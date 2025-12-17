@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { createUser } from "./actions"
+import { getCachedDirectorates } from "@/app/dashboard/cached-data"
 import {
     Card,
     CardContent,
@@ -26,7 +27,7 @@ export default async function AdminPage({
 }) {
     const supabase = await createClient()
     const { error, success } = await searchParams
-    const { data: directorates } = await supabase.from('directorates').select('*')
+    const directorates = await getCachedDirectorates()
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 py-10">
