@@ -28,7 +28,8 @@ async function getAuthClient() {
     const auth = new google.auth.GoogleAuth({
         credentials: {
             client_email: parsedCredentials.client_email,
-            private_key: parsedCredentials.private_key,
+            // Handle escaped newlines for Vercel/Env variables
+            private_key: parsedCredentials.private_key ? parsedCredentials.private_key.replace(/\\n/g, '\n') : undefined,
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });

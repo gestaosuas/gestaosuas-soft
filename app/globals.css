@@ -105,6 +105,10 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-zinc-50 dark:bg-zinc-950 text-foreground antialiased;
+    /* Adicionar um padrão sutil de fundo opcional se desejar */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%), 
+        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
   }
 }

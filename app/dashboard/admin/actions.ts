@@ -25,7 +25,7 @@ export async function createUser(formData: FormData) {
     const directorateId = formData.get('directorate') as string
 
     if (!directorateId || directorateId === 'none') {
-        return { error: 'Directorate is required' }
+        redirect('/dashboard/admin?error=Directorate is required')
     }
 
     const supabaseAdmin = createAdminClient()
