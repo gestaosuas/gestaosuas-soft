@@ -12,10 +12,14 @@ import { Button } from "@/components/ui/button"
 
 export function SubmissionFormClient({
     definition,
-    directorateName
+    directorateName,
+    directorateId,
+    setor
 }: {
     definition: FormDefinition,
-    directorateName: string
+    directorateName: string,
+    directorateId: string,
+    setor?: string
 }) {
     const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1))
     const [year, setYear] = useState<string>(String(new Date().getFullYear()))
@@ -28,12 +32,12 @@ export function SubmissionFormClient({
 
         setLoading(true)
         try {
-            const result = await submitReport(data, Number(month), Number(year))
+            const result = await submitReport(data, Number(month), Number(year), setor)
             if (result?.error) {
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
-                window.location.href = '/dashboard'
+                window.location.href = `/dashboard/diretoria/${directorateId}`
             }
         } catch (e) {
             alert("Erro inesperado ao enviar.")
@@ -49,7 +53,7 @@ export function SubmissionFormClient({
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard">
+                    <Link href={setor === 'beneficios' ? `/dashboard/beneficios` : `/dashboard/diretoria/${directorateId}`}>
                         <Button variant="ghost" size="icon" className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                             <ArrowLeft className="h-6 w-6" />
                         </Button>

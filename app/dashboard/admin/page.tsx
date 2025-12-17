@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/server"
 import { createUser } from "./actions"
 import { getCachedDirectorates } from "@/app/dashboard/cached-data"
+import { UserList } from "./user-list"
+import { createAdminClient } from "@/utils/supabase/admin"
 import {
     Card,
     CardContent,
@@ -11,13 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+
 import { UserPlus, Shield } from "lucide-react"
 
 export default async function AdminPage({
@@ -28,6 +24,7 @@ export default async function AdminPage({
     const supabase = await createClient()
     const { error, success } = await searchParams
     const directorates = await getCachedDirectorates()
+    const mappedUsers = await fetchAllUsers()
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 py-10">
@@ -103,20 +100,26 @@ export default async function AdminPage({
                                     className="h-11 bg-zinc-50/50 border-zinc-200 focus:border-indigo-500 focus:ring-indigo-500"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="directorate" className="text-zinc-600 dark:text-zinc-400 font-medium">Vincular Diretoria</Label>
-                                <Select name="directorate" required>
-                                    <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 focus:ring-indigo-500">
-                                        <SelectValue placeholder="Selecione a diretoria..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {directorates?.map((d) => (
-                                            <SelectItem key={d.id} value={d.id}>
-                                                {d.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-3">
+                                <Label className="text-zinc-600 dark:text-zinc-400 font-medium">Vincular Diretorias</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50">
+                                    {directorates?.map((d) => (
+                                        <label key={d.id} className="flex items-start gap-3 p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors">
+                                            <div className="flex items-center h-5">
+                                                <input
+                                                    type="checkbox"
+                                                    name="directorates"
+                                                    value={d.id}
+                                                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-600"
+                                                />
+                                            </div>
+                                            <div className="text-sm">
+                                                <span className="font-medium text-zinc-900 dark:text-zinc-100">{d.name}</span>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground">Selecione uma ou mais diretorias para este usuário.</p>
                             </div>
                         </div>
                         <div className="pt-6 flex justify-end gap-3">
@@ -127,7 +130,54 @@ export default async function AdminPage({
                         </div>
                     </form>
                 </CardContent>
+                {/* Form Creation Card from previous turn ... */}
             </Card>
+
+            {/* User List Section */}
+            <UserList users={mappedUsers} directorates={directorates || []} />
         </div>
     )
+}
+
+async function fetchAllUsers() {
+    const supabaseAdmin = createAdminClient()
+
+    // 1. Get Auth Users
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
+    if (error || !users) return []
+
+    // 2. Get Profiles & Permissions
+    const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select(`
+            id, 
+            role, 
+            full_name,
+            profile_directorates (
+                directorate_id
+            )
+        `)
+
+    // Map for easy lookup
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+    // 3. Merge
+    const mergedUsers = (users || []).map((u: any) => {
+        const profile = profileMap.get(u.id)
+        // Access nested join safely
+        // @ts-ignore
+        const rawDirs = profile?.profile_directorates || []
+        // @ts-ignore
+        const dirIds = rawDirs.map(pd => pd.directorate_id)
+
+        return {
+            id: u.id,
+            email: u.email || 'No email',
+            name: profile?.full_name || u.user_metadata?.full_name || 'Desconhecido',
+            role: profile?.role || 'user',
+            directorateIds: dirIds
+        }
+    })
+
+    return mergedUsers
 }

@@ -22,10 +22,10 @@ export async function createUser(formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const name = formData.get('name') as string
-    const directorateId = formData.get('directorate') as string
+    const directorateIds = formData.getAll('directorates') as string[]
 
-    if (!directorateId || directorateId === 'none') {
-        redirect('/dashboard/admin?error=Directorate is required')
+    if (!directorateIds || directorateIds.length === 0) {
+        redirect('/dashboard/admin?error=At least one directorate is required')
     }
 
     const supabaseAdmin = createAdminClient()
@@ -40,8 +40,6 @@ export async function createUser(formData: FormData) {
 
     if (authError) {
         console.error("Auth error:", authError)
-        // Return error to UI (need client component or useFormState for proper error handling, but simplified here)
-        // We will throw for now or just log.
         redirect('/dashboard/admin?error=' + encodeURIComponent(authError.message))
     }
 
@@ -55,7 +53,6 @@ export async function createUser(formData: FormData) {
         .upsert({
             id: userData.user.id,
             role: 'user',
-            directorate_id: directorateId || null,
             full_name: name
         })
 
@@ -65,6 +62,80 @@ export async function createUser(formData: FormData) {
         redirect('/dashboard/admin?error=' + encodeURIComponent(profileError.message))
     }
 
+    // Assign Directorates (Many-to-Many)
+    if (directorateIds.length > 0) {
+        const assignments = directorateIds.map(dirId => ({
+            profile_id: userData.user!.id,
+            directorate_id: dirId
+        }))
+
+        const { error: assignError } = await supabaseAdmin
+            .from('profile_directorates')
+            .insert(assignments)
+
+        if (assignError) {
+            console.error("Assignment error:", assignError)
+            // Optional: Cleanup but maybe just warn?
+            // await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
+            // redirect('/dashboard/admin?error=User created but failed to assign directorates')
+        }
+    }
+
+
+
     revalidatePath('/dashboard/admin')
     redirect('/dashboard/admin?success=User created')
+}
+
+export async function deleteUser(userId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error("Unauthorized")
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    revalidatePath('/dashboard/admin')
+}
+
+export async function updateUserAccess(userId: string, directorateIds: string[]) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error("Unauthorized")
+
+    const supabaseAdmin = createAdminClient()
+
+    // 1. Remove existing assignments for this user
+    const { error: deleteError } = await supabaseAdmin
+        .from('profile_directorates')
+        .delete()
+        .eq('profile_id', userId)
+
+    if (deleteError) throw new Error("Failed to clear existing permissions")
+
+    // 2. Add new assignments
+    if (directorateIds.length > 0) {
+        const assignments = directorateIds.map(dirId => ({
+            profile_id: userId,
+            directorate_id: dirId
+        }))
+
+        const { error: insertError } = await supabaseAdmin
+            .from('profile_directorates')
+            .insert(assignments)
+
+        if (insertError) throw new Error("Failed to assign new permissions")
+    }
+
+    revalidatePath('/dashboard/admin')
 }

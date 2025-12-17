@@ -61,7 +61,9 @@ export async function updateSheetColumn(config: SheetConfig, month: number, data
     const startRow = config.startRow || 2;
     const endRow = startRow + dataValues.length - 1;
 
-    const range = `${config.sheetName}!${colLetter}${startRow}:${colLetter}${endRow}`;
+    // Conditionally quote sheet name if it has spaces
+    const formattedSheetName = config.sheetName.includes(' ') ? `'${config.sheetName}'` : config.sheetName;
+    const range = `${formattedSheetName}!${colLetter}${startRow}:${colLetter}${endRow}`;
 
     // Transform 1D array [1, 2, 3] into 2D vertical array [[1], [2], [3]]
     const values = dataValues.map(v => [v]);
@@ -74,4 +76,73 @@ export async function updateSheetColumn(config: SheetConfig, month: number, data
             values: values
         }
     });
+}
+
+/**
+ * Updates multiple disjoint blocks of data in the same sheet column (defined by Month).
+ * 
+ * @param config Sheet configuration (ID, Sheet Name)
+ * @param month Month number (1-12)
+ * @param blocksData Array of objects containing startRow, endRow, and the values for that block
+ */
+export async function updateSheetBlocks(
+    config: SheetConfig,
+    month: number,
+    blocksData: { startRow: number, values: (string | number)[] }[]
+) {
+    const auth = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: auth as any });
+
+    // Calculate Column Letter
+    const baseCharCode = 'B'.charCodeAt(0); // 66
+    const colCharCode = baseCharCode + (month - 1);
+    const colLetter = String.fromCharCode(colCharCode);
+
+    // Prepare batch update data
+    const data = blocksData.map(block => {
+        const startRow = block.startRow;
+        // The range end is strictly start + length - 1
+        const endRow = startRow + block.values.length - 1;
+        // Conditionally quote sheet name if it has spaces
+        const formattedSheetName = config.sheetName.includes(' ') ? `'${config.sheetName}'` : config.sheetName;
+        const range = `${formattedSheetName}!${colLetter}${startRow}:${colLetter}${endRow}`;
+
+        return {
+            range: range,
+            values: block.values.map(v => [v]) // Vertical 2D array
+        };
+    });
+
+    await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: config.spreadsheetId,
+        requestBody: {
+            valueInputOption: 'USER_ENTERED',
+            data: data
+        }
+    });
+}
+
+export async function validateSheetExists(spreadsheetId: string, sheetName: string) {
+    const auth = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: auth as any });
+
+    try {
+        const meta = await sheets.spreadsheets.get({
+            spreadsheetId
+        });
+
+        const sheetNames = meta.data.sheets?.map(s => s.properties?.title) || [];
+        console.log("DEBUG: Available Sheets:", JSON.stringify(sheetNames));
+
+        if (!sheetNames.includes(sheetName)) {
+            return {
+                exists: false,
+                available: sheetNames
+            };
+        }
+        return { exists: true, available: sheetNames };
+    } catch (e: any) {
+        console.error("Error validating sheet:", e);
+        return { exists: true, available: [] };
+    }
 }
