@@ -105,6 +105,7 @@ export default function MonthlyReportEditor({
     const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1))
     const [year, setYear] = useState<string>(String(new Date().getFullYear()))
     const [blocks, setBlocks] = useState<ReportBlock[]>([])
+    const [attachIndicators, setAttachIndicators] = useState(false)
     const [loading, setLoading] = useState(false)
 
     // Helper: Current Date Logic
@@ -174,7 +175,8 @@ export default function MonthlyReportEditor({
         try {
             const payload = {
                 _report_content: blocks,
-                _report_type: 'monthly_narrative'
+                _report_type: 'monthly_narrative',
+                _attach_indicators: attachIndicators
             }
             const result = await submitReport(payload, Number(month), Number(year), directorateId, setor)
             if (result?.error) alert(result.error)
@@ -259,6 +261,20 @@ export default function MonthlyReportEditor({
                                 <SelectItem value="2026">2026</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="md:col-span-2 flex items-center gap-3 pt-2 border-t border-amber-100 dark:border-amber-900/10">
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="attachIndicators"
+                                checked={attachIndicators}
+                                onChange={(e) => setAttachIndicators(e.target.checked)}
+                                className="h-5 w-5 rounded border-zinc-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                            />
+                            <Label htmlFor="attachIndicators" className="cursor-pointer font-medium text-zinc-700 dark:text-zinc-300">
+                                Anexar Tabela de Indicadores (Dados Quantitativos) no final do relatório?
+                            </Label>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

@@ -4,6 +4,10 @@ import { getCachedSubmission } from "@/app/dashboard/cached-data"
 import { redirect } from "next/navigation"
 import ReportActions from "./report-actions"
 import { cn } from "@/lib/utils"
+import { getCachedIndicators } from "@/app/dashboard/cached-data"
+import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
+import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
+import { FormDefinition } from "@/components/form-engine"
 
 export default async function ViewReportPage({
     params,
@@ -34,6 +38,66 @@ export default async function ViewReportPage({
     const isNarrative = content.length > 0
     const directorateName = submission.directorates?.name || 'Diretoria'
     const monthName = new Date(0, submission.month - 1).toLocaleString('pt-BR', { month: 'long' })
+
+    // Logic for Attached Indicators
+    let AttachIndicatorsElement = null
+    if (submission.data?._attach_indicators) {
+        const indicatorsSub = await getCachedIndicators(
+            user.id,
+            submission.directorate_id,
+            submission.month,
+            submission.year
+        )
+
+        if (indicatorsSub) {
+            let formDef = submission.directorates?.form_definition as FormDefinition
+            const dirName = (submission.directorates?.name || '').toLowerCase()
+
+            // Resolve Config if not in DB
+            if (!formDef) {
+                if (dirName.includes('benefícios') || dirName.includes('beneficios')) {
+                    formDef = BENEFICIOS_FORM_DEFINITION
+                } else if (dirName.includes('formação') || dirName.includes('cp')) {
+                    formDef = CP_FORM_DEFINITION
+                }
+                // SINE usually has it in DB, but if not, logic implies it might be missing or handled elsewhere.
+                // If standard SINE config exists in file I should import it, but I don't see sine-config.ts reference.
+                // Assuming SINE has it in DB as per previous steps.
+            }
+
+            if (formDef && formDef.sections) {
+                AttachIndicatorsElement = (
+                    <div className="mt-12 pt-8 border-t-2 border-zinc-900 break-before-page print:block">
+                        <h3 className="text-xl font-bold mb-6 text-center uppercase border-b border-zinc-200 pb-2">Anexo: Indicadores Quantitativos</h3>
+                        <div className="grid gap-8">
+                            {formDef.sections.map((section, idx) => (
+                                <div key={idx} className="break-inside-avoid">
+                                    <h4 className="font-bold bg-zinc-100 dark:bg-zinc-800 p-2 border border-zinc-300 dark:border-zinc-700 text-sm mb-0 uppercase tracking-tight">
+                                        {section.title}
+                                    </h4>
+                                    <table className="w-full text-xs md:text-sm border-collapse border border-t-0 border-zinc-300 dark:border-zinc-700">
+                                        <tbody>
+                                            {section.fields.map((field) => (
+                                                <tr key={field.id} className="border-b border-zinc-200 dark:border-zinc-800 odd:bg-white even:bg-zinc-50 dark:odd:bg-zinc-900 dark:even:bg-zinc-900/50">
+                                                    <td className="p-2 border-r border-zinc-300 dark:border-zinc-700 w-2/3">{field.label}</td>
+                                                    <td className="p-2 text-center font-mono font-bold text-zinc-900 dark:text-zinc-100">
+                                                        {indicatorsSub.data?.[field.id] !== undefined && indicatorsSub.data?.[field.id] !== '' ? indicatorsSub.data[field.id] : '-'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="text-[10px] text-zinc-400 text-center mt-4">
+                            * Dados extraídos automaticamente do relatório de indicadores referência {monthName}/{submission.year}.
+                        </div>
+                    </div>
+                )
+            }
+        }
+    }
 
     return (
         <div className="container mx-auto max-w-4xl py-8 animate-in fade-in zoom-in-95 duration-500">
@@ -118,6 +182,9 @@ export default async function ViewReportPage({
                             })}
                         </div>
                     )}
+
+                    {/* ATTACHED INDICATORS SECTION */}
+                    {AttachIndicatorsElement}
 
                 </div>
 

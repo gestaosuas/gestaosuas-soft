@@ -193,3 +193,49 @@ export const getCachedSubmission = async (id: string, userId: string) => {
         }
     )()
 }
+
+export const getCachedIndicators = async (userId: string, directorateId: string, month: number, year: number) => {
+    return await unstable_cache(
+        async () => {
+            const supabase = createAdminClient()
+
+            // 1. Permission Check
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+            let hasAccess = false
+            if (profile?.role === 'admin') hasAccess = true
+            else {
+                const { data: link } = await supabase
+                    .from('profile_directorates')
+                    .select('profile_id')
+                    .eq('profile_id', userId)
+                    .eq('directorate_id', directorateId)
+                    .single()
+                if (link) hasAccess = true
+            }
+
+            if (!hasAccess) return null
+
+            // 2. Fetch Indicator Submission (Not Narrative)
+            // We assume indicators don't have _report_content
+            const { data: submissions } = await supabase
+                .from('submissions')
+                .select('*')
+                .eq('directorate_id', directorateId)
+                .eq('month', month)
+                .eq('year', year)
+
+            if (!submissions || submissions.length === 0) return null
+
+            // Find the one that doesn't look like a narrative
+            // Narrative has _report_content array
+            const indicatorSub = submissions.find(s => !s.data?._report_content)
+
+            return indicatorSub || null
+        },
+        [`indicators-${directorateId}-${month}-${year}-${userId}`],
+        {
+            tags: [`submissions-${directorateId}`],
+            revalidate: 60
+        }
+    )()
+}
