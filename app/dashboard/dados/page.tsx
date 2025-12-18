@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server"
+import { getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -109,12 +110,12 @@ export default async function DataPage({
         titleContext = `${directorate.name} (SINE)`
     }
 
-    // Buscar Submissões do Ano
-    const { data: submissions } = await supabase
-        .from('submissions')
-        .select('month, data')
-        .eq('directorate_id', directorate.id)
-        .eq('year', selectedYear)
+    // Buscar Submissões do Ano (Securely)
+    // We filter by year in memory since the cache returns all months (it's efficient enough)
+    // The previous code fetched all directorate submissions anyway? No, filtering by year/directorate on DB.
+    // Our cache fetches ALL submissions for the directorate. We will filter by year in loop.
+    const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
+    const submissions = allSubmissions.filter((s: any) => s.year === selectedYear)
 
     // Organizar dados em um mapa fácil: month -> dataObject
     const dataByMonth = new Map<number, Record<string, any>>()

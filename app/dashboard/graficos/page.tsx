@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server"
+import { getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
 import { CP_FORM_DEFINITION } from "../cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "../beneficios-config"
 import { redirect } from "next/navigation"
@@ -102,12 +103,9 @@ export default async function GraficosPage({
     const formDef = directorate.form_definition as FormDefinition
     const allFields = formDef?.sections?.flatMap(s => s.fields) || []
 
-    // 2. Fetch Data
-    const { data: submissions } = await supabase
-        .from('submissions')
-        .select('month, data')
-        .eq('directorate_id', directorate.id)
-        .eq('year', selectedYear)
+    // 2. Fetch Data (Securely)
+    const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
+    const submissions = allSubmissions.filter((s: any) => s.year === selectedYear)
 
     // 3. Process Data
     const dataByMonth = new Map<number, any>()
