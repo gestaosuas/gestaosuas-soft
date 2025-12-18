@@ -261,7 +261,7 @@ export async function updateSystemSetting(key: string, value: string) {
         return { error: "Erro ao salvar configuração." }
     }
 
-    revalidateTag('settings')
+
     revalidatePath('/dashboard', 'layout')
     return { success: true }
 }
