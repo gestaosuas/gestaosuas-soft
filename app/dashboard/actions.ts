@@ -288,6 +288,6 @@ export async function updateSystemSetting(key: string, value: string) {
     }
 
 
-    revalidatePath('/dashboard', 'layout')
+    revalidatePath('/dashboard')
     return { success: true }
 }
