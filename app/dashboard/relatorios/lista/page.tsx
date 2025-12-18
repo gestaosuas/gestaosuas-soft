@@ -96,7 +96,20 @@ export default async function ReportListPage({
 
                 {(!narrativeSubmissions || narrativeSubmissions.length === 0) && (
                     <div className="text-center py-20 text-zinc-400">
-                        Nenhum relatório descritivo encontrado.
+                        <p>Nenhum relatório descritivo encontrado.</p>
+                        <div className="mt-8 p-4 bg-zinc-100 dark:bg-zinc-900 rounded-lg text-xs text-left max-w-lg mx-auto overflow-auto">
+                            <p className="font-bold text-red-500 mb-2">Debug RLS - Se você devia ver algo, tire um print disso:</p>
+                            <p><strong>Diretoria ID (URL):</strong> {directorate_id}</p>
+                            <p><strong>Usuário Logado:</strong> {user.email}</p>
+                            <p><strong>Total Submissões (Raw):</strong> {submissions?.length || 0}</p>
+                            {submissions && submissions.length > 0 && (
+                                <div className="mt-2 text-zinc-500">
+                                    Exemplo (primeiro): mês {submissions[0].month}/{submissions[0].year}
+                                    <br />
+                                    Tem conteúdo? {submissions[0].data?._report_content ? 'SIM' : 'NÃO'}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
