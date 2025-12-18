@@ -25,6 +25,10 @@ export default async function ReportListPage({
         .order('year', { ascending: false })
         .order('month', { ascending: false })
 
+    // Filter to show ONLY Narrative Reports (containing _report_content)
+    // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
+    const narrativeSubmissions = submissions?.filter((sub) => sub.data && sub.data._report_content) || []
+
     // Basic permission check
     // Omitted strictly for brevity as we are just listing, but in prod should verify link
 
@@ -49,7 +53,7 @@ export default async function ReportListPage({
             </div>
 
             <div className="grid gap-6">
-                {submissions?.map((sub) => {
+                {narrativeSubmissions.map((sub) => {
                     // Check if it has narrative content
                     const hasContent = sub.data && sub.data._report_content;
                     // Or fallback to classic data view
@@ -90,9 +94,9 @@ export default async function ReportListPage({
                     )
                 })}
 
-                {(!submissions || submissions.length === 0) && (
+                {(!narrativeSubmissions || narrativeSubmissions.length === 0) && (
                     <div className="text-center py-20 text-zinc-400">
-                        Nenhum relatório encontrado.
+                        Nenhum relatório descritivo encontrado.
                     </div>
                 )}
             </div>
