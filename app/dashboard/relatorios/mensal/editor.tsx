@@ -182,7 +182,7 @@ export default function MonthlyReportEditor({
             if (result?.error) alert(result.error)
             else {
                 alert("Relatório salvo com sucesso!")
-                window.location.href = `/dashboard/diretoria/${directorateId}`
+                window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
             }
         } catch (e) {
             console.error(e)

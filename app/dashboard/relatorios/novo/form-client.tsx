@@ -39,7 +39,7 @@ export function SubmissionFormClient({
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
-                window.location.href = `/dashboard/diretoria/${directorateId}`
+                window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
             }
         } catch (e) {
             alert("Erro inesperado ao enviar.")

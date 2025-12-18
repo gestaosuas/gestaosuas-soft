@@ -212,6 +212,8 @@ export async function submitReport(formData: Record<string, any>, month: number,
     }
 
     revalidatePath('/dashboard')
+    revalidateTag('submissions')
+    revalidateTag(`submissions-${directorate.id}`)
     return { success: true }
 }
 
@@ -241,6 +243,7 @@ export async function deleteReport(reportId: string) {
     }
 
     revalidatePath('/dashboard')
+    revalidateTag('submissions')
     return { success: true }
 }
 
