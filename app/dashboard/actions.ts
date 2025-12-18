@@ -231,11 +231,28 @@ export async function deleteReport(reportId: string) {
     const isEmailAdmin = adminEmails.includes(user.email || '')
     const isAdmin = profile?.role === 'admin' || isEmailAdmin
 
-    if (!isAdmin) {
-        return { error: "Apenas administradores podem excluir relatórios." }
+    // Check Admin or Owner
+    // We need to fetch the submission first (securely via Admin Client) to check ownership
+    const adminSupabase = createAdminClient()
+    const { data: submission } = await adminSupabase
+        .from('submissions')
+        .select('user_id')
+        .eq('id', reportId)
+        .single()
+
+    let canDelete = false
+
+    if (isAdmin) {
+        canDelete = true
+    } else if (submission && submission.user_id === user.id) {
+        canDelete = true // Owner
     }
 
-    const { error } = await supabase.from('submissions').delete().eq('id', reportId)
+    if (!canDelete) {
+        return { error: "Apenas administradores ou o autor do relatório podem excluí-lo." }
+    }
+
+    const { error } = await adminSupabase.from('submissions').delete().eq('id', reportId)
 
     if (error) {
         console.error("Delete error:", error)
