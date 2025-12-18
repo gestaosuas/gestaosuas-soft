@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, LogOut, ShieldCheck, Building2, ChevronLeft, ChevronRight, HandHeart } from "lucide-react"
 
-export function Sidebar({ role, directorates = [] }: { role?: 'admin' | 'user', directorates?: any[] }) {
+export function Sidebar({ role, directorates = [], userName, logoUrl }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string }) {
     const pathname = usePathname()
     const [isCollapsed, setIsCollapsed] = useState(false)
 
     return (
         <div className={cn(
-            "hidden md:flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl text-card-foreground shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative transition-all duration-300 ease-in-out",
+            "hidden md:flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl text-card-foreground shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative transition-all duration-300 ease-in-out print:hidden",
             isCollapsed ? "w-20" : "w-72"
         )}>
             {/* Gradient Border Line */}
@@ -35,14 +35,32 @@ export function Sidebar({ role, directorates = [] }: { role?: 'admin' | 'user', 
                 {/* Logo Glow */}
                 <div className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-blue-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-                <div className="flex items-center gap-3 relative z-10">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30 transform transition-transform group-hover:scale-105 duration-300">
-                        <ShieldCheck className="h-6 w-6" />
-                    </div>
+                <div className="flex flex-col items-center justify-center gap-1 relative z-10 w-full overflow-hidden text-center">
+                    {logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={logoUrl} alt="Logo" className="h-10 w-auto max-w-[150px] object-contain mb-1" />
+                    ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30 transform transition-transform group-hover:scale-105 duration-300">
+                            <ShieldCheck className="h-6 w-6" />
+                        </div>
+                    )}
+
                     {!isCollapsed && (
-                        <div className="flex flex-col animate-in fade-in duration-300">
-                            <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">Sistema Vigilância</span>
-                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mt-1">Socioassistencial 2026</span>
+                        <div className="flex flex-col animate-in fade-in duration-300 w-full px-2">
+                            {!logoUrl && (
+                                <>
+                                    <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">Sistema Vigilância</span>
+                                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mt-1">Socioassistencial 2026</span>
+                                </>
+                            )}
+                            {userName && (
+                                <span className={cn(
+                                    "text-zinc-500 dark:text-zinc-400 truncate w-full block text-center",
+                                    logoUrl ? "text-[11px] font-medium" : "text-[10px] mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-1"
+                                )} title={userName}>
+                                    {userName}
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>
@@ -147,6 +165,22 @@ export function Sidebar({ role, directorates = [] }: { role?: 'admin' | 'user', 
                             >
                                 <Users className={cn("h-5 w-5 transition-colors", pathname?.startsWith("/dashboard/admin") ? "text-violet-600 dark:text-violet-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Gestão de Usuários</span>}
+                            </Button>
+                        </Link>
+                        <Link href="/dashboard/configuracoes">
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full h-12 text-sm font-medium transition-all duration-300 rounded-xl mt-1",
+                                    isCollapsed ? "justify-center px-0" : "justify-start px-4",
+                                    pathname?.startsWith("/dashboard/configuracoes")
+                                        ? "bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/20 dark:to-gray-900/10 text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200/50 dark:border-gray-800/30"
+                                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+                                )}
+                                title="Configurações"
+                            >
+                                <ShieldCheck className={cn("h-5 w-5 transition-colors", pathname?.startsWith("/dashboard/configuracoes") ? "text-gray-600 dark:text-gray-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                {!isCollapsed && <span>Configurações</span>}
                             </Button>
                         </Link>
                     </div>

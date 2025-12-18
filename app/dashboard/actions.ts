@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
 import { redirect } from 'next/navigation'
@@ -11,7 +11,7 @@ import { CP_FORM_DEFINITION, CP_SHEET_BLOCKS, CP_SHEET_NAME } from './cp-config'
 import { BENEFICIOS_FORM_DEFINITION, BENEFICIOS_SHEET_BLOCKS, BENEFICIOS_SHEET_NAME, BENEFICIOS_SPREADSHEET_ID } from './beneficios-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 
-export async function submitReport(formData: Record<string, any>, month: number, year: number, setor?: string) {
+export async function submitReport(formData: Record<string, any>, month: number, year: number, directorateId: string, setor?: string) {
 
     // Force refresh of configuration
     const supabase = await createClient()
@@ -21,14 +21,35 @@ export async function submitReport(formData: Record<string, any>, month: number,
         throw new Error("Unauthorized")
     }
 
-    // Get User Profile & Directorate
-    const { data: profile } = await supabase.from('profiles').select('*, directorates(*)').eq('id', user.id).single()
+    // Get User Profile & Permission Check
+    const { data: profile } = await supabase.from('profiles').select(`
+        *,
+        profile_directorates (
+            directorates (*)
+        )
+    `).eq('id', user.id).single()
 
-    if (!profile || !profile.directorates) {
-        throw new Error("No directorate assigned")
+    // @ts-ignore
+    const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates) || []
+
+    // Check Admin
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+
+    let directorate = null
+
+    if (isAdmin) {
+        // Fetch requested directorate directly if admin
+        const { data: d } = await supabase.from('directorates').select('*').eq('id', directorateId).single()
+        directorate = d
+    } else {
+        // Verify link
+        directorate = userDirectorates.find((d: any) => d.id === directorateId)
     }
 
-    const directorate = Array.isArray(profile.directorates) ? profile.directorates[0] : profile.directorates
+    if (!directorate) {
+        throw new Error("Directorate not found or unauthorized")
+    }
 
     // Check if already submitted
     const { data: existing } = await supabase
@@ -140,7 +161,10 @@ export async function submitReport(formData: Record<string, any>, month: number,
                     blocksData
                 )
             }
-        } else if (directorate.sheet_config && directorate.form_definition) {
+
+            // Skip Google Sheets if this is a narrative report (has _report_content)
+            // or check which keys are numeric before sending.
+        } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
             // SINE / DEFAULT LOGIC
             const formDef = directorate.form_definition as FormDefinition
 
@@ -182,5 +206,62 @@ export async function submitReport(formData: Record<string, any>, month: number,
     }
 
     revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function deleteReport(reportId: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    // Check admin
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+
+    // Explicit email whitelist for safety
+    const adminEmails = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br']
+    const isEmailAdmin = adminEmails.includes(user.email || '')
+    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+
+    if (!isAdmin) {
+        return { error: "Apenas administradores podem excluir relatórios." }
+    }
+
+    const { error } = await supabase.from('submissions').delete().eq('id', reportId)
+
+    if (error) {
+        console.error("Delete error:", error)
+        return { error: "Erro ao excluir relatório." }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function updateSystemSetting(key: string, value: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    // Check admin
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+
+    if (!isAdmin) {
+        return { error: "Apenas administradores podem alterar configurações." }
+    }
+
+    // Upsert
+    const { error } = await supabase.from('settings').upsert({ key, value })
+
+    if (error) {
+        console.error("Update setting error:", error)
+        return { error: "Erro ao salvar configuração." }
+    }
+
+    revalidateTag('settings')
+    revalidatePath('/dashboard', 'layout')
     return { success: true }
 }

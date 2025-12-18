@@ -78,3 +78,32 @@ export const getCachedDirectorate = async (id: string) => {
         }
     )()
 }
+
+export const getSystemSettings = async () => {
+    return await unstable_cache(
+        async () => {
+            const supabase = createAdminClient()
+            try {
+                const { data, error } = await supabase.from('settings').select('*')
+                if (error) throw error
+                // Convert array to object
+                const settings = data.reduce((acc: any, curr: any) => {
+                    acc[curr.key] = curr.value
+                    return acc
+                }, {})
+                return settings
+            } catch (e) {
+                console.warn("Settings table not found or empty, using defaults.", e)
+                return {
+                    logo_url: '',
+                    system_name: 'Sistema Vigilância Socioassistencial 2026'
+                }
+            }
+        },
+        ['system-settings'],
+        {
+            tags: ['settings'],
+            revalidate: 3600
+        }
+    )()
+}

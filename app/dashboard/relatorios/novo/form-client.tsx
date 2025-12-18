@@ -14,12 +14,14 @@ export function SubmissionFormClient({
     definition,
     directorateName,
     directorateId,
-    setor
+    setor,
+    isAdmin = false
 }: {
     definition: FormDefinition,
     directorateName: string,
     directorateId: string,
-    setor?: string
+    setor?: string,
+    isAdmin?: boolean
 }) {
     const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1))
     const [year, setYear] = useState<string>(String(new Date().getFullYear()))
@@ -32,7 +34,7 @@ export function SubmissionFormClient({
 
         setLoading(true)
         try {
-            const result = await submitReport(data, Number(month), Number(year), setor)
+            const result = await submitReport(data, Number(month), Number(year), directorateId, setor)
             if (result?.error) {
                 alert(result.error)
             } else {
@@ -88,11 +90,33 @@ export function SubmissionFormClient({
                                     <SelectValue placeholder="Mês" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                        <SelectItem key={m} value={String(m)} className="focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer">
-                                            {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
-                                        </SelectItem>
-                                    ))}
+                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
+                                        const currentDate = new Date()
+                                        const currentMonth = currentDate.getMonth() + 1
+                                        const currentYear = currentDate.getFullYear()
+                                        const selectedYearInt = parseInt(year)
+
+                                        // Disable future months if not admin
+                                        // If selected year is future -> all disabled
+                                        // If selected year is current -> future months disabled
+                                        // If selected year is past -> all enabled
+                                        let isDisabled = false
+                                        if (!isAdmin) {
+                                            if (selectedYearInt > currentYear) isDisabled = true
+                                            else if (selectedYearInt === currentYear && m > currentMonth) isDisabled = true
+                                        }
+
+                                        return (
+                                            <SelectItem
+                                                key={m}
+                                                value={String(m)}
+                                                disabled={isDisabled}
+                                                className={`focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
+                                            </SelectItem>
+                                        )
+                                    })}
                                 </SelectContent>
                             </Select>
                         </div>

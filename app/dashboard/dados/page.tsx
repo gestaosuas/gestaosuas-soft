@@ -19,9 +19,9 @@ import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 export default async function DataPage({
     searchParams,
 }: {
-    searchParams: Promise<{ year?: string, setor?: string }>
+    searchParams: Promise<{ year?: string, setor?: string, directorate_id?: string }>
 }) {
-    const { year, setor } = await searchParams
+    const { year, setor, directorate_id } = await searchParams
     const selectedYear = Number(year) || 2025
     const isCP = setor === 'centros'
     const isBeneficios = setor === 'beneficios'
@@ -48,24 +48,38 @@ export default async function DataPage({
     // @ts-ignore
     const userDirectorates = profile.profile_directorates?.map(pd => pd.directorates) || []
 
-    // Fallback for old single relation if permissions table is empty? 
-    // Usually better to migrate, but let's be safe.
-    // (Skipping fallback to keep code clean, assuming migration ran)
-
     let directorate = null
 
-    if (isBeneficios) {
-        directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios') || d.name.toUpperCase().includes('BENEFICIOS'))
-    } else if (isCP || setor === 'sine') {
-        directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('formação profissional') || d.name.toLowerCase().includes('sine'))
-    } else {
-        // Default / First one
-        directorate = userDirectorates[0]
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const isAdmin = profile.role === 'admin' || isEmailAdmin
+
+    if (directorate_id) {
+        if (isAdmin) {
+            const { data: d } = await supabase.from('directorates').select('*').eq('id', directorate_id).single()
+            directorate = d
+        } else {
+            // Check if user is linked to the requested directorate
+            const isLinked = userDirectorates.some((d: any) => d.id === directorate_id)
+            if (isLinked) {
+                directorate = userDirectorates.find((d: any) => d.id === directorate_id)
+            }
+        }
+    }
+
+    if (!directorate) {
+        if (isBeneficios) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios') || d.name.toUpperCase().includes('BENEFICIOS'))
+        } else if (isCP || setor === 'sine') {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('formação profissional') || d.name.toLowerCase().includes('sine'))
+        } else {
+            // Default / First one
+            directorate = userDirectorates[0]
+        }
     }
 
     // Admin Override: If admin, fetch all directorates to find the target one?
     // Access control: If user is admin (profile.role === 'admin'), they can see any sector.
-    if (profile.role === 'admin' && !directorate) {
+    if (isAdmin && !directorate) {
         // If admin didn't find it in their "assigned" list (which might be empty), find it by query
         const { data: allDirs } = await supabase.from('directorates').select('*')
         if (isBeneficios) {

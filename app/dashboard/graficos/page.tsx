@@ -25,9 +25,9 @@ function findFieldIdBySuffix(fields: any[], suffix: string): string[] {
 export default async function GraficosPage({
     searchParams,
 }: {
-    searchParams: Promise<{ year?: string, setor?: string, month?: string }>
+    searchParams: Promise<{ year?: string, setor?: string, month?: string, directorate_id?: string }>
 }) {
-    const { year, setor, month } = await searchParams
+    const { year, setor, month, directorate_id } = await searchParams
     const selectedYear = Number(year) || new Date().getFullYear()
 
     const supabase = await createClient()
@@ -52,20 +52,39 @@ export default async function GraficosPage({
 
     let directorate = null
 
-    // 1. Resolve Field IDs & Config based on Sector
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+
+    // 0. Resolve by ID if provided
+    if (directorate_id) {
+        if (isAdmin) {
+            const { data: d } = await supabase.from('directorates').select('*').eq('id', directorate_id).single()
+            directorate = d
+        } else {
+            // Check if user is linked to the requested directorate
+            const isLinked = userDirectorates.some((d: any) => d.id === directorate_id)
+            if (isLinked) {
+                directorate = userDirectorates.find((d: any) => d.id === directorate_id)
+            }
+        }
+    }
+
+    // 1. Resolve Field IDs & Config based on Sector if not found by ID
     const isCP = setor === 'centros'
     const isBeneficios = setor === 'beneficios'
 
-    if (isBeneficios) {
-        directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios') || d.name.toUpperCase().includes('BENEFICIOS'))
-    } else if (isCP || setor === 'sine') {
-        directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('formação profissional') || d.name.toLowerCase().includes('sine'))
-    } else {
-        directorate = userDirectorates[0]
+    if (!directorate) {
+        if (isBeneficios) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios') || d.name.toUpperCase().includes('BENEFICIOS'))
+        } else if (isCP || setor === 'sine') {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('formação profissional') || d.name.toLowerCase().includes('sine'))
+        } else {
+            directorate = userDirectorates[0]
+        }
     }
 
     // Admin Override
-    if (profile?.role === 'admin' && !directorate) {
+    if (isAdmin && !directorate) {
         const { data: allDirs } = await supabase.from('directorates').select('*')
         if (isBeneficios) {
             directorate = allDirs?.find(d => d.name.toLowerCase().includes('benefícios'))

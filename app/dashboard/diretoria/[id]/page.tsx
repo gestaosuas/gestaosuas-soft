@@ -1,7 +1,8 @@
+
 import { getCachedDirectorate } from "@/app/dashboard/cached-data"
 import { notFound } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { FilePlus, BarChart3, Database, FileText, Settings } from "lucide-react"
+import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings } from "lucide-react"
 import Link from "next/link"
 
 export default async function DirectoratePage({
@@ -16,8 +17,9 @@ export default async function DirectoratePage({
         return notFound()
     }
 
-    const isSineFormation = directorate.name.toLowerCase().includes('formação profissional') && directorate.name.toLowerCase().includes('sine')
-    const isBeneficios = directorate.name.toLowerCase().includes('benefícios')
+    const normalizedName = directorate.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    const isSineFormation = normalizedName.includes('formacao profissional') && normalizedName.includes('sine')
+    const isBeneficios = normalizedName.includes('beneficios')
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -39,8 +41,8 @@ export default async function DirectoratePage({
                         <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 border-l-4 border-blue-500 pl-3">
                             SINE
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <Link href="/dashboard/relatorios/novo?setor=sine" className="group relative block w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <Link href={`/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
                                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                                 <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-blue-100 dark:border-blue-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-blue-500/20">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -51,16 +53,56 @@ export default async function DirectoratePage({
                                             <FilePlus className="h-7 w-7" />
                                         </div>
                                         <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                                            Enviar Relatório SINE
+                                            Enviar Indicadores
                                         </CardTitle>
                                         <CardDescription className="text-sm mt-2">
-                                            Indicadores do Sistema Nacional de Emprego.
+                                            Indicadores numéricos do SINE.
                                         </CardDescription>
                                     </CardHeader>
                                 </Card>
                             </Link>
 
-                            <Link href="/dashboard/dados?setor=sine" className="group relative block w-full">
+                            <Link href={`/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-amber-100 dark:border-amber-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-amber-500/20">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <FileText className="w-32 h-32 text-amber-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                    </div>
+                                    <CardHeader className="relative z-10">
+                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform duration-300">
+                                            <FileText className="h-7 w-7" />
+                                        </div>
+                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                                            Criar Relatório Mensal
+                                        </CardTitle>
+                                        <CardDescription className="text-sm mt-2">
+                                            Relatório descritivo com textos e tabelas.
+                                        </CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+
+                            <Link href={`/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-emerald-100 dark:border-emerald-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-emerald-500/20">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <FolderOpen className="w-32 h-32 text-emerald-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                    </div>
+                                    <CardHeader className="relative z-10">
+                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300">
+                                            <FolderOpen className="h-7 w-7" />
+                                        </div>
+                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+                                            Ver Relatórios
+                                        </CardTitle>
+                                        <CardDescription className="text-sm mt-2">
+                                            Histórico de relatórios mensais enviados.
+                                        </CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+
+                            <Link href={`/dashboard/dados?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
                                 <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-cyan-500/30">
                                     <CardHeader>
                                         <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -76,7 +118,7 @@ export default async function DirectoratePage({
                                 </Card>
                             </Link>
 
-                            <Link href="/dashboard/graficos?setor=sine" className="group relative block w-full">
+                            <Link href={`/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
                                 <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-indigo-500/30">
                                     <CardHeader>
                                         <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -100,7 +142,7 @@ export default async function DirectoratePage({
                             Centros Profissionalizantes
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <Link href="/dashboard/relatorios/novo?setor=centros" className="group relative block w-full">
+                            <Link href={`/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
                                 <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                                 <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-violet-100 dark:border-violet-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-violet-500/20">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -120,7 +162,7 @@ export default async function DirectoratePage({
                                 </Card>
                             </Link>
 
-                            <Link href="/dashboard/dados?setor=centros" className="group relative block w-full">
+                            <Link href={`/dashboard/dados?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
                                 <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-purple-500/30">
                                     <CardHeader>
                                         <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -136,7 +178,7 @@ export default async function DirectoratePage({
                                 </Card>
                             </Link>
 
-                            <Link href="/dashboard/graficos?setor=centros" className="group relative block w-full">
+                            <Link href={`/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
                                 <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-purple-500/30">
                                     <CardHeader>
                                         <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -158,7 +200,7 @@ export default async function DirectoratePage({
                 // Layout específico para Benefícios
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Card 1: Enviar Relatório */}
-                    <Link href="/dashboard/relatorios/novo?setor=beneficios" className="group relative block w-full">
+                    <Link href={`/dashboard/relatorios/novo?setor=beneficios&directorate_id=${directorate.id}`} className="group relative block w-full">
                         <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                         <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-pink-100 dark:border-pink-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-pink-500/20">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -179,7 +221,7 @@ export default async function DirectoratePage({
                     </Link>
 
                     {/* Card 2: Dados */}
-                    <Link href="/dashboard/dados?setor=beneficios" className="group relative block w-full">
+                    <Link href={`/dashboard/dados?setor=beneficios&directorate_id=${directorate.id}`} className="group relative block w-full">
                         <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-rose-500/30">
                             <CardHeader>
                                 <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-rose-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -196,7 +238,7 @@ export default async function DirectoratePage({
                     </Link>
 
                     {/* Card 3: Dashboard */}
-                    <Link href="/dashboard/graficos?setor=beneficios" className="group relative block w-full">
+                    <Link href={`/dashboard/graficos?setor=beneficios&directorate_id=${directorate.id}`} className="group relative block w-full">
                         <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-orange-500/30">
                             <CardHeader>
                                 <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -216,7 +258,7 @@ export default async function DirectoratePage({
                 // Layout Padrão para outras diretorias
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Card 1: Lançar Relatório */}
-                    <Link href="/dashboard/relatorios/novo" className="group relative block w-full">
+                    <Link href={`/dashboard/relatorios/novo?directorate_id=${directorate.id}`} className="group relative block w-full">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                         <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-blue-100 dark:border-blue-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-blue-500/20">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -237,7 +279,7 @@ export default async function DirectoratePage({
                     </Link>
 
                     {/* Card 2: Meus Dados */}
-                    <Link href="/dashboard/dados" className="group relative block w-full">
+                    <Link href={`/dashboard/dados?directorate_id=${directorate.id}`} className="group relative block w-full">
                         <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-cyan-500/30">
                             <CardHeader>
                                 <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -254,22 +296,21 @@ export default async function DirectoratePage({
                     </Link>
 
                     {/* Card 3: Dashboard Analítico */}
-                    <div className="group relative block w-full cursor-not-allowed opacity-60">
-                        <Card className="h-full bg-zinc-50/50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800 border-dashed">
+                    <Link href={`/dashboard/graficos?directorate_id=${directorate.id}`} className="group relative block w-full">
+                        <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-indigo-500/30">
                             <CardHeader>
-                                <div className="mb-6 h-14 w-14 rounded-2xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+                                <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
                                     <BarChart3 className="h-7 w-7" />
                                 </div>
-                                <CardTitle className="text-xl font-bold text-zinc-500">
+                                <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 transition-colors">
                                     Dashboard Analítico
                                 </CardTitle>
                                 <CardDescription className="text-base mt-2">
                                     Gráficos de evolução exclusivos de {directorate.name}.
-                                    <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs font-bold bg-zinc-200 dark:bg-zinc-800 text-zinc-500 uppercase tracking-wider">Em Breve</span>
                                 </CardDescription>
                             </CardHeader>
                         </Card>
-                    </div>
+                    </Link>
                 </div>
             )}
 

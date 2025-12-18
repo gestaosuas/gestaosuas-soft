@@ -104,11 +104,121 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-zinc-50 dark:bg-zinc-950 text-foreground antialiased;
     /* Adicionar um padrão sutil de fundo opcional se desejar */
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%), 
-        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
+    background-image:
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+    /* Important: This hides browser headers/footers in most browsers */
+  }
+
+  /* Reset Body */
+  body {
+    background-color: white !important;
+    background-image: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Kill all scrollbars in print */
+  * {
+    overflow: visible !important;
+    scrollbar-width: none !important;
+  }
+
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Hide UI Components */
+  aside,
+  nav,
+  header,
+  button,
+  .print-hidden,
+  form,
+  .fixed:not(.print-only-container),
+  .absolute:not(.print-only-container) {
+    display: none !important;
+  }
+
+  /* Target Layout Main Content Wrapper (if exists) or reset all containers */
+  div {
+    overflow: visible !important;
+  }
+
+  /* The Main Print Container */
+  .print-only-container {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    margin: 0 !important;
+    /* Simulate Page Margins: Top Right Bottom Left */
+    /* Increased top/bottom as requested */
+    padding: 25mm 15mm 35mm 15mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+    visibility: visible !important;
+    z-index: 9999;
+  }
+
+  /* Footer Positioning */
+  .print-footer {
+    position: fixed;
+    bottom: 10mm;
+    /* Lifted up further */
+    left: 15mm;
+    width: calc(100% - 30mm);
+    border-top: 1px solid #000 !important;
+    padding-top: 2mm !important;
+    background: white;
+    z-index: 10000;
+  }
+
+  /* Tables: Prevent breaking inside */
+  table,
+  tr,
+  td,
+  th,
+  tbody,
+  thead,
+  .break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Prevent orphans: Headings should stick to next content */
+  .break-after-avoid {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Ensure header row repeats if it does break (browser dependent) */
+  thead {
+    display: table-header-group;
+  }
+
+  /* General Block spacing for print */
+  .print-content-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 20px;
   }
 }
