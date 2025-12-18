@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
 import { redirect } from 'next/navigation'
 import { FormDefinition } from '@/components/form-engine'
@@ -52,7 +53,11 @@ export async function submitReport(formData: Record<string, any>, month: number,
     }
 
     // Check if already submitted
-    const { data: existing } = await supabase
+    // Use Admin Client for Write Operations (Bypassing DB RLS)
+    const adminSupabase = createAdminClient()
+
+    // Check if submitted exist
+    const { data: existing } = await adminSupabase
         .from('submissions')
         .select('id, data')
         .eq('directorate_id', directorate.id)
@@ -61,17 +66,18 @@ export async function submitReport(formData: Record<string, any>, month: number,
         .single()
 
     if (existing) {
-        // MERGE DATA: Keep existing data and overwrite with new formData keys
         const mergedData = { ...existing.data, ...formData }
 
-        const { error: updateError } = await supabase
+        const { error: updateError } = await adminSupabase
             .from('submissions')
             .update({ data: mergedData, created_at: new Date().toISOString() })
             .eq('id', existing.id)
 
-        if (updateError) throw new Error("Erro ao atualizar relatório.")
+        if (updateError) {
+            console.error("Update Error:", updateError)
+            throw new Error("Erro ao atualizar relatório.")
+        }
     } else {
-        // Save to Supabase (New)
         const submissionData = {
             user_id: user.id,
             directorate_id: directorate.id,
@@ -80,11 +86,11 @@ export async function submitReport(formData: Record<string, any>, month: number,
             data: formData,
         }
 
-        const { error: dbError } = await supabase.from('submissions').insert(submissionData)
+        const { error: dbError } = await adminSupabase.from('submissions').insert(submissionData)
 
         if (dbError) {
             console.error("DB Error:", dbError)
-            return { error: "Erro ao salvar no banco de dados." }
+            return { error: "Erro ao salvar no banco de dados: " + dbError.message }
         }
     }
 
