@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { ArrowLeft, Printer } from "lucide-react"
+import { getCachedSubmission } from "@/app/dashboard/cached-data"
 import { redirect } from "next/navigation"
 import ReportActions from "./report-actions"
 import { cn } from "@/lib/utils"
@@ -12,16 +13,16 @@ export default async function ViewReportPage({
     const { id } = await params
 
     const supabase = await createClient()
-    const { data: submission } = await supabase
-        .from('submissions')
-        .select('*, directorates(*)')
-        .eq('id', id)
-        .single()
+    // Use Secure Cache Fetcher
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return <div>Acesso negado.</div>
+
+    const submission = await getCachedSubmission(id, user.id)
 
     if (!submission) return <div>Relatório não encontrado.</div>
 
     // Check Admin Status
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
     let isAdmin = false
     if (user) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()

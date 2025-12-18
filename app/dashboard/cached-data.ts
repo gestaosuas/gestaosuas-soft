@@ -153,3 +153,43 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
         }
     )()
 }
+
+export const getCachedSubmission = async (id: string, userId: string) => {
+    return await unstable_cache(
+        async () => {
+            const supabase = createAdminClient()
+
+            // 1. Fetch the submission first to know which directorate it belongs to
+            const { data: submission } = await supabase
+                .from('submissions')
+                .select('*, directorates(*)')
+                .eq('id', id)
+                .single()
+
+            if (!submission) return null
+
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+
+            // 2. Security Check
+            if (profile?.role === 'admin') return submission
+            if (userId === submission.user_id) return submission // Owner access
+
+            // Check Directorate Link
+            const { data: link } = await supabase
+                .from('profile_directorates')
+                .select('profile_id')
+                .eq('profile_id', userId)
+                .eq('directorate_id', submission.directorate_id)
+                .single()
+
+            if (link) return submission
+
+            return null // No access
+        },
+        [`submission-view-${id}-${userId}`],
+        {
+            tags: [`submission-${id}`],
+            revalidate: 60
+        }
+    )()
+}
