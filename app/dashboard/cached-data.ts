@@ -1,3 +1,4 @@
+
 import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/utils/supabase/admin'
 
@@ -104,6 +105,51 @@ export const getSystemSettings = async () => {
         {
             tags: ['settings'],
             revalidate: 3600
+        }
+    )()
+}
+
+export const getCachedSubmissionsForUser = async (userId: string, directorateId: string) => {
+    // This cache key includes userId to ensure it's specific, but we check permission internally
+    return await unstable_cache(
+        async () => {
+            const supabase = createAdminClient()
+
+            // 1. Verify Permission: Does user have access to this directorate?
+            // (We check Admin role OR Link)
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+
+            let hasAccess = false
+            if (profile?.role === 'admin') {
+                hasAccess = true
+            } else {
+                // Check direct link (Correct column is profile_id)
+                const { data: link } = await supabase
+                    .from('profile_directorates')
+                    .select('profile_id')
+                    .eq('profile_id', userId)
+                    .eq('directorate_id', directorateId)
+                    .single()
+
+                if (link) hasAccess = true
+            }
+
+            if (!hasAccess) return [] // Return empty if no access
+
+            // 2. Fetch Submissions (Bypassing RLS)
+            const { data: submissions } = await supabase
+                .from('submissions')
+                .select('*')
+                .eq('directorate_id', directorateId)
+                .order('year', { ascending: false })
+                .order('month', { ascending: false })
+
+            return submissions || []
+        },
+        [`submissions-safe-${directorateId}-${userId}`], // Cache per user+directorate
+        {
+            tags: ['submissions', `submissions-${directorateId}`],
+            revalidate: 60 // 1 minute is fine for listings
         }
     )()
 }

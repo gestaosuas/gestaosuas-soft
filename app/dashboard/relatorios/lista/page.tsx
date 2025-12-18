@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server"
+import { getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,13 +18,9 @@ export default async function ReportListPage({
 
     if (!user) redirect('/login')
 
-    // Fetch submissions
-    const { data: submissions } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq('directorate_id', directorate_id)
-        .order('year', { ascending: false })
-        .order('month', { ascending: false })
+    // Use Safe Fetcher that checks permission via Service Role
+    // This circumvents the broken RLS policies on the database side
+    const submissions = await getCachedSubmissionsForUser(user.id, directorate_id || '')
 
     // Filter to show ONLY Narrative Reports (containing _report_content)
     // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
