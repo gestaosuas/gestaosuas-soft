@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { FileText, BarChart3, Settings } from "lucide-react"
+import { FileText, BarChart3, Settings, FilePlus, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function BeneficiosPage() {
@@ -15,17 +15,17 @@ export default function BeneficiosPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {/* Card 1: Enviar Indicadores */}
                 <Link href="/dashboard/relatorios/novo?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                     <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-pink-100 dark:border-pink-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-pink-500/20">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <FileText className="w-32 h-32 text-pink-600 -rotate-12 translate-x-10 -translate-y-10" />
+                            <FilePlus className="w-32 h-32 text-pink-600 -rotate-12 translate-x-10 -translate-y-10" />
                         </div>
                         <CardHeader className="relative z-10">
                             <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-pink-500/30 group-hover:scale-110 transition-transform duration-300">
-                                <FileText className="h-7 w-7" />
+                                <FilePlus className="h-7 w-7" />
                             </div>
                             <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-pink-600 transition-colors">
                                 Enviar Indicadores
@@ -37,7 +37,49 @@ export default function BeneficiosPage() {
                     </Card>
                 </Link>
 
-                {/* Card 2: Dados */}
+                {/* Card 2: Relatório Mensal (NEW) */}
+                <Link href="/dashboard/relatorios/mensal?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                    <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-pink-100 dark:border-pink-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-pink-500/20">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <FileText className="w-32 h-32 text-pink-500 -rotate-12 translate-x-10 -translate-y-10" />
+                        </div>
+                        <CardHeader className="relative z-10">
+                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white shadow-lg shadow-pink-500/30 group-hover:scale-110 transition-transform duration-300">
+                                <FileText className="h-7 w-7" />
+                            </div>
+                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-pink-600 transition-colors">
+                                Criar Relatório Mensal
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-2">
+                                Relatório descritivo com textos e tabelas.
+                            </CardDescription>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                {/* Card 3: Ver Relatórios (NEW) */}
+                <Link href="/dashboard/relatorios/lista?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
+                    <div className="absolute inset-0 bg-gradient-to-r from-rose-500 to-pink-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                    <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-pink-100 dark:border-pink-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-rose-500/20">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <FolderOpen className="w-32 h-32 text-rose-600 -rotate-12 translate-x-10 -translate-y-10" />
+                        </div>
+                        <CardHeader className="relative z-10">
+                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300">
+                                <FolderOpen className="h-7 w-7" />
+                            </div>
+                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-rose-600 transition-colors">
+                                Ver Relatórios
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-2">
+                                Histórico de relatórios mensais enviados.
+                            </CardDescription>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                {/* Card 4: Dados */}
                 <Link href="/dashboard/dados?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
                     <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-rose-500/30">
                         <CardHeader>
@@ -54,7 +96,7 @@ export default function BeneficiosPage() {
                     </Card>
                 </Link>
 
-                {/* Card 3: Dashboard */}
+                {/* Card 5: Dashboard */}
                 <Link href="/dashboard/graficos?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
                     <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-orange-500/30">
                         <CardHeader>

@@ -117,8 +117,8 @@
 @media print {
   @page {
     size: A4;
-    margin: 0;
-    /* Important: This hides browser headers/footers in most browsers */
+    margin: 18mm 10mm 20mm 10mm;
+    /* Topo: 18mm, Laterais: 10mm, Inferior: 20mm */
   }
 
   /* Reset Body */
@@ -130,6 +130,35 @@
     width: 100% !important;
     height: auto !important;
     overflow: visible !important;
+    font-size: 10.5pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Compact spacing for print */
+  h1 {
+    font-size: 18pt !important;
+    margin-bottom: 3mm !important;
+  }
+
+  h2 {
+    font-size: 14pt !important;
+    margin-top: 2mm !important;
+  }
+
+  h4 {
+    font-size: 11pt !important;
+    margin-top: 3mm !important;
+    margin-bottom: 1.5mm !important;
+  }
+
+  p,
+  .prose {
+    margin-bottom: 2.5mm !important;
+    line-height: 1.4 !important;
+  }
+
+  .print-content-block {
+    margin-bottom: 3mm !important;
   }
 
   /* Kill all scrollbars in print */
@@ -167,10 +196,8 @@
     height: auto !important;
     min-height: auto !important;
     margin: 0 !important;
-    margin: 0 !important;
-    /* Simulate Page Margins: Top Right Bottom Left */
-    /* Increased top/bottom as requested */
-    padding: 25mm 15mm 35mm 15mm !important;
+    padding: 0 !important;
+    /* Spacing is now handled by @page margin */
     border: none !important;
     box-shadow: none !important;
     background: white !important;
@@ -179,13 +206,12 @@
     z-index: 9999;
   }
 
-  /* Footer Positioning */
+  /* Footer Positioning - Fixed repeats on every page */
   .print-footer {
     position: fixed;
-    bottom: 10mm;
-    /* Lifted up further */
-    left: 15mm;
-    width: calc(100% - 30mm);
+    bottom: 5mm;
+    left: 10mm;
+    width: calc(100% - 20mm);
     border-top: 1px solid #000 !important;
     padding-top: 2mm !important;
     background: white;
