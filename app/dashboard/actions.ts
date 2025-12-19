@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
@@ -212,8 +212,46 @@ export async function submitReport(formData: Record<string, any>, month: number,
     }
 
     revalidatePath('/dashboard')
-    revalidateTag('submissions')
-    revalidateTag(`submissions-${directorate.id}`)
+    return { success: true }
+}
+
+export async function submitDailyReport(date: string, directorateId: string, formData: Record<string, any>) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Check existing
+    const { data: existing } = await adminSupabase
+        .from('daily_reports')
+        .select('id, data')
+        .eq('date', date)
+        .eq('directorate_id', directorateId)
+        .single()
+
+    if (existing) {
+        const mergedData = { ...existing.data, ...formData }
+        const { error } = await adminSupabase
+            .from('daily_reports')
+            .update({ data: mergedData, updated_at: new Date().toISOString() })
+            .eq('id', existing.id)
+
+        if (error) throw new Error("Erro ao atualizar relatório diário: " + error.message)
+    } else {
+        const { error } = await adminSupabase
+            .from('daily_reports')
+            .insert({
+                date,
+                directorate_id: directorateId,
+                data: formData,
+                user_id: user.id // Assuming we might want to track who did it
+            })
+
+        if (error) throw new Error("Erro ao salvar relatório diário: " + error.message)
+    }
+
+    revalidatePath('/dashboard')
     return { success: true }
 }
 
@@ -260,7 +298,6 @@ export async function deleteReport(reportId: string) {
     }
 
     revalidatePath('/dashboard')
-    revalidateTag('submissions')
     return { success: true }
 }
 
@@ -288,6 +325,6 @@ export async function updateSystemSetting(key: string, value: string) {
     }
 
 
-    revalidatePath('/dashboard')
+    revalidatePath('/', 'layout')
     return { success: true }
 }

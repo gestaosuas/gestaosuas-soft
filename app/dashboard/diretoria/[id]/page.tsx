@@ -18,8 +18,9 @@ export default async function DirectoratePage({
     }
 
     const normalizedName = directorate.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    const isSineFormation = normalizedName.includes('formacao profissional') && normalizedName.includes('sine')
-    const isBeneficios = normalizedName.includes('beneficios')
+    const isSINE = normalizedName.includes('sine') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
+    const isCP = normalizedName.includes('formacao') || normalizedName.includes('profissional') || normalizedName.includes('centro') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
+    const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -33,168 +34,199 @@ export default async function DirectoratePage({
                 </p>
             </div>
 
-            {isSineFormation ? (
+            {(isSINE || isCP) ? (
                 // Layout específico para Formação Profissional e SINE
                 <div className="space-y-12">
-                    {/* Seção SINE */}
+                    {/* Seção Relatório Diário (Novo) */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 border-l-4 border-blue-500 pl-3">
-                            SINE
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            <Link href={`/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-blue-100 dark:border-blue-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-blue-500/20">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <FilePlus className="w-32 h-32 text-blue-600 -rotate-12 translate-x-10 -translate-y-10" />
-                                    </div>
-                                    <CardHeader className="relative z-10">
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <FilePlus className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                                            Enviar Indicadores
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Indicadores numéricos do SINE.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-
-                            <Link href={`/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-amber-100 dark:border-amber-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-amber-500/20">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <FileText className="w-32 h-32 text-amber-600 -rotate-12 translate-x-10 -translate-y-10" />
-                                    </div>
-                                    <CardHeader className="relative z-10">
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <FileText className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-amber-600 transition-colors">
-                                            Criar Relatório Mensal
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Relatório descritivo com textos e tabelas.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-
-                            <Link href={`/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-emerald-100 dark:border-emerald-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-emerald-500/20">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <FolderOpen className="w-32 h-32 text-emerald-600 -rotate-12 translate-x-10 -translate-y-10" />
-                                    </div>
-                                    <CardHeader className="relative z-10">
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <FolderOpen className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-emerald-600 transition-colors">
-                                            Ver Relatórios
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Histórico de relatórios mensais enviados.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-
-                            <Link href={`/dashboard/dados?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-cyan-500/30">
-                                    <CardHeader>
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <Database className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-cyan-600 transition-colors">
-                                            Dados SINE
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Histórico de lançamentos do SINE.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-
-                            <Link href={`/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-indigo-500/30">
-                                    <CardHeader>
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <BarChart3 className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 transition-colors">
-                                            Dashboard SINE
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Gráficos e estatísticas visuais.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Seção Centros Profissionalizantes */}
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 border-l-4 border-violet-500 pl-3">
-                            Centros Profissionalizantes
+                        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 border-l-4 border-indigo-500 pl-3">
+                            Gestão Diária
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <Link href={`/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-violet-100 dark:border-violet-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-violet-500/20">
+                            <Link href={`/dashboard/relatorios/diario/novo?directorate_id=${directorate.id}`} className="group relative block w-full">
+                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-indigo-100 dark:border-indigo-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-indigo-500/20">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <FilePlus className="w-32 h-32 text-violet-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                        <FileText className="w-32 h-32 text-indigo-600 -rotate-12 translate-x-10 -translate-y-10" />
                                     </div>
                                     <CardHeader className="relative z-10">
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <FilePlus className="h-7 w-7" />
+                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
+                                            <FileText className="h-7 w-7" />
                                         </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-violet-600 transition-colors">
-                                            Enviar Relatório CP
+                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                                            Relatório Diário
                                         </CardTitle>
                                         <CardDescription className="text-sm mt-2">
-                                            Indicadores dos Centros Profissionalizantes.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-
-                            <Link href={`/dashboard/dados?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-purple-500/30">
-                                    <CardHeader>
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <Database className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-purple-600 transition-colors">
-                                            Dados CP
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Histórico dos Centros.
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </Link>
-
-                            <Link href={`/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
-                                <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-purple-500/30">
-                                    <CardHeader>
-                                        <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                                            <BarChart3 className="h-7 w-7" />
-                                        </div>
-                                        <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-purple-600 transition-colors">
-                                            Dashboard CP
-                                        </CardTitle>
-                                        <CardDescription className="text-sm mt-2">
-                                            Gráficos e indicadores dos Centros.
+                                            Preencher indicadores diários para o Painel Geral.
                                         </CardDescription>
                                     </CardHeader>
                                 </Card>
                             </Link>
                         </div>
                     </div>
+
+                    {/* Seção SINE */}
+                    {isSINE && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 border-l-4 border-blue-500 pl-3">
+                                SINE
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                <Link href={`/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                    <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-blue-100 dark:border-blue-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-blue-500/20">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <FilePlus className="w-32 h-32 text-blue-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                        </div>
+                                        <CardHeader className="relative z-10">
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <FilePlus className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                Enviar Indicadores
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Indicadores numéricos do SINE.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+
+                                <Link href={`/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                    <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-amber-100 dark:border-amber-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-amber-500/20">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <FileText className="w-32 h-32 text-amber-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                        </div>
+                                        <CardHeader className="relative z-10">
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <FileText className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                                                Criar Relatório Mensal
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Relatório descritivo com textos e tabelas.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+
+                                <Link href={`/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                    <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-emerald-100 dark:border-emerald-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-emerald-500/20">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <FolderOpen className="w-32 h-32 text-emerald-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                        </div>
+                                        <CardHeader className="relative z-10">
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <FolderOpen className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+                                                Ver Relatórios
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Histórico de relatórios mensais enviados.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+
+                                <Link href={`/dashboard/dados?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-cyan-500/30">
+                                        <CardHeader>
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <Database className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-cyan-600 transition-colors">
+                                                Dados SINE
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Histórico de lançamentos do SINE.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+
+                                <Link href={`/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-indigo-500/30">
+                                        <CardHeader>
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <BarChart3 className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                                                Dashboard SINE
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Gráficos e estatísticas visuais.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
+                    {isCP && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 border-l-4 border-violet-500 pl-3">
+                                Centros Profissionalizantes
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <Link href={`/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                                    <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-violet-100 dark:border-violet-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-violet-500/20">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <FilePlus className="w-32 h-32 text-violet-600 -rotate-12 translate-x-10 -translate-y-10" />
+                                        </div>
+                                        <CardHeader className="relative z-10">
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <FilePlus className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-violet-600 transition-colors">
+                                                Enviar Relatório CP
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Indicadores dos Centros Profissionalizantes.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+
+                                <Link href={`/dashboard/dados?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-purple-500/30">
+                                        <CardHeader>
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <Database className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-purple-600 transition-colors">
+                                                Dados CP
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Histórico dos Centros.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+
+                                <Link href={`/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`} className="group relative block w-full">
+                                    <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-purple-500/30">
+                                        <CardHeader>
+                                            <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+                                                <BarChart3 className="h-7 w-7" />
+                                            </div>
+                                            <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-purple-600 transition-colors">
+                                                Dashboard CP
+                                            </CardTitle>
+                                            <CardDescription className="text-sm mt-2">
+                                                Gráficos e indicadores dos Centros.
+                                            </CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : isBeneficios ? (
                 // Layout específico para Benefícios
@@ -211,7 +243,7 @@ export default async function DirectoratePage({
                                     <FileText className="h-7 w-7" />
                                 </div>
                                 <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-pink-600 transition-colors">
-                                    Enviar Relatório
+                                    Enviar Indicadores
                                 </CardTitle>
                                 <CardDescription className="text-sm mt-2">
                                     Preencher indicadores mensais de benefícios.

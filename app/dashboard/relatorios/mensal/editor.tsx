@@ -257,8 +257,9 @@ export default function MonthlyReportEditor({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="2025">2025</SelectItem>
-                                <SelectItem value="2026">2026</SelectItem>
+                                {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
+                                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

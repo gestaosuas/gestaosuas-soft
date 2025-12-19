@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, LogOut, ShieldCheck, Menu, X, Building2 } from "lucide-react"
 
-export function MobileNav({ role, directorates = [] }: { role?: 'admin' | 'user', directorates?: any[] }) {
+export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin' | 'user', directorates?: any[], logoUrl?: string }) {
     const [isOpen, setIsOpen] = useState(false)
     const pathname = usePathname()
 
@@ -31,10 +31,16 @@ export function MobileNav({ role, directorates = [] }: { role?: 'admin' | 'user'
             {/* Mobile Header */}
             <div className="md:hidden flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 sticky top-0 z-30">
                 <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-                        <ShieldCheck className="h-5 w-5" />
-                    </div>
-                    <span className="font-bold tracking-tight">Sistema Vigilância</span>
+                    {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+                    ) : (
+                        <>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                                <ShieldCheck className="h-5 w-5" />
+                            </div>
+                            <span className="font-bold tracking-tight">Sistema Vigilância</span>
+                        </>
+                    )}
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
                     <Menu className="h-6 w-6" />
@@ -58,10 +64,16 @@ export function MobileNav({ role, directorates = [] }: { role?: 'admin' | 'user'
                     {/* Header */}
                     <div className="flex h-20 items-center justify-between px-6 border-b border-zinc-100 dark:border-zinc-800/50">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                                <ShieldCheck className="h-5 w-5" />
-                            </div>
-                            <span className="font-bold tracking-tight">Menu</span>
+                            {logoUrl ? (
+                                <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+                            ) : (
+                                <>
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <ShieldCheck className="h-5 w-5" />
+                                    </div>
+                                    <span className="font-bold tracking-tight">Menu</span>
+                                </>
+                            )}
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                             <X className="h-5 w-5" />

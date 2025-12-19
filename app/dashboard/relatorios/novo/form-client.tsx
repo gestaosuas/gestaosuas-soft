@@ -39,7 +39,11 @@ export function SubmissionFormClient({
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
-                window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
+                if (setor === 'beneficios') {
+                    window.location.href = '/dashboard/beneficios'
+                } else {
+                    window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
+                }
             }
         } catch (e) {
             alert("Erro inesperado ao enviar.")
@@ -127,8 +131,9 @@ export function SubmissionFormClient({
                                     <SelectValue placeholder="Ano" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="2025">2025</SelectItem>
-                                    <SelectItem value="2026">2026</SelectItem>
+                                    {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
+                                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>

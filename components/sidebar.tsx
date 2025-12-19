@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, LogOut, ShieldCheck, Building2, ChevronLeft, ChevronRight, HandHeart } from "lucide-react"
 
-export function Sidebar({ role, directorates = [], userName, logoUrl }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string }) {
+export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
     const pathname = usePathname()
     const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -29,38 +29,32 @@ export function Sidebar({ role, directorates = [], userName, logoUrl }: { role?:
             </button>
 
             <div className={cn(
-                "flex h-24 items-center border-b border-zinc-100 dark:border-zinc-800/50 relative overflow-hidden group transition-all",
-                isCollapsed ? "justify-center px-0" : "px-6"
+                "flex flex-col items-center justify-center border-b border-zinc-100 dark:border-zinc-800/50 relative overflow-hidden group transition-all",
+                isCollapsed ? "min-h-20 py-2 px-0" : "min-h-40 py-6 px-6"
             )}>
                 {/* Logo Glow */}
                 <div className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-blue-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
                 <div className="flex flex-col items-center justify-center gap-1 relative z-10 w-full overflow-hidden text-center">
-                    {logoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={logoUrl} alt="Logo" className="h-10 w-auto max-w-[150px] object-contain mb-1" />
-                    ) : (
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30 transform transition-transform group-hover:scale-105 duration-300">
-                            <ShieldCheck className="h-6 w-6" />
-                        </div>
+                    {!isCollapsed && (
+                        logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={logoUrl} alt="Logo" className="h-20 w-auto max-w-[220px] object-contain mb-3 animate-in fade-in zoom-in-95 duration-300" />
+                        ) : (
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30 transform transition-transform group-hover:scale-105 duration-300 mb-2">
+                                <ShieldCheck className="h-10 w-10" />
+                            </div>
+                        )
                     )}
 
                     {!isCollapsed && (
                         <div className="flex flex-col animate-in fade-in duration-300 w-full px-2">
-                            {!logoUrl && (
-                                <>
-                                    <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">Sistema Vigilância</span>
-                                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mt-1">Socioassistencial 2026</span>
-                                </>
-                            )}
-                            {userName && (
-                                <span className={cn(
-                                    "text-zinc-500 dark:text-zinc-400 truncate w-full block text-center",
-                                    logoUrl ? "text-[11px] font-medium" : "text-[10px] mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-1"
-                                )} title={userName}>
-                                    {userName}
-                                </span>
-                            )}
+                            <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
+                                {systemName?.split(' ').slice(0, 2).join(' ') || "Sistema Vigilância"}
+                            </span>
+                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mt-1">
+                                {systemName?.split(' ').slice(2).join(' ') || "Socioassistencial 2026"}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -188,6 +182,23 @@ export function Sidebar({ role, directorates = [], userName, logoUrl }: { role?:
             </div>
 
             <div className="p-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-t from-zinc-50/80 to-transparent dark:from-zinc-900/20">
+                {userName && !isCollapsed && (
+                    <div className="px-4 mb-4 animate-in fade-in slide-in-from-bottom-2">
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Conectado como</p>
+                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-200 truncate" title={userName}>
+                            {userName}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <div className={cn(
+                                "h-1.5 w-1.5 rounded-full",
+                                role === 'admin' ? "bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                            )}></div>
+                            <p className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                {role === 'admin' ? 'Administrador' : 'Usuário'}
+                            </p>
+                        </div>
+                    </div>
+                )}
                 <form action="/auth/signout" method="post">
                     <Button
                         variant="ghost"

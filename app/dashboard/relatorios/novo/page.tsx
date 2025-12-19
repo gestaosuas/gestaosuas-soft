@@ -76,10 +76,29 @@ export default async function NewReportPage({
         // @ts-ignore
         const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates) || []
 
-        if (userDirectorates.length === 0) {
-            return <div>Erro: Sem diretoria vinculada.</div>
+        // Try to find by keyword in assigned directorates
+        if (isBeneficios) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios'))
+        } else if (isCP || setor === 'sine') {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('profis') || d.name.toLowerCase().includes('sine'))
         }
-        directorate = userDirectorates[0]
+
+        // If still not found and admin, fetch all to try and find a match
+        if (!directorate && isAdmin) {
+            const { data: allDirs } = await supabase.from('directorates').select('*')
+            if (isBeneficios) {
+                directorate = allDirs?.find(d => d.name.toLowerCase().includes('benefícios'))
+            } else if (isCP || setor === 'sine') {
+                directorate = allDirs?.find(d => d.name.toLowerCase().includes('profis') || d.name.toLowerCase().includes('sine'))
+            }
+        }
+
+        if (!directorate) {
+            if (userDirectorates.length === 0 && !isAdmin) {
+                return <div>Erro: Sem diretoria vinculada.</div>
+            }
+            directorate = userDirectorates?.[0]
+        }
     }
 
     // Choose Form Definition based on setor

@@ -87,12 +87,18 @@ export const getSystemSettings = async () => {
             try {
                 const { data, error } = await supabase.from('settings').select('*')
                 if (error) throw error
+                const defaultSettings = {
+                    logo_url: '',
+                    system_name: 'Sistema Vigilância Socioassistencial 2026'
+                }
+
                 // Convert array to object
                 const settings = data.reduce((acc: any, curr: any) => {
                     acc[curr.key] = curr.value
                     return acc
                 }, {})
-                return settings
+
+                return { ...defaultSettings, ...settings }
             } catch (e) {
                 console.warn("Settings table not found or empty, using defaults.", e)
                 return {

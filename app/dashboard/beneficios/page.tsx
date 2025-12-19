@@ -16,8 +16,8 @@ export default function BeneficiosPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Card 1: Enviar Relatório */}
-                <Link href="/dashboard/relatorios/novo?setor=beneficios" className="group relative block w-full">
+                {/* Card 1: Enviar Indicadores */}
+                <Link href="/dashboard/relatorios/novo?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
                     <Card className="relative h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-pink-100 dark:border-pink-900/30 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-pink-500/20">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -28,7 +28,7 @@ export default function BeneficiosPage() {
                                 <FileText className="h-7 w-7" />
                             </div>
                             <CardTitle className="text-xl font-bold text-zinc-900 dark:text-white group-hover:text-pink-600 transition-colors">
-                                Enviar Relatório
+                                Enviar Indicadores
                             </CardTitle>
                             <CardDescription className="text-sm mt-2">
                                 Preencher indicadores mensais de benefícios.
@@ -38,7 +38,7 @@ export default function BeneficiosPage() {
                 </Link>
 
                 {/* Card 2: Dados */}
-                <Link href="/dashboard/dados?setor=beneficios" className="group relative block w-full">
+                <Link href="/dashboard/dados?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
                     <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-rose-500/30">
                         <CardHeader>
                             <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-rose-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300">
@@ -55,7 +55,7 @@ export default function BeneficiosPage() {
                 </Link>
 
                 {/* Card 3: Dashboard */}
-                <Link href="/dashboard/graficos?setor=beneficios" className="group relative block w-full">
+                <Link href="/dashboard/graficos?setor=beneficios&directorate_id=efaf606a-53ae-4bbc-996c-79f4354ce0f9" className="group relative block w-full">
                     <Card className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:border-orange-500/30">
                         <CardHeader>
                             <div className="mb-6 h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">

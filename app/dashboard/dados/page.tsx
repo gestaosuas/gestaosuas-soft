@@ -16,6 +16,7 @@ import { FormDefinition } from "@/components/form-engine"
 
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
+import { PrintExportControls } from "@/components/print-export-controls"
 
 export default async function DataPage({
     searchParams,
@@ -23,7 +24,7 @@ export default async function DataPage({
     searchParams: Promise<{ year?: string, setor?: string, directorate_id?: string }>
 }) {
     const { year, setor, directorate_id } = await searchParams
-    const selectedYear = Number(year) || 2025
+    const selectedYear = Number(year) || new Date().getFullYear()
     const isCP = setor === 'centros'
     const isBeneficios = setor === 'beneficios'
 
@@ -96,18 +97,23 @@ export default async function DataPage({
     let formDefinition = directorate.form_definition as FormDefinition
     let titleContext = directorate.name
 
+    let printTitle = `Meus Dados: ${selectedYear}`
+
     if (isCP) {
         formDefinition = CP_FORM_DEFINITION
-        titleContext = `${directorate.name} (CP)`
+        titleContext = `Dados Centro Profissionalizante ${selectedYear}`
+        printTitle = titleContext
     }
 
     if (isBeneficios) {
         formDefinition = BENEFICIOS_FORM_DEFINITION
-        titleContext = "Benefícios Socioassistenciais"
+        titleContext = `Dados Benefícios Socioassistenciais ${selectedYear}`
+        printTitle = titleContext
     }
 
     if (setor === 'sine') {
-        titleContext = `${directorate.name} (SINE)`
+        titleContext = `Dados SINE ${selectedYear}`
+        printTitle = titleContext
     }
 
     // Buscar Submissões do Ano (Securely)
@@ -137,23 +143,118 @@ export default async function DataPage({
                         <ArrowLeft className="h-6 w-6" />
                     </Button>
                 </Link>
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+                <div className="flex-1 space-y-1">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 print:hidden">
                         Meus Dados: {selectedYear}
                     </h1>
-                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <h1 className="hidden print:block text-2xl font-bold text-black border-b-2 border-black pb-2 mb-4">
+                        {printTitle}
+                    </h1>
+                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2 print:hidden">
                         <TableIcon className="w-4 h-4" />
                         {titleContext}
                     </p>
                 </div>
+                <PrintExportControls />
             </div>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @media print {
+                    @page { 
+                        size: portrait;
+                        margin: 10mm 5mm !important;
+                    }
+                    * {
+                        transition: none !important;
+                        animation: none !important;
+                        transform: none !important;
+                        box-shadow: none !important;
+                    }
+                    body {
+                        background: white !important;
+                        color: black !important;
+                        font-size: 8pt !important;
+                    }
+                    main, .overflow-auto, .print-section {
+                        overflow: visible !important;
+                    }
+                    .space-y-8, .space-y-10, .space-y-12 {
+                        gap: 0 !important;
+                        margin: 0 !important;
+                    }
+                    /* Títulos agora são controlados pelas classes print: no JSX */
+                    h2 {
+                        color: black !important;
+                        border-left: 3px solid #000 !important;
+                        margin-top: 6mm !important;
+                        margin-bottom: 2mm !important;
+                        padding-left: 2mm !important;
+                        font-size: 11pt !important;
+                        page-break-after: avoid !important;
+                        break-after: avoid !important;
+                    }
+                    .print-section {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        margin-bottom: 6mm !important;
+                        display: block !important;
+                    }
+                    table {
+                        width: 100% !important;
+                        font-size: 5.5pt !important;
+                        border-collapse: collapse !important;
+                        table-layout: fixed !important;
+                        border: 1px solid #000 !important;
+                        page-break-inside: auto !important;
+                    }
+                    th, td {
+                        border: 0.5px solid #666 !important;
+                        padding: 0.8mm 0.3mm !important;
+                        line-height: 1.1 !important;
+                        white-space: normal !important;
+                        word-wrap: break-word !important;
+                        overflow-wrap: break-word !important;
+                        vertical-align: middle !important;
+                    }
+                    /* Indicator Column - approx 28% of width */
+                    th:first-child, td:first-child {
+                        width: 28% !important;
+                        text-align: left !important;
+                        padding-left: 1mm !important;
+                    }
+                    /* Month columns - approx 5.5% each */
+                    th:not(:first-child), td:not(:first-child) {
+                        width: 5.5% !important;
+                        text-align: center !important;
+                    }
+                    th {
+                        background-color: #f2f2f2 !important;
+                        -webkit-print-color-adjust: exact;
+                        font-weight: bold !important;
+                        text-transform: uppercase !important;
+                    }
+                    .bg-white, .shadow-xl, .rounded-xl, .border {
+                        background: white !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                    }
+                    .text-indigo-600 {
+                        color: black !important;
+                        font-weight: bold !important;
+                    }
+                    .print-hidden, button, nav, aside {
+                        display: none !important;
+                    }
+                }
+            `}} />
 
             <div className="space-y-12">
                 {formDefinition.sections.map((section, sIdx) => {
                     const sectionIndicators = section.fields
 
                     return (
-                        <div key={sIdx} className="space-y-4">
+                        <div key={sIdx} className="space-y-4 print-section">
                             <h2 className="text-xl font-bold text-indigo-900 dark:text-indigo-100 pl-2 border-l-4 border-indigo-500">
                                 {section.title}
                             </h2>

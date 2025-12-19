@@ -1,8 +1,6 @@
-import { createClient } from "@/utils/supabase/server"
 
-import Link from "next/link"
-import { FilePlus, BarChart3, Database } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { createClient } from "@/utils/supabase/server"
+import { DailyDashboard } from "./daily-dashboard"
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -22,7 +20,7 @@ export default async function DashboardPage() {
                 </p>
             </div>
 
-            {/* Cards moved to Directorate Page */}
+            <DailyDashboard />
 
             {/* Status Section Modernized */}
             <div className="mt-12 p-1 rounded-3xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-900 dark:to-zinc-800">
