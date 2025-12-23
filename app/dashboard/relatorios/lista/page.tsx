@@ -32,68 +32,57 @@ export default async function ReportListPage({
     const monthName = (m: number) => new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })
 
     return (
-        <div className="container mx-auto max-w-5xl py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center gap-4 mb-8">
+        <div className="container mx-auto max-w-5xl py-8 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
+            <header className="flex items-center gap-6 mb-12 px-2">
                 <Link href={`/dashboard/diretoria/${directorate_id}`}>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                        <ArrowLeft className="h-6 w-6" />
+                    <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                        <ArrowLeft className="h-5 w-5 text-zinc-500" />
                     </Button>
                 </Link>
-                <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-green-600">
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
                         Histórico de Relatórios
                     </h1>
-                    <p className="text-sm font-medium text-muted-foreground">
-                        Visualize os relatórios mensais enviados.
+                    <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
+                        Acervo de registros e narrativas consolidadas.
                     </p>
                 </div>
-            </div>
+            </header>
 
             <div className="grid gap-6">
                 {narrativeSubmissions.map((sub) => {
-                    // Check if it has narrative content
                     const hasContent = sub.data && sub.data._report_content;
-                    // Or fallback to classic data view
 
                     return (
-                        <Card key={sub.id} className="group overflow-hidden border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-all duration-300">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${hasContent ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
-                                        {hasContent ? <FileText className="w-5 h-5" /> : <TableIcon className="w-5 h-5" />}
+                        <Card key={sub.id} className="group border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all duration-500 rounded-2xl overflow-hidden">
+                            <CardHeader className="flex flex-row items-center justify-between p-8 border-b border-zinc-50 dark:border-zinc-800/60">
+                                <div className="flex items-center gap-5">
+                                    <div className={`p-3 rounded-xl transition-colors ${hasContent ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                                        {hasContent ? <FileText className="w-6 h-6" /> : <TableIcon className="w-6 h-6" />}
                                     </div>
-                                    <div>
-                                        <CardTitle className="text-lg font-bold capitalize">
-                                            {monthName(sub.month)} de {sub.year}
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-lg font-bold capitalize text-blue-900 dark:text-blue-50">
+                                            {monthName(sub.month)} <span className="text-zinc-400 font-medium ml-1">/ {sub.year}</span>
                                         </CardTitle>
-                                        <CardDescription>
-                                            Enviado em {new Date(sub.created_at).toLocaleDateString('pt-BR')}
+                                        <CardDescription className="text-[12px] font-medium text-zinc-500">
+                                            Efetivado em {new Date(sub.created_at).toLocaleDateString('pt-BR')} • {sub.data._report_content.length} seções narrativas
                                         </CardDescription>
                                     </div>
                                 </div>
                                 <Link href={`/dashboard/relatorios/visualizar/${sub.id}`}>
-                                    <Button variant="outline" className="group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200">
+                                    <Button variant="outline" className="h-10 px-6 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold text-[12px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                                         Visualizar
                                     </Button>
                                 </Link>
                             </CardHeader>
-                            {!hasContent && (
-                                <CardContent className="pt-4">
-                                    <p className="text-sm text-zinc-500">Relatório numérico (Formulário Padrão)</p>
-                                </CardContent>
-                            )}
-                            {hasContent && (
-                                <CardContent className="pt-4">
-                                    <p className="text-sm text-zinc-500">Relatório descritivo com {sub.data._report_content.length} blocos de conteúdo.</p>
-                                </CardContent>
-                            )}
                         </Card>
                     )
                 })}
 
                 {(!narrativeSubmissions || narrativeSubmissions.length === 0) && (
-                    <div className="text-center py-20 text-zinc-400">
-                        Nenhum relatório descritivo encontrado.
+                    <div className="text-center py-32 rounded-3xl border-2 border-dashed border-zinc-100 dark:border-zinc-800/40">
+                        <FileText className="w-12 h-12 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
+                        <p className="text-[13px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Nenhum relatório descritivo encontrado.</p>
                     </div>
                 )}
             </div>

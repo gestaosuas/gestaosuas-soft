@@ -22,9 +22,11 @@ export default async function SettingsPage() {
     const settings = await getSystemSettings()
 
     return (
-        <div className="container mx-auto max-w-4xl py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Configurações do Sistema</h1>
-            <p className="text-muted-foreground mb-8">Gerencie as opções globais da aplicação.</p>
+        <div className="container mx-auto max-w-4xl py-8 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
+            <h1 className="text-4xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50 mb-2">
+                Configurações do Sistema
+            </h1>
+            <p className="text-[15px] text-zinc-500 dark:text-zinc-400 font-medium mb-12">Gerencie as opções globais e identidade visual da aplicação.</p>
 
             <SettingsForm initialSettings={settings} />
         </div>

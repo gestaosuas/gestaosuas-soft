@@ -173,18 +173,18 @@ export default async function GraficosPage({
         return (
             <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-6 space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[100] pointer-events-auto">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                         <Link
-                            href="/dashboard/beneficios"
-                            className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                            href="/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9"
+                            className="p-2 h-11 w-11 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all cursor-pointer"
                         >
-                            <ArrowLeft className="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
+                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-                                Dashboard Benefícios <span className="text-pink-600">{selectedYear}</span>
+                            <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                                Dashboard Benefícios <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span>
                             </h1>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[14px] font-medium text-zinc-500 mt-0.5">
                                 Indicadores de benefícios eventuais e continuados.
                             </p>
                         </div>
@@ -302,18 +302,18 @@ export default async function GraficosPage({
 
             <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-6 space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[100] pointer-events-auto">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                         <Link
                             href={`/dashboard/diretoria/${directorate.id}`}
-                            className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                            className="p-2 h-11 w-11 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all cursor-pointer"
                         >
-                            <ArrowLeft className="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
+                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-                                Dashboard CP <span className="text-violet-600">{selectedYear}</span>
+                            <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                                Dashboard CP <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span>
                             </h1>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[14px] font-medium text-zinc-500 mt-0.5">
                                 Centros Profissionalizantes.
                             </p>
                         </div>
@@ -401,18 +401,18 @@ export default async function GraficosPage({
     return (
         <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-6 space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-[100] pointer-events-auto">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                     <Link
                         href={`/dashboard/diretoria/${directorate.id}`}
-                        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                        className="p-2 h-11 w-11 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all cursor-pointer"
                     >
-                        <ArrowLeft className="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
+                        <ArrowLeft className="h-5 w-5 text-zinc-500" />
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-                            Dashboard SINE <span className="text-indigo-600">{selectedYear}</span>
+                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                            Dashboard SINE <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span>
                         </h1>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[14px] font-medium text-zinc-500 mt-0.5">
                             Visão geral dos indicadores de performance.
                         </p>
                     </div>

@@ -56,7 +56,7 @@ export const getCachedDirectorates = async () => {
         ['all-directorates'],
         {
             tags: ['directorates'],
-            revalidate: 86400 // 24 hours
+            revalidate: 60 // 1 minute
         }
     )()
 }

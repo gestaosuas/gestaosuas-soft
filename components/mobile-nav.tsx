@@ -5,11 +5,16 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, LogOut, ShieldCheck, Menu, X, Building2 } from "lucide-react"
+import { LayoutDashboard, Users, LogOut, ShieldCheck, Menu, X, Building2, Activity } from "lucide-react"
 
 export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin' | 'user', directorates?: any[], logoUrl?: string }) {
     const [isOpen, setIsOpen] = useState(false)
     const pathname = usePathname()
+
+    // Separate directorates by category
+    const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE']
+    const mainDirectorates = directorates.filter(d => mainNames.includes(d.name))
+    const monitoringDirectorates = directorates.filter(d => !mainNames.includes(d.name))
 
     // Close sidebar when route changes
     useEffect(() => {
@@ -100,12 +105,12 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
                             </Button>
                         </Link>
 
-                        {directorates.length > 0 && (
+                        {mainDirectorates.length > 0 && (
                             <>
                                 <div className="px-4 mt-6 mb-2">
                                     <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Diretorias</h3>
                                 </div>
-                                {directorates.map((dir) => (
+                                {mainDirectorates.map((dir) => (
                                     <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
                                         <Button
                                             variant="ghost"
@@ -117,6 +122,30 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
                                             )}
                                         >
                                             <Building2 className={cn("mr-3 h-4 w-4 shrink-0", pathname === `/dashboard/diretoria/${dir.id}` ? "text-primary" : "text-zinc-400")} />
+                                            <span className="truncate">{dir.name}</span>
+                                        </Button>
+                                    </Link>
+                                ))}
+                            </>
+                        )}
+
+                        {monitoringDirectorates.length > 0 && (
+                            <>
+                                <div className="px-4 mt-6 mb-2">
+                                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Monitoramentos</h3>
+                                </div>
+                                {monitoringDirectorates.map((dir) => (
+                                    <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
+                                        <Button
+                                            variant="ghost"
+                                            className={cn(
+                                                "w-full justify-start h-11 px-4 text-sm font-medium transition-all duration-200 truncate",
+                                                pathname === `/dashboard/diretoria/${dir.id}`
+                                                    ? "bg-zinc-50 dark:bg-zinc-900 text-primary shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+                                            )}
+                                        >
+                                            <Activity className={cn("mr-3 h-4 w-4 shrink-0", pathname === `/dashboard/diretoria/${dir.id}` ? "text-primary" : "text-zinc-400")} />
                                             <span className="truncate">{dir.name}</span>
                                         </Button>
                                     </Link>

@@ -328,3 +328,221 @@ export async function updateSystemSetting(key: string, value: string) {
     revalidatePath('/', 'layout')
     return { success: true }
 }
+
+export async function submitOSC(data: {
+    name: string,
+    activity_type: string,
+    cep: string,
+    address: string,
+    number: string,
+    neighborhood: string,
+    phone: string
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    // Use admin client for insertion to ensure it bypasses any restrictive RLS during setup
+    const adminSupabase = createAdminClient()
+
+    const { error } = await adminSupabase.from('oscs').insert({
+        ...data,
+        user_id: user.id
+    })
+
+    if (error) {
+        console.error("OSC Insert Error:", error)
+        return { error: "Erro ao cadastrar OSC: " + error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function getOSCs() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { data, error } = await adminSupabase
+        .from('oscs')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error("OSC Fetch Error:", error)
+        return []
+    }
+
+    return data || []
+}
+
+export async function updateOSC(id: string, data: {
+    name: string,
+    activity_type: string,
+    cep: string,
+    address: string,
+    number: string,
+    neighborhood: string,
+    phone: string
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('oscs')
+        .update(data)
+        .eq('id', id)
+
+    if (error) {
+        console.error("OSC Update Error:", error)
+        return { error: "Erro ao atualizar OSC: " + error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function deleteOSC(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('oscs')
+        .delete()
+        .eq('id', id)
+
+    if (error) {
+        console.error("OSC Delete Error:", error)
+        return { error: "Erro ao excluir OSC: " + error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function saveVisit(data: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { id, ...visitData } = data
+
+    if (id) {
+        // Update existing draft
+        const { error } = await adminSupabase
+            .from('visits')
+            .update({
+                ...visitData,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .eq('status', 'draft')
+
+        if (error) throw new Error("Erro ao salvar rascunho: " + error.message)
+    } else {
+        // Create new visit
+        const { data: newVisit, error } = await adminSupabase
+            .from('visits')
+            .insert({
+                ...visitData,
+                user_id: user.id,
+                status: 'draft'
+            })
+            .select()
+            .single()
+
+        if (error) throw new Error("Erro ao criar visita: " + error.message)
+        return { success: true, id: newVisit.id }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function finalizeVisit(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({ status: 'finalized', updated_at: new Date().toISOString() })
+        .eq('id', id)
+
+    if (error) throw new Error("Erro ao finalizar visita: " + error.message)
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function getVisits(directorateId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { data, error } = await adminSupabase
+        .from('visits')
+        .select(`
+            *,
+            oscs (name)
+        `)
+        .eq('directorate_id', directorateId)
+        .order('visit_date', { ascending: false })
+
+    if (error) {
+        console.error("Fetch Visitas Error:", error)
+        return []
+    }
+
+    return data || []
+}
+
+export async function getVisitById(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { data, error } = await adminSupabase
+        .from('visits')
+        .select(`
+            *,
+            oscs (*)
+        `)
+        .eq('id', id)
+        .single()
+
+    if (error) {
+        console.error("Fetch Visita Detail Error:", error)
+        return null
+    }
+
+    return data
+}
+
+export async function deleteVisit(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('visits')
+        .delete()
+        .eq('id', id)
+        .eq('status', 'draft') // Prevent deleting finalized reports for audit trails
+
+    if (error) throw new Error("Erro ao excluir visita: " + error.message)
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}

@@ -21,7 +21,13 @@ export default async function DashboardLayout({
     const settings = await getSystemSettings()
 
     return (
-        <div className="flex h-screen overflow-hidden bg-zinc-50/50 dark:bg-zinc-950 font-sans antialiased text-zinc-900 dark:text-zinc-50 selection:bg-primary/10 selection:text-primary flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible">
+        <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950 font-sans antialiased text-zinc-900 dark:text-zinc-50 selection:bg-zinc-900 selection:text-zinc-50 dark:selection:bg-zinc-100 dark:selection:text-zinc-900 flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible">
+            {/* Elegant Background Layering */}
+            <div className="absolute inset-0 -z-10 bg-white dark:bg-zinc-950">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.03),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.02),rgba(0,0,0,0))] pointer-events-none"></div>
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay pointer-events-none"></div>
+            </div>
+
             <div className="print:hidden">
                 <MobileNav
                     role={profile?.role as 'admin' | 'user'}
@@ -36,9 +42,8 @@ export default async function DashboardLayout({
                 logoUrl={settings?.logo_url}
                 systemName={settings?.system_name}
             />
-            <main className="flex-1 overflow-y-auto relative">
-                <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-zinc-950 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1f2937_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_70%,transparent_100%)] opacity-50"></div>
-                <div className="h-full p-4 md:p-6 w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <main className="flex-1 overflow-y-auto relative z-10">
+                <div className="h-full p-6 md:p-8 lg:p-10 w-full mx-auto animate-in fade-in slide-in-from-bottom-2 duration-700">
                     {children}
                 </div>
             </main>

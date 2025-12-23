@@ -41,31 +41,37 @@ export default function ReportActions({ reportId, directorateId, isAdmin }: Repo
     }
 
     return (
-        <div className="flex items-center justify-between mb-8 print:hidden">
-            <div className="flex gap-2">
-                <Button variant="ghost" asChild>
-                    <Link href={`/dashboard/relatorios/lista?directorate_id=${directorateId}`}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Voltar
-                    </Link>
-                </Button>
+        <div className="flex items-center justify-between mb-10 px-2 print:hidden animate-in fade-in slide-in-from-top-4 duration-1000">
+            <div className="flex gap-4">
+                <Link href={`/dashboard/relatorios/lista?directorate_id=${directorateId}`}>
+                    <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-900 transition-all shadow-sm">
+                        <ArrowLeft className="h-5 w-5 text-zinc-500" />
+                    </Button>
+                </Link>
+                <div className="hidden sm:flex flex-col justify-center">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Ações do Relatório</span>
+                    <span className="text-[13px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-tight">Modo Visualização Profissional</span>
+                </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
                 {isAdmin && (
                     <Button
                         onClick={handleDelete}
-                        variant="destructive"
+                        variant="ghost"
                         disabled={deleting}
-                        className="bg-red-500 hover:bg-red-600 text-white"
+                        className="h-11 px-6 rounded-xl text-red-500 hover:text-white hover:bg-red-500 border border-transparent hover:border-red-500 transition-all font-bold text-[11px] uppercase tracking-widest"
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Excluir
                     </Button>
                 )}
-                <Button onClick={handlePrint} variant="outline">
+                <Button
+                    onClick={handlePrint}
+                    className="h-11 px-8 rounded-xl bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-blue-900/10 transition-all active:scale-[0.98]"
+                >
                     <Printer className="h-4 w-4 mr-2" />
-                    Imprimir (Ctrl+P)
+                    Imprimir Documento
                 </Button>
             </div>
         </div>

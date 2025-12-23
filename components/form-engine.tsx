@@ -49,22 +49,22 @@ export function FormEngine({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-12">
             {definition.sections.map((section, idx) => (
-                <div key={idx} className="space-y-6">
-                    <div className="flex items-center gap-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
-                        <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100 uppercase tracking-tight">
+                <div key={idx} className="space-y-8">
+                    <div className="flex items-center gap-3">
+                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                        <h3 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">
                             {section.title}
                         </h3>
-                        <div className="h-pxflex-1 bg-zinc-100 dark:bg-zinc-800"></div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {section.fields.map((field) => (
-                            <div key={field.id} className="space-y-2 group">
+                            <div key={field.id} className="space-y-2.5">
                                 <Label
                                     htmlFor={field.id}
-                                    className="text-sm font-medium text-zinc-600 dark:text-zinc-400 group-hover:text-primary transition-colors"
+                                    className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-0.5"
                                 >
                                     {field.label}
                                 </Label>
@@ -76,7 +76,7 @@ export function FormEngine({
                                     disabled={disabled}
                                     required={field.required}
                                     value={formData[field.id] || ''}
-                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary focus-visible:border-primary transition-all duration-200"
+                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium"
                                 />
                             </div>
                         ))}
@@ -84,14 +84,13 @@ export function FormEngine({
                 </div>
             ))}
 
-            <div className="flex justify-end pt-6">
+            <div className="flex justify-end pt-10 border-t border-zinc-100 dark:border-zinc-800/60">
                 <Button
                     type="submit"
                     disabled={disabled}
-                    size="lg"
-                    className="w-full md:w-auto min-w-[200px] h-12 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                    className="h-12 px-12 bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-900/10 dark:shadow-none uppercase tracking-widest text-[11px]"
                 >
-                    {disabled ? 'Salvando...' : 'Salvar Relatório'}
+                    {disabled ? 'Processando...' : 'Confirmar e Enviar'}
                 </Button>
             </div>
         </form>

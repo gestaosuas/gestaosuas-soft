@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import { UserPlus, Shield } from "lucide-react"
-
 export default async function AdminPage({
     searchParams,
 }: {
@@ -27,69 +25,60 @@ export default async function AdminPage({
     const mappedUsers = await fetchAllUsers()
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 py-10">
-            <div className="text-center space-y-2">
-                <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-100 text-indigo-600 mb-4 shadow-inner">
-                    <Shield className="w-8 h-8" />
-                </div>
-                <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
-                    Gestão de Usuários
+        <div className="max-w-[1000px] mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 py-10">
+            <header className="space-y-2">
+                <h1 className="text-4xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                    Administração de Usuários
                 </h1>
-                <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-                    Cadastre novos membros e gerencie permissões de acesso às diretorias.
+                <p className="text-[15px] text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl leading-relaxed">
+                    Controle de acesso institucional. Cadastre novos membros e gerencie permissões de visibilidade por diretoria.
                 </p>
-            </div>
+            </header>
 
-            <Card className="border-indigo-100 dark:border-indigo-900/30 shadow-2xl shadow-indigo-500/10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-                <CardHeader className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 pb-8">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600">
-                            <UserPlus className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-xl">Novo Cadastro</CardTitle>
-                            <CardDescription>Preencha os dados abaixo para criar uma credencial.</CardDescription>
-                        </div>
+            <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900/40 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-none rounded-2xl overflow-hidden">
+                <CardHeader className="pt-10 px-8 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
+                    <div className="space-y-1">
+                        <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">Novo Cadastro</CardTitle>
+                        <CardDescription className="text-sm font-medium text-zinc-500">Credenciais oficiais de acesso ao sistema.</CardDescription>
                     </div>
                 </CardHeader>
-                <CardContent className="pt-8">
+                <CardContent className="pt-8 px-8 pb-10">
                     {error && (
-                        <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm font-semibold border border-red-100 flex items-center gap-2 animate-in slide-in-from-left-2">
-                            <span>⚠️</span> {error}
+                        <div className="mb-8 p-4 rounded-lg bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-[13px] font-medium text-red-600 dark:text-red-400 flex items-center gap-2 animate-in fade-in zoom-in-95">
+                            {error}
                         </div>
                     )}
                     {success && (
-                        <div className="mb-6 p-4 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-semibold border border-emerald-100 flex items-center gap-2 animate-in slide-in-from-left-2">
-                            <span>✅</span> {success}
+                        <div className="mb-8 p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 text-[13px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2 animate-in fade-in zoom-in-95">
+                            {success}
                         </div>
                     )}
 
-                    <form action={createUser} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="name" className="text-zinc-600 dark:text-zinc-400 font-medium">Nome Completo</Label>
+                    <form action={createUser} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2.5">
+                                <Label htmlFor="name" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Nome Completo</Label>
                                 <Input
                                     id="name"
                                     name="name"
                                     required
-                                    placeholder="Ex: João da Silva"
-                                    className="h-11 bg-zinc-50/50 border-zinc-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="João da Silva"
+                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium whitespace-nowrap"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email" className="text-zinc-600 dark:text-zinc-400 font-medium">E-mail Corporativo</Label>
+                            <div className="space-y-2.5">
+                                <Label htmlFor="email" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">E-mail Corporativo</Label>
                                 <Input
                                     id="email"
                                     name="email"
                                     type="email"
                                     required
                                     placeholder="usuario@uberlandia.mg.gov.br"
-                                    className="h-11 bg-zinc-50/50 border-zinc-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 transition-all font-medium whitespace-nowrap"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="password" className="text-zinc-600 dark:text-zinc-400 font-medium">Senha Provisória</Label>
+                            <div className="space-y-2.5">
+                                <Label htmlFor="password" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Senha Provisória</Label>
                                 <Input
                                     id="password"
                                     name="password"
@@ -97,43 +86,39 @@ export default async function AdminPage({
                                     required
                                     minLength={6}
                                     placeholder="••••••"
-                                    className="h-11 bg-zinc-50/50 border-zinc-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 transition-all font-medium whitespace-nowrap"
                                 />
                             </div>
-                            <div className="space-y-3">
-                                <Label className="text-zinc-600 dark:text-zinc-400 font-medium">Vincular Diretorias</Label>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50">
+                            <div className="space-y-4 md:col-span-2">
+                                <Label className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Atribuição de Diretorias</Label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6 rounded-xl border border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/30 dark:bg-zinc-950/20">
                                     {directorates?.map((d) => (
-                                        <label key={d.id} className="flex items-start gap-3 p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors">
+                                        <label key={d.id} className="flex items-center gap-3 p-3 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-blue-100 dark:hover:border-blue-800 group shadow-none">
                                             <div className="flex items-center h-5">
                                                 <input
                                                     type="checkbox"
                                                     name="directorates"
                                                     value={d.id}
-                                                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-600"
+                                                    className="h-4 w-4 rounded border-zinc-300 text-blue-900 focus:ring-blue-600 dark:border-zinc-700 dark:bg-zinc-800"
                                                 />
                                             </div>
-                                            <div className="text-sm">
-                                                <span className="font-medium text-zinc-900 dark:text-zinc-100">{d.name}</span>
-                                            </div>
+                                            <span className="text-[13px] font-semibold text-zinc-600 dark:text-zinc-400 group-hover:text-blue-900 dark:group-hover:text-blue-200 transition-colors uppercase tracking-tight">{d.name}</span>
                                         </label>
                                     ))}
                                 </div>
-                                <p className="text-xs text-muted-foreground">Selecione uma ou mais diretorias para este usuário.</p>
+                                <p className="text-[11px] text-zinc-400 dark:text-zinc-600 font-bold uppercase tracking-wider ml-1 italic">Dica: Um usuário pode monitorar múltiplas áreas simultaneamente.</p>
                             </div>
                         </div>
-                        <div className="pt-6 flex justify-end gap-3">
-                            <Button type="button" variant="outline" className="h-11 px-6">Cancelar</Button>
-                            <Button type="submit" className="h-11 px-8 bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300">
-                                Criar Acesso
+                        <div className="pt-6 flex justify-end gap-4 border-t border-zinc-100 dark:border-zinc-800/60 pt-10">
+                            <Button type="button" variant="ghost" className="h-11 px-6 font-bold text-zinc-500 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all uppercase tracking-widest text-[11px]">Limpar</Button>
+                            <Button type="submit" className="h-11 px-10 bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-900/10 dark:shadow-none uppercase tracking-widest text-[11px]">
+                                Cadastrar Membro
                             </Button>
                         </div>
                     </form>
                 </CardContent>
-                {/* Form Creation Card from previous turn ... */}
             </Card>
 
-            {/* User List Section */}
             <UserList users={mappedUsers} directorates={directorates || []} />
         </div>
     )

@@ -64,151 +64,165 @@ export function DailyDashboard() {
     }
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
-                <div>
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                        <CalendarIcon className="w-5 h-5 text-indigo-500" />
+        <div className="space-y-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900/50 p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                <div className="space-y-1">
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
                         Acompanhamento Diário
                     </h2>
-                    <p className="text-sm text-muted-foreground">Consolidado de todas as diretorias por dia.</p>
+                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium">Consolidado institucional das diretorias por data.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
+                    <div className="relative group">
                         <Label htmlFor="dash-date" className="sr-only">Data</Label>
                         <Input
                             id="dash-date"
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-[180px] h-10 rounded-full"
+                            className="w-[180px] h-11 rounded-lg bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 font-bold text-zinc-700 dark:text-zinc-300 transition-all"
                         />
                     </div>
                 </div>
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-64 rounded-2xl bg-zinc-100 dark:bg-zinc-800 animate-pulse"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {[1, 2].map(i => (
+                        <div key={i} className="h-96 rounded-2xl bg-zinc-50 dark:bg-zinc-900 animate-pulse border border-zinc-100 dark:border-zinc-800"></div>
                     ))}
                 </div>
             ) : reports.length === 0 ? (
-                <div className="text-center py-20 bg-zinc-50 dark:bg-zinc-900/50 rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800">
-                    <Info className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Nenhum registro para esta data</h3>
-                    <p className="text-zinc-500 max-w-xs mx-auto mt-1">Selecione outro dia ou solicite o preenchimento dos relatórios.</p>
+                <div className="flex flex-col items-center justify-center py-32 bg-zinc-50/30 dark:bg-zinc-950/20 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                    <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 mb-4">
+                        <Info className="w-8 h-8 text-zinc-300" />
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">Sem registros para esta data</h3>
+                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium mt-1">Selecione outro período no calendário acima.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
                     {reports.map(report => {
                         const cp = getCPTotals(report.data)
-                        const sineTotal = report.data.sine_total || 0
                         const isSineCP = report.directorate?.name?.toLowerCase().includes('sine')
 
                         return (
-                            <Card key={report.id} className="border-none shadow-xl bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 overflow-hidden group">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/20">
-                                    <CardTitle className="flex items-center justify-between">
-                                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">{report.directorate?.name}</span>
-                                        <div className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-xs">
-                                            Diário
+                            <Card key={report.id} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 shadow-sm overflow-hidden rounded-2xl">
+                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 px-8 py-6">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <CardTitle className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                                                {report.directorate?.name}
+                                            </CardTitle>
+                                            <CardDescription className="text-sm font-medium text-zinc-500">
+                                                Dados coletados em {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                            </CardDescription>
                                         </div>
-                                    </CardTitle>
-                                    <CardDescription>Resumo dos indicadores coletados em {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}</CardDescription>
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
+                                            <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest leading-none">Relatório Consolidado</span>
+                                        </div>
+                                    </div>
                                 </CardHeader>
-                                <CardContent className="p-6">
+                                <CardContent className="p-8">
                                     {isSineCP ? (
-                                        <div className="space-y-10">
-                                            {/* SINE INDICATORS */}
-                                            <div>
-                                                <div className="flex items-center justify-between mb-6">
-                                                    <h4 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                                                        <div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div> SINE - INDICADORES
+                                        <div className="space-y-12">
+                                            {/* SINE SECTION */}
+                                            <div className="space-y-8">
+                                                <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                                                    <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                        SINE • Indicadores de Atendimento
                                                     </h4>
-                                                    <div className="text-[10px] font-bold text-zinc-400 uppercase">Valores do dia</div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-1">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-4">
                                                     {[
-                                                        { label: "Atendimento Trabalhador", val: report.data.sine_atend_trabalhador, icon: Users, color: "blue" },
-                                                        { label: "Atendimento Online", val: report.data.sine_atend_trabalhador_online, icon: Laptop, color: "sky" },
-                                                        { label: "Atendimento Empregador", val: report.data.sine_atend_empregador, icon: Building, color: "slate" },
-                                                        { label: "Empregador Online", val: report.data.sine_atend_empregador_online, icon: Globe, color: "slate" },
-                                                        { label: "Seguro Desemprego", val: report.data.sine_seguro_desemprego, icon: ShieldCheck, color: "orange" },
-                                                        { label: "CTPS Digital", val: report.data.sine_ctps_digital, icon: IdCard, color: "emerald" },
-                                                        { label: "Vagas Captadas", val: report.data.sine_vagas_captadas, icon: Briefcase, color: "green" },
-                                                        { label: "Ligações Recebidas", val: report.data.sine_ligacoes_recebidas, icon: PhoneIncoming, color: "rose" },
-                                                        { label: "Ligações Realizadas", val: report.data.sine_ligacoes_realizadas, icon: PhoneOutgoing, color: "rose" },
-                                                        { label: "Currículos", val: report.data.sine_curriculos, icon: FileText, color: "violet" },
-                                                        { label: "Entrevistados", val: report.data.sine_entrevistados, icon: UserCheck, color: "indigo" },
-                                                        { label: "Processo Seletivo", val: report.data.sine_processo_seletivo, icon: ListChecks, color: "purple" },
-                                                        { label: "Orientação Profissional", val: report.data.sine_orientacao_profissional, icon: Compass, color: "pink" },
+                                                        { label: "Atendimento Trabalhador", val: report.data.sine_atend_trabalhador, icon: Users },
+                                                        { label: "Atendimento Online", val: report.data.sine_atend_trabalhador_online, icon: Laptop },
+                                                        { label: "Atendimento Empregador", val: report.data.sine_atend_empregador, icon: Building },
+                                                        { label: "Empregador Online", val: report.data.sine_atend_empregador_online, icon: Globe },
+                                                        { label: "Seguro Desemprego", val: report.data.sine_seguro_desemprego, icon: ShieldCheck },
+                                                        { label: "CTPS Digital", val: report.data.sine_ctps_digital, icon: IdCard },
+                                                        { label: "Vagas Captadas", val: report.data.sine_vagas_captadas, icon: Briefcase },
+                                                        { label: "Ligações Recebidas", val: report.data.sine_ligacoes_recebidas, icon: PhoneIncoming },
+                                                        { label: "Ligações Realizadas", val: report.data.sine_ligacoes_realizadas, icon: PhoneOutgoing },
+                                                        { label: "Currículos", val: report.data.sine_curriculos, icon: FileText },
+                                                        { label: "Entrevistados", val: report.data.sine_entrevistados, icon: UserCheck },
+                                                        { label: "Processo Seletivo", val: report.data.sine_processo_seletivo, icon: ListChecks },
+                                                        { label: "Orientação Profissional", val: report.data.sine_orientacao_profissional, icon: Compass },
                                                     ].map((item, idx) => (
-                                                        <div key={idx} className="flex items-center justify-between py-2 border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 px-2 rounded-md transition-colors group">
+                                                        <div key={idx} className="flex items-center justify-between group transition-all">
                                                             <div className="flex items-center gap-3">
-                                                                <item.icon className="w-4 h-4 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
-                                                                <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">{item.label}</span>
+                                                                <item.icon className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors" />
+                                                                <span className="text-[13px] font-medium text-zinc-600 dark:text-zinc-400">{item.label}</span>
                                                             </div>
-                                                            <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{item.val || 0}</span>
+                                                            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{item.val || 0}</span>
                                                         </div>
                                                     ))}
                                                 </div>
 
-                                                {/* TOTAL SINE HIGHLIGHT */}
-                                                <div className="mt-6 flex justify-end">
-                                                    <div className="bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center gap-8">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-bold uppercase opacity-80 tracking-tighter">Total Sine</span>
-                                                            <span className="text-2xl font-black">{report.data.sine_total || 0}</span>
+                                                {/* SINE TOTAL HIGHLIGHT */}
+                                                <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                                                    <div className="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-8 py-5 rounded-2xl shadow-xl shadow-zinc-900/10 flex items-center gap-10">
+                                                        <div className="space-y-0.5">
+                                                            <span className="text-[10px] font-bold uppercase opacity-60 tracking-[0.1em] block">Volume Total SINE</span>
+                                                            <span className="text-3xl font-bold tabular-nums tracking-tight">{report.data.sine_total || 0}</span>
                                                         </div>
-                                                        <TrendingUp className="w-8 h-8 opacity-20" />
+                                                        <div className="p-3 bg-white/10 dark:bg-black/5 rounded-xl">
+                                                            <TrendingUp className="w-6 h-6" />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* CENTROS TOTALS */}
-                                            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                                                <div className="flex items-center justify-between mb-6">
-                                                    <h4 className="text-xs font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest flex items-center gap-2">
-                                                        <div className="w-1.5 h-4 bg-violet-600 rounded-full"></div> CENTROS - TOTAIS CONSOLIDADOS
+                                            {/* CENTROS SECTION */}
+                                            <div className="space-y-8 pt-4">
+                                                <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                                                    <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                        Centros Profissionalizantes • Performance
                                                     </h4>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                                                     {[
-                                                        { label: "Atendimento", val: cp.atendimento, icon: Users, color: "violet" },
-                                                        { label: "Inscrições", val: cp.inscricoes, icon: ClipboardCheck, color: "blue" },
-                                                        { label: "Qtd. Presentes", val: cp.pessoas_presentes, icon: UserCheck, color: "amber" },
-                                                        { label: "Lig. Recebidas", val: cp.ligacoes_recebidas, icon: PhoneIncoming, color: "rose" },
-                                                        { label: "Lig. Realizadas", val: cp.ligacoes_realizadas, icon: PhoneOutgoing, color: "rose" },
+                                                        { label: "Atendimento", val: cp.atendimento, icon: Users },
+                                                        { label: "Inscrições", val: cp.inscricoes, icon: ClipboardCheck },
+                                                        { label: "Presenças", val: cp.pessoas_presentes, icon: UserCheck },
+                                                        { label: "Lançamento", val: cp.ligacoes_recebidas, icon: PhoneIncoming },
+                                                        { label: "Retorno", val: cp.ligacoes_realizadas, icon: PhoneOutgoing },
                                                     ].map((item, idx) => (
-                                                        <div key={idx} className="bg-white dark:bg-zinc-800/80 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700/50 shadow-sm">
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <item.icon className={`w-3.5 h-3.5 text-${item.color}-500`} />
-                                                                <span className="text-[10px] font-bold text-zinc-500 uppercase">{item.label}</span>
+                                                        <div key={idx} className="bg-white dark:bg-zinc-900/50 p-5 rounded-xl border border-zinc-200/60 dark:border-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.02)] group hover:border-zinc-900 dark:hover:border-zinc-50 transition-all">
+                                                            <div className="flex flex-col gap-4">
+                                                                <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-zinc-900 dark:group-hover:bg-zinc-50 transition-colors">
+                                                                    <item.icon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-900 transition-colors" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
+                                                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums leading-none tracking-tight">{item.val || 0}</p>
+                                                                </div>
                                                             </div>
-                                                            <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">{item.val || 0}</p>
                                                         </div>
                                                     ))}
 
                                                     {/* TOTAL PROCEDIMENTOS */}
-                                                    <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-4 rounded-xl shadow-md text-white sm:col-span-2 lg:col-span-1">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <Activity className="w-3.5 h-3.5 text-violet-200" />
-                                                            <span className="text-[10px] font-bold text-violet-100 uppercase">Total Proc.</span>
+                                                    <div className="bg-zinc-900 dark:bg-zinc-50 p-5 rounded-xl text-white dark:text-zinc-900 sm:col-span-2 lg:col-span-1 flex flex-col justify-between gap-4 shadow-lg shadow-zinc-900/5 transition-transform hover:scale-[1.02] cursor-default">
+                                                        <div className="p-2 w-fit bg-white/10 dark:bg-black/5 rounded-lg">
+                                                            <Activity className="w-3.5 h-3.5" />
                                                         </div>
-                                                        <p className="text-2xl font-black">{cp.total_procedimentos || 0}</p>
+                                                        <div className="space-y-1">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Proc.</span>
+                                                            <p className="text-2xl font-bold tabular-nums leading-none tracking-tight">{cp.total_procedimentos || 0}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
                                             {Object.entries(report.data).map(([k, v]: [any, any]) => (
-                                                <div key={k} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-lg hover:border-indigo-200 transition-colors">
-                                                    <span className="text-[10px] text-zinc-500 font-bold uppercase truncate pr-4">{k.replace(/_/g, ' ')}</span>
-                                                    <span className="text-base font-black text-indigo-600">{v}</span>
+                                                <div key={k} className="flex items-center justify-between p-4 bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800 rounded-xl hover:border-zinc-900 dark:hover:border-zinc-50 transition-all">
+                                                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase truncate pr-4">{k.replace(/_/g, ' ')}</span>
+                                                    <span className="text-base font-bold text-zinc-900 dark:text-zinc-100">{v}</span>
                                                 </div>
                                             ))}
                                         </div>

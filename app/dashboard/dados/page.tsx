@@ -3,6 +3,7 @@ import { getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { ArrowLeft, Table as TableIcon } from "lucide-react"
 import {
     Table,
@@ -136,34 +137,39 @@ export default async function DataPage({
     ]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full max-w-[98%] mx-auto py-8">
-            <div className="flex items-center gap-4 px-2">
-                <Link href={isBeneficios ? `/dashboard/beneficios` : `/dashboard/diretoria/${directorate.id}`}>
-                    <Button variant="ghost" size="icon" className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
-                        <ArrowLeft className="h-6 w-6" />
-                    </Button>
-                </Link>
-                <div className="flex-1 space-y-1">
-                    <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 print:hidden">
-                        Meus Dados: {selectedYear}
-                    </h1>
-                    <h1 className="hidden print:block text-2xl font-bold text-black border-b-2 border-black pb-2 mb-4">
-                        {printTitle}
-                    </h1>
-                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2 print:hidden">
-                        <TableIcon className="w-4 h-4" />
-                        {titleContext}
-                    </p>
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 w-full max-w-[98%] mx-auto py-8">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+                <div className="flex items-center gap-6">
+                    <Link href={isBeneficios ? `/dashboard/beneficios` : `/dashboard/diretoria/${directorate.id}`}>
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
+                        </Button>
+                    </Link>
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50 print:hidden">
+                            Histórico de Dados {selectedYear}
+                        </h1>
+                        <h1 className="hidden print:block text-2xl font-bold text-black border-b border-zinc-200 pb-4 mb-6">
+                            {printTitle}
+                        </h1>
+                        <div className="flex items-center gap-2 print:hidden">
+                            <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none truncate max-w-[400px]">
+                                {titleContext}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <PrintExportControls />
-            </div>
+                <div className="flex items-center gap-3 print:hidden">
+                    <PrintExportControls />
+                </div>
+            </header>
 
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @media print {
                     @page { 
                         size: portrait;
-                        margin: 10mm 5mm !important;
+                        margin: 12mm 8mm !important;
                     }
                     * {
                         transition: none !important;
@@ -174,112 +180,77 @@ export default async function DataPage({
                     body {
                         background: white !important;
                         color: black !important;
-                        font-size: 8pt !important;
-                    }
-                    main, .overflow-auto, .print-section {
-                        overflow: visible !important;
-                    }
-                    .space-y-8, .space-y-10, .space-y-12 {
-                        gap: 0 !important;
-                        margin: 0 !important;
-                    }
-                    /* Títulos agora são controlados pelas classes print: no JSX */
-                    h2 {
-                        color: black !important;
-                        border-left: 3px solid #000 !important;
-                        margin-top: 6mm !important;
-                        margin-bottom: 2mm !important;
-                        padding-left: 2mm !important;
-                        font-size: 11pt !important;
-                        page-break-after: avoid !important;
-                        break-after: avoid !important;
+                        font-family: 'Inter', sans-serif !important;
                     }
                     .print-section {
                         page-break-inside: avoid !important;
-                        break-inside: avoid !important;
-                        margin-bottom: 6mm !important;
-                        display: block !important;
+                        margin-bottom: 8mm !important;
+                    }
+                    h2 {
+                        font-size: 11pt !important;
+                        text-transform: uppercase !important;
+                        letter-spacing: 0.1em !important;
+                        border-left: 4px solid #000 !important;
+                        padding-left: 3mm !important;
+                        margin-bottom: 3mm !important;
                     }
                     table {
                         width: 100% !important;
-                        font-size: 5.5pt !important;
+                        font-size: 6pt !important;
                         border-collapse: collapse !important;
-                        table-layout: fixed !important;
                         border: 1px solid #000 !important;
-                        page-break-inside: auto !important;
                     }
                     th, td {
                         border: 0.5px solid #666 !important;
-                        padding: 0.8mm 0.3mm !important;
-                        line-height: 1.1 !important;
-                        white-space: normal !important;
-                        word-wrap: break-word !important;
-                        overflow-wrap: break-word !important;
+                        padding: 1.2mm 0.5mm !important;
                         vertical-align: middle !important;
                     }
-                    /* Indicator Column - approx 28% of width */
-                    th:first-child, td:first-child {
-                        width: 28% !important;
-                        text-align: left !important;
-                        padding-left: 1mm !important;
-                    }
-                    /* Month columns - approx 5.5% each */
-                    th:not(:first-child), td:not(:first-child) {
-                        width: 5.5% !important;
-                        text-align: center !important;
-                    }
                     th {
-                        background-color: #f2f2f2 !important;
-                        -webkit-print-color-adjust: exact;
-                        font-weight: bold !important;
+                        background: #f8f8f8 !important;
+                        font-weight: 800 !important;
                         text-transform: uppercase !important;
                     }
-                    .bg-white, .shadow-xl, .rounded-xl, .border {
-                        background: white !important;
-                        border: none !important;
-                        box-shadow: none !important;
-                    }
-                    .text-indigo-600 {
-                        color: black !important;
-                        font-weight: bold !important;
-                    }
-                    .print-hidden, button, nav, aside {
+                    .print-hidden {
                         display: none !important;
                     }
                 }
             `}} />
 
-            <div className="space-y-12">
+            <div className="space-y-16">
                 {formDefinition.sections.map((section, sIdx) => {
                     const sectionIndicators = section.fields
 
                     return (
-                        <div key={sIdx} className="space-y-4 print-section">
-                            <h2 className="text-xl font-bold text-indigo-900 dark:text-indigo-100 pl-2 border-l-4 border-indigo-500">
-                                {section.title}
-                            </h2>
-                            <div className="rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-white dark:bg-zinc-950 shadow-xl shadow-indigo-500/5 overflow-hidden">
-                                <div className="w-full">
+                        <div key={sIdx} className="space-y-8 print-section">
+                            <div className="flex items-center gap-3 px-2">
+                                <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                                <h2 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">
+                                    {section.title}
+                                </h2>
+                            </div>
+
+                            <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
+                                <div className="overflow-x-auto custom-scrollbar">
                                     <Table>
                                         <TableHeader>
-                                            <TableRow className="bg-zinc-50/80 dark:bg-zinc-900/80 border-b border-indigo-100 dark:border-indigo-900/30">
-                                                <TableHead className="w-[20%] min-w-[200px] font-bold text-indigo-900 dark:text-indigo-100 pl-6 h-14">
-                                                    INDICADOR
+                                            <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
+                                                <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                    Atributo / Indicador
                                                 </TableHead>
                                                 {months.map((m, i) => (
-                                                    <TableHead key={i} className="text-center font-bold text-xs text-zinc-500 dark:text-zinc-400 h-14 px-1 tracking-wider">
-                                                        {m.toUpperCase()}
+                                                    <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
+                                                        {m}
                                                     </TableHead>
                                                 ))}
-                                                <TableHead className="text-center font-bold text-indigo-600 text-xs h-14 px-1 bg-indigo-50/50 dark:bg-indigo-900/10">TOTAL</TableHead>
+                                                <TableHead className="text-center font-bold text-zinc-900 dark:text-zinc-50 text-[10px] h-14 px-1 bg-zinc-50/80 dark:bg-zinc-800/40 uppercase tracking-widest">Acumulado</TableHead>
                                             </TableRow>
                                         </TableHeader>
-                                        <TableBody>
+                                        <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
                                             {sectionIndicators.map((indicator) => {
                                                 let rowTotal = 0
                                                 return (
-                                                    <TableRow key={indicator.id} className="h-11 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors border-b border-zinc-50 dark:border-zinc-800/50 last:border-0 property-row">
-                                                        <TableCell className="font-medium text-xs text-zinc-700 dark:text-zinc-300 pl-6 py-2 border-r border-indigo-50/50 dark:border-indigo-900/20 truncate max-w-[300px]" title={indicator.label}>
+                                                    <TableRow key={indicator.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
+                                                        <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight" title={indicator.label}>
                                                             {indicator.label}
                                                         </TableCell>
                                                         {months.map((_, idx) => {
@@ -293,18 +264,18 @@ export default async function DataPage({
                                                             }
 
                                                             return (
-                                                                <TableCell key={monthNum} className="text-center text-xs text-zinc-600 dark:text-zinc-400 p-0 border-r border-zinc-50 dark:border-zinc-800/10 last:border-0">
+                                                                <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
                                                                     {val !== undefined && val !== '' ? (
-                                                                        <span className="inline-block py-1 px-2 rounded hover:bg-white hover:shadow-sm transition-all cursor-default">
+                                                                        <span className="font-bold text-zinc-900 dark:text-zinc-100">
                                                                             {val}
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="text-zinc-300 dark:text-zinc-700">-</span>
+                                                                        <span className="text-zinc-200 dark:text-zinc-800">-</span>
                                                                     )}
                                                                 </TableCell>
                                                             )
                                                         })}
-                                                        <TableCell className="text-center font-bold text-xs text-indigo-600 bg-indigo-50/20 dark:bg-indigo-900/10 p-0">
+                                                        <TableCell className="text-center font-bold text-[12px] text-zinc-900 dark:text-zinc-50 bg-zinc-50/30 dark:bg-zinc-800/20 p-0">
                                                             {rowTotal > 0 ? rowTotal.toLocaleString('pt-BR') : '-'}
                                                         </TableCell>
                                                     </TableRow>
@@ -313,7 +284,7 @@ export default async function DataPage({
                                         </TableBody>
                                     </Table>
                                 </div>
-                            </div>
+                            </Card>
                         </div>
                     )
                 })}

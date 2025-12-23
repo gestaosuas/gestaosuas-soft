@@ -36,7 +36,7 @@ const ToolbarButton = ({ onClick, icon: Icon, active = false }: { onClick: () =>
     <Button
         variant="ghost"
         size="sm"
-        className={`h-8 w-8 p-0 ${active ? 'bg-indigo-100 text-indigo-700' : 'text-zinc-500 hover:text-zinc-900'}`}
+        className={`h-8 w-8 p-0 ${active ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:text-zinc-900'}`}
         onClick={(e) => { e.preventDefault(); onClick(); }}
     >
         <Icon className="w-4 h-4" />
@@ -74,21 +74,20 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
     }
 
     return (
-        <div className="border rounded-md border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+        <div className="border rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all shadow-sm">
             <div className="flex items-center gap-1 p-2 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
                 <ToolbarButton icon={Bold} onClick={() => exec('bold')} />
                 <ToolbarButton icon={Italic} onClick={() => exec('italic')} />
                 <ToolbarButton icon={Underline} onClick={() => exec('underline')} />
-                <div className="w-px h-4 bg-zinc-300 mx-1" />
+                <div className="w-px h-4 bg-zinc-200 mx-2" />
                 <ToolbarButton icon={List} onClick={() => exec('insertUnorderedList')} />
             </div>
             <div
                 ref={editorRef}
-                className="min-h-[120px] p-4 outline-none prose prose-indigo max-w-none text-sm dark:text-zinc-300"
+                className="min-h-[160px] p-6 outline-none prose prose-blue max-w-none text-sm dark:text-zinc-300"
                 contentEditable
                 onInput={handleInput}
                 onBlur={handleInput}
-            // No dangerouslySetInnerHTML here to avoid re-render cursor reset
             />
         </div>
     )
@@ -193,21 +192,20 @@ export default function MonthlyReportEditor({
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-zinc-100 dark:border-zinc-800/60">
+                <div className="flex items-center gap-6">
                     <Link href={`/dashboard/diretoria/${directorateId}`}>
-                        <Button variant="ghost" size="icon" className="hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                            <ArrowLeft className="h-6 w-6" />
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Button>
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
                             Relatório Mensal
                         </h1>
-                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
+                        <p className="text-[12px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                             {directorateName}
                         </p>
                     </div>
@@ -216,7 +214,7 @@ export default function MonthlyReportEditor({
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 font-bold"
+                        className="h-11 px-8 bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-900/10 dark:shadow-none uppercase tracking-widest text-[11px]"
                     >
                         <Save className="w-4 h-4 mr-2" />
                         Salvar Relatório
@@ -225,15 +223,15 @@ export default function MonthlyReportEditor({
             </div>
 
             {/* Config Card */}
-            <Card className="border-amber-100 dark:border-amber-900/30 shadow-xl shadow-amber-500/5 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl">
-                <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
+                <CardContent className="pt-10 px-10 pb-8 grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
-                        <Label>Mês de Referência</Label>
+                        <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest ml-0.5">Mês de Referência</Label>
                         <Select value={month} onValueChange={setMonth} disabled={loading}>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-semibold uppercase tracking-tight">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
                                     const selectedYearInt = parseInt(year)
                                     let isDisabled = false
@@ -242,8 +240,8 @@ export default function MonthlyReportEditor({
                                         else if (selectedYearInt === currentYear && m > currentMonth) isDisabled = true
                                     }
                                     return (
-                                        <SelectItem key={m} value={String(m)} disabled={isDisabled}>
-                                            {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
+                                        <SelectItem key={m} value={String(m)} disabled={isDisabled} className="uppercase text-[11px] font-bold py-3 px-4 focus:bg-blue-900 dark:focus:bg-blue-600 focus:text-white cursor-pointer transition-colors">
+                                            {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })}
                                         </SelectItem>
                                     )
                                 })}
@@ -251,29 +249,29 @@ export default function MonthlyReportEditor({
                         </Select>
                     </div>
                     <div className="space-y-3">
-                        <Label>Ano</Label>
+                        <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest ml-0.5">Exercício</Label>
                         <Select value={year} onValueChange={setYear} disabled={loading}>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-bold tracking-tight">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
                                 {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
-                                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                                    <SelectItem key={y} value={String(y)} className="text-[11px] font-bold py-3 px-4 focus:bg-blue-900 dark:focus:bg-blue-600 focus:text-white cursor-pointer transition-colors">{y}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="md:col-span-2 flex items-center gap-3 pt-2 border-t border-amber-100 dark:border-amber-900/10">
-                        <div className="flex items-center space-x-2">
+                    <div className="md:col-span-2 flex items-center gap-4 pt-8 border-t border-zinc-100 dark:border-zinc-800/60">
+                        <div className="flex items-center space-x-3">
                             <input
                                 type="checkbox"
                                 id="attachIndicators"
                                 checked={attachIndicators}
                                 onChange={(e) => setAttachIndicators(e.target.checked)}
-                                className="h-5 w-5 rounded border-zinc-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                className="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-700 text-blue-900 focus:ring-blue-500 cursor-pointer transition-all"
                             />
-                            <Label htmlFor="attachIndicators" className="cursor-pointer font-medium text-zinc-700 dark:text-zinc-300">
-                                Anexar Tabela de Indicadores (Dados Quantitativos) no final do relatório?
+                            <Label htmlFor="attachIndicators" className="cursor-pointer font-bold text-[12px] text-zinc-700 dark:text-zinc-300 uppercase tracking-tight">
+                                Anexar Tabela de Indicadores Quantitativos no Relatório
                             </Label>
                         </div>
                     </div>
@@ -361,18 +359,18 @@ export default function MonthlyReportEditor({
                 ))}
 
                 {/* Add Buttons */}
-                <div className="flex justify-center gap-4 py-8 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 transition-colors hover:border-indigo-300">
-                    <Button variant="outline" onClick={() => addBlock('heading')} className="hover:border-indigo-500 hover:text-indigo-600 hover:bg-white">
+                <div className="flex flex-col md:flex-row justify-center items-center gap-6 py-12 border-2 border-dashed border-zinc-200 dark:border-zinc-800/60 rounded-3xl bg-zinc-50/30 dark:bg-zinc-900/20 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
+                    <Button variant="outline" onClick={() => addBlock('heading')} className="h-12 px-8 rounded-xl border-zinc-200 hover:border-blue-600 hover:text-blue-600 hover:bg-white bg-white dark:bg-zinc-900 transition-all font-bold text-[11px] uppercase tracking-widest shadow-sm">
                         <Heading1 className="w-4 h-4 mr-2" />
-                        Título
+                        Novo Título
                     </Button>
-                    <Button variant="outline" onClick={() => addBlock('paragraph')} className="hover:border-indigo-500 hover:text-indigo-600 hover:bg-white">
+                    <Button variant="outline" onClick={() => addBlock('paragraph')} className="h-12 px-8 rounded-xl border-zinc-200 hover:border-blue-600 hover:text-blue-600 hover:bg-white bg-white dark:bg-zinc-900 transition-all font-bold text-[11px] uppercase tracking-widest shadow-sm">
                         <Type className="w-4 h-4 mr-2" />
-                        Texto
+                        Novo Parágrafo
                     </Button>
-                    <Button variant="outline" onClick={() => addBlock('table')} className="hover:border-indigo-500 hover:text-indigo-600 hover:bg-white">
+                    <Button variant="outline" onClick={() => addBlock('table')} className="h-12 px-8 rounded-xl border-zinc-200 hover:border-blue-600 hover:text-blue-600 hover:bg-white bg-white dark:bg-zinc-900 transition-all font-bold text-[11px] uppercase tracking-widest shadow-sm">
                         <TableIcon className="w-4 h-4 mr-2" />
-                        Tabela
+                        Nova Tabela
                     </Button>
                 </div>
             </div>

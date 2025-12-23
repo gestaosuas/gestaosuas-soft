@@ -67,20 +67,25 @@ export default async function ViewReportPage({
 
             if (formDef && formDef.sections) {
                 AttachIndicatorsElement = (
-                    <div className="mt-12 pt-8 border-t-2 border-zinc-900 break-before-page print:block">
-                        <h3 className="text-xl font-bold mb-6 text-center uppercase border-b border-zinc-200 pb-2">Anexo: Indicadores Quantitativos</h3>
-                        <div className="grid gap-8">
+                    <div className="mt-12 pt-12 border-t-4 border-blue-900/10 break-before-page print:block">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="h-1 w-6 bg-blue-600 rounded-full"></div>
+                            <h3 className="text-[11px] font-extrabold text-blue-900/60 uppercase tracking-[0.2em]">
+                                Anexo: Indicadores Quantitativos
+                            </h3>
+                        </div>
+                        <div className="grid gap-10">
                             {formDef.sections.map((section, idx) => (
-                                <div key={idx} className="break-inside-avoid">
-                                    <h4 className="font-bold bg-zinc-100 dark:bg-zinc-800 p-2 border border-zinc-300 dark:border-zinc-700 text-sm mb-0 uppercase tracking-tight">
+                                <div key={idx} className="break-inside-avoid space-y-4">
+                                    <h4 className="font-bold text-[13px] text-blue-900 uppercase tracking-tight pl-2 border-l-2 border-blue-600">
                                         {section.title}
                                     </h4>
-                                    <table className="w-full text-xs md:text-sm border-collapse border border-t-0 border-zinc-300 dark:border-zinc-700">
-                                        <tbody>
+                                    <table className="w-full text-xs md:text-sm border-collapse border border-zinc-100 print:border-zinc-300">
+                                        <tbody className="divide-y divide-zinc-50 print:divide-zinc-200">
                                             {section.fields.map((field) => (
-                                                <tr key={field.id} className="border-b border-zinc-200 dark:border-zinc-800 odd:bg-white even:bg-zinc-50 dark:odd:bg-zinc-900 dark:even:bg-zinc-900/50">
-                                                    <td className="p-2 border-r border-zinc-300 dark:border-zinc-700 w-2/3">{field.label}</td>
-                                                    <td className="p-2 text-center font-mono font-bold text-zinc-900 dark:text-zinc-100">
+                                                <tr key={field.id} className="odd:bg-white even:bg-zinc-50/50">
+                                                    <td className="p-3 text-zinc-600 font-medium w-3/4">{field.label}</td>
+                                                    <td className="p-3 text-center font-bold text-blue-900 border-l border-zinc-100 print:border-zinc-200">
                                                         {indicatorsSub.data?.[field.id] !== undefined && indicatorsSub.data?.[field.id] !== '' ? indicatorsSub.data[field.id] : '-'}
                                                     </td>
                                                 </tr>
@@ -90,8 +95,8 @@ export default async function ViewReportPage({
                                 </div>
                             ))}
                         </div>
-                        <div className="text-[10px] text-zinc-400 text-center mt-4">
-                            * Dados extraídos automaticamente do relatório de indicadores referência {monthName}/{submission.year}.
+                        <div className="text-[10px] text-zinc-400 text-center mt-10 italic">
+                            * Dados extraídos automaticamente do sistema de vigilância para referência em {monthName}/{submission.year}.
                         </div>
                     </div>
                 )

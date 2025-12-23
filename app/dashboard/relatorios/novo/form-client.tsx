@@ -5,7 +5,7 @@ import { submitReport } from "@/app/dashboard/actions"
 import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card"
 import { ArrowLeft, Calendar, FileText } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -40,7 +40,7 @@ export function SubmissionFormClient({
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
-                    window.location.href = '/dashboard/beneficios'
+                    window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
                 } else {
                     window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
                 }
@@ -55,113 +55,117 @@ export function SubmissionFormClient({
     const monthName = new Date(0, Number(month) - 1).toLocaleString('pt-BR', { month: 'long' })
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                    <Link href={setor === 'beneficios' ? `/dashboard/beneficios` : `/dashboard/diretoria/${directorateId}`}>
-                        <Button variant="ghost" size="icon" className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
-                            <ArrowLeft className="h-6 w-6" />
+                <div className="flex items-center gap-6">
+                    <Link href={setor === 'beneficios' ? `/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9` : `/dashboard/diretoria/${directorateId}`}>
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Button>
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
-                            Novo Relatório
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                            Entrada de Dados
                         </h1>
-                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            {directorateName}
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{directorateName}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Selection Card */}
-            <Card className="border-indigo-100 dark:border-indigo-900/30 shadow-xl shadow-indigo-500/5 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl">
-                <CardContent className="pt-6">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600">
-                            <Calendar className="w-5 h-5" />
-                        </div>
-                        <h3 className="font-semibold text-lg">Período de Referência</h3>
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="lg:col-span-4">
+                    <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden sticky top-8">
+                        <CardHeader className="pt-8 px-8 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
+                            <div className="flex items-center gap-3">
+                                <Calendar className="w-4 h-4 text-zinc-900 dark:text-zinc-50" />
+                                <h3 className="text-[12px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Referência</h3>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-8 space-y-8">
+                            <div className="space-y-3">
+                                <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">Ciclo Mensal</Label>
+                                <Select value={month} onValueChange={setMonth} disabled={loading}>
+                                    <SelectTrigger className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-semibold uppercase tracking-tight">
+                                        <SelectValue placeholder="Mês" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
+                                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
+                                            const currentDate = new Date()
+                                            const currentMonth = currentDate.getMonth() + 1
+                                            const currentYear = currentDate.getFullYear()
+                                            const selectedYearInt = parseInt(year)
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl">
-                        <div className="space-y-3">
-                            <Label className="text-zinc-600 font-medium">Mês</Label>
-                            <Select value={month} onValueChange={setMonth} disabled={loading}>
-                                <SelectTrigger className="h-12 bg-zinc-50 border-zinc-200 focus:ring-indigo-500 text-base">
-                                    <SelectValue placeholder="Mês" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
-                                        const currentDate = new Date()
-                                        const currentMonth = currentDate.getMonth() + 1
-                                        const currentYear = currentDate.getFullYear()
-                                        const selectedYearInt = parseInt(year)
+                                            let isDisabled = false
+                                            if (!isAdmin) {
+                                                if (selectedYearInt > currentYear) isDisabled = true
+                                                else if (selectedYearInt === currentYear && m > currentMonth) isDisabled = true
+                                            }
 
-                                        // Disable future months if not admin
-                                        // If selected year is future -> all disabled
-                                        // If selected year is current -> future months disabled
-                                        // If selected year is past -> all enabled
-                                        let isDisabled = false
-                                        if (!isAdmin) {
-                                            if (selectedYearInt > currentYear) isDisabled = true
-                                            else if (selectedYearInt === currentYear && m > currentMonth) isDisabled = true
-                                        }
+                                            return (
+                                                <SelectItem
+                                                    key={m}
+                                                    value={String(m)}
+                                                    disabled={isDisabled}
+                                                    className="uppercase text-[11px] font-bold py-3 px-4 focus:bg-zinc-900 dark:focus:bg-zinc-50 focus:text-white dark:focus:text-zinc-900 cursor-pointer mb-1 last:mb-0 transition-colors"
+                                                >
+                                                    {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })}
+                                                </SelectItem>
+                                            )
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">Exercício</Label>
+                                <Select value={year} onValueChange={setYear} disabled={loading}>
+                                    <SelectTrigger className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-bold tracking-tight">
+                                        <SelectValue placeholder="Ano" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
+                                        {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
+                                            <SelectItem key={y} value={String(y)} className="text-[11px] font-bold py-3 px-4 focus:bg-zinc-900 dark:focus:bg-zinc-50 focus:text-white dark:focus:text-zinc-900 cursor-pointer mb-1 last:mb-0 transition-colors">{y}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                                        return (
-                                            <SelectItem
-                                                key={m}
-                                                value={String(m)}
-                                                disabled={isDisabled}
-                                                className={`focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
-                                            </SelectItem>
-                                        )
-                                    })}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-3">
-                            <Label className="text-zinc-600 font-medium">Ano</Label>
-                            <Select value={year} onValueChange={setYear} disabled={loading}>
-                                <SelectTrigger className="h-12 bg-zinc-50 border-zinc-200 focus:ring-indigo-500 text-base">
-                                    <SelectValue placeholder="Ano" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
-                                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/60">
+                                <div className="p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-[0.15em] leading-relaxed">
+                                        Os dados preenchidos serão consolidados para o exercício de <span className="text-zinc-900 dark:text-zinc-100">{year}</span> no mês de <span className="text-zinc-900 dark:text-zinc-100 capitalize">{monthName}</span>.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-            {/* Form Card */}
-            <div className="relative">
-                <div className="absolute -left-4 top-10 w-full h-full bg-indigo-500/5 rounded-3xl -z-10 blur-xl"></div>
-                <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-950">
-                    <CardContent className="pt-8 px-8">
-                        <div className="mb-8 flex items-center justify-between border-b border-zinc-100 pb-4">
-                            <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200">
-                                Indicadores de <span className="text-indigo-600 capitalize">{monthName}</span>
-                            </h2>
-                            <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-wider">
-                                Entrada de Dados
-                            </span>
-                        </div>
-
-                        <FormEngine
-                            definition={definition}
-                            onSubmit={handleSubmit}
-                            disabled={loading}
-                        />
-                    </CardContent>
-                </Card>
+                <div className="lg:col-span-8">
+                    <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl">
+                        <CardHeader className="pt-8 px-10 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Indicadores Operacionais</h3>
+                                    <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
+                                </div>
+                                <span className="hidden sm:inline-flex items-center px-3 py-1 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[10px] font-bold rounded-full uppercase tracking-widest">
+                                    Formulário Oficial
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-10">
+                            <FormEngine
+                                definition={definition}
+                                onSubmit={handleSubmit}
+                                disabled={loading}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     )
