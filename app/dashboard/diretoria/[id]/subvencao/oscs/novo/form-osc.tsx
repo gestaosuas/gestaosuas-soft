@@ -71,7 +71,7 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
             const data = await response.json()
 
             if (!data.erro) {
-                setFormData(prev => ({
+                setFormData((prev: any) => ({
                     ...prev,
                     address: data.logradouro || "",
                     neighborhood: data.bairro || "",
