@@ -6,6 +6,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
 import { redirect } from 'next/navigation'
 import { FormDefinition } from '@/components/form-engine'
+import { checkUserPermission, isAdmin as isAdminCheck } from '@/lib/auth-utils'
 
 
 import { CP_FORM_DEFINITION, CP_SHEET_BLOCKS, CP_SHEET_NAME } from './cp-config'
@@ -22,31 +23,19 @@ export async function submitReport(formData: Record<string, any>, month: number,
         throw new Error("Unauthorized")
     }
 
-    // Get User Profile & Permission Check
-    const { data: profile } = await supabase.from('profiles').select(`
-        *,
-        profile_directorates (
-            directorates (*)
-        )
-    `).eq('id', user.id).single()
+    // Check Admin & Permission
+    const isAdmin = await isAdminCheck(user.id)
+    const adminSupabase = createAdminClient()
 
-    // @ts-ignore
-    const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates) || []
-
-    // Check Admin
-    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
-    const isAdmin = profile?.role === 'admin' || isEmailAdmin
-
-    let directorate = null
-
-    if (isAdmin) {
-        // Fetch requested directorate directly if admin
-        const { data: d } = await supabase.from('directorates').select('*').eq('id', directorateId).single()
-        directorate = d
-    } else {
-        // Verify link
-        directorate = userDirectorates.find((d: any) => d.id === directorateId)
+    if (!isAdmin) {
+        const hasAccess = await checkUserPermission(user.id, directorateId)
+        if (!hasAccess) {
+            throw new Error("Directorate not found or unauthorized")
+        }
     }
+
+    // Fetch directorate to get config (needed for sheets)
+    const { data: directorate } = await adminSupabase.from('directorates').select('*').eq('id', directorateId).single()
 
     if (!directorate) {
         throw new Error("Directorate not found or unauthorized")
@@ -54,7 +43,6 @@ export async function submitReport(formData: Record<string, any>, month: number,
 
     // Check if already submitted
     // Use Admin Client for Write Operations (Bypassing DB RLS)
-    const adminSupabase = createAdminClient()
 
     // Check if submitted exist
     const { data: existing } = await adminSupabase
@@ -220,6 +208,10 @@ export async function submitDailyReport(date: string, directorateId: string, for
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    // Permission Check
+    const hasAccess = await checkUserPermission(user.id, directorateId)
+    if (!hasAccess) throw new Error("Unauthorized access to this directorate")
+
     const adminSupabase = createAdminClient()
 
     // Check existing
@@ -262,12 +254,7 @@ export async function deleteReport(reportId: string) {
     if (!user) throw new Error("Unauthorized")
 
     // Check admin
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-
-    // Explicit email whitelist for safety
-    const adminEmails = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br']
-    const isEmailAdmin = adminEmails.includes(user.email || '')
-    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+    const isAdmin = await isAdminCheck(user.id)
 
     // Check Admin or Owner
     // We need to fetch the submission first (securely via Admin Client) to check ownership
@@ -308,9 +295,7 @@ export async function updateSystemSetting(key: string, value: string) {
     if (!user) throw new Error("Unauthorized")
 
     // Check admin
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
-    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+    const isAdmin = await isAdminCheck(user.id)
 
     if (!isAdmin) {
         return { error: "Apenas administradores podem alterar configurações." }
@@ -342,7 +327,13 @@ export async function submitOSC(data: {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
-    // Use admin client for insertion to ensure it bypasses any restrictive RLS during setup
+    // OSCs are shared for now, but we check if user is at least admin or has a directorate link
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) {
+        // Verify user is linked to ANY directorate (authorized technician)
+        const { data: links } = await supabase.from('profile_directorates').select('id').eq('profile_id', user.id).limit(1)
+        if (!links || links.length === 0) throw new Error("Unauthorized to register OSCs")
+    }
     const adminSupabase = createAdminClient()
 
     const { error } = await adminSupabase.from('oscs').insert({
@@ -430,6 +421,12 @@ export async function saveVisit(data: any) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
+
+    const { directorate_id } = data
+    if (!directorate_id) throw new Error("Directorate ID is required")
+
+    const hasAccess = await checkUserPermission(user.id, directorate_id)
+    if (!hasAccess) throw new Error("Unauthorized to save visits for this directorate")
 
     const adminSupabase = createAdminClient()
     const { id, ...visitData } = data

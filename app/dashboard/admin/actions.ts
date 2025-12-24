@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import { isAdmin as isAdminCheck } from '@/lib/auth-utils'
 
 export async function createUser(formData: FormData) {
     // Check auth
@@ -14,8 +15,8 @@ export async function createUser(formData: FormData) {
     }
 
     // Check role
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') {
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) {
         throw new Error("Unauthorized")
     }
 
@@ -92,8 +93,8 @@ export async function deleteUser(userId: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') throw new Error("Unauthorized")
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) throw new Error("Unauthorized")
 
     const supabaseAdmin = createAdminClient()
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
@@ -108,14 +109,28 @@ export async function deleteUser(userId: string) {
 export async function updateUserAccess(userId: string, directorateIds: string[]) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error("Acesso não autorizado: Sessão expirada.")
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') throw new Error("Unauthorized")
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) throw new Error("Acesso negado: Apenas administradores podem gerenciar permissões.")
 
     const supabaseAdmin = createAdminClient()
 
-    // 1. Remove existing assignments for this user
+    // 1. Ensure Profile exists (role is required, default to 'user' if new)
+    // We fetch current role first to not overwrite it if it exists
+    const { data: currentProfile } = await supabaseAdmin.from('profiles').select('role, full_name').eq('id', userId).single()
+
+    if (!currentProfile) {
+        // If profile missing, we should probably fetch metadata from auth to get the name
+        const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(userId)
+        await supabaseAdmin.from('profiles').upsert({
+            id: userId,
+            role: 'user',
+            full_name: authUser?.user_metadata?.full_name || 'Usuário Migrado'
+        })
+    }
+
+    // 2. Remove existing assignments for this user
     const { error: deleteError } = await supabaseAdmin
         .from('profile_directorates')
         .delete()

@@ -111,7 +111,7 @@ export function SignaturePad({ onSave, onClear, defaultValue, readOnly, label }:
                     onTouchStart={startDrawing}
                     onTouchEnd={stopDrawing}
                     onTouchMove={draw}
-                    className={`w-full h-40 bg-zinc-50 dark:bg-zinc-950 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl touch-none ${readOnly ? 'cursor-not-allowed opacity-80' : 'cursor-crosshair active:border-blue-500 transition-colors'}`}
+                    className={`w-full h-40 rounded-2xl touch-none ${readOnly ? 'cursor-not-allowed border-none bg-transparent shadow-none' : 'bg-zinc-50 dark:bg-zinc-950 border-2 border-dashed border-zinc-200 dark:border-zinc-800 cursor-crosshair active:border-blue-500 transition-colors'}`}
                 />
                 {!readOnly && !isEmpty && (
                     <Button
@@ -127,11 +127,6 @@ export function SignaturePad({ onSave, onClear, defaultValue, readOnly, label }:
                 {isEmpty && !readOnly && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-300 dark:text-zinc-700 text-sm font-medium">
                         Assine aqui
-                    </div>
-                )}
-                {readOnly && !isEmpty && (
-                    <div className="absolute top-3 right-3 p-1.5 bg-green-500 text-white rounded-full shadow-lg">
-                        <Check className="h-3 w-3" />
                     </div>
                 )}
             </div>

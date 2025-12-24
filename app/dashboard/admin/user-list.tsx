@@ -52,8 +52,8 @@ export function UserList({ users, directorates }: { users: UserData[], directora
         try {
             await updateUserAccess(editingUser.id, selectedDirs)
             setEditingUser(null)
-        } catch (e) {
-            alert("Erro ao atualizar permissões")
+        } catch (e: any) {
+            alert(e.message || "Erro ao atualizar permissões")
         } finally {
             setIsSaving(false)
         }
