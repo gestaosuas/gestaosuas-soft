@@ -321,7 +321,8 @@ export async function submitOSC(data: {
     address: string,
     number: string,
     neighborhood: string,
-    phone: string
+    phone: string,
+    subsidized_count?: number
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -331,7 +332,7 @@ export async function submitOSC(data: {
     const isAdmin = await isAdminCheck(user.id)
     if (!isAdmin) {
         // Verify user is linked to ANY directorate (authorized technician)
-        const { data: links } = await supabase.from('profile_directorates').select('id').eq('profile_id', user.id).limit(1)
+        const { data: links } = await supabase.from('profile_directorates').select('profile_id').eq('profile_id', user.id).limit(1)
         if (!links || links.length === 0) throw new Error("Unauthorized to register OSCs")
     }
     const adminSupabase = createAdminClient()
@@ -376,7 +377,8 @@ export async function updateOSC(id: string, data: {
     address: string,
     number: string,
     neighborhood: string,
-    phone: string
+    phone: string,
+    subsidized_count?: number
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -531,12 +533,20 @@ export async function deleteVisit(id: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    const isAdmin = await isAdminCheck(user.id)
     const adminSupabase = createAdminClient()
-    const { error } = await adminSupabase
+
+    let query = adminSupabase
         .from('visits')
         .delete()
         .eq('id', id)
-        .eq('status', 'draft') // Prevent deleting finalized reports for audit trails
+
+    // Only allow deletion if admin OR (owner AND draft)
+    if (!isAdmin) {
+        query = query.eq('user_id', user.id).eq('status', 'draft')
+    }
+
+    const { error } = await query
 
     if (error) throw new Error("Erro ao excluir visita: " + error.message)
 

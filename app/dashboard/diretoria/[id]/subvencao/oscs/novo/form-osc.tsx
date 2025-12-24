@@ -46,7 +46,8 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
         address: "",
         number: "",
         neighborhood: "",
-        phone: ""
+        phone: "",
+        subsidized_count: 0
     }
 
     const [formData, setFormData] = useState(oscToEdit || emptyForm)
@@ -173,7 +174,7 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
                             </Select>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <Label className="text-[12px] font-bold uppercase tracking-widest text-zinc-400">CEP</Label>
                                 <div className="relative">
@@ -201,6 +202,15 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
                                         className="h-12 pl-10 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-900/20 transition-all font-medium"
                                     />
                                 </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[12px] font-bold uppercase tracking-widest text-zinc-400">Número Subvencionado</Label>
+                                <Input
+                                    type="number"
+                                    value={formData.subsidized_count}
+                                    onChange={e => setFormData({ ...formData, subsidized_count: Number(e.target.value) })}
+                                    className="h-12 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-900/20 transition-all font-medium text-center font-bold"
+                                />
                             </div>
                         </div>
 

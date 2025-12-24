@@ -8,12 +8,16 @@ import { Calendar, Building, FileText, Eye, Edit2, Trash2, Loader2, CheckCircle2
 import { deleteVisit } from "@/app/dashboard/actions"
 import { useRouter } from "next/navigation"
 
-export function VisitList({ visits, directorateId }: { visits: any[], directorateId: string }) {
+export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], directorateId: string, isAdmin?: boolean }) {
     const router = useRouter()
     const [deletingId, setDeletingId] = useState<string | null>(null)
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Tem certeza que deseja excluir este rascunho de visita?")) return
+    const handleDelete = async (id: string, status: string) => {
+        const message = status === 'finalized'
+            ? "ATENÇÃO: Este relatório está FINALIZADO. Deseja realmente excluí-lo? Esta ação não pode ser desfeita."
+            : "Tem certeza que deseja excluir este rascunho de visita?"
+
+        if (!window.confirm(message)) return
 
         setDeletingId(id)
         try {
@@ -123,11 +127,11 @@ export function VisitList({ visits, directorateId }: { visits: any[], directorat
                                                     <><Edit2 className="h-3.5 w-3.5" /> Editar</>
                                                 )}
                                             </Button>
-                                            {visit.status === 'draft' && (
+                                            {(visit.status === 'draft' || isAdmin) && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleDelete(visit.id)}
+                                                    onClick={() => handleDelete(visit.id, visit.status)}
                                                     disabled={deletingId === visit.id}
                                                     className="h-9 w-9 rounded-xl text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100"
                                                 >

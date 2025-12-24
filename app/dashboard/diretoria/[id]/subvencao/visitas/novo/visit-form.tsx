@@ -58,8 +58,9 @@ export function VisitForm({
     })
 
     const [atendimento, setAtendimento] = useState(initialVisit?.atendimento || {
-        horario: "",
-        turnos: { manha: false, tarde: false },
+        tipo_horario: initialVisit?.atendimento?.tipo_horario || "periodo",
+        horario_inicio: "",
+        horario_fim: "",
         total_atendidos: 0,
         subvencionados: 0,
         presentes: { manha: 0, tarde: 0 },
@@ -73,6 +74,7 @@ export function VisitForm({
         demanda_espontanea: false,
         busca_ativa: false,
         encaminhamento: false,
+        outros: false,
         quem_encaminha: ""
     })
 
@@ -102,6 +104,26 @@ export function VisitForm({
     // Selected OSC Data
     const selectedOSC = oscs.find(o => o.id === formData.osc_id)
     const isLocked = initialVisit?.status === 'finalized'
+
+    // Auto-fill subsidized count from selected OSC
+    useEffect(() => {
+        if (formData.osc_id && !isLocked) {
+            const osc = oscs.find(o => o.id === formData.osc_id)
+            if (osc && osc.subsidized_count !== undefined) {
+                setAtendimento((prev: any) => ({
+                    ...prev,
+                    subvencionados: osc.subsidized_count
+                }))
+            }
+        }
+    }, [formData.osc_id, oscs, isLocked])
+
+    const [oscSearch, setOscSearch] = useState("")
+
+    // Filtered OSCs based on search
+    const filteredOSCs = (oscs || []).filter(osc =>
+        osc.name.toLowerCase().includes(oscSearch.toLowerCase())
+    )
 
     const handleSave = async (finalize = false) => {
         if (!formData.osc_id) {
@@ -346,7 +368,7 @@ export function VisitForm({
                     <h2 className={cn(
                         "text-lg font-black tracking-tight mb-4",
                         !isLocked ? "text-blue-900 border-none pb-0" : "text-black border-b-2 border-black"
-                    )}>I. IDENTIFICAÇÃO</h2>
+                    )}>IDENTIFICAÇÃO</h2>
 
                     <div className={cn(
                         isLocked ? "space-y-1.5" : "space-y-6"
@@ -383,19 +405,38 @@ export function VisitForm({
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                                 <div className="md:col-span-8 space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400">Organização da Sociedade Civil (OSC)</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900/40">Selecione a Organização Social Civil (OSC)</Label>
                                     <Select
                                         value={formData.osc_id}
-                                        onValueChange={val => setFormData({ ...formData, osc_id: val })}
-                                        disabled={isLocked}
+                                        onValueChange={value => setFormData({ ...formData, osc_id: value })}
                                     >
-                                        <SelectTrigger className="h-12 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 rounded-xl font-semibold">
-                                            <SelectValue placeholder="Selecione a OSC..." />
+                                        <SelectTrigger className="h-12 bg-zinc-50 border-zinc-200/60 rounded-xl focus:ring-4 focus:ring-blue-900/5 transition-all text-blue-950 font-bold">
+                                            <SelectValue placeholder="Escolha uma instituição cadastrada" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            {oscs.map(osc => (
-                                                <SelectItem key={osc.id} value={osc.id}>{osc.name}</SelectItem>
-                                            ))}
+                                        <SelectContent className="max-h-[400px]">
+                                            <div className="p-2 sticky top-0 bg-white z-10 border-b border-zinc-100">
+                                                <Input
+                                                    placeholder="Digite para filtrar..."
+                                                    value={oscSearch}
+                                                    onChange={(e) => setOscSearch(e.target.value)}
+                                                    onKeyDown={(e) => e.stopPropagation()}
+                                                    className="h-9 text-sm rounded-lg"
+                                                />
+                                            </div>
+                                            {filteredOSCs.length === 0 ? (
+                                                <div className="p-4 text-center text-xs text-zinc-500 font-medium">
+                                                    Nenhuma OSC encontrada
+                                                </div>
+                                            ) : (
+                                                filteredOSCs.map((osc) => (
+                                                    <SelectItem key={osc.id} value={osc.id} className="cursor-pointer py-3">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-blue-950">{osc.name}</span>
+                                                            <span className="text-[10px] text-zinc-500">{osc.activity_type}</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -422,7 +463,7 @@ export function VisitForm({
                     <h2 className={cn(
                         "text-lg font-black tracking-tight mb-4",
                         !isLocked ? "text-blue-900 border-none pb-0" : "text-black border-b-2 border-black"
-                    )}>II. ATENDIMENTO</h2>
+                    )}>ATENDIMENTO</h2>
 
                     <div className={cn(
                         isLocked ? "space-y-2 px-2" : "space-y-6"
@@ -430,26 +471,11 @@ export function VisitForm({
                         {isLocked ? (
                             <div className="space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-2">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-[11px] font-bold uppercase shrink-0">Horário:</span>
-                                        <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">{atendimento.horario || "-"}</span>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <span className="text-[11px] font-bold uppercase shrink-0">Turnos:</span>
-                                        <div className="flex gap-4">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className={cn("w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox", atendimento.turnos.manha && "bg-black print-checkbox-checked")}>
-                                                    {atendimento.turnos.manha && <Check className="h-2.5 w-2.5 text-white" />}
-                                                </div>
-                                                <span className="text-[10px] font-bold">Manhã</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className={cn("w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox", atendimento.turnos.tarde && "bg-black print-checkbox-checked")}>
-                                                    {atendimento.turnos.tarde && <Check className="h-2.5 w-2.5 text-white" />}
-                                                </div>
-                                                <span className="text-[10px] font-bold">Tarde</span>
-                                            </div>
-                                        </div>
+                                    <div className="flex items-baseline gap-2 md:col-span-2">
+                                        <span className="text-[11px] font-bold uppercase shrink-0">Horário de Funcionamento:</span>
+                                        <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
+                                            {atendimento.tipo_horario === '24hrs' ? 'Atendimento 24 horas' : `${atendimento.horario_inicio || '-'} às ${atendimento.horario_fim || '-'}`}
+                                        </span>
                                     </div>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-[11px] font-bold uppercase shrink-0">Total / Mês:</span>
@@ -514,40 +540,49 @@ export function VisitForm({
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <div className="md:col-span-1 space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Horário</Label>
-                                        <Input
-                                            placeholder="08:00 às 18:00"
-                                            value={atendimento.horario}
-                                            onChange={e => setAtendimento({ ...atendimento, horario: e.target.value })}
-                                            className="h-10 bg-zinc-50/50 rounded-lg text-sm"
-                                        />
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                                    <div className="md:col-span-1 space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Tipo de Horário</Label>
+                                        <RadioGroup
+                                            value={atendimento.tipo_horario}
+                                            onValueChange={val => setAtendimento({ ...atendimento, tipo_horario: val })}
+                                            className="flex gap-4 h-10 items-center"
+                                        >
+                                            <div className="flex items-center space-x-1.5">
+                                                <RadioGroupItem value="periodo" label="Período" id="h-periodo" />
+                                            </div>
+                                            <div className="flex items-center space-x-1.5">
+                                                <RadioGroupItem value="24hrs" label="24hrs" id="h-24hrs" />
+                                            </div>
+                                        </RadioGroup>
                                     </div>
 
-                                    <div className="md:col-span-1 space-y-1.5">
-                                        <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Turnos</Label>
-                                        <div className="flex gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className={cn(
-                                                    "w-3.5 h-3.5 rounded border border-zinc-300 flex items-center justify-center print-checkbox transition-all",
-                                                    atendimento.turnos.manha && "bg-blue-900 border-blue-900 print-checkbox-checked"
-                                                )}>
-                                                    {atendimento.turnos.manha && <Check className="h-2.5 w-2.5 text-white" />}
-                                                </div>
-                                                <span className="text-[11px] font-bold text-zinc-700">Manhã</span>
+                                    {atendimento.tipo_horario === 'periodo' ? (
+                                        <>
+                                            <div className="md:col-span-1 space-y-1.5">
+                                                <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Horário Início</Label>
+                                                <Input
+                                                    type="time"
+                                                    value={atendimento.horario_inicio}
+                                                    onChange={e => setAtendimento({ ...atendimento, horario_inicio: e.target.value })}
+                                                    className="h-10 bg-zinc-50/50 rounded-lg text-sm"
+                                                />
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className={cn(
-                                                    "w-3.5 h-3.5 rounded border border-zinc-300 flex items-center justify-center print-checkbox transition-all",
-                                                    atendimento.turnos.tarde && "bg-blue-900 border-blue-900 print-checkbox-checked"
-                                                )}>
-                                                    {atendimento.turnos.tarde && <Check className="h-2.5 w-2.5 text-white" />}
-                                                </div>
-                                                <span className="text-[11px] font-bold text-zinc-700">Tarde</span>
+                                            <div className="md:col-span-1 space-y-1.5">
+                                                <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Horário Fim</Label>
+                                                <Input
+                                                    type="time"
+                                                    value={atendimento.horario_fim}
+                                                    onChange={e => setAtendimento({ ...atendimento, horario_fim: e.target.value })}
+                                                    className="h-10 bg-zinc-50/50 rounded-lg text-sm"
+                                                />
                                             </div>
+                                        </>
+                                    ) : (
+                                        <div className="md:col-span-2 bg-zinc-50 dark:bg-zinc-900/50 h-10 flex items-center px-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                                            <span className="text-[11px] font-bold text-zinc-500 uppercase">Atendimento 24 horas</span>
                                         </div>
-                                    </div>
+                                    )}
 
                                     <div className="md:col-span-1 space-y-1.5">
                                         <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Total / Mês</Label>
@@ -662,14 +697,14 @@ export function VisitForm({
                     <h2 className={cn(
                         "text-lg font-black tracking-tight mb-4",
                         !isLocked ? "text-blue-900 border-none pb-0" : "text-black border-b-2 border-black"
-                    )}>III. FORMA DE ACESSO DO USUÁRIO</h2>
+                    )}>FORMA DE ACESSO DO USUÁRIO</h2>
 
                     <div className={cn(
                         isLocked ? "space-y-1.5 px-2" : "space-y-6"
                     )}>
                         {isLocked ? (
                             <div className="flex flex-col gap-2">
-                                <div className="flex gap-10">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div className="flex items-center gap-2">
                                         <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")} />
                                         <span className="text-[10px] font-bold">Demanda Espontânea</span>
@@ -682,6 +717,10 @@ export function VisitForm({
                                         <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")} />
                                         <span className="text-[10px] font-bold">Encaminhamento</span>
                                     </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")} />
+                                        <span className="text-[10px] font-bold">Outros</span>
+                                    </div>
                                 </div>
                                 {formaAcesso.encaminhamento && (
                                     <div className="flex items-baseline gap-2">
@@ -692,18 +731,38 @@ export function VisitForm({
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="flex gap-10 p-4 bg-zinc-50/50 dark:bg-zinc-950/50 rounded-xl border border-zinc-100">
-                                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setFormaAcesso({ ...formaAcesso, demanda_espontanea: !formaAcesso.demanda_espontanea })}>
-                                        <Checkbox checked={formaAcesso.demanda_espontanea} />
-                                        <span className="text-[11px] font-bold text-zinc-700">Demanda Espontânea</span>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="demanda_espontanea"
+                                            checked={formaAcesso.demanda_espontanea}
+                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, demanda_espontanea: !!checked })}
+                                        />
+                                        <Label htmlFor="demanda_espontanea" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Demanda Espontânea</Label>
                                     </div>
-                                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setFormaAcesso({ ...formaAcesso, busca_ativa: !formaAcesso.busca_ativa })}>
-                                        <Checkbox checked={formaAcesso.busca_ativa} />
-                                        <span className="text-[11px] font-bold text-zinc-700">Busca Ativa</span>
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="busca_ativa"
+                                            checked={formaAcesso.busca_ativa}
+                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, busca_ativa: !!checked })}
+                                        />
+                                        <Label htmlFor="busca_ativa" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Busca Ativa</Label>
                                     </div>
-                                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setFormaAcesso({ ...formaAcesso, encaminhamento: !formaAcesso.encaminhamento })}>
-                                        <Checkbox checked={formaAcesso.encaminhamento} />
-                                        <span className="text-[11px] font-bold text-zinc-700">Encaminhamento</span>
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="encaminhamento"
+                                            checked={formaAcesso.encaminhamento}
+                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, encaminhamento: !!checked })}
+                                        />
+                                        <Label htmlFor="encaminhamento" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Encaminhamento pela rede</Label>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="outros"
+                                            checked={formaAcesso.outros}
+                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, outros: !!checked })}
+                                        />
+                                        <Label htmlFor="outros" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Outros</Label>
                                     </div>
                                 </div>
                                 {formaAcesso.encaminhamento && (
@@ -731,7 +790,7 @@ export function VisitForm({
                         <h2 className={cn(
                             "text-lg font-black tracking-tight",
                             !isLocked ? "text-blue-900 border-none pb-0" : "text-black"
-                        )}>V. RECURSOS HUMANOS</h2>
+                        )}>RECURSOS HUMANOS</h2>
                         {!isLocked && (
                             <Button
                                 type="button"
@@ -778,23 +837,39 @@ export function VisitForm({
                                             )}
                                         </TableCell>
                                         <TableCell className="py-1 text-center h-8">
-                                            <div className="flex justify-center">
-                                                <div className={cn(
-                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox",
+                                            <div
+                                                onClick={() => {
+                                                    if (!isLocked) {
+                                                        const newData = [...rhData]
+                                                        newData[index].voluntario = !newData[index].voluntario
+                                                        setRhData(newData)
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
+                                                    !isLocked && "hover:border-blue-900",
                                                     row.voluntario && "bg-black print-checkbox-checked"
-                                                )}>
-                                                    {row.voluntario && <Check className="h-2.5 w-2.5 text-white" />}
-                                                </div>
+                                                )}
+                                            >
+                                                {row.voluntario && <Check className="h-2.5 w-2.5 text-white" />}
                                             </div>
                                         </TableCell>
                                         <TableCell className="py-1 text-center h-8">
-                                            <div className="flex justify-center">
-                                                <div className={cn(
-                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox",
+                                            <div
+                                                onClick={() => {
+                                                    if (!isLocked) {
+                                                        const newData = [...rhData]
+                                                        newData[index].subvencao = !newData[index].subvencao
+                                                        setRhData(newData)
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
+                                                    !isLocked && "hover:border-blue-900",
                                                     row.subvencao && "bg-black print-checkbox-checked"
-                                                )}>
-                                                    {row.subvencao && <Check className="h-2.5 w-2.5 text-white" />}
-                                                </div>
+                                                )}
+                                            >
+                                                {row.subvencao && <Check className="h-2.5 w-2.5 text-white" />}
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-4 py-1 h-8">
@@ -842,13 +917,13 @@ export function VisitForm({
                     {isLocked ? (
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">VI. OBSERVAÇÕES</h2>
+                                <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">OBSERVAÇÕES</h2>
                                 <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
                                     {observacoes || "Nenhuma observação registrada."}
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">VII. RECOMENDAÇÕES</h2>
+                                <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">RECOMENDAÇÕES</h2>
                                 <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
                                     {recomendacoes || "Nenhuma recomendação registrada."}
                                 </div>
@@ -858,7 +933,7 @@ export function VisitForm({
                         <>
                             <Card className="overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
                                 <CardHeader className="p-4 pb-1">
-                                    <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">VI. OBSERVAÇÕES</Label>
+                                    <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">OBSERVAÇÕES</Label>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
                                     <Textarea
@@ -870,7 +945,7 @@ export function VisitForm({
                             </Card>
                             <Card className="overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
                                 <CardHeader className="p-4 pb-1">
-                                    <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">VII. RECOMENDAÇÕES</Label>
+                                    <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">RECOMENDAÇÕES</Label>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
                                     <Textarea
@@ -893,7 +968,7 @@ export function VisitForm({
                 <h2 className={cn(
                     "text-lg font-black tracking-tight mb-4",
                     !isLocked ? "text-blue-900 border-none pb-0" : "text-black border-b-2 border-black"
-                )}>VIII. ASSINATURAS</h2>
+                )}>ASSINATURAS</h2>
 
                 <div className={cn(
                     "grid grid-cols-1 md:grid-cols-3 gap-8",
@@ -901,11 +976,19 @@ export function VisitForm({
                 )}>
                     <div className="space-y-2">
                         <SignaturePad
-                            label="Assinatura Técnico SMDS 1"
+                            label=""
                             defaultValue={assinaturas.tecnico1}
                             onSave={data => setAssinaturas({ ...assinaturas, tecnico1: data })}
                             readOnly={isLocked}
                         />
+                        {!isLocked && (
+                            <Input
+                                placeholder="Nome do Técnico 1"
+                                value={assinaturas.tecnico1_nome}
+                                onChange={e => setAssinaturas({ ...assinaturas, tecnico1_nome: e.target.value })}
+                                className="h-8 text-xs text-center border-none bg-zinc-50"
+                            />
+                        )}
                         <div className="text-center">
                             <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.tecnico1_nome || "Nome do Técnico 1"}</p>
                             <p className="text-[9px] font-black uppercase text-zinc-400">Técnico SMDS</p>
@@ -914,11 +997,19 @@ export function VisitForm({
 
                     <div className="space-y-2">
                         <SignaturePad
-                            label="Assinatura Técnico SMDS 2"
+                            label=""
                             defaultValue={assinaturas.tecnico2}
                             onSave={data => setAssinaturas({ ...assinaturas, tecnico2: data })}
                             readOnly={isLocked}
                         />
+                        {!isLocked && (
+                            <Input
+                                placeholder="Nome do Técnico 2"
+                                value={assinaturas.tecnico2_nome}
+                                onChange={e => setAssinaturas({ ...assinaturas, tecnico2_nome: e.target.value })}
+                                className="h-8 text-xs text-center border-none bg-zinc-50"
+                            />
+                        )}
                         <div className="text-center">
                             <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.tecnico2_nome || "Nome do Técnico 2"}</p>
                             <p className="text-[9px] font-black uppercase text-zinc-400">Técnico SMDS</p>
@@ -927,14 +1018,22 @@ export function VisitForm({
 
                     <div className="space-y-2">
                         <SignaturePad
-                            label="Assinatura do Responsável"
+                            label=""
                             defaultValue={assinaturas.responsavel}
                             onSave={data => setAssinaturas({ ...assinaturas, responsavel: data })}
                             readOnly={isLocked}
                         />
+                        {!isLocked && (
+                            <Input
+                                placeholder="Nome do Responsável"
+                                value={assinaturas.responsavel_nome}
+                                onChange={e => setAssinaturas({ ...assinaturas, responsavel_nome: e.target.value })}
+                                className="h-8 text-xs text-center border-none bg-zinc-50"
+                            />
+                        )}
                         <div className="text-center">
                             <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.responsavel_nome || "Nome do Responsável"}</p>
-                            <p className="text-[9px] font-black uppercase text-zinc-400">Pela Entidade (OSC)</p>
+                            <p className="text-[9px] font-black uppercase text-zinc-400">Responsável pela OSC</p>
                         </div>
                     </div>
                 </div>

@@ -97,6 +97,7 @@ export function OSCList({ oscs, onEdit }: { oscs: any[], onEdit?: (osc: any) => 
                                     <TableHead className="py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400">Atividade</TableHead>
                                     <TableHead className="py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400">Contatos / Endereço</TableHead>
                                     <TableHead className="py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400">Bairro</TableHead>
+                                    <TableHead className="py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400 text-center">Subvencionados</TableHead>
                                     <TableHead className="no-print px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400 text-right">Ações</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -131,6 +132,9 @@ export function OSCList({ oscs, onEdit }: { oscs: any[], onEdit?: (osc: any) => 
                                             <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">
                                                 {osc.neighborhood}
                                             </span>
+                                        </TableCell>
+                                        <TableCell className="py-4 text-center font-black text-blue-900 dark:text-blue-400">
+                                            {osc.subsidized_count || 0}
                                         </TableCell>
                                         <TableCell className="no-print px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
