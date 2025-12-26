@@ -33,7 +33,17 @@ const ACTIVITY_TYPES = [
     "Serviço de Acolhimento Institucional para Mulher Vítima de Violência"
 ]
 
-export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorateId: string, oscToEdit?: any, onCancelEdit?: () => void }) {
+export function FormOSC({
+    directorateId,
+    oscToEdit,
+    onCancelEdit,
+    existingOscs = []
+}: {
+    directorateId: string,
+    oscToEdit?: any,
+    onCancelEdit?: () => void,
+    existingOscs?: any[]
+}) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [cepLoading, setCepLoading] = useState(false)
@@ -87,6 +97,21 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // Similarity check (only if not editing)
+        if (!oscToEdit) {
+            const normalizedNewName = formData.name.toLowerCase().trim()
+            const similarOsc = existingOscs.find(osc => {
+                const normalizedExisting = osc.name.toLowerCase().trim()
+                return normalizedExisting.includes(normalizedNewName) || normalizedNewName.includes(normalizedExisting)
+            })
+
+            if (similarOsc) {
+                const confirmed = window.confirm(`Atenção: Já existe uma OSC cadastrada com o nome "${similarOsc.name}". Deseja continuar com o cadastro assim mesmo?`)
+                if (!confirmed) return
+            }
+        }
+
         setLoading(true)
 
         try {
@@ -117,11 +142,11 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
             <div className="flex items-center justify-between">
                 <Button
                     variant="ghost"
-                    onClick={() => router.back()}
+                    onClick={onCancelEdit ? onCancelEdit : () => router.back()}
                     className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                    Voltar
+                    Voltar para lista
                 </Button>
             </div>
 
@@ -250,7 +275,7 @@ export function FormOSC({ directorateId, oscToEdit, onCancelEdit }: { directorat
                         <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => router.back()}
+                            onClick={onCancelEdit ? onCancelEdit : () => router.back()}
                             className="h-12 px-6 rounded-xl font-bold uppercase tracking-widest text-[11px] text-zinc-500 hover:text-zinc-900 transition-all"
                         >
                             Cancelar

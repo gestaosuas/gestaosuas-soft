@@ -51,10 +51,11 @@ export function VisitForm({
     const [isSaving, setIsSaving] = useState(false)
 
     // Form State
-    const [formData, setFormData] = useState(initialVisit?.identificacao || {
-        osc_id: initialVisit?.osc_id || "",
+    const [formData, setFormData] = useState({
+        osc_id: initialVisit?.osc_id || initialVisit?.identificacao?.osc_id || "",
         email: initialVisit?.identificacao?.email || "",
-        visit_date: initialVisit?.visit_date || new Date().toISOString().split('T')[0],
+        visit_date: initialVisit?.visit_date || initialVisit?.identificacao?.visit_date || new Date().toISOString().split('T')[0],
+        ...(initialVisit?.identificacao || {})
     })
 
     const [atendimento, setAtendimento] = useState(initialVisit?.atendimento || {
@@ -222,12 +223,17 @@ export function VisitForm({
                         justify-content: center !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
+                        min-width: 12px;
+                        min-height: 12px;
                     }
                     .print-checkbox-checked {
                         background-color: #000 !important;
                         color: white !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
+                    }
+                    .report-container {
+                        color: #000 !important;
                     }
                     table { 
                         width: 100% !important;
@@ -371,9 +377,13 @@ export function VisitForm({
                     )}>IDENTIFICAÇÃO</h2>
 
                     <div className={cn(
-                        isLocked ? "space-y-1.5" : "space-y-6"
+                        "space-y-6"
                     )}>
-                        {isLocked ? (
+                        {/* Print/Read-only View (Always shows on print) */}
+                        <div className={cn(
+                            "hidden print:block",
+                            isLocked && "block"
+                        )}>
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-1.5 px-2">
                                 <div className="md:col-span-8 flex items-baseline gap-2">
                                     <span className="text-[11px] font-bold uppercase shrink-0">OSC:</span>
@@ -381,7 +391,9 @@ export function VisitForm({
                                 </div>
                                 <div className="md:col-span-4 flex items-baseline gap-2">
                                     <span className="text-[11px] font-bold uppercase shrink-0">Data da Visita:</span>
-                                    <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">{new Date(formData.visit_date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                                    <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
+                                        {formData.visit_date ? new Date(formData.visit_date + 'T12:00:00').toLocaleDateString('pt-BR') : "-"}
+                                    </span>
                                 </div>
                                 <div className="md:col-span-6 flex items-baseline gap-2">
                                     <span className="text-[11px] font-bold uppercase shrink-0">Tipo de atividade:</span>
@@ -398,12 +410,15 @@ export function VisitForm({
                                 <div className="md:col-span-12 flex items-baseline gap-2">
                                     <span className="text-[11px] font-bold uppercase shrink-0">Endereço:</span>
                                     <span className="text-[11px] font-medium border-b border-dotted border-zinc-300 grow pb-px">
-                                        {selectedOSC?.address}, {selectedOSC?.number} - {selectedOSC?.neighborhood}
+                                        {selectedOSC?.address ? `${selectedOSC.address}, ${selectedOSC.number} - ${selectedOSC.neighborhood}` : "-"}
                                     </span>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        </div>
+
+                        {/* Interactive Edit View (Hidden on print) */}
+                        {!isLocked && (
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 print:hidden">
                                 <div className="md:col-span-8 space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900/40">Selecione a Organização Social Civil (OSC)</Label>
                                     <Select
@@ -513,11 +528,15 @@ export function VisitForm({
                                     <span className="text-[11px] font-bold uppercase shrink-0">Há lista de espera?</span>
                                     <div className="flex gap-8 grow">
                                         <div className="flex items-center gap-2">
-                                            <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'sim' && "bg-black print-checkbox-checked")} />
+                                            <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'sim' && "bg-black print-checkbox-checked")}>
+                                                {atendimento.lista_espera === 'sim' && <Check className="h-2 w-2 text-white print:text-black" />}
+                                            </div>
                                             <span className="text-[10px] font-bold">Sim {atendimento.lista_espera === 'sim' && <span className="underline ml-1">({atendimento.lista_espera_qtd} pessoas)</span>}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'nao' && "bg-black print-checkbox-checked")} />
+                                            <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'nao' && "bg-black print-checkbox-checked")}>
+                                                {atendimento.lista_espera === 'nao' && <Check className="h-2 w-2 text-white print:text-black" />}
+                                            </div>
                                             <span className="text-[10px] font-bold">Não</span>
                                         </div>
                                     </div>
@@ -706,19 +725,27 @@ export function VisitForm({
                             <div className="flex flex-col gap-2">
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")} />
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.demanda_espontanea && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
                                         <span className="text-[10px] font-bold">Demanda Espontânea</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.busca_ativa && "bg-black print-checkbox-checked")} />
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.busca_ativa && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.busca_ativa && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
                                         <span className="text-[10px] font-bold">Busca Ativa</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")} />
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.encaminhamento && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
                                         <span className="text-[10px] font-bold">Encaminhamento</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")} />
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.outros && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
                                         <span className="text-[10px] font-bold">Outros</span>
                                     </div>
                                 </div>
@@ -851,7 +878,7 @@ export function VisitForm({
                                                     row.voluntario && "bg-black print-checkbox-checked"
                                                 )}
                                             >
-                                                {row.voluntario && <Check className="h-2.5 w-2.5 text-white" />}
+                                                {row.voluntario && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
                                             </div>
                                         </TableCell>
                                         <TableCell className="py-1 text-center h-8">
@@ -869,7 +896,7 @@ export function VisitForm({
                                                     row.subvencao && "bg-black print-checkbox-checked"
                                                 )}
                                             >
-                                                {row.subvencao && <Check className="h-2.5 w-2.5 text-white" />}
+                                                {row.subvencao && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-4 py-1 h-8">

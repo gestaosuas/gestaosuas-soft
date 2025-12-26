@@ -5,6 +5,7 @@ import { Plus, ArrowLeft, FileText } from "lucide-react"
 import Link from "next/link"
 import { isAdmin as checkAdmin } from "@/lib/auth-utils"
 import { createClient } from "@/utils/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function VisitasPage({
     params
@@ -12,11 +13,17 @@ export default async function VisitasPage({
     params: Promise<{ id: string }>
 }) {
     const { id } = await params
-    const visits = await getVisits(id)
-
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const isAdmin = await checkAdmin(user?.id || "")
+
+    if (!user) {
+        redirect('/login')
+    }
+
+    const [visits, isAdmin] = await Promise.all([
+        getVisits(id),
+        checkAdmin(user.id)
+    ])
 
     return (
         <div className="container mx-auto py-8 space-y-12">

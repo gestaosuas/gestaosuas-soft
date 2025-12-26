@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Building2, MapPin, Phone, Calendar, Printer, Edit2, Trash2, Loader2 } from "lucide-react"
+import { Building2, MapPin, Phone, Calendar, Printer, Edit2, Trash2, Loader2, ArrowLeft } from "lucide-react"
 import { deleteOSC } from "@/app/dashboard/actions"
 import { useRouter } from "next/navigation"
 
@@ -65,28 +65,42 @@ export function OSCList({ oscs, onEdit }: { oscs: any[], onEdit?: (osc: any) => 
             `}</style>
 
             <Card className="border-none shadow-2xl shadow-blue-900/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2rem] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200 print-area">
-                <CardHeader className="p-8 pb-6 flex flex-row items-center justify-between space-y-0">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400 rounded-xl">
-                            <Building2 className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-50 tracking-tight">
-                                OSCs Cadastradas
-                            </CardTitle>
-                            <p className="text-[12px] font-medium text-zinc-500">
-                                Total: {oscs.length} instituições
-                            </p>
+                <CardHeader className="p-8 pb-6 space-y-6">
+                    <div className="flex items-center justify-between no-print">
+                        <Button
+                            variant="ghost"
+                            onClick={() => router.back()}
+                            className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors -ml-4"
+                        >
+                            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                            Voltar para o Painel
+                        </Button>
+
+                        <Button
+                            onClick={handlePrint}
+                            variant="outline"
+                            className="h-10 px-4 rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 hover:bg-blue-900 hover:text-white transition-all gap-2 font-bold text-[11px] uppercase tracking-widest"
+                        >
+                            <Printer className="h-4 w-4" />
+                            Imprimir Lista
+                        </Button>
+                    </div>
+
+                    <div className="flex flex-row items-center justify-between space-y-0">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400 rounded-xl">
+                                <Building2 className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-50 tracking-tight">
+                                    OSCs Cadastradas
+                                </CardTitle>
+                                <p className="text-[12px] font-medium text-zinc-500">
+                                    Total: {oscs.length} instituições
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <Button
-                        onClick={handlePrint}
-                        variant="outline"
-                        className="no-print h-10 px-4 rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 hover:bg-blue-900 hover:text-white transition-all gap-2 font-bold text-[11px] uppercase tracking-widest"
-                    >
-                        <Printer className="h-4 w-4" />
-                        Imprimir Lista
-                    </Button>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
