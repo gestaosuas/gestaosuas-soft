@@ -203,6 +203,8 @@ export default async function DirectoratePage({
                             {[
                                 { label: "Ver Dados CRAS", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=cras&directorate_id=${directorate.id}`, icon: Database },
                                 { label: "Dashboard CRAS", desc: "Resultados e metas institucionais", href: `/dashboard/graficos?setor=cras&directorate_id=${directorate.id}`, icon: BarChart3 },
+                                { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=cras&directorate_id=${directorate.id}`, icon: FileText },
+                                { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=cras&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => (
                                 <Link key={idx} href={item.href} className="group">
                                     <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">

@@ -1,4 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/admin"
+import { getCachedProfile } from "@/app/dashboard/cached-data"
 import MonthlyReportEditor from "./editor"
 import { redirect } from "next/navigation"
 
@@ -14,43 +16,48 @@ export default async function MonthlyReportPage({
 
     if (!user) redirect('/login')
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select(`
-            *,
-            profile_directorates (
-                directorates (*)
-            )
-        `)
-        .eq('id', user.id)
-        .single()
-
-    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
-    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+    const cachedProfile = await getCachedProfile(user.id)
+    const isAdmin = cachedProfile?.role === 'admin'
 
     let directorate = null;
 
     if (directorate_id) {
-        const { data: requestedDirectorate } = await supabase
+        const adminSupabase = createAdminClient()
+        const { data: requestedDirectorate } = await adminSupabase
             .from('directorates')
             .select('*')
             .eq('id', directorate_id)
             .single()
 
         if (requestedDirectorate) {
+            // Check permissions using the cached profile data which comes from admin context
             // @ts-ignore
-            const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates) || []
+            const userDirectorates = cachedProfile?.directorates || []
             const isLinked = userDirectorates.some((d: any) => d.id === directorate_id)
 
             if (isAdmin || isLinked) {
                 directorate = requestedDirectorate
             } else {
-                return <div>Acesso não autorizado.</div>
+                return (
+                    <div className="flex h-[80vh] items-center justify-center">
+                        <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 dark:border-red-900/20">
+                            <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Acesso não autorizado</h2>
+                            <p className="text-zinc-600 dark:text-zinc-400">Você não tem permissão para acessar esta diretoria.</p>
+                        </div>
+                    </div>
+                )
             }
         }
     }
 
-    if (!directorate) return <div>Diretoria não encontrada.</div>
+    if (!directorate) return (
+        <div className="flex h-[80vh] items-center justify-center">
+            <div className="p-8 text-center">
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Diretoria não encontrada</h2>
+                <p className="text-zinc-500">Verifique se o link está correto ou contate o administrador.</p>
+            </div>
+        </div>
+    )
 
     return (
         <div className="container mx-auto max-w-5xl py-8">
