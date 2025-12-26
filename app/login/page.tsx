@@ -27,9 +27,9 @@ export default async function LoginPage({
 
             <main className="w-full max-w-[380px] animate-in fade-in slide-in-from-bottom-3 duration-1000">
                 <header className="text-center mb-10 pt-8 flex flex-col items-center">
-                    <div className="w-16 h-16 bg-blue-900 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-blue-900/20 transform hover:scale-105 transition-all duration-500">
+                    <div className="w-20 h-20 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-zinc-200/50 dark:shadow-none transform hover:scale-105 transition-all duration-500 border border-zinc-100 dark:border-zinc-700">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/logo-vigilancia.png" alt="Logo" className="w-10 h-10 object-contain brightness-0 invert" />
+                        <img src="/logo-vigilancia.png" alt="Logo" className="w-12 h-12 object-contain" />
                     </div>
                     <div className="space-y-2">
                         <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
