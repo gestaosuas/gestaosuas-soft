@@ -2,24 +2,29 @@ import { createClient } from "@/utils/supabase/server"
 import { SubmissionFormClient } from "./form-client"
 import { FormDefinition } from "@/components/form-engine"
 import { redirect } from "next/navigation"
+import { createAdminClient } from "@/utils/supabase/admin"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
+import { CRAS_FORM_DEFINITION } from "@/app/dashboard/cras-config"
 
 export default async function NewReportPage({
     searchParams,
 }: {
-    searchParams: Promise<{ setor?: string, directorate_id?: string }>
+    searchParams: Promise<{ setor?: string, directorate_id?: string, unit?: string }>
 }) {
-    const { setor, directorate_id } = await searchParams
+    const { setor, directorate_id, unit } = await searchParams
     const isCP = setor === 'centros'
     const isBeneficios = setor === 'beneficios'
+    const isCRAS = setor === 'cras'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
-    const { data: profile } = await supabase
+    const adminSupabase = createAdminClient()
+
+    const { data: profile } = await adminSupabase
         .from('profiles')
         .select(`
             *,
@@ -36,8 +41,8 @@ export default async function NewReportPage({
     let directorate = null;
 
     if (directorate_id) {
-        // Fetch the requested directorate details
-        const { data: requestedDirectorate } = await supabase
+        // Fetch the requested directorate details using admin client
+        const { data: requestedDirectorate } = await adminSupabase
             .from('directorates')
             .select('*')
             .eq('id', directorate_id)
@@ -81,15 +86,21 @@ export default async function NewReportPage({
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios'))
         } else if (isCP || setor === 'sine') {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('profis') || d.name.toLowerCase().includes('sine'))
+        } else if (isCRAS) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('cras'))
         }
 
         // If still not found and admin, fetch all to try and find a match
         if (!directorate && isAdmin) {
-            const { data: allDirs } = await supabase.from('directorates').select('*')
+            const { data: allDirs } = await adminSupabase.from('directorates').select('*')
+            const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
             if (isBeneficios) {
-                directorate = allDirs?.find(d => d.name.toLowerCase().includes('benefícios'))
+                directorate = allDirs?.find(d => normalize(d.name).includes('beneficios'))
             } else if (isCP || setor === 'sine') {
-                directorate = allDirs?.find(d => d.name.toLowerCase().includes('profis') || d.name.toLowerCase().includes('sine'))
+                directorate = allDirs?.find(d => normalize(d.name).includes('profis') || normalize(d.name).includes('sine'))
+            } else if (isCRAS) {
+                directorate = allDirs?.find(d => normalize(d.name).includes('cras'))
             }
         }
 
@@ -101,8 +112,17 @@ export default async function NewReportPage({
         }
     }
 
+    if (!directorate) {
+        return (
+            <div className="p-8 text-center">
+                <h2 className="text-xl font-bold text-red-600 mb-2">Diretoria não encontrada ou sem permissão</h2>
+                <p>Favor contatar o administrador ou verificar se você possui as permissões necessárias.</p>
+            </div>
+        )
+    }
+
     // Choose Form Definition based on setor
-    let formDefinition = directorate.form_definition as FormDefinition
+    let formDefinition = (directorate as any).form_definition as FormDefinition
     let titleContext = directorate.name
 
     if (isCP) {
@@ -113,6 +133,11 @@ export default async function NewReportPage({
     if (isBeneficios) {
         formDefinition = BENEFICIOS_FORM_DEFINITION
         titleContext = "Benefícios Socioassistenciais"
+    }
+
+    if (isCRAS) {
+        formDefinition = CRAS_FORM_DEFINITION
+        titleContext = "CRAS"
     }
 
     if (setor === 'sine') {
@@ -130,6 +155,7 @@ export default async function NewReportPage({
                 directorateName={titleContext}
                 directorateId={directorate.id}
                 setor={setor}
+                unit={unit}
                 isAdmin={isAdmin}
             />
         </div>

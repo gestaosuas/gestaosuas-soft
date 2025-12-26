@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, FileText, Calendar, Table as TableIcon } from "lucide-react"
 import { redirect } from "next/navigation"
 
+import { YearSelector } from "@/components/year-selector"
+
 export default async function ReportListPage({
     searchParams,
 }: {
-    searchParams: Promise<{ setor?: string, directorate_id?: string }>
+    searchParams: Promise<{ setor?: string, directorate_id?: string, year?: string }>
 }) {
-    const { setor, directorate_id } = await searchParams
+    const { setor, directorate_id, year } = await searchParams
+    const selectedYear = Number(year) || new Date().getFullYear()
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -24,7 +27,11 @@ export default async function ReportListPage({
 
     // Filter to show ONLY Narrative Reports (containing _report_content)
     // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
-    const narrativeSubmissions = submissions?.filter((sub) => sub.data && sub.data._report_content) || []
+    const narrativeSubmissions = submissions?.filter((sub) =>
+        sub.data &&
+        sub.data._report_content &&
+        sub.year === selectedYear
+    ) || []
 
     // Basic permission check
     // Omitted strictly for brevity as we are just listing, but in prod should verify link
@@ -33,19 +40,24 @@ export default async function ReportListPage({
 
     return (
         <div className="container mx-auto max-w-5xl py-8 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
-            <header className="flex items-center gap-6 mb-12 px-2">
-                <Link href={`/dashboard/diretoria/${directorate_id}`}>
-                    <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
-                        <ArrowLeft className="h-5 w-5 text-zinc-500" />
-                    </Button>
-                </Link>
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
-                        Histórico de Relatórios
-                    </h1>
-                    <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
-                        Acervo de registros e narrativas consolidadas.
-                    </p>
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 px-2">
+                <div className="flex items-center gap-6">
+                    <Link href={`/dashboard/diretoria/${directorate_id}`}>
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
+                        </Button>
+                    </Link>
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                            Histórico de Relatórios
+                        </h1>
+                        <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
+                            Acervo de registros e narrativas consolidadas de {selectedYear}.
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <YearSelector currentYear={selectedYear} />
                 </div>
             </header>
 

@@ -15,12 +15,14 @@ export function SubmissionFormClient({
     directorateName,
     directorateId,
     setor,
+    unit,
     isAdmin = false
 }: {
     definition: FormDefinition,
     directorateName: string,
     directorateId: string,
     setor?: string,
+    unit?: string,
     isAdmin?: boolean
 }) {
     const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1))
@@ -34,13 +36,17 @@ export function SubmissionFormClient({
 
         setLoading(true)
         try {
-            const result = await submitReport(data, Number(month), Number(year), directorateId, setor)
+            // Include unit in data if present
+            const finalData = unit ? { ...data, _unit: unit } : data
+            const result = await submitReport(finalData, Number(month), Number(year), directorateId, setor)
             if (result?.error) {
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
+                } else if (setor === 'cras') {
+                    window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else {
                     window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
                 }
@@ -70,6 +76,12 @@ export function SubmissionFormClient({
                         </h1>
                         <div className="flex items-center gap-2">
                             <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{directorateName}</span>
+                            {unit && (
+                                <>
+                                    <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">{unit}</span>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -161,6 +173,17 @@ export function SubmissionFormClient({
                             <FormEngine
                                 definition={definition}
                                 onSubmit={handleSubmit}
+                                onDataChange={(data, setData) => {
+                                    if (setor === 'cras') {
+                                        const mes_anterior = Number(data.mes_anterior) || 0
+                                        const admitidas = Number(data.admitidas) || 0
+                                        const total = mes_anterior + admitidas
+
+                                        if (data.atual !== total) {
+                                            setData(prev => ({ ...prev, atual: total }))
+                                        }
+                                    }
+                                }}
                                 disabled={loading}
                             />
                         </CardContent>

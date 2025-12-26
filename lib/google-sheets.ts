@@ -143,6 +143,6 @@ export async function validateSheetExists(spreadsheetId: string, sheetName: stri
         return { exists: true, available: sheetNames };
     } catch (e: any) {
         console.error("Error validating sheet:", e);
-        return { exists: true, available: [] };
+        return { exists: false, available: [] };
     }
 }

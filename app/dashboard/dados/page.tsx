@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server"
-import { getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
+import { getCachedSubmissionsForUser, getCachedProfile, getCachedDirectorates } from "@/app/dashboard/cached-data"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,9 @@ import { FormDefinition } from "@/components/form-engine"
 
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
+import { CRAS_FORM_DEFINITION, CRAS_UNITS } from "@/app/dashboard/cras-config"
 import { PrintExportControls } from "@/components/print-export-controls"
+import { YearSelector } from "@/components/year-selector"
 
 export default async function DataPage({
     searchParams,
@@ -26,40 +28,36 @@ export default async function DataPage({
 }) {
     const { year, setor, directorate_id } = await searchParams
     const selectedYear = Number(year) || new Date().getFullYear()
-    const isCP = setor === 'centros'
-    const isBeneficios = setor === 'beneficios'
+    let isCP = setor === 'centros'
+    let isBeneficios = setor === 'beneficios'
+    let isCRAS = setor === 'cras'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select(`
-            *,
-            profile_directorates (
-                directorates (*)
-            )
-        `)
-        .eq('id', user.id)
-        .single()
+    // Use cached profile (Admin-safe)
+    const profile = await getCachedProfile(user.id)
 
-    if (!profile) return <div>Perfil não encontrado.</div>
+    console.log("[DEBUG] DataPage - User:", user.email)
+    console.log("[DEBUG] DataPage - Profile Role:", profile?.role || 'Guest (Email Admin)')
+    console.log("[DEBUG] DataPage - SearchParams:", { year, setor, directorate_id })
+
+    // If no profile and not email admin, return early
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    if (!profile && !isEmailAdmin) return <div>Perfil não encontrado.</div>
 
     // Flatten directorates
-    // @ts-ignore
-    const userDirectorates = profile.profile_directorates?.map(pd => pd.directorates) || []
+    const userDirectorates = profile?.directorates || []
 
     let directorate = null
-
-    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
-    const isAdmin = profile.role === 'admin' || isEmailAdmin
+    const isAdmin = profile?.role === 'admin' || isEmailAdmin
 
     if (directorate_id) {
         if (isAdmin) {
-            const { data: d } = await supabase.from('directorates').select('*').eq('id', directorate_id).single()
-            directorate = d
+            const all = await getCachedDirectorates()
+            directorate = all?.find(d => d.id === directorate_id)
         } else {
             // Check if user is linked to the requested directorate
             const isLinked = userDirectorates.some((d: any) => d.id === directorate_id)
@@ -71,28 +69,50 @@ export default async function DataPage({
 
     if (!directorate) {
         if (isBeneficios) {
-            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('benefícios') || d.name.toUpperCase().includes('BENEFICIOS'))
+            directorate = userDirectorates.find((d: any) => {
+                const norm = d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                return norm.includes('beneficios')
+            })
         } else if (isCP || setor === 'sine') {
-            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('formação profissional') || d.name.toLowerCase().includes('sine'))
+            directorate = userDirectorates.find((d: any) => {
+                const norm = d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                return norm.includes('formacao') || norm.includes('sine') || norm.includes('profissional')
+            })
         } else {
             // Default / First one
             directorate = userDirectorates[0]
         }
     }
 
-    // Admin Override: If admin, fetch all directorates to find the target one?
-    // Access control: If user is admin (profile.role === 'admin'), they can see any sector.
+    // Admin Override: Global Search
     if (isAdmin && !directorate) {
-        // If admin didn't find it in their "assigned" list (which might be empty), find it by query
-        const { data: allDirs } = await supabase.from('directorates').select('*')
-        if (isBeneficios) {
-            directorate = allDirs?.find(d => d.name.toLowerCase().includes('benefícios'))
-        } else if (isCP || setor === 'sine') {
-            directorate = allDirs?.find(d => d.name.toLowerCase().includes('formação'))
+        const allDirs = await getCachedDirectorates()
+        if (allDirs) {
+            if (isBeneficios) {
+                directorate = allDirs.find(d => {
+                    const norm = d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    return norm.includes('beneficios')
+                })
+            } else if (isCP || setor === 'sine') {
+                directorate = allDirs.find(d => {
+                    const norm = d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    return norm.includes('formacao') || norm.includes('sine') || norm.includes('profissional')
+                })
+            }
         }
     }
 
     if (!directorate) return <div className="p-8 text-center text-red-500">Você não tem permissão para visualizar dados desta diretoria ou ela não foi encontrada.</div>
+
+    console.log("[DEBUG] DataPage - Final Directorate:", directorate?.name)
+
+    // Ensure sector is set based on resolved directorate if it was missing
+    if (directorate && !isBeneficios && !isCP && !isCRAS && setor !== 'sine') {
+        const norm = directorate.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        if (norm.includes('beneficios')) isBeneficios = true
+        else if (norm.includes('formacao') || norm.includes('centro') || norm.includes('profissional')) isCP = true
+        else if (norm.includes('cras')) isCRAS = true
+    }
 
     // Choose Form Definition based on setor
     let formDefinition = directorate.form_definition as FormDefinition
@@ -117,6 +137,12 @@ export default async function DataPage({
         printTitle = titleContext
     }
 
+    if (isCRAS) {
+        formDefinition = CRAS_FORM_DEFINITION
+        titleContext = `Dados CRAS ${selectedYear}`
+        printTitle = titleContext
+    }
+
     // Buscar Submissões do Ano (Securely)
     // We filter by year in memory since the cache returns all months (it's efficient enough)
     // The previous code fetched all directorate submissions anyway? No, filtering by year/directorate on DB.
@@ -124,12 +150,30 @@ export default async function DataPage({
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
     const submissions = allSubmissions.filter((s: any) => s.year === selectedYear)
 
-    // Organizar dados em um mapa fácil: month -> dataObject
-    const dataByMonth = new Map<number, Record<string, any>>()
+    // Organizar dados em um mapa fácil: unit -> month -> dataObject
+    const dataByUnitAndMonth = new Map<string, Map<number, Record<string, any>>>()
 
     submissions?.forEach(sub => {
-        dataByMonth.set(sub.month, sub.data)
+        if (sub.data._is_multi_unit && sub.data.units) {
+            // New format: multiple units in one row
+            Object.entries(sub.data.units).forEach(([unitName, unitData]: [string, any]) => {
+                if (!dataByUnitAndMonth.has(unitName)) {
+                    dataByUnitAndMonth.set(unitName, new Map())
+                }
+                dataByUnitAndMonth.get(unitName)!.set(sub.month, unitData)
+            })
+        } else {
+            // Old flat format or single-unit directorates
+            const unitName = sub.data._unit || 'Principal'
+            if (!dataByUnitAndMonth.has(unitName)) {
+                dataByUnitAndMonth.set(unitName, new Map())
+            }
+            dataByUnitAndMonth.get(unitName)!.set(sub.month, sub.data)
+        }
     })
+
+    // If not CRAS, we expect only one logical unit (the directorate itself)
+    const unitsToRender = isCRAS ? CRAS_UNITS : ['Principal']
 
     const months = [
         "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -140,7 +184,7 @@ export default async function DataPage({
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 w-full max-w-[98%] mx-auto py-8">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
                 <div className="flex items-center gap-6">
-                    <Link href={isBeneficios ? `/dashboard/beneficios` : `/dashboard/diretoria/${directorate.id}`}>
+                    <Link href={`/dashboard/diretoria/${directorate.id}`}>
                         <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
                             <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Button>
@@ -159,7 +203,9 @@ export default async function DataPage({
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 print:hidden">
+                <div className="flex items-center gap-4 print:hidden">
+                    <YearSelector currentYear={selectedYear} />
+                    <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden md:block"></div>
                     <PrintExportControls />
                 </div>
             </header>
@@ -217,74 +263,96 @@ export default async function DataPage({
             `}} />
 
             <div className="space-y-16">
-                {formDefinition.sections.map((section, sIdx) => {
-                    const sectionIndicators = section.fields
+                {unitsToRender.map((unitName) => {
+                    const unitData = dataByUnitAndMonth.get(unitName) || new Map<number, Record<string, any>>()
+
+                    // Skip units with no data if it's CRAS (optional, but requested "all tables")
+                    // Actually, the user asked to see all tables, so we'll show them even if empty
 
                     return (
-                        <div key={sIdx} className="space-y-8 print-section">
-                            <div className="flex items-center gap-3 px-2">
-                                <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                                <h2 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">
-                                    {section.title}
-                                </h2>
-                            </div>
+                        <div key={unitName} className="space-y-12 pb-12 border-b border-zinc-100 dark:border-zinc-800 last:border-0 last:pb-0">
+                            {isCRAS && (
+                                <div className="flex items-center gap-4 px-2">
+                                    <h2 className="text-xl font-black text-blue-900 dark:text-blue-100 uppercase tracking-tight">
+                                        {unitName}
+                                    </h2>
+                                    <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
+                                </div>
+                            )}
 
-                            <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
-                                <div className="overflow-x-auto custom-scrollbar">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
-                                                <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
-                                                    Atributo / Indicador
-                                                </TableHead>
-                                                {months.map((m, i) => (
-                                                    <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
-                                                        {m}
-                                                    </TableHead>
-                                                ))}
-                                                <TableHead className="text-center font-bold text-zinc-900 dark:text-zinc-50 text-[10px] h-14 px-1 bg-zinc-50/80 dark:bg-zinc-800/40 uppercase tracking-widest">Acumulado</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-                                            {sectionIndicators.map((indicator) => {
-                                                let rowTotal = 0
-                                                return (
-                                                    <TableRow key={indicator.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
-                                                        <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight" title={indicator.label}>
-                                                            {indicator.label}
-                                                        </TableCell>
-                                                        {months.map((_, idx) => {
-                                                            const monthNum = idx + 1
-                                                            const monthData = dataByMonth.get(monthNum)
-                                                            const val = monthData?.[indicator.id]
-                                                            const numVal = Number(val)
+                            {formDefinition.sections.map((section, sIdx) => {
+                                const sectionIndicators = section.fields
 
-                                                            if (!isNaN(numVal)) {
-                                                                rowTotal += numVal
-                                                            }
+                                return (
+                                    <div key={sIdx} className="space-y-8 print-section">
+                                        {!isCRAS && (
+                                            <div className="flex items-center gap-3 px-2">
+                                                <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                                                <h2 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">
+                                                    {section.title}
+                                                </h2>
+                                            </div>
+                                        )}
 
+                                        <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
+                                            <div className="overflow-x-auto custom-scrollbar">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Atributo / Indicador
+                                                            </TableHead>
+                                                            {months.map((m, i) => (
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
+                                                                    {m}
+                                                                </TableHead>
+                                                            ))}
+                                                            <TableHead className="text-center font-bold text-zinc-900 dark:text-zinc-50 text-[10px] h-14 px-1 bg-zinc-50/80 dark:bg-zinc-800/40 uppercase tracking-widest">Acumulado</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                                                        {sectionIndicators.map((indicator) => {
+                                                            let rowTotal = 0
                                                             return (
-                                                                <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
-                                                                    {val !== undefined && val !== '' ? (
-                                                                        <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                                                                            {val}
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-zinc-200 dark:text-zinc-800">-</span>
-                                                                    )}
-                                                                </TableCell>
+                                                                <TableRow key={indicator.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
+                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight" title={indicator.label}>
+                                                                        {indicator.label}
+                                                                    </TableCell>
+                                                                    {months.map((_, idx) => {
+                                                                        const monthNum = idx + 1
+                                                                        const monthData = unitData.get(monthNum)
+                                                                        const val = monthData?.[indicator.id]
+                                                                        const numVal = Number(val)
+
+                                                                        if (!isNaN(numVal)) {
+                                                                            rowTotal += numVal
+                                                                        }
+
+                                                                        return (
+                                                                            <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
+                                                                                {val !== undefined && val !== '' ? (
+                                                                                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                                                                                        {val}
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="text-zinc-200 dark:text-zinc-800">-</span>
+                                                                                )}
+                                                                            </TableCell>
+                                                                        )
+                                                                    })}
+                                                                    <TableCell className="text-center font-bold text-[12px] text-zinc-900 dark:text-zinc-50 bg-zinc-50/30 dark:bg-zinc-800/20 p-0">
+                                                                        {rowTotal > 0 ? rowTotal.toLocaleString('pt-BR') : '-'}
+                                                                    </TableCell>
+                                                                </TableRow>
                                                             )
                                                         })}
-                                                        <TableCell className="text-center font-bold text-[12px] text-zinc-900 dark:text-zinc-50 bg-zinc-50/30 dark:bg-zinc-800/20 p-0">
-                                                            {rowTotal > 0 ? rowTotal.toLocaleString('pt-BR') : '-'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </Card>
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                )
+                            })}
                         </div>
                     )
                 })}

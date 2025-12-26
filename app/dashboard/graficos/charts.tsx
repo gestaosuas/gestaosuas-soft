@@ -19,19 +19,19 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function MetricsCards({ data, monthName }: { data: any, monthName: string }) {
+export function MetricsCards({ data, monthName, compact = false }: { data: any, monthName: string, compact?: boolean }) {
     // data is { label: string, value: number, color: string }[]
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-${Math.min(data.length, 7)} gap-3`}>
             {data.map((item: any, i: number) => (
-                <Card key={i} className="border-l-4 shadow-sm" style={{ borderLeftColor: item.color }}>
-                    <CardHeader className="p-4 pb-2">
-                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {item.label} ({monthName})
+                <Card key={i} className={`border-l-4 shadow-sm transition-all hover:translate-y-[-2px] ${compact ? 'py-1.5' : 'py-2'}`} style={{ borderLeftColor: item.color }}>
+                    <CardHeader className={`${compact ? 'p-3' : 'p-4'} pb-1`}>
+                        <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-tight">
+                            {item.label}
                         </h3>
                     </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="text-2xl font-bold" style={{ color: item.color }}>
+                    <CardContent className={`${compact ? 'p-3' : 'p-4'} pt-0`}>
+                        <div className="text-2xl font-black tracking-tight" style={{ color: item.color }}>
                             {item.value.toLocaleString('pt-BR')}
                         </div>
                     </CardContent>
@@ -44,13 +44,13 @@ export function MetricsCards({ data, monthName }: { data: any, monthName: string
 export function ServicesBarChart({ data }: { data: any[] }) {
     return (
         <Card className="shadow-sm">
-            <CardHeader>
+            <CardHeader className="p-3">
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     Serviços
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[220px] p-2 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         layout="vertical"
@@ -88,13 +88,13 @@ export function ServicesBarChart({ data }: { data: any[] }) {
 export function AttendanceLineChart({ data }: { data: any[] }) {
     return (
         <Card className="shadow-sm">
-            <CardHeader>
+            <CardHeader className="p-3">
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     Atendimento ao Empregador e ao Trabalhador
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[220px] p-2 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
@@ -159,13 +159,13 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
 export function GenericLineChart({ data, title, dataKey, color }: { data: any[], title: string, dataKey: string, color: string }) {
     return (
         <Card className="shadow-sm">
-            <CardHeader>
+            <CardHeader className="p-3">
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
                     {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[220px] p-2 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -203,13 +203,13 @@ export function GenericLineChart({ data, title, dataKey, color }: { data: any[],
 export function ComparisonLineChart({ data, title, keys, colors }: { data: any[], title: string, keys: string[], colors: string[] }) {
     return (
         <Card className="shadow-sm">
-            <CardHeader>
+            <CardHeader className="p-3">
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[220px] p-2 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -275,13 +275,13 @@ export function GenderPieChart({ data }: { data: any[] }) {
 
     return (
         <Card className="shadow-sm">
-            <CardHeader>
+            <CardHeader className="p-3">
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     Gênero
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[220px] p-2 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie

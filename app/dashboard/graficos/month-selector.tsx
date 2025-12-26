@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export function MonthSelector({ currentMonth }: { currentMonth: number }) {
+export function MonthSelector({ currentMonth }: { currentMonth: number | string }) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -30,8 +30,9 @@ export function MonthSelector({ currentMonth }: { currentMonth: number }) {
             <select
                 value={currentMonth}
                 onChange={handleMonthChange}
-                className="h-10 w-[180px] appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus:ring-zinc-300 cursor-pointer"
+                className="h-10 w-[180px] appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus:ring-zinc-300 cursor-pointer font-medium text-zinc-900 dark:text-zinc-100"
             >
+                <option value="all">Todos os Meses</option>
                 {months.map((month, index) => (
                     <option key={index} value={index + 1}>
                         {month}

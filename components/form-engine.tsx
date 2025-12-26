@@ -11,6 +11,7 @@ export type FieldDefinition = {
     label: string
     type: 'text' | 'number' | 'date'
     required?: boolean
+    disabled?: boolean
 }
 
 export type SectionDefinition = {
@@ -26,17 +27,25 @@ export function FormEngine({
     definition,
     initialData = {},
     onSubmit,
+    onDataChange,
     disabled = false
 }: {
     definition: FormDefinition,
     initialData?: Record<string, any>,
     onSubmit: (data: Record<string, any>) => void
+    onDataChange?: (data: Record<string, any>, setData: (data: Record<string, any> | ((prev: Record<string, any>) => Record<string, any>)) => void) => void
     disabled?: boolean
 }) {
     const [formData, setFormData] = useState<Record<string, any>>(initialData)
 
     const handleChange = (id: string, value: any) => {
-        setFormData(prev => ({ ...prev, [id]: value }))
+        setFormData(prev => {
+            const newData = { ...prev, [id]: value }
+            if (onDataChange) {
+                onDataChange(newData, setFormData)
+            }
+            return newData
+        })
     }
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -73,7 +82,7 @@ export function FormEngine({
                                     name={field.id}
                                     type={field.type}
                                     onChange={(e) => handleChange(field.id, e.target.value)}
-                                    disabled={disabled}
+                                    disabled={disabled || field.disabled}
                                     required={field.required}
                                     value={formData[field.id] || ''}
                                     className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium"

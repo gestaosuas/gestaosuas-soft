@@ -1,9 +1,10 @@
-
-import { getCachedDirectorate } from "@/app/dashboard/cached-data"
-import { notFound } from "next/navigation"
+import { getCachedDirectorate, getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
+import { notFound, redirect } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList } from "lucide-react"
+import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { CRAS_UNITS } from "@/app/dashboard/cras-config"
+import { createClient } from "@/utils/supabase/server"
 
 export default async function DirectoratePage({
     params,
@@ -22,6 +23,20 @@ export default async function DirectoratePage({
     const isCP = normalizedName.includes('formacao') || normalizedName.includes('profissional') || normalizedName.includes('centro') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
     const isSubvencao = normalizedName.includes('subvencao') || id === '63553b96-3771-4842-9f45-630c7558adac'
+    const isCRAS = normalizedName.includes('cras')
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
+
+    const submissions = await getCachedSubmissionsForUser(user.id, directorate.id)
+
+    const getMonthName = (month: number) => {
+        return new Date(0, month - 1).toLocaleString('pt-BR', { month: 'long' })
+    }
+
+    const latestSubmission = submissions?.[0]
+    const latestMonthSINE_CP = latestSubmission ? getMonthName(latestSubmission.month) : null
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000">
@@ -70,7 +85,8 @@ export default async function DirectoratePage({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: "Enviar Indicadores", desc: "Indicadores numéricos de desempenho", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Atualizar Dados SINE", desc: "Indicadores numéricos de desempenho", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Dashboard SINE", desc: "Gráficos e performance", href: `/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`, icon: BarChart3 },
                                     { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`, icon: FileText },
                                     { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
                                     { label: "Dados SINE", desc: "Consulta ao banco de registros", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
@@ -78,8 +94,16 @@ export default async function DirectoratePage({
                                     <Link key={idx} href={item.href} className="group">
                                         <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                                             <CardHeader className="p-6">
-                                                <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-4">
-                                                    <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
+                                                        <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                    </div>
+                                                    {item.label === "Atualizar Dados SINE" && latestMonthSINE_CP && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-md">
+                                                            <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                                                            <span className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês Atualizado: {latestMonthSINE_CP}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <CardTitle className="text-[15px] font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
                                                 <CardDescription className="text-[12px] text-zinc-500 mt-1">{item.desc}</CardDescription>
@@ -100,15 +124,23 @@ export default async function DirectoratePage({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {[
-                                    { label: "Enviar Relatório CP", desc: "Performance dos Centros", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
-                                    { label: "Consulta de Dados", desc: "Histórico de procedimentos", href: `/dashboard/dados?setor=centros&directorate_id=${directorate.id}`, icon: Database },
-                                    { label: "Analytics CP", desc: "Gráficos e visualização", href: `/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`, icon: BarChart3 },
+                                    { label: "Atualizar Dados CP", desc: "Performance dos Centros", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Dados CP", desc: "Histórico de procedimentos", href: `/dashboard/dados?setor=centros&directorate_id=${directorate.id}`, icon: Database },
+                                    { label: "Dashboard CP", desc: "Gráficos e visualização", href: `/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`, icon: BarChart3 },
                                 ].map((item, idx) => (
                                     <Link key={idx} href={item.href} className="group">
                                         <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                                             <CardHeader className="p-6">
-                                                <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-4">
-                                                    <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
+                                                        <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                    </div>
+                                                    {item.label === "Atualizar Dados CP" && latestMonthSINE_CP && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-md">
+                                                            <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                                                            <span className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês Atualizado: {latestMonthSINE_CP}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <CardTitle className="text-[15px] font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
                                                 <CardDescription className="text-[12px] text-zinc-500 mt-1">{item.desc}</CardDescription>
@@ -128,17 +160,25 @@ export default async function DirectoratePage({
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
-                            { label: "Enviar Indicadores", desc: "Métricas mensais de benefícios", href: `/dashboard/relatorios/novo?setor=beneficios&directorate_id=${directorate.id}`, icon: FilePlus },
+                            { label: "Atualizar Dados", desc: "Métricas mensais de benefícios", href: `/dashboard/relatorios/novo?setor=beneficios&directorate_id=${directorate.id}`, icon: FilePlus },
                             { label: "Relatório Mensal", desc: "Consolidado qualitativo", href: `/dashboard/relatorios/mensal?setor=beneficios&directorate_id=${directorate.id}`, icon: FileText },
-                            { label: "Histórico de Envios", desc: "Relatórios mensais anteriores", href: `/dashboard/relatorios/lista?setor=beneficios&directorate_id=${directorate.id}`, icon: FolderOpen },
-                            { label: "Banco de Conhecimento", desc: "Dados consolidados", href: `/dashboard/dados?setor=beneficios&directorate_id=${directorate.id}`, icon: Database },
-                            { label: "Painel de Resultados", desc: "Analytics e KPIs", href: `/dashboard/graficos?setor=beneficios&directorate_id=${directorate.id}`, icon: BarChart3 },
+                            { label: "Ver Relatórios", desc: "Relatórios mensais anteriores", href: `/dashboard/relatorios/lista?setor=beneficios&directorate_id=${directorate.id}`, icon: FolderOpen },
+                            { label: "Dados Benefícios", desc: "Dados consolidados", href: `/dashboard/dados?setor=beneficios&directorate_id=${directorate.id}`, icon: Database },
+                            { label: "Dashboard Benefícios", desc: "Analytics e KPIs", href: `/dashboard/graficos?setor=beneficios&directorate_id=${directorate.id}`, icon: BarChart3 },
                         ].map((item, idx) => (
                             <Link key={idx} href={item.href} className="group">
                                 <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                                     <CardHeader className="p-8">
-                                        <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
-                                            <item.icon className="w-5 h-5 text-zinc-500 group-hover:text-white" />
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors shadow-sm">
+                                                <item.icon className="w-5 h-5 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            {item.label === "Atualizar Dados" && latestMonthSINE_CP && (
+                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full">
+                                                    <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                                                    <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês Atualizado: {latestMonthSINE_CP}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
                                         <CardDescription className="text-[13px] text-zinc-500 mt-1 font-medium">{item.desc}</CardDescription>
@@ -148,6 +188,76 @@ export default async function DirectoratePage({
                         ))}
                     </div>
                 </section>
+            ) : isCRAS ? (
+                <div className="space-y-16">
+                    {/* Top Cards for CRAS */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Consolidado CRAS</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { label: "Ver Dados CRAS", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=cras&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dashboard CRAS", desc: "Resultados e metas institucionais", href: `/dashboard/graficos?setor=cras&directorate_id=${directorate.id}`, icon: BarChart3 },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-1 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Unit Cards */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-green-600 dark:bg-green-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Unidades Territoriais</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {CRAS_UNITS.map((unit, idx) => {
+                                // Find latest month for THIS unit
+                                const unitLatestSub = submissions?.find(s => {
+                                    if (s.data._is_multi_unit && s.data.units) {
+                                        return !!s.data.units[unit]
+                                    }
+                                    return s.data._unit === unit
+                                })
+                                const latestUnitMonth = unitLatestSub ? getMonthName(unitLatestSub.month) : null
+
+                                return (
+                                    <Link key={idx} href={`/dashboard/relatorios/novo?setor=cras&directorate_id=${directorate.id}&unit=${encodeURIComponent(unit)}`} className="group">
+                                        <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                            <CardHeader className="p-6">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
+                                                        <FilePlus className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                    </div>
+                                                    {latestUnitMonth && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-md">
+                                                            <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                                                            <span className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês Atualizado: {latestUnitMonth}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <CardTitle className="text-[15px] font-bold text-blue-900 dark:text-blue-100 transition-colors">Atualizar Dados</CardTitle>
+                                                <CardDescription className="text-[12px] text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">{unit}</CardDescription>
+                                            </CardHeader>
+                                        </Card>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    </section>
+                </div>
             ) : isSubvencao ? (
                 <section className="space-y-12">
                     <div className="flex items-center gap-3">
