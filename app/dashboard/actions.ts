@@ -581,8 +581,10 @@ export async function getVisits(directorateId: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    const adminSupabase = createAdminClient()
+
     // Check if user is admin
-    const { data: profile } = await supabase
+    const { data: profile } = await adminSupabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
@@ -590,7 +592,6 @@ export async function getVisits(directorateId: string) {
 
     const isAdmin = profile?.role === 'admin'
 
-    const adminSupabase = createAdminClient()
     let query = adminSupabase
         .from('visits')
         .select(`

@@ -1,4 +1,4 @@
-import { getCachedDirectorate, getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
+import { getCachedDirectorate, getCachedSubmissionsForUser, getCachedProfile } from "@/app/dashboard/cached-data"
 import { notFound, redirect } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList, CheckCircle2 } from "lucide-react"
@@ -29,13 +29,8 @@ export default async function DirectoratePage({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-    const isAdmin = profile?.role === 'admin'
+    const cachedProfile = await getCachedProfile(user.id)
+    const isAdmin = cachedProfile?.role === 'admin'
 
     const submissions = await getCachedSubmissionsForUser(user.id, directorate.id)
 
