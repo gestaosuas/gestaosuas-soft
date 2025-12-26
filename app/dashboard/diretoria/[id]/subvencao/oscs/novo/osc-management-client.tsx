@@ -31,7 +31,7 @@ export function OSCManagementClient({ directorateId, initialOscs }: { directorat
                 />
             ) : (
                 <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between no-print">
                         <div>
                             <h1 className="text-3xl font-black text-blue-900 dark:text-blue-50 tracking-tight">OSCs PARCEIRAS</h1>
                             <p className="text-zinc-500 font-medium">Gerenciamento de Organizações da Sociedade Civil</p>

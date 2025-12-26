@@ -55,6 +55,11 @@ export function VisitForm({
         osc_id: initialVisit?.osc_id || initialVisit?.identificacao?.osc_id || "",
         email: initialVisit?.identificacao?.email || "",
         visit_date: initialVisit?.visit_date || initialVisit?.identificacao?.visit_date || new Date().toISOString().split('T')[0],
+        visit_date_1: initialVisit?.identificacao?.visit_date_1 || initialVisit?.visit_date || new Date().toISOString().split('T')[0],
+        visit_shift_1: initialVisit?.identificacao?.visit_shift_1 || "",
+        has_second_visit: initialVisit?.identificacao?.has_second_visit || false,
+        visit_date_2: initialVisit?.identificacao?.visit_date_2 || "",
+        visit_shift_2: initialVisit?.identificacao?.visit_shift_2 || "",
         ...(initialVisit?.identificacao || {})
     })
 
@@ -80,15 +85,15 @@ export function VisitForm({
     })
 
     const [rhData, setRhData] = useState(initialVisit?.rh_data || [
-        { cargo: "Coordenador", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Assistente Social", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Psicólogo", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Instrutor", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Educador Físico", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Auxiliar Administrativo", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Monitor", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Serviço Geral", voluntario: false, subvencao: false, outros: "" },
-        { cargo: "Cozinheiro", voluntario: false, subvencao: false, outros: "" },
+        { cargo: "Coordenador", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Assistente Social", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Psicólogo", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Instrutor", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Educador Físico", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Auxiliar Administrativo", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Monitor", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Serviço Geral", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Cozinheiro", voluntario: false, subvencao: false, quantidade: "", outros: "" },
     ])
 
     const [observacoes, setObservacoes] = useState(initialVisit?.observacoes || "")
@@ -138,7 +143,7 @@ export function VisitForm({
                 id: initialVisit?.id,
                 osc_id: formData.osc_id,
                 directorate_id: directorateId,
-                visit_date: formData.visit_date,
+                visit_date: formData.visit_date_1,
                 identificacao: formData,
                 atendimento,
                 forma_acesso: formaAcesso,
@@ -169,7 +174,7 @@ export function VisitForm({
     }
 
     const addRhRow = () => {
-        setRhData([...rhData, { cargo: "", voluntario: false, subvencao: false, outros: "" }])
+        setRhData([...rhData, { cargo: "", voluntario: false, subvencao: false, quantidade: "", outros: "" }])
     }
 
     const removeRhRow = (index: number) => {
@@ -389,11 +394,23 @@ export function VisitForm({
                                     <span className="text-[11px] font-bold uppercase shrink-0">OSC:</span>
                                     <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">{selectedOSC?.name || "-"}</span>
                                 </div>
-                                <div className="md:col-span-4 flex items-baseline gap-2">
-                                    <span className="text-[11px] font-bold uppercase shrink-0">Data da Visita:</span>
-                                    <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
-                                        {formData.visit_date ? new Date(formData.visit_date + 'T12:00:00').toLocaleDateString('pt-BR') : "-"}
-                                    </span>
+                                <div className="md:col-span-4 flex flex-col gap-1">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-[11px] font-bold uppercase shrink-0">1ª Visita:</span>
+                                        <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
+                                            {formData.visit_date_1 ? new Date(formData.visit_date_1 + 'T12:00:00').toLocaleDateString('pt-BR') : "-"}
+                                            {formData.visit_shift_1 ? ` (${formData.visit_shift_1})` : ""}
+                                        </span>
+                                    </div>
+                                    {formData.has_second_visit && (
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-[11px] font-bold uppercase shrink-0">2ª Visita:</span>
+                                            <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
+                                                {formData.visit_date_2 ? new Date(formData.visit_date_2 + 'T12:00:00').toLocaleDateString('pt-BR') : "-"}
+                                                {formData.visit_shift_2 ? ` (${formData.visit_shift_2})` : ""}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="md:col-span-6 flex items-baseline gap-2">
                                     <span className="text-[11px] font-bold uppercase shrink-0">Tipo de atividade:</span>
@@ -455,15 +472,86 @@ export function VisitForm({
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="md:col-span-4 space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400">Data da Visita</Label>
-                                    <Input
-                                        type="date"
-                                        value={formData.visit_date}
-                                        onChange={e => setFormData({ ...formData, visit_date: e.target.value })}
-                                        disabled={isLocked}
-                                        className="h-12 bg-zinc-50/50 rounded-xl font-bold"
-                                    />
+                                <div className="md:col-span-4 space-y-4">
+                                    {/* 1st Visit */}
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400">1ª Visita (Obrigatória)</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="date"
+                                                value={formData.visit_date_1}
+                                                onChange={e => setFormData({ ...formData, visit_date_1: e.target.value, visit_date: e.target.value })}
+                                                disabled={isLocked || !!initialVisit?.id}
+                                                className="h-10 bg-zinc-50/50 rounded-lg font-bold text-xs"
+                                            />
+                                            <Select
+                                                value={formData.visit_shift_1}
+                                                onValueChange={val => setFormData({ ...formData, visit_shift_1: val })}
+                                                disabled={isLocked || !!initialVisit?.id}
+                                            >
+                                                <SelectTrigger className="h-10 w-[110px] bg-zinc-50/50 text-xs font-bold">
+                                                    <SelectValue placeholder="Turno" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Manhã">Manhã</SelectItem>
+                                                    <SelectItem value="Tarde">Tarde</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+
+                                    {/* 2nd Visit Toggle & Fields */}
+                                    <div className="space-y-2">
+                                        {!formData.has_second_visit ? (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setFormData({ ...formData, has_second_visit: true })}
+                                                className="w-full h-8 text-[10px] font-bold uppercase tracking-wide text-blue-900 border-blue-200 hover:bg-blue-50"
+                                            >
+                                                <Plus className="h-3 w-3 mr-2" />
+                                                Adicionar 2ª Visita
+                                            </Button>
+                                        ) : (
+                                            <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400">2ª Visita</Label>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setFormData({ ...formData, has_second_visit: false, visit_date_2: "", visit_shift_2: "" })}
+                                                        className="h-5 px-2 text-[9px] text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        Remover
+                                                    </Button>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        type="date"
+                                                        value={formData.visit_date_2}
+                                                        onChange={e => setFormData({ ...formData, visit_date_2: e.target.value })}
+                                                        disabled={isLocked}
+                                                        className="h-10 bg-zinc-50/50 rounded-lg font-bold text-xs"
+                                                    />
+                                                    <Select
+                                                        value={formData.visit_shift_2}
+                                                        onValueChange={val => setFormData({ ...formData, visit_shift_2: val })}
+                                                        disabled={isLocked}
+                                                    >
+                                                        <SelectTrigger className="h-10 w-[110px] bg-zinc-50/50 text-xs font-bold">
+                                                            <SelectValue placeholder="Turno" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="Manhã">Manhã</SelectItem>
+                                                            <SelectItem value="Tarde">Tarde</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -473,92 +561,93 @@ export function VisitForm({
                 {/* II. ATENDIMENTO */}
                 <div className={cn(
                     "print-section locked-report",
-                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6"
+                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
                 )}>
                     <h2 className={cn(
                         "text-lg font-black tracking-tight mb-4",
-                        !isLocked ? "text-blue-900 border-none pb-0" : "text-black border-b-2 border-black"
+                        !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
                     )}>ATENDIMENTO</h2>
 
-                    <div className={cn(
-                        isLocked ? "space-y-2 px-2" : "space-y-6"
-                    )}>
-                        {isLocked ? (
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-2">
-                                    <div className="flex items-baseline gap-2 md:col-span-2">
-                                        <span className="text-[11px] font-bold uppercase shrink-0">Horário de Funcionamento:</span>
-                                        <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
-                                            {atendimento.tipo_horario === '24hrs' ? 'Atendimento 24 horas' : `${atendimento.horario_inicio || '-'} às ${atendimento.horario_fim || '-'}`}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-[11px] font-bold uppercase shrink-0">Total / Mês:</span>
-                                        <span className="text-[11px] font-black border-b border-dotted border-zinc-300 grow pb-px text-center">{atendimento.total_atendidos}</span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-[11px] font-bold uppercase shrink-0">Subvencionados:</span>
-                                        <span className="text-[11px] font-black border-b border-dotted border-zinc-300 grow pb-px text-center">{atendimento.subvencionados}</span>
-                                    </div>
+                    <div className={cn(isLocked ? "space-y-2 px-2" : "space-y-6")}>
+
+                        {/* REPORT/PRINT VIEW */}
+                        <div className={cn("space-y-3", !isLocked && "hidden print:block")}>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-2">
+                                <div className="flex items-baseline gap-2 md:col-span-2">
+                                    <span className="text-[11px] font-bold uppercase shrink-0">Horário de Funcionamento:</span>
+                                    <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">
+                                        {atendimento.tipo_horario === '24hrs' ? 'Atendimento 24 horas' : `${atendimento.horario_inicio || '-'} às ${atendimento.horario_fim || '-'}`}
+                                    </span>
                                 </div>
-
-                                <Table className="border border-zinc-200">
-                                    <TableHeader className="bg-zinc-50">
-                                        <TableRow className="hover:bg-transparent h-7">
-                                            <TableHead colSpan={3} className="text-[9px] font-black uppercase text-center h-7 text-zinc-900 border-b">
-                                                Usuários presentes no momento da visita (Conferência)
-                                            </TableHead>
-                                        </TableRow>
-                                        <TableRow className="hover:bg-transparent h-7">
-                                            <TableHead className="text-[9px] font-bold uppercase text-center h-7 border-r w-1/3">Manhã</TableHead>
-                                            <TableHead className="text-[9px] font-bold uppercase text-center h-7 border-r w-1/3">Tarde</TableHead>
-                                            <TableHead className="text-[9px] font-bold uppercase text-center h-7 w-1/3 text-blue-900">Total</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow className="hover:bg-transparent h-8">
-                                            <TableCell className="text-center font-black h-8 py-0 border-r">{atendimento.presentes.manha}</TableCell>
-                                            <TableCell className="text-center font-black h-8 py-0 border-r">{atendimento.presentes.tarde}</TableCell>
-                                            <TableCell className="text-center font-black h-8 py-0 text-blue-900 text-base">{totalPresentes}</TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
-
-                                <div className="flex items-center gap-4 py-1 border-b border-zinc-100">
-                                    <span className="text-[11px] font-bold uppercase shrink-0">Há lista de espera?</span>
-                                    <div className="flex gap-8 grow">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'sim' && "bg-black print-checkbox-checked")}>
-                                                {atendimento.lista_espera === 'sim' && <Check className="h-2 w-2 text-white print:text-black" />}
-                                            </div>
-                                            <span className="text-[10px] font-bold">Sim {atendimento.lista_espera === 'sim' && <span className="underline ml-1">({atendimento.lista_espera_qtd} pessoas)</span>}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'nao' && "bg-black print-checkbox-checked")}>
-                                                {atendimento.lista_espera === 'nao' && <Check className="h-2 w-2 text-white print:text-black" />}
-                                            </div>
-                                            <span className="text-[10px] font-bold">Não</span>
-                                        </div>
-                                    </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-[11px] font-bold uppercase shrink-0">Total / Mês:</span>
+                                    <span className="text-[11px] font-black border-b border-dotted border-zinc-300 grow pb-px text-center">{atendimento.total_atendidos}</span>
                                 </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-[11px] font-bold uppercase shrink-0">Subvencionados:</span>
+                                    <span className="text-[11px] font-black border-b border-dotted border-zinc-300 grow pb-px text-center">{atendimento.subvencionados}</span>
+                                </div>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black uppercase text-zinc-900">Tipos de atividades desenvolvidas (descritivo):</p>
-                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
-                                            {atendimento.atividades || "Não detalhado"}
+                            <Table className="border border-zinc-200">
+                                <TableHeader className="bg-zinc-50">
+                                    <TableRow className="hover:bg-transparent h-7">
+                                        <TableHead colSpan={3} className="text-[9px] font-black uppercase text-center h-7 text-zinc-900 border-b">
+                                            Usuários presentes no momento da visita (Conferência)
+                                        </TableHead>
+                                    </TableRow>
+                                    <TableRow className="hover:bg-transparent h-7">
+                                        <TableHead className="text-[9px] font-bold uppercase text-center h-7 border-r w-1/3">Manhã</TableHead>
+                                        <TableHead className="text-[9px] font-bold uppercase text-center h-7 border-r w-1/3">Tarde</TableHead>
+                                        <TableHead className="text-[9px] font-bold uppercase text-center h-7 w-1/3 text-blue-900">Total</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow className="hover:bg-transparent h-8">
+                                        <TableCell className="text-center font-black h-8 py-0 border-r">{atendimento.presentes.manha}</TableCell>
+                                        <TableCell className="text-center font-black h-8 py-0 border-r">{atendimento.presentes.tarde}</TableCell>
+                                        <TableCell className="text-center font-black h-8 py-0 text-blue-900 text-base">{Number(atendimento.presentes.manha || 0) + Number(atendimento.presentes.tarde || 0)}</TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+
+                            <div className="flex items-center gap-4 py-1 border-b border-zinc-100">
+                                <span className="text-[11px] font-bold uppercase shrink-0">Há lista de espera?</span>
+                                <div className="flex gap-8 grow">
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'sim' && "bg-black print-checkbox-checked")}>
+                                            {atendimento.lista_espera === 'sim' && <Check className="h-2 w-2 text-white print:text-black" />}
                                         </div>
+                                        <span className="text-[10px] font-bold">Sim {atendimento.lista_espera === 'sim' && <span className="underline ml-1">({atendimento.lista_espera_qtd} pessoas)</span>}</span>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black uppercase text-zinc-900">Atividades em execução no momento da visita:</p>
-                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
-                                            {atendimento.atividades_momento || "Não detalhado"}
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded-full border border-black print-checkbox", atendimento.lista_espera === 'nao' && "bg-black print-checkbox-checked")}>
+                                            {atendimento.lista_espera === 'nao' && <Check className="h-2 w-2 text-white print:text-black" />}
                                         </div>
+                                        <span className="text-[10px] font-bold">Não</span>
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="space-y-6">
+
+                            <div className="space-y-2">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase text-zinc-900">Tipos de atividades desenvolvidas (descritivo):</p>
+                                    <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
+                                        {atendimento.atividades || "Não detalhado"}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase text-zinc-900">Atividades em execução no momento da visita:</p>
+                                    <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
+                                        {atendimento.atividades_momento || "Não detalhado"}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* EDIT VIEW */}
+                        {!isLocked && (
+                            <div className="space-y-6 print:hidden">
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                                     <div className="md:col-span-1 space-y-2">
                                         <Label className="text-[10px] font-black uppercase tracking-tight text-zinc-400">Tipo de Horário</Label>
@@ -618,8 +707,8 @@ export function VisitForm({
                                         <Input
                                             type="number"
                                             value={atendimento.subvencionados}
-                                            onChange={e => setAtendimento({ ...atendimento, subvencionados: Number(e.target.value) })}
-                                            className="h-10 text-center font-bold"
+                                            readOnly
+                                            className="h-10 text-center font-bold bg-zinc-100 text-zinc-500 cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
@@ -711,53 +800,53 @@ export function VisitForm({
                 {/* III. FORMA DE ACESSO */}
                 <div className={cn(
                     "print-section locked-report",
-                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6"
+                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
                 )}>
                     <h2 className={cn(
                         "text-lg font-black tracking-tight mb-4",
-                        !isLocked ? "text-blue-900 border-none pb-0" : "text-black border-b-2 border-black"
+                        !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
                     )}>FORMA DE ACESSO DO USUÁRIO</h2>
 
-                    <div className={cn(
-                        isLocked ? "space-y-1.5 px-2" : "space-y-6"
-                    )}>
-                        {isLocked ? (
-                            <div className="flex flex-col gap-2">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")}>
-                                            {formaAcesso.demanda_espontanea && <Check className="h-2 w-2 text-white print:text-black" />}
-                                        </div>
-                                        <span className="text-[10px] font-bold">Demanda Espontânea</span>
+                    <div className={cn(isLocked ? "space-y-1.5 px-2" : "space-y-6")}>
+                        {/* REPORT/PRINT VIEW */}
+                        <div className={cn("flex flex-col gap-2", !isLocked && "hidden print:flex")}>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")}>
+                                        {formaAcesso.demanda_espontanea && <Check className="h-2 w-2 text-white print:text-black" />}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.busca_ativa && "bg-black print-checkbox-checked")}>
-                                            {formaAcesso.busca_ativa && <Check className="h-2 w-2 text-white print:text-black" />}
-                                        </div>
-                                        <span className="text-[10px] font-bold">Busca Ativa</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")}>
-                                            {formaAcesso.encaminhamento && <Check className="h-2 w-2 text-white print:text-black" />}
-                                        </div>
-                                        <span className="text-[10px] font-bold">Encaminhamento</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")}>
-                                            {formaAcesso.outros && <Check className="h-2 w-2 text-white print:text-black" />}
-                                        </div>
-                                        <span className="text-[10px] font-bold">Outros</span>
-                                    </div>
+                                    <span className="text-[10px] font-bold">Demanda Espontânea</span>
                                 </div>
-                                {formaAcesso.encaminhamento && (
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-[10px] font-black uppercase shrink-0">Quem encaminha?</span>
-                                        <span className="text-[11px] font-medium border-b border-dotted border-zinc-300 grow pb-px italic">{formaAcesso.quem_encaminha || "-"}</span>
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.busca_ativa && "bg-black print-checkbox-checked")}>
+                                        {formaAcesso.busca_ativa && <Check className="h-2 w-2 text-white print:text-black" />}
                                     </div>
-                                )}
+                                    <span className="text-[10px] font-bold">Busca Ativa</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")}>
+                                        {formaAcesso.encaminhamento && <Check className="h-2 w-2 text-white print:text-black" />}
+                                    </div>
+                                    <span className="text-[10px] font-bold">Encaminhamento</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")}>
+                                        {formaAcesso.outros && <Check className="h-2 w-2 text-white print:text-black" />}
+                                    </div>
+                                    <span className="text-[10px] font-bold">Outros</span>
+                                </div>
                             </div>
-                        ) : (
-                            <div className="space-y-6">
+                            {formaAcesso.encaminhamento && (
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-[10px] font-black uppercase shrink-0">Quem encaminha?</span>
+                                    <span className="text-[11px] font-medium border-b border-dotted border-zinc-300 grow pb-px italic">{formaAcesso.quem_encaminha || "-"}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* EDIT VIEW */}
+                        {!isLocked && (
+                            <div className="space-y-6 print:hidden">
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                     <div className="flex items-center gap-2">
                                         <Checkbox
@@ -811,19 +900,22 @@ export function VisitForm({
                 {/* V. RECURSOS HUMANOS */}
                 <div className={cn(
                     "print-section locked-report",
-                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6"
+                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
                 )}>
-                    <div className="flex items-center justify-between border-b-2 border-black mb-4">
+                    <div className={cn(
+                        "flex items-center justify-between mb-4",
+                        !isLocked ? "border-b border-zinc-200 pb-2 print:border-b-2 print:border-black" : "border-b-2 border-black"
+                    )}>
                         <h2 className={cn(
                             "text-lg font-black tracking-tight",
-                            !isLocked ? "text-blue-900 border-none pb-0" : "text-black"
+                            !isLocked ? "text-blue-900 print:text-black" : "text-black"
                         )}>RECURSOS HUMANOS</h2>
                         {!isLocked && (
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={addRhRow}
-                                className="h-8 rounded-lg border-blue-200 text-blue-900 font-bold text-[9px] uppercase tracking-widest gap-2"
+                                className="h-8 rounded-lg border-blue-200 text-blue-900 font-bold text-[9px] uppercase tracking-widest gap-2 print:hidden"
                             >
                                 <Plus className="h-3 w-3" />
                                 Adicionar Cargo
@@ -838,6 +930,7 @@ export function VisitForm({
                                     <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Cargo / Função</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Voluntário</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Subvenção</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Quantidade</TableHead>
                                     <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Outros / Observações</TableHead>
                                     {!isLocked && <TableHead className="w-[40px]"></TableHead>}
                                 </TableRow>
@@ -848,19 +941,20 @@ export function VisitForm({
                                         <TableCell className="px-4 py-1 font-bold text-zinc-700 h-8">
                                             {index < 9 ? (
                                                 <span className="text-[11px]">{row.cargo}</span>
-                                            ) : isLocked ? (
-                                                <span className="text-[11px] text-zinc-900">{row.cargo}</span>
                                             ) : (
-                                                <Input
-                                                    placeholder="Cargo"
-                                                    value={row.cargo}
-                                                    onChange={e => {
-                                                        const newData = [...rhData]
-                                                        newData[index].cargo = e.target.value
-                                                        setRhData(newData)
-                                                    }}
-                                                    className="h-7 text-[11px]"
-                                                />
+                                                <>
+                                                    <span className={cn("text-[11px] text-zinc-900", !isLocked && "hidden print:inline")}>{row.cargo}</span>
+                                                    {!isLocked && <Input
+                                                        placeholder="Cargo"
+                                                        value={row.cargo}
+                                                        onChange={e => {
+                                                            const newData = [...rhData]
+                                                            newData[index].cargo = e.target.value
+                                                            setRhData(newData)
+                                                        }}
+                                                        className="h-7 text-[11px] print:hidden"
+                                                    />}
+                                                </>
                                             )}
                                         </TableCell>
                                         <TableCell className="py-1 text-center h-8">
@@ -891,7 +985,7 @@ export function VisitForm({
                                                     }
                                                 }}
                                                 className={cn(
-                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
+                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
                                                     !isLocked && "hover:border-blue-900",
                                                     row.subvencao && "bg-black print-checkbox-checked"
                                                 )}
@@ -899,10 +993,25 @@ export function VisitForm({
                                                 {row.subvencao && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
                                             </div>
                                         </TableCell>
+                                        <TableCell className="py-1 px-4 h-8 text-center">
+                                            <span className={cn("text-[11px] font-bold text-zinc-900", !isLocked && "hidden print:inline")}>{row.quantidade || "-"}</span>
+                                            {!isLocked && (
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={row.quantidade}
+                                                    onChange={e => {
+                                                        const newData = [...rhData]
+                                                        newData[index].quantidade = e.target.value
+                                                        setRhData(newData)
+                                                    }}
+                                                    className="h-7 text-[11px] text-center print:hidden"
+                                                />
+                                            )}
+                                        </TableCell>
                                         <TableCell className="px-4 py-1 h-8">
-                                            {isLocked ? (
-                                                <span className="text-[10px] text-zinc-600 italic leading-none">{row.outros || "-"}</span>
-                                            ) : (
+                                            <span className={cn("text-[10px] text-zinc-600 italic leading-none", !isLocked && "hidden print:inline")}>{row.outros || "-"}</span>
+                                            {!isLocked && (
                                                 <Input
                                                     placeholder="..."
                                                     value={row.outros}
@@ -911,7 +1020,7 @@ export function VisitForm({
                                                         newData[index].outros = e.target.value
                                                         setRhData(newData)
                                                     }}
-                                                    className="h-7 text-[11px]"
+                                                    className="h-7 text-[11px] print:hidden"
                                                 />
                                             )}
                                         </TableCell>
@@ -941,24 +1050,26 @@ export function VisitForm({
                     "print-section locked-report",
                     !isLocked && "grid grid-cols-1 md:grid-cols-2 gap-4"
                 )}>
-                    {isLocked ? (
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">OBSERVAÇÕES</h2>
-                                <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
-                                    {observacoes || "Nenhuma observação registrada."}
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">RECOMENDAÇÕES</h2>
-                                <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
-                                    {recomendacoes || "Nenhuma recomendação registrada."}
-                                </div>
+                    {/* REPORT/PRINT VIEW */}
+                    <div className={cn("space-y-4", !isLocked && "hidden print:block")}>
+                        <div className="space-y-1">
+                            <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">OBSERVAÇÕES</h2>
+                            <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
+                                {observacoes || "Nenhuma observação registrada."}
                             </div>
                         </div>
-                    ) : (
+                        <div className="space-y-1">
+                            <h2 className="text-lg font-black tracking-tight text-black border-b-2 border-black mb-2 uppercase">RECOMENDAÇÕES</h2>
+                            <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
+                                {recomendacoes || "Nenhuma recomendação registrada."}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* EDIT VIEW */}
+                    {!isLocked && (
                         <>
-                            <Card className="overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
+                            <Card className="overflow-hidden border-none shadow-2xl bg-white rounded-2xl print:hidden">
                                 <CardHeader className="p-4 pb-1">
                                     <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">OBSERVAÇÕES</Label>
                                 </CardHeader>
@@ -970,7 +1081,7 @@ export function VisitForm({
                                     />
                                 </CardContent>
                             </Card>
-                            <Card className="overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
+                            <Card className="overflow-hidden border-none shadow-2xl bg-white rounded-2xl print:hidden">
                                 <CardHeader className="p-4 pb-1">
                                     <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">RECOMENDAÇÕES</Label>
                                 </CardHeader>
@@ -1013,7 +1124,7 @@ export function VisitForm({
                                 placeholder="Nome do Técnico 1"
                                 value={assinaturas.tecnico1_nome}
                                 onChange={e => setAssinaturas({ ...assinaturas, tecnico1_nome: e.target.value })}
-                                className="h-8 text-xs text-center border-none bg-zinc-50"
+                                className="h-8 text-xs text-center border-none bg-zinc-50 print:hidden"
                             />
                         )}
                         <div className="text-center">
@@ -1034,7 +1145,7 @@ export function VisitForm({
                                 placeholder="Nome do Técnico 2"
                                 value={assinaturas.tecnico2_nome}
                                 onChange={e => setAssinaturas({ ...assinaturas, tecnico2_nome: e.target.value })}
-                                className="h-8 text-xs text-center border-none bg-zinc-50"
+                                className="h-8 text-xs text-center border-none bg-zinc-50 print:hidden"
                             />
                         )}
                         <div className="text-center">
@@ -1042,6 +1153,7 @@ export function VisitForm({
                             <p className="text-[9px] font-black uppercase text-zinc-400">Técnico SMDS</p>
                         </div>
                     </div>
+
 
                     <div className="space-y-2">
                         <SignaturePad
@@ -1055,7 +1167,7 @@ export function VisitForm({
                                 placeholder="Nome do Responsável"
                                 value={assinaturas.responsavel_nome}
                                 onChange={e => setAssinaturas({ ...assinaturas, responsavel_nome: e.target.value })}
-                                className="h-8 text-xs text-center border-none bg-zinc-50"
+                                className="h-8 text-xs text-center border-none bg-zinc-50 print:hidden"
                             />
                         )}
                         <div className="text-center">

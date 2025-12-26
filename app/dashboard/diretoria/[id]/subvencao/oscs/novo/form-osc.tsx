@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 const ACTIVITY_TYPES = [
     "Serviço de Convivência e Fortalecimento de Vínculos – 6 a 15 anos",
@@ -62,13 +63,19 @@ export function FormOSC({
 
     const [formData, setFormData] = useState(oscToEdit || emptyForm)
 
+
+
+    const [subsidizedType, setSubsidizedType] = useState<"number" | "demand">("number")
+
     // Sync form with oscToEdit when it changes
     useEffect(() => {
         if (oscToEdit) {
             setFormData(oscToEdit)
+            setSubsidizedType(oscToEdit.subsidized_count === -1 ? "demand" : "number")
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } else {
             setFormData(emptyForm)
+            setSubsidizedType("number")
         }
     }, [oscToEdit])
 
@@ -95,19 +102,51 @@ export function FormOSC({
         }
     }
 
+    const handleNameBlur = () => {
+        if (!formData.name || oscToEdit) return
+
+        const normalizeString = (str: string) => {
+            return str
+                .toLowerCase()
+                .normalize('NFKD')
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "")
+        }
+
+        const normalizedNewName = normalizeString(formData.name)
+
+        const similarOsc = existingOscs.find(osc => {
+            const normalizedExisting = normalizeString(osc.name)
+            return normalizedExisting.includes(normalizedNewName) || normalizedNewName.includes(normalizedExisting)
+        })
+
+        if (similarOsc) {
+            alert(`Atenção: Já existe uma OSC cadastrada com nome similar: "${similarOsc.name}". verificue se não é duplicidade.`)
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
         // Similarity check (only if not editing)
         if (!oscToEdit) {
-            const normalizedNewName = formData.name.toLowerCase().trim()
+            const normalizeString = (str: string) => {
+                return str
+                    .toLowerCase()
+                    .normalize('NFKD')
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]/g, "")
+            }
+
+            const normalizedNewName = normalizeString(formData.name)
+
             const similarOsc = existingOscs.find(osc => {
-                const normalizedExisting = osc.name.toLowerCase().trim()
+                const normalizedExisting = normalizeString(osc.name)
                 return normalizedExisting.includes(normalizedNewName) || normalizedNewName.includes(normalizedExisting)
             })
 
             if (similarOsc) {
-                const confirmed = window.confirm(`Atenção: Já existe uma OSC cadastrada com o nome "${similarOsc.name}". Deseja continuar com o cadastro assim mesmo?`)
+                const confirmed = window.confirm(`Atenção: Já existe uma OSC cadastrada com o nome "${similarOsc.name}".\n\nNome novo que você digitou: "${formData.name}"\n\nDeseja continuar com o cadastro assim mesmo?`)
                 if (!confirmed) return
             }
         }
@@ -229,13 +268,41 @@ export function FormOSC({
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[12px] font-bold uppercase tracking-widest text-zinc-400">Número Subvencionado</Label>
-                                <Input
-                                    type="number"
-                                    value={formData.subsidized_count}
-                                    onChange={e => setFormData({ ...formData, subsidized_count: Number(e.target.value) })}
-                                    className="h-12 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-900/20 transition-all font-medium text-center font-bold"
-                                />
+                                <Label className="text-[12px] font-bold uppercase tracking-widest text-zinc-400">Quantidade Subvencionado</Label>
+                                <div className="space-y-3">
+                                    <RadioGroup
+                                        value={subsidizedType}
+                                        onValueChange={(value: string) => {
+                                            const type = value as "number" | "demand"
+                                            setSubsidizedType(type)
+                                            if (type === "demand") {
+                                                setFormData((prev: any) => ({ ...prev, subsidized_count: -1 }))
+                                            } else {
+                                                setFormData((prev: any) => ({ ...prev, subsidized_count: 0 }))
+                                            }
+                                        }}
+                                        className="flex items-center gap-4 py-2"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="number" id="type-number" />
+                                            <Label htmlFor="type-number" className="font-medium cursor-pointer">Número</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="demand" id="type-demand" />
+                                            <Label htmlFor="type-demand" className="font-medium cursor-pointer">Conforme Demanda</Label>
+                                        </div>
+                                    </RadioGroup>
+
+                                    {subsidizedType === "number" && (
+                                        <Input
+                                            type="number"
+                                            value={formData.subsidized_count === -1 ? 0 : formData.subsidized_count}
+                                            onChange={e => setFormData({ ...formData, subsidized_count: Number(e.target.value) })}
+                                            className="h-12 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-900/20 transition-all font-medium text-center font-bold"
+                                            min="0"
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
 
