@@ -581,15 +581,30 @@ export async function getVisits(directorateId: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    // Check if user is admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    const isAdmin = profile?.role === 'admin'
+
     const adminSupabase = createAdminClient()
-    const { data, error } = await adminSupabase
+    let query = adminSupabase
         .from('visits')
         .select(`
             *,
             oscs (name)
         `)
         .eq('directorate_id', directorateId)
-        .order('visit_date', { ascending: false })
+
+    // If not admin, only show their own visits
+    if (!isAdmin) {
+        query = query.eq('user_id', user.id)
+    }
+
+    const { data, error } = await query.order('visit_date', { ascending: false })
 
     if (error) {
         console.error("Fetch Visitas Error:", error)
