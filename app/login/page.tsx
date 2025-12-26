@@ -26,13 +26,19 @@ export default async function LoginPage({
             </div>
 
             <main className="w-full max-w-[380px] animate-in fade-in slide-in-from-bottom-3 duration-1000">
-                <header className="text-center mb-10 space-y-2">
-                    <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
-                        Bem-vindo de volta
-                    </h1>
-                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium tracking-wide italic">
-                        Sistema de Vigilância Socioassistencial • 2026
-                    </p>
+                <header className="text-center mb-10 pt-8 flex flex-col items-center">
+                    <div className="w-16 h-16 bg-blue-900 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-blue-900/20 transform hover:scale-105 transition-all duration-500">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/logo-vigilancia.png" alt="Logo" className="w-10 h-10 object-contain brightness-0 invert" />
+                    </div>
+                    <div className="space-y-2">
+                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                            Bem-vindo de volta
+                        </h1>
+                        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium tracking-wide italic">
+                            Sistema de Vigilância Socioassistencial • 2026
+                        </p>
+                    </div>
                 </header>
 
                 <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900/40 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none rounded-2xl overflow-hidden">
