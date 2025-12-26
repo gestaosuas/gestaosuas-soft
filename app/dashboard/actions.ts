@@ -291,9 +291,9 @@ export async function submitReport(formData: Record<string, any>, month: number,
         return { error: `Erro Google Sheets: ${sheetError.message || sheetError.toString()}${specificHint}${debugInfo}` }
     }
 
-    revalidatePath('/dashboard')
-    revalidateTag('submissions')
-    revalidateTag(`submissions-${directorateId}`)
+    revalidatePath('/dashboard', 'layout')
+    // revalidateTag('submissions')
+    // revalidateTag(`submissions-${directorateId}`)
     return { success: true }
 }
 
@@ -337,7 +337,7 @@ export async function submitDailyReport(date: string, directorateId: string, for
         if (error) throw new Error("Erro ao salvar relatório diário: " + error.message)
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -378,7 +378,7 @@ export async function deleteReport(reportId: string) {
         return { error: "Erro ao excluir relatório." }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -441,7 +441,7 @@ export async function submitOSC(data: {
         return { error: "Erro ao cadastrar OSC: " + error.message }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -489,7 +489,7 @@ export async function updateOSC(id: string, data: {
         return { error: "Erro ao atualizar OSC: " + error.message }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -509,7 +509,7 @@ export async function deleteOSC(id: string) {
         return { error: "Erro ao excluir OSC: " + error.message }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -555,7 +555,7 @@ export async function saveVisit(data: any) {
         return { success: true, id: newVisit.id }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -572,7 +572,7 @@ export async function finalizeVisit(id: string) {
 
     if (error) throw new Error("Erro ao finalizar visita: " + error.message)
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
@@ -644,6 +644,6 @@ export async function deleteVisit(id: string) {
 
     if (error) throw new Error("Erro ao excluir visita: " + error.message)
 
-    revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'page')
     return { success: true }
 }

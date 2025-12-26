@@ -84,7 +84,7 @@ export async function createUser(formData: FormData) {
 
 
 
-    revalidatePath('/dashboard/admin')
+    revalidatePath('/dashboard/admin', 'page')
     redirect('/dashboard/admin?success=User created')
 }
 
@@ -103,7 +103,7 @@ export async function deleteUser(userId: string) {
         throw new Error(error.message)
     }
 
-    revalidatePath('/dashboard/admin')
+    revalidatePath('/dashboard/admin', 'page')
 }
 
 export async function updateUserAccess(userId: string, directorateIds: string[]) {
@@ -152,5 +152,5 @@ export async function updateUserAccess(userId: string, directorateIds: string[])
         if (insertError) throw new Error("Failed to assign new permissions")
     }
 
-    revalidatePath('/dashboard/admin')
+    revalidatePath('/dashboard/admin', 'page')
 }
