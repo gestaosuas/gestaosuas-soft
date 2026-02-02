@@ -12,7 +12,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
     const [isCollapsed, setIsCollapsed] = useState(false)
 
     // Separate directorates by category
-    const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE', 'CRAS']
+    const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE', 'CRAS', 'CREAS Idoso e Pessoa com Deficiência']
     const mainDirectorates = directorates
         .filter(d => mainNames.includes(d.name))
         .sort((a, b) => mainNames.indexOf(a.name) - mainNames.indexOf(b.name))

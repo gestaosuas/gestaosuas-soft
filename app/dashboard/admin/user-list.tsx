@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Trash2, Edit, Shield, Check, X, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { deleteUser, updateUserAccess } from './actions'
-// If no toast, we can use simple alert or just relying on revalidate
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+
 
 type UserData = {
     id: string
@@ -160,64 +169,62 @@ export function UserList({ users, directorates }: { users: UserData[], directora
                 </div>
             </CardContent>
 
-            {/* Modal de Edição Refinado */}
-            {editingUser && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/20 dark:bg-black/20 backdrop-blur-md animate-in fade-in duration-300">
-                    <Card className="w-full max-w-xl bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-none rounded-2xl overflow-hidden">
-                        <CardHeader className="pt-10 px-8 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
-                            <div className="space-y-1">
-                                <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">Permissões de Acesso</CardTitle>
-                                <CardDescription className="text-sm font-medium text-zinc-500">
-                                    Monitoramento atribuído para <span className="text-blue-900 dark:text-blue-100 font-bold">{editingUser.name}</span>
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-8 space-y-8">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                                {directorates.map(dir => (
-                                    <label key={dir.id} className={cn(
-                                        "flex items-center gap-3 p-4 rounded-xl border transition-all cursor-pointer group",
-                                        selectedDirs.includes(dir.id)
-                                            ? "bg-blue-900 dark:bg-blue-600 border-blue-900 dark:border-blue-600 shadow-lg shadow-blue-900/10"
-                                            : "bg-zinc-50/50 dark:bg-zinc-950/40 border-zinc-100 dark:border-zinc-800/60 hover:border-blue-300 dark:hover:border-blue-700"
-                                    )}>
-                                        <div className="flex items-center h-5">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedDirs.includes(dir.id)}
-                                                onChange={() => toggleDir(dir.id)}
-                                                className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 opacity-0 absolute"
-                                            />
-                                            <div className={cn(
-                                                "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                                                selectedDirs.includes(dir.id)
-                                                    ? "bg-white dark:bg-zinc-900 border-transparent"
-                                                    : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
-                                            )}>
-                                                {selectedDirs.includes(dir.id) && <Check className="w-3 h-3 text-zinc-900 dark:text-zinc-50" />}
-                                            </div>
-                                        </div>
-                                        <span className={cn(
-                                            "text-[13px] font-bold uppercase tracking-tight transition-colors",
+            {/* Modal de Edição Refinado usando Dialog */}
+            <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+                <DialogContent className="sm:max-w-2xl bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-none p-0 overflow-hidden gap-0">
+                    <DialogHeader className="pt-10 px-8 pb-6 border-b border-zinc-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 z-10">
+                        <DialogTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">Permissões de Acesso</DialogTitle>
+                        <DialogDescription className="text-sm font-medium text-zinc-500">
+                            Monitoramento atribuído para <span className="text-blue-900 dark:text-blue-100 font-bold">{editingUser?.name}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-zinc-50/30 dark:bg-zinc-950/20">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {directorates.map(dir => (
+                                <label key={dir.id} className={cn(
+                                    "flex items-center gap-3 p-4 rounded-xl border transition-all cursor-pointer group select-none",
+                                    selectedDirs.includes(dir.id)
+                                        ? "bg-blue-900 dark:bg-blue-600 border-blue-900 dark:border-blue-600 shadow-lg shadow-blue-900/10 scale-[1.02]"
+                                        : "bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800/60 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm"
+                                )}>
+                                    <div className="flex items-center h-5">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDirs.includes(dir.id)}
+                                            onChange={() => toggleDir(dir.id)}
+                                            className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 opacity-0 absolute"
+                                        />
+                                        <div className={cn(
+                                            "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                                             selectedDirs.includes(dir.id)
-                                                ? "text-white dark:text-zinc-900"
-                                                : "text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-200"
+                                                ? "bg-white dark:bg-zinc-900 border-transparent shadow-inner"
+                                                : "bg-zinc-50 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 group-hover:border-blue-400"
                                         )}>
-                                            {dir.name}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                            <div className="flex justify-end gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800/60">
-                                <Button variant="ghost" onClick={() => setEditingUser(null)} disabled={isSaving} className="font-bold text-[11px] uppercase tracking-widest text-zinc-500 hover:text-blue-900">Descartar</Button>
-                                <Button onClick={handleSavePermissions} disabled={isSaving} className="bg-blue-900 dark:bg-blue-600 text-white font-bold px-8 rounded-lg text-[11px] uppercase tracking-widest h-11 active:scale-[0.98] transition-all shadow-lg shadow-blue-900/10">
-                                    {isSaving ? "Processando..." : "Confirmar Alterações"}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+                                            {selectedDirs.includes(dir.id) && <Check className="w-3.5 h-3.5 text-blue-900 dark:text-blue-500 stroke-[3]" />}
+                                        </div>
+                                    </div>
+                                    <span className={cn(
+                                        "text-[13px] font-bold uppercase tracking-tight transition-colors leading-tight",
+                                        selectedDirs.includes(dir.id)
+                                            ? "text-white dark:text-zinc-50"
+                                            : "text-zinc-500 dark:text-zinc-400 group-hover:text-blue-900 dark:group-hover:text-blue-200"
+                                    )}>
+                                        {dir.name}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <DialogFooter className="p-6 border-t border-zinc-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 z-10 gap-2">
+                        <Button variant="ghost" onClick={() => setEditingUser(null)} disabled={isSaving} className="font-bold text-[11px] uppercase tracking-widest text-zinc-500 hover:text-blue-900 hover:bg-zinc-50 dark:hover:bg-zinc-800">Cancelar</Button>
+                        <Button onClick={handleSavePermissions} disabled={isSaving} className="bg-blue-900 dark:bg-blue-600 text-white font-bold px-8 rounded-lg text-[11px] uppercase tracking-widest h-11 active:scale-[0.98] transition-all shadow-lg shadow-blue-900/10 hover:bg-blue-800 dark:hover:bg-blue-500">
+                            {isSaving ? "Processando..." : "Confirmar Alterações"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     )
 }

@@ -1,8 +1,8 @@
 'use client'
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
-import { submitReport } from "@/app/dashboard/actions"
-import { useState } from "react"
+import { submitReport, getPreviousMonthData } from "@/app/dashboard/actions"
+import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card"
@@ -16,6 +16,7 @@ export function SubmissionFormClient({
     directorateId,
     setor,
     unit,
+    subcategory,
     isAdmin = false
 }: {
     definition: FormDefinition,
@@ -23,11 +24,97 @@ export function SubmissionFormClient({
     directorateId: string,
     setor?: string,
     unit?: string,
+    subcategory?: string,
     isAdmin?: boolean
 }) {
     const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1))
     const [year, setYear] = useState<string>(String(new Date().getFullYear()))
     const [loading, setLoading] = useState(false)
+    const [fetchedInitialData, setFetchedInitialData] = useState<Record<string, any>>({})
+    const [dataLoaded, setDataLoaded] = useState(false)
+
+
+    // Effect to fetch previous month data when month/year changes
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadPreviousData() {
+            // Reset to avoid showing wrong data while loading
+            if (isMounted) setFetchedInitialData({})
+
+            if (setor !== 'creas') {
+                if (isMounted) {
+                    setLoading(false)
+                    setDataLoaded(true)
+                }
+                return
+            }
+
+            setLoading(true)
+            try {
+                // Ensure month/year are valid numbers
+                const m = Number(month)
+                const y = Number(year)
+
+                if (isNaN(m) || isNaN(y)) {
+                    console.warn("Invalid month or year for fetching previous data:", { month, year });
+                    return;
+                }
+
+                const prevData = await getPreviousMonthData(directorateId, m, y)
+
+                if (isMounted && prevData && Object.keys(prevData).length > 0) {
+                    let newData: any = {}
+
+                    if (setor === 'creas') {
+                        // Calculations for CREAS subcategories
+                        // We check both raw numbers and possible string values from DB
+
+                        // Helper to safely parse
+                        const getNum = (val: any) => {
+                            const n = Number(val)
+                            return isNaN(n) ? 0 : n
+                        }
+
+                        if (subcategory === 'idoso') {
+                            // FA (Famílias)
+                            // Check if we have the necessary fields in previous data
+                            if (prevData.fa_atual !== undefined) {
+                                newData.fa_mes_anterior = getNum(prevData.fa_atual) - getNum(prevData.fa_desligadas)
+                            }
+                            // IA (Idosos)
+                            if (prevData.ia_atual !== undefined) {
+                                newData.ia_mes_anterior = getNum(prevData.ia_atual) - getNum(prevData.ia_desligadas)
+                            }
+                        } else if (subcategory === 'deficiente') {
+                            // PCD
+                            if (prevData.pcd_atual !== undefined) {
+                                newData.pcd_mes_anterior = getNum(prevData.pcd_atual) - getNum(prevData.pcd_desligadas)
+                            }
+                        }
+                    }
+                    console.log("Fetched Previous Data:", prevData)
+                    console.log("Calculated New Data:", newData)
+                    setFetchedInitialData(newData)
+                } else if (isMounted) {
+                    console.log("No previous data found for CREAS or data is empty for", { directorateId, month, year, setor, subcategory });
+                    setFetchedInitialData({}); // Ensure it's empty if no data is found
+                }
+            } catch (err) {
+                console.error("Error fetching previous data", err)
+            } finally {
+                if (isMounted) {
+                    setLoading(false)
+                    setDataLoaded(true)
+                }
+            }
+        }
+
+        loadPreviousData()
+
+        return () => { isMounted = false }
+    }, [month, year, directorateId, setor, subcategory])
+
 
     const handleSubmit = async (data: Record<string, any>) => {
         if (!confirm(`Confirma o envio do relatório de ${directorateName} referente a ${month}/${year}?`)) {
@@ -36,8 +123,13 @@ export function SubmissionFormClient({
 
         setLoading(true)
         try {
-            // Include unit in data if present
-            const finalData = unit ? { ...data, _unit: unit } : data
+            // Include unit and subcategory in data if present
+            const finalData = { ...data, ...fetchedInitialData, _unit: unit, _subcategory: subcategory }
+            // Note: attributes from form (data) overwrite fetchedInitialData if collision.
+            // But we want the opposite for 'mes_anterior' if user didn't touch it?
+            // Actually 'data' comes from FormEngine. If FormEngine was initialized with fetchedInitialData, 'data' will contain it (or modified version).
+            // So just `...data` is enough, `fetchedInitialData` is passed to FormEngine.
+
             const result = await submitReport(finalData, Number(month), Number(year), directorateId, setor)
             if (result?.error) {
                 alert(result.error)
@@ -45,14 +137,15 @@ export function SubmissionFormClient({
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-                } else if (setor === 'cras') {
+                } else if (setor === 'cras' || setor === 'creas') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else {
                     window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
                 }
             }
-        } catch (e) {
-            alert("Erro inesperado ao enviar.")
+        } catch (e: any) {
+            console.error(e)
+            alert("Erro inesperado ao enviar: " + (e.message || JSON.stringify(e)))
         } finally {
             setLoading(false)
         }
@@ -171,7 +264,9 @@ export function SubmissionFormClient({
                         </CardHeader>
                         <CardContent className="p-10">
                             <FormEngine
+                                key={`${month}-${year}`} // Reset form when month/year changes to load new initialData
                                 definition={definition}
+                                initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}
                                 onDataChange={(data, setData) => {
                                     if (setor === 'cras') {
@@ -181,6 +276,35 @@ export function SubmissionFormClient({
 
                                         if (data.atual !== total) {
                                             setData(prev => ({ ...prev, atual: total }))
+                                        }
+                                    }
+
+                                    if (setor === 'creas') {
+                                        // Auto-calc for Families (fa_) and Idosos (ia_)
+                                        // Concept: Atual = Mes Anterior + Admitidas (No subtraction per user request)
+                                        const fa_anterior = Number(data.fa_mes_anterior) || 0
+                                        const fa_admitidas = Number(data.fa_admitidas) || 0
+                                        const fa_total = fa_anterior + fa_admitidas
+
+                                        if (Number(data.fa_atual) !== fa_total) {
+                                            setData(prev => ({ ...prev, fa_atual: fa_total }))
+                                        }
+
+                                        const ia_anterior = Number(data.ia_mes_anterior) || 0
+                                        const ia_admitidas = Number(data.ia_admitidas) || 0
+                                        const ia_total = ia_anterior + ia_admitidas
+
+                                        if (Number(data.ia_atual) !== ia_total) {
+                                            setData(prev => ({ ...prev, ia_atual: ia_total }))
+                                        }
+
+                                        // Auto-calc for PCD
+                                        const pcd_anterior = Number(data.pcd_mes_anterior) || 0
+                                        const pcd_admitidas = Number(data.pcd_admitidas) || 0
+                                        const pcd_total = pcd_anterior + pcd_admitidas
+
+                                        if (Number(data.pcd_atual) !== pcd_total) {
+                                            setData(prev => ({ ...prev, pcd_atual: pcd_total }))
                                         }
                                     }
                                 }}

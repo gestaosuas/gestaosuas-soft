@@ -53,10 +53,10 @@ export const getCachedDirectorates = async () => {
                 .order('name')
             return data
         },
-        ['all-directorates'],
+        ['all-directorates-v2'],
         {
             tags: ['directorates'],
-            revalidate: 60 // 1 minute
+            revalidate: 1 // Force refresh to clear ghosts
         }
     )()
 }

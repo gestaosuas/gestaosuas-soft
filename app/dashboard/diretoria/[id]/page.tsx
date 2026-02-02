@@ -24,6 +24,7 @@ export default async function DirectoratePage({
     const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
     const isSubvencao = normalizedName.includes('subvencao') || id === '63553b96-3771-4842-9f45-630c7558adac'
     const isCRAS = normalizedName.includes('cras')
+    const isCREAS = normalizedName.includes('creas') // CREAS Idoso e Pessoa com Deficiência
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -263,6 +264,57 @@ export default async function DirectoratePage({
                         </div>
                     </section>
                 </div>
+            ) : isCREAS ? (
+                <div className="space-y-12">
+                    {/* Row 1: Reports */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-purple-600 dark:bg-purple-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">CREAS • Relatórios</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { label: "Relatório Mensal", desc: "Consolidado descritivo", href: `/dashboard/relatorios/mensal?setor=creas&directorate_id=${directorate.id}`, icon: FileText },
+                                { label: "Ver Relatórios", desc: "Histórico de envios", href: `/dashboard/relatorios/lista?setor=creas&directorate_id=${directorate.id}`, icon: FolderOpen },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-purple-600 dark:hover:border-purple-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-purple-600 dark:group-hover:bg-purple-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Row 2: Management */}
+                    <section className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                                { label: "Atualizar Dados", desc: "Novos registros", href: `/dashboard/relatorios/novo?setor=creas&directorate_id=${directorate.id}`, icon: FilePlus },
+                                { label: "Dados CREAS", desc: "Banco de dados", href: `/dashboard/dados?setor=creas&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dashboard CREAS", desc: "Indicadores e gráficos", href: `/dashboard/graficos?setor=creas&directorate_id=${directorate.id}`, icon: BarChart3 },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-purple-600 dark:hover:border-purple-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-purple-600 dark:group-hover:bg-purple-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className=" text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                </div>
             ) : isSubvencao ? (
                 <section className="space-y-12">
                     <div className="flex items-center gap-3">
@@ -319,17 +371,10 @@ export default async function DirectoratePage({
                         As ferramentas e indicadores customizados para esta unidade estão em fase de implementação.
                     </p>
                 </div>
-            )}
+            )
+            }
 
-            <footer className="pt-12 border-t border-zinc-100 dark:border-zinc-800/60">
-                <div className="flex flex-col items-center justify-center p-10 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
-                    <Database className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mb-4" />
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest leading-none">Área Institucional Restrita</h3>
-                    <p className="text-[12px] text-zinc-500 dark:text-zinc-500 font-bold uppercase tracking-widest mt-2">
-                        {directorate.name}
-                    </p>
-                </div>
-            </footer>
-        </div>
+
+        </div >
     )
 }

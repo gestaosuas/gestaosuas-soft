@@ -18,6 +18,7 @@ import { FormDefinition } from "@/components/form-engine"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION, CRAS_UNITS } from "@/app/dashboard/cras-config"
+import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 
@@ -31,6 +32,7 @@ export default async function DataPage({
     let isCP = setor === 'centros'
     let isBeneficios = setor === 'beneficios'
     let isCRAS = setor === 'cras'
+    let isCREAS = setor === 'creas'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -112,6 +114,7 @@ export default async function DataPage({
         if (norm.includes('beneficios')) isBeneficios = true
         else if (norm.includes('formacao') || norm.includes('centro') || norm.includes('profissional')) isCP = true
         else if (norm.includes('cras')) isCRAS = true
+        else if (norm.includes('creas')) isCREAS = true
     }
 
     // Choose Form Definition based on setor
@@ -140,6 +143,17 @@ export default async function DataPage({
     if (isCRAS) {
         formDefinition = CRAS_FORM_DEFINITION
         titleContext = `Dados CRAS ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (isCREAS) {
+        formDefinition = {
+            sections: [
+                ...CREAS_IDOSO_FORM_DEFINITION.sections,
+                ...CREAS_DEFICIENTE_FORM_DEFINITION.sections
+            ]
+        }
+        titleContext = `Dados CREAS ${selectedYear}`
         printTitle = titleContext
     }
 

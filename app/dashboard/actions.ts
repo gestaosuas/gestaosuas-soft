@@ -12,6 +12,7 @@ import { checkUserPermission, isAdmin as isAdminCheck } from '@/lib/auth-utils'
 import { CP_FORM_DEFINITION, CP_SHEET_BLOCKS, CP_SHEET_NAME } from './cp-config'
 import { BENEFICIOS_FORM_DEFINITION, BENEFICIOS_SHEET_BLOCKS, BENEFICIOS_SHEET_NAME, BENEFICIOS_SPREADSHEET_ID } from './beneficios-config'
 import { CRAS_FORM_DEFINITION, CRAS_SHEET_BLOCKS, CRAS_SPREADSHEET_ID } from './cras-config'
+import { CREAS_IDOSO_FORM_DEFINITION, CREAS_IDOSO_SHEET_CONFIG, CREAS_DEFICIENTE_FORM_DEFINITION, CREAS_DEFICIENTE_SHEET_CONFIG } from './creas-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 
 export async function submitReport(formData: Record<string, any>, month: number, year: number, directorateId: string, setor?: string) {
@@ -50,6 +51,28 @@ export async function submitReport(formData: Record<string, any>, month: number,
         const mes_anterior = Number(formData.mes_anterior) || 0
         const admitidas = Number(formData.admitidas) || 0
         formData.atual = mes_anterior + admitidas
+    }
+
+    if (setor === 'creas') {
+        // CREAS Calculation (Redundant check as client does it, but good for safety)
+        // Only calculate if the corresponding fields are present to avoid clearing other subcategory data
+        if (formData.fa_mes_anterior !== undefined || formData.fa_admitidas !== undefined) {
+            const fa_anterior = Number(formData.fa_mes_anterior) || 0
+            const fa_admitidas = Number(formData.fa_admitidas) || 0
+            formData.fa_atual = fa_anterior + fa_admitidas
+        }
+
+        if (formData.ia_mes_anterior !== undefined || formData.ia_admitidas !== undefined) {
+            const ia_anterior = Number(formData.ia_mes_anterior) || 0
+            const ia_admitidas = Number(formData.ia_admitidas) || 0
+            formData.ia_atual = ia_anterior + ia_admitidas
+        }
+
+        if (formData.pcd_mes_anterior !== undefined || formData.pcd_admitidas !== undefined) {
+            const pcd_anterior = Number(formData.pcd_mes_anterior) || 0
+            const pcd_admitidas = Number(formData.pcd_admitidas) || 0
+            formData.pcd_atual = pcd_anterior + pcd_admitidas
+        }
     }
 
     // Check if submitted exist
@@ -245,6 +268,67 @@ export async function submitReport(formData: Record<string, any>, month: number,
 
                 await updateSheetBlocks(
                     crasConfig,
+                    month,
+                    blocksData
+                )
+            }
+        } else if (setor === 'creas') {
+            // CREAS LOGIC
+            const subcategory = formData._subcategory || 'idoso'
+
+            if (subcategory === 'idoso') {
+                const formDef = CREAS_IDOSO_FORM_DEFINITION
+                const config = CREAS_IDOSO_SHEET_CONFIG
+                const blocks = config.blocks
+
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = blocks[index]
+                    if (!blockConfig) return null
+
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+
+                    return {
+                        startRow: blockConfig.startRow,
+                        values: values
+                    }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                await updateSheetBlocks(
+                    {
+                        spreadsheetId: config.spreadsheetId,
+                        sheetName: config.sheetName,
+                    },
+                    month,
+                    blocksData
+                )
+            } else if (subcategory === 'deficiente') {
+                const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
+                const config = CREAS_DEFICIENTE_SHEET_CONFIG
+                const blocks = config.blocks
+
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = blocks[index]
+                    if (!blockConfig) return null
+
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+
+                    return {
+                        startRow: blockConfig.startRow,
+                        values: values
+                    }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                await updateSheetBlocks(
+                    {
+                        spreadsheetId: config.spreadsheetId,
+                        sheetName: config.sheetName,
+                    },
                     month,
                     blocksData
                 )
@@ -478,6 +562,11 @@ export async function updateOSC(id: string, data: {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) {
+        return { error: "Apenas administradores podem atualizar OSCs." }
+    }
+
     const adminSupabase = createAdminClient()
     const { error } = await adminSupabase
         .from('oscs')
@@ -497,6 +586,11 @@ export async function deleteOSC(id: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) {
+        return { error: "Apenas administradores podem excluir OSCs." }
+    }
 
     const adminSupabase = createAdminClient()
     const { error } = await adminSupabase
@@ -565,6 +659,23 @@ export async function finalizeVisit(id: string) {
     if (!user) throw new Error("Unauthorized")
 
     const adminSupabase = createAdminClient()
+
+    // Fetch visit to check ownership
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('user_id, status')
+        .eq('id', id)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    const isOwner = visit.user_id === user.id
+
+    if (!isAdmin && !isOwner) {
+        throw new Error("Você não tem permissão para finalizar esta visita.")
+    }
+
     const { error } = await adminSupabase
         .from('visits')
         .update({ status: 'finalized', updated_at: new Date().toISOString() })
@@ -662,4 +773,33 @@ export async function deleteVisit(id: string) {
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
+}
+
+export async function getPreviousMonthData(directorateId: string, currentMonth: number, currentYear: number) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return null
+
+    // Determine previous month
+    let prevMonth = currentMonth - 1
+    let prevYear = currentYear
+
+    if (prevMonth === 0) {
+        prevMonth = 12
+        prevYear = currentYear - 1
+    }
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch submission
+    const { data: submission } = await adminSupabase
+        .from('submissions')
+        .select('data')
+        .eq('directorate_id', directorateId)
+        .eq('month', prevMonth)
+        .eq('year', prevYear)
+        .maybeSingle()
+
+    return submission?.data || null
 }

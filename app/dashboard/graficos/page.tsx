@@ -4,6 +4,7 @@ import { CP_FORM_DEFINITION } from "../cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "../beneficios-config"
 import { redirect } from "next/navigation"
 import { MetricsCards, ServicesBarChart, AttendanceLineChart, GenderPieChart, GenericLineChart, ComparisonLineChart, GenericPieChart } from "./charts"
+import { CreasDashboard } from "./creas-dashboard"
 import { FormDefinition } from "@/components/form-engine"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -54,6 +55,7 @@ export default async function GraficosPage({
     let isCP = setor === 'centros'
     let isBeneficios = setor === 'beneficios'
     let isCRAS = setor === 'cras'
+    let isCREAS = setor === 'creas'
 
     if (!directorate) {
         if (isBeneficios) {
@@ -71,6 +73,11 @@ export default async function GraficosPage({
                 const norm = d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 return norm.includes('cras')
             })
+        } else if (isCREAS) {
+            directorate = userDirectorates.find((d: any) => {
+                const norm = d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                return norm.includes('creas')
+            })
         }
     }
 
@@ -86,6 +93,8 @@ export default async function GraficosPage({
                 })
             } else if (isCRAS) {
                 directorate = allDirs.find(d => d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('cras'))
+            } else if (isCREAS) {
+                directorate = allDirs.find(d => d.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('creas'))
             }
         }
     }
@@ -97,6 +106,7 @@ export default async function GraficosPage({
         if (normName.includes('beneficios')) isBeneficios = true
         else if (normName.includes('formacao') || normName.includes('centro') || normName.includes('profissional')) isCP = true
         else if (normName.includes('cras')) isCRAS = true
+        else if (normName.includes('creas')) isCREAS = true
     }
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
@@ -217,6 +227,39 @@ export default async function GraficosPage({
                     <GenericLineChart title="Evolução de Atendimentos" data={chartData('atendimentos')} dataKey="atendimentos" color="#3b82f6" />
                     <GenericLineChart title="Famílias em Acompanhamento" data={chartData('atual')} dataKey="atual" color="#3b82f6" />
                 </div>
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
+    }
+
+    // --- CREAS Dashboard ---
+    if (isCREAS) {
+        const selectedMonth = month || 'all'
+        const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
+
+        return (
+            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                        </Link>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
+                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard CREAS <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
+                            </div>
+                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">{selectedMonthName}</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
+                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonth} /></div>
+                        </div>
+                    </div>
+                </header>
+
+                <CreasDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} />
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )

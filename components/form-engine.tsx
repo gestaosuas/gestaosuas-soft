@@ -37,16 +37,28 @@ export function FormEngine({
     disabled?: boolean
 }) {
     const [formData, setFormData] = useState<Record<string, any>>(initialData)
+    const isFirstRender = React.useRef(true)
 
     const handleChange = (id: string, value: any) => {
-        setFormData(prev => {
-            const newData = { ...prev, [id]: value }
-            if (onDataChange) {
-                onDataChange(newData, setFormData)
-            }
-            return newData
-        })
+        setFormData(prev => ({ ...prev, [id]: value }))
     }
+
+    React.useEffect(() => {
+        if (Object.keys(initialData).length > 0) {
+            setFormData(prev => ({ ...prev, ...initialData }))
+        }
+    }, [initialData])
+
+    React.useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false
+            return
+        }
+
+        if (onDataChange) {
+            onDataChange(formData, setFormData)
+        }
+    }, [formData, onDataChange])
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
