@@ -7,6 +7,7 @@ import { createAdminClient } from "@/utils/supabase/admin"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION } from "@/app/dashboard/cras-config"
+import { CEAI_FORM_DEFINITION } from "@/app/dashboard/ceai-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 
 export default async function NewReportPage({
@@ -18,6 +19,7 @@ export default async function NewReportPage({
     const isCP = setor === 'centros'
     const isBeneficios = setor === 'beneficios'
     const isCRAS = setor === 'cras'
+    const isCEAI = setor === 'ceai'
     const isCREAS = setor === 'creas'
 
     const supabase = await createClient()
@@ -78,7 +80,6 @@ export default async function NewReportPage({
         }
     }
 
-    // Fallback if no ID provided or not found (for legacy support or default)
     // Fallback if no ID provided or not found
     if (!directorate) {
         // @ts-ignore
@@ -91,6 +92,8 @@ export default async function NewReportPage({
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('profis') || d.name.toLowerCase().includes('sine'))
         } else if (isCRAS) {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('cras'))
+        } else if (isCEAI) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('ceai'))
         } else if (isCREAS) {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('creas'))
         }
@@ -106,6 +109,8 @@ export default async function NewReportPage({
                 directorate = allDirs?.find(d => normalize(d.name).includes('profis') || normalize(d.name).includes('sine'))
             } else if (isCRAS) {
                 directorate = allDirs?.find(d => normalize(d.name).includes('cras'))
+            } else if (isCEAI) {
+                directorate = allDirs?.find(d => normalize(d.name).includes('ceai'))
             } else if (isCREAS) {
                 directorate = allDirs?.find(d => normalize(d.name).includes('creas'))
             }
@@ -147,6 +152,11 @@ export default async function NewReportPage({
         titleContext = "CRAS"
     }
 
+    if (isCEAI) {
+        formDefinition = CEAI_FORM_DEFINITION
+        titleContext = "CEAI"
+    }
+
     if (setor === 'sine') {
         titleContext = `${directorate.name} (SINE)`
     }
@@ -180,12 +190,12 @@ export default async function NewReportPage({
 
                             <Link href={`/dashboard/relatorios/novo?setor=creas&directorate_id=${directorate?.id || ''}&subcategory=deficiente`} className="group">
                                 <div className="h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 shadow-sm hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 flex flex-col items-center text-center cursor-pointer">
-                                    <div className="h-20 w-20 bg-zinc-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 text-zinc-400 dark:text-zinc-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                        {/* Accessibility Icon */}
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.9 4.9 14.2 14.2" /></svg>
+                                    <div className="h-20 w-20 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mb-6 text-purple-600 dark:text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                        {/* Person Icon */}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                     </div>
                                     <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">CREAS Deficiente</h3>
-                                    <p className="text-sm text-zinc-500 mt-2 font-medium">Em breve.</p>
+                                    <p className="text-sm text-zinc-500 mt-2 font-medium">Relatório de violência e acompanhamento de PCDs.</p>
                                 </div>
                             </Link>
                         </div>

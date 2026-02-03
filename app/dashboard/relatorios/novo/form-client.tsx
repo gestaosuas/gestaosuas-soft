@@ -42,7 +42,7 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            if (setor !== 'creas') {
+            if (setor !== 'creas' && setor !== 'ceai') {
                 if (isMounted) {
                     setLoading(false)
                     setDataLoaded(true)
@@ -65,40 +65,45 @@ export function SubmissionFormClient({
 
                 if (isMounted && prevData && Object.keys(prevData).length > 0) {
                     let newData: any = {}
+                    const getNum = (val: any) => {
+                        const n = Number(val)
+                        return isNaN(n) ? 0 : n
+                    }
 
                     if (setor === 'creas') {
-                        // Calculations for CREAS subcategories
-                        // We check both raw numbers and possible string values from DB
-
-                        // Helper to safely parse
-                        const getNum = (val: any) => {
-                            const n = Number(val)
-                            return isNaN(n) ? 0 : n
-                        }
-
                         if (subcategory === 'idoso') {
-                            // FA (Famílias)
-                            // Check if we have the necessary fields in previous data
                             if (prevData.fa_atual !== undefined) {
                                 newData.fa_mes_anterior = getNum(prevData.fa_atual) - getNum(prevData.fa_desligadas)
                             }
-                            // IA (Idosos)
                             if (prevData.ia_atual !== undefined) {
                                 newData.ia_mes_anterior = getNum(prevData.ia_atual) - getNum(prevData.ia_desligadas)
                             }
                         } else if (subcategory === 'deficiente') {
-                            // PCD
                             if (prevData.pcd_atual !== undefined) {
                                 newData.pcd_mes_anterior = getNum(prevData.pcd_atual) - getNum(prevData.pcd_desligadas)
                             }
                         }
+                    } else if (setor === 'ceai') {
+                        // CEAI logic (Multi-unit)
+                        let targetData = prevData
+                        if (prevData._is_multi_unit && prevData.units && unit) {
+                            targetData = prevData.units[unit] || {}
+                        }
+
+                        if (targetData.atendidos_anterior_masc !== undefined || targetData.inseridos_masc !== undefined) {
+                            newData.atendidos_anterior_masc = getNum(targetData.atendidos_anterior_masc) + getNum(targetData.inseridos_masc) - getNum(targetData.desligados_masc)
+                        }
+                        if (targetData.atendidos_anterior_fem !== undefined || targetData.inseridos_fem !== undefined) {
+                            newData.atendidos_anterior_fem = getNum(targetData.atendidos_anterior_fem) + getNum(targetData.inseridos_fem) - getNum(targetData.desligados_fem)
+                        }
                     }
+
                     console.log("Fetched Previous Data:", prevData)
                     console.log("Calculated New Data:", newData)
                     setFetchedInitialData(newData)
                 } else if (isMounted) {
-                    console.log("No previous data found for CREAS or data is empty for", { directorateId, month, year, setor, subcategory });
-                    setFetchedInitialData({}); // Ensure it's empty if no data is found
+                    console.log("No previous data found for", { directorateId, month, year, setor, unit, subcategory });
+                    setFetchedInitialData({});
                 }
             } catch (err) {
                 console.error("Error fetching previous data", err)
@@ -139,6 +144,8 @@ export function SubmissionFormClient({
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
                 } else if (setor === 'cras' || setor === 'creas') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
+                } else if (setor === 'ceai') {
+                    window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`
                 } else {
                     window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
                 }
@@ -276,6 +283,16 @@ export function SubmissionFormClient({
 
                                         if (data.atual !== total) {
                                             setData(prev => ({ ...prev, atual: total }))
+                                        }
+                                    }
+
+                                    if (setor === 'ceai') {
+                                        const inseridos_masc = Number(data.inseridos_masc) || 0
+                                        const inseridos_fem = Number(data.inseridos_fem) || 0
+                                        const total = inseridos_masc + inseridos_fem
+
+                                        if (data.total_inseridos !== total) {
+                                            setData(prev => ({ ...prev, total_inseridos: total }))
                                         }
                                     }
 

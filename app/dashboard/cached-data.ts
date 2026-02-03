@@ -72,10 +72,10 @@ export const getCachedDirectorate = async (id: string) => {
                 .single()
             return data
         },
-        [`directorate-${id}`],
+        [`directorate-v2-${id}`],
         {
             tags: [`directorate-${id}`, 'directorates'],
-            revalidate: 3600
+            revalidate: 1
         }
     )()
 }

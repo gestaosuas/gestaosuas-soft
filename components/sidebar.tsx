@@ -2,17 +2,18 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, LogOut, ShieldCheck, Building2, ChevronLeft, ChevronRight, HandHeart, Activity, ClipboardList } from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
     const pathname = usePathname()
+    const searchParams = useSearchParams()
     const [isCollapsed, setIsCollapsed] = useState(false)
 
     // Separate directorates by category
-    const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE', 'CRAS', 'CREAS Idoso e Pessoa com Deficiência']
+    const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência']
     const mainDirectorates = directorates
         .filter(d => mainNames.includes(d.name))
         .sort((a, b) => mainNames.indexOf(a.name) - mainNames.indexOf(b.name))
@@ -103,24 +104,36 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                         {!isCollapsed && (
                             <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em]">Diretorias</h3>
                         )}
-                        {mainDirectorates.map((dir) => (
-                            <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
-                                <Button
-                                    variant="ghost"
-                                    className={cn(
-                                        "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
-                                        isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
-                                        pathname === `/dashboard/diretoria/${dir.id}`
-                                            ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                            : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
-                                    )}
-                                    title={dir.name}
-                                >
-                                    <Building2 className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname === `/dashboard/diretoria/${dir.id}` ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
-                                    {!isCollapsed && <span className="truncate">{dir.name}</span>}
-                                </Button>
-                            </Link>
-                        ))}
+                        {mainDirectorates.map((dir) => {
+                            const isPathActive = pathname?.includes(`/dashboard/diretoria/${dir.id}`)
+                            // Verifique se o parametro 'directorate_id' bate com o id da diretoria
+                            const isParamActive = searchParams?.get('directorate_id') === dir.id
+                            const isActive = isPathActive || isParamActive
+
+                            return (
+                                <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
+                                    <div className="relative">
+                                        {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-blue-600 rounded-r-full"></div>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            className={cn(
+                                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                                isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
+                                                isActive
+                                                    ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
+                                                    : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                            )}
+                                            title={dir.name}
+                                        >
+                                            <Building2 className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                            {!isCollapsed && <span className="truncate">{dir.name}</span>}
+                                        </Button>
+                                    </div>
+                                </Link>
+                            )
+                        })}
                     </div>
                 )}
 
@@ -129,24 +142,35 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                         {!isCollapsed && (
                             <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em] mt-2">Monitoramentos</h3>
                         )}
-                        {monitoringDirectorates.map((dir) => (
-                            <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
-                                <Button
-                                    variant="ghost"
-                                    className={cn(
-                                        "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
-                                        isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
-                                        pathname === `/dashboard/diretoria/${dir.id}`
-                                            ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                            : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
-                                    )}
-                                    title={dir.name}
-                                >
-                                    <Activity className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname === `/dashboard/diretoria/${dir.id}` ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
-                                    {!isCollapsed && <span className="truncate">{dir.name}</span>}
-                                </Button>
-                            </Link>
-                        ))}
+                        {monitoringDirectorates.map((dir) => {
+                            const isPathActive = pathname?.includes(`/dashboard/diretoria/${dir.id}`)
+                            const isParamActive = searchParams?.get('directorate_id') === dir.id
+                            const isActive = isPathActive || isParamActive
+
+                            return (
+                                <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
+                                    <div className="relative">
+                                        {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-blue-600 rounded-r-full"></div>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            className={cn(
+                                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                                isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
+                                                isActive
+                                                    ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
+                                                    : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                            )}
+                                            title={dir.name}
+                                        >
+                                            <Activity className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                            {!isCollapsed && <span className="truncate">{dir.name}</span>}
+                                        </Button>
+                                    </div>
+                                </Link>
+                            )
+                        })}
                     </div>
                 )}
 

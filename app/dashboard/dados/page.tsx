@@ -18,6 +18,7 @@ import { FormDefinition } from "@/components/form-engine"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION, CRAS_UNITS } from "@/app/dashboard/cras-config"
+import { CEAI_FORM_DEFINITION, CEAI_UNITS } from "@/app/dashboard/ceai-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
@@ -32,6 +33,7 @@ export default async function DataPage({
     let isCP = setor === 'centros'
     let isBeneficios = setor === 'beneficios'
     let isCRAS = setor === 'cras'
+    let isCEAI = setor === 'ceai'
     let isCREAS = setor === 'creas'
 
     const supabase = await createClient()
@@ -114,6 +116,7 @@ export default async function DataPage({
         if (norm.includes('beneficios')) isBeneficios = true
         else if (norm.includes('formacao') || norm.includes('centro') || norm.includes('profissional')) isCP = true
         else if (norm.includes('cras')) isCRAS = true
+        else if (norm.includes('ceai')) isCEAI = true
         else if (norm.includes('creas')) isCREAS = true
     }
 
@@ -143,6 +146,12 @@ export default async function DataPage({
     if (isCRAS) {
         formDefinition = CRAS_FORM_DEFINITION
         titleContext = `Dados CRAS ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (isCEAI) {
+        formDefinition = CEAI_FORM_DEFINITION
+        titleContext = `Dados CEAI ${selectedYear}`
         printTitle = titleContext
     }
 
@@ -187,7 +196,7 @@ export default async function DataPage({
     })
 
     // If not CRAS, we expect only one logical unit (the directorate itself)
-    const unitsToRender = isCRAS ? CRAS_UNITS : ['Principal']
+    const unitsToRender = isCRAS ? CRAS_UNITS : isCEAI ? CEAI_UNITS : ['Principal']
 
     const months = [
         "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -285,7 +294,7 @@ export default async function DataPage({
 
                     return (
                         <div key={unitName} className="space-y-12 pb-12 border-b border-zinc-100 dark:border-zinc-800 last:border-0 last:pb-0">
-                            {isCRAS && (
+                            {(isCRAS || isCEAI) && (
                                 <div className="flex items-center gap-4 px-2">
                                     <h2 className="text-xl font-black text-blue-900 dark:text-blue-100 uppercase tracking-tight">
                                         {unitName}
@@ -299,7 +308,7 @@ export default async function DataPage({
 
                                 return (
                                     <div key={sIdx} className="space-y-8 print-section">
-                                        {!isCRAS && (
+                                        {(!isCRAS && !isCEAI) && (
                                             <div className="flex items-center gap-3 px-2">
                                                 <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                                                 <h2 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">

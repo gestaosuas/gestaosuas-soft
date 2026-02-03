@@ -4,6 +4,7 @@ export type SheetConfig = {
     spreadsheetId: string
     sheetName: string
     startRow?: number
+    baseColumn?: string
 }
 
 // Helper to get Google Auth Client
@@ -54,7 +55,10 @@ export async function updateSheetColumn(config: SheetConfig, month: number, data
     // Feb (2) -> C
     // ...
     // Dec (12) -> M
-    const baseCharCode = 'B'.charCodeAt(0); // 66
+    // Calculate Column Letter
+    // Jan (1) -> B (default) or config.baseColumn
+    const baseColChar = config.baseColumn || 'B'
+    const baseCharCode = baseColChar.charCodeAt(0);
     const colCharCode = baseCharCode + (month - 1);
     const colLetter = String.fromCharCode(colCharCode);
 
@@ -94,7 +98,9 @@ export async function updateSheetBlocks(
     const sheets = google.sheets({ version: 'v4', auth: auth as any });
 
     // Calculate Column Letter
-    const baseCharCode = 'B'.charCodeAt(0); // 66
+    // Calculate Column Letter
+    const baseColChar = config.baseColumn || 'B'
+    const baseCharCode = baseColChar.charCodeAt(0);
     const colCharCode = baseCharCode + (month - 1);
     const colLetter = String.fromCharCode(colCharCode);
 

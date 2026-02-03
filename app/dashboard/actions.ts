@@ -13,6 +13,7 @@ import { CP_FORM_DEFINITION, CP_SHEET_BLOCKS, CP_SHEET_NAME } from './cp-config'
 import { BENEFICIOS_FORM_DEFINITION, BENEFICIOS_SHEET_BLOCKS, BENEFICIOS_SHEET_NAME, BENEFICIOS_SPREADSHEET_ID } from './beneficios-config'
 import { CRAS_FORM_DEFINITION, CRAS_SHEET_BLOCKS, CRAS_SPREADSHEET_ID } from './cras-config'
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_IDOSO_SHEET_CONFIG, CREAS_DEFICIENTE_FORM_DEFINITION, CREAS_DEFICIENTE_SHEET_CONFIG } from './creas-config'
+import { CEAI_FORM_DEFINITION, CEAI_SHEET_BLOCKS, CEAI_SPREADSHEET_ID } from './ceai-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 
 export async function submitReport(formData: Record<string, any>, month: number, year: number, directorateId: string, setor?: string) {
@@ -86,8 +87,8 @@ export async function submitReport(formData: Record<string, any>, month: number,
 
     if (existing) {
         let mergedData;
-        if (setor === 'cras') {
-            // For CRAS, we store units in a nested 'units' object to avoid unique constraint issues
+        if (setor === 'cras' || setor === 'ceai') {
+            // Multi-unit handling
             const unitName = formData._unit || 'Principal'
             const currentUnits = existing.data.units || {}
             mergedData = {
@@ -112,7 +113,8 @@ export async function submitReport(formData: Record<string, any>, month: number,
             throw new Error("Erro ao atualizar relatório.")
         }
     } else {
-        const finalData = setor === 'cras' ? {
+        // New Submission
+        const finalData = (setor === 'cras' || setor === 'ceai') ? {
             _is_multi_unit: true,
             units: {
                 [formData._unit || 'Principal']: formData
@@ -138,246 +140,129 @@ export async function submitReport(formData: Record<string, any>, month: number,
     // Save to Google Sheets
     try {
         if (setor === 'centros') {
-            // CP LOGIC
             const formDef = CP_FORM_DEFINITION
             const blocks = CP_SHEET_BLOCKS
-
-            // We need to map the flat form data to the blocked structure
-            // The form definition sections map 1:1 to the blocks in order
-
             const blocksData = formDef.sections.map((section, index) => {
                 const blockConfig = blocks[index]
                 if (!blockConfig) return null
-
-                // Get values for this section's fields
                 const values = section.fields.map(field => {
                     const val = formData[field.id]
                     return val !== undefined && val !== '' ? Number(val) : 0
                 })
-
-                return {
-                    startRow: blockConfig.startRow,
-                    values: values
-                }
+                return { startRow: blockConfig.startRow, values: values }
             }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
 
             if (directorate.sheet_config) {
-                // Use the CP Sheet Name, keep the ID from directorate config
-                const cpConfig = {
-                    ...directorate.sheet_config as SheetConfig,
-                    sheetName: CP_SHEET_NAME
-                }
-
                 await updateSheetBlocks(
-                    cpConfig,
+                    { ...directorate.sheet_config as SheetConfig, sheetName: CP_SHEET_NAME },
                     month,
                     blocksData
                 )
             }
-
         } else if (setor === 'beneficios') {
-            // BENEFICIOS LOGIC
             const formDef = BENEFICIOS_FORM_DEFINITION
             const blocks = BENEFICIOS_SHEET_BLOCKS
-
             const blocksData = formDef.sections.map((section, index) => {
                 const blockConfig = blocks[index]
                 if (!blockConfig) return null
-
                 const values = section.fields.map(field => {
                     const val = formData[field.id]
                     return val !== undefined && val !== '' ? Number(val) : 0
                 })
-
-                return {
-                    startRow: blockConfig.startRow,
-                    values: values
-                }
+                return { startRow: blockConfig.startRow, values: values }
             }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
 
             if (directorate.sheet_config) {
-                const beneficiosConfig = {
-                    ...directorate.sheet_config as SheetConfig,
-                    sheetName: 'BENEFICIOS',
-                    spreadsheetId: BENEFICIOS_SPREADSHEET_ID
-                }
-
                 await updateSheetBlocks(
-                    beneficiosConfig,
+                    { ...directorate.sheet_config as SheetConfig, sheetName: 'BENEFICIOS', spreadsheetId: BENEFICIOS_SPREADSHEET_ID },
                     month,
                     blocksData
                 )
             }
+        } else if (setor === 'cras') {
+            const formDef = CRAS_FORM_DEFINITION
+            const blocks = CRAS_SHEET_BLOCKS
+            const blocksData = formDef.sections.map((section, index) => {
+                const blockConfig = blocks[index]
+                if (!blockConfig) return null
+                const values = section.fields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                return { startRow: blockConfig.startRow, values: values }
+            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
 
-            // Skip Google Sheets if this is a narrative report (has _report_content)
-            // or check which keys are numeric before sending.
+            await updateSheetBlocks(
+                { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: formData._unit || 'CRAS' },
+                month,
+                blocksData
+            )
+        } else if (setor === 'creas') {
+            const subcategory = formData._subcategory || 'idoso'
+            if (subcategory === 'idoso') {
+                const formDef = CREAS_IDOSO_FORM_DEFINITION
+                const cfg = CREAS_IDOSO_SHEET_CONFIG
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = cfg.blocks[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+                await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
+            } else {
+                const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
+                const cfg = CREAS_DEFICIENTE_SHEET_CONFIG
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = cfg.blocks[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+                await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
+            }
+        } else if (setor === 'ceai') {
+            const formDef = CEAI_FORM_DEFINITION
+            const blocksData = formDef.sections.map((section, index) => {
+                const blockConfig = CEAI_SHEET_BLOCKS[index]
+                if (!blockConfig) return null
+                const values = section.fields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                return { startRow: blockConfig.startRow, values: values }
+            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+            await updateSheetBlocks(
+                { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
+                month,
+                blocksData
+            )
         } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
-            // SINE / DEFAULT LOGIC
+            // DEFAULT LOGIC (SINE/ETC)
             const formDef = directorate.form_definition as FormDefinition
-
-            // Map the form data to an ordered array based on the fields definition
             const allFields = formDef.sections.flatMap(s => s.fields)
-
             const orderedValues = allFields.map(field => {
                 const val = formData[field.id]
                 return val !== undefined && val !== '' ? Number(val) : 0
             })
-
-            // Fix for wrong sheet name in DB
             let sheetConfig = directorate.sheet_config as SheetConfig
-
-            // Aggressive fix: If it looks like Beneficicios, force the correct name
-            if (sheetConfig.sheetName && sheetConfig.sheetName.toUpperCase().includes('BENEFICIOS')) {
+            if (sheetConfig.sheetName?.toUpperCase().includes('BENEFICIOS')) {
                 sheetConfig = { ...sheetConfig, sheetName: 'BENEFICIOS' }
             }
-
-            await updateSheetColumn(
-                sheetConfig,
-                month,
-                orderedValues
-            )
-        } else if (setor === 'cras') {
-            // CRAS LOGIC
-            const formDef = CRAS_FORM_DEFINITION
-            const blocks = CRAS_SHEET_BLOCKS
-
-            // Calculation already done at the top of function for DB
-            // We just need to prepare blocks Data for Sheets
-
-            const blocksData = formDef.sections.map((section, index) => {
-                const blockConfig = blocks[index]
-                if (!blockConfig) return null
-
-                const values = section.fields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-
-                return {
-                    startRow: blockConfig.startRow,
-                    values: values
-                }
-            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-            if (directorate.sheet_config || CRAS_SPREADSHEET_ID) {
-                const crasConfig = {
-                    ...(directorate.sheet_config || {}) as SheetConfig,
-                    sheetName: formData._unit || 'CRAS', // Use the unit name as tab name
-                    spreadsheetId: CRAS_SPREADSHEET_ID
-                }
-
-                await updateSheetBlocks(
-                    crasConfig,
-                    month,
-                    blocksData
-                )
-            }
-        } else if (setor === 'creas') {
-            // CREAS LOGIC
-            const subcategory = formData._subcategory || 'idoso'
-
-            if (subcategory === 'idoso') {
-                const formDef = CREAS_IDOSO_FORM_DEFINITION
-                const config = CREAS_IDOSO_SHEET_CONFIG
-                const blocks = config.blocks
-
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = blocks[index]
-                    if (!blockConfig) return null
-
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-
-                    return {
-                        startRow: blockConfig.startRow,
-                        values: values
-                    }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                await updateSheetBlocks(
-                    {
-                        spreadsheetId: config.spreadsheetId,
-                        sheetName: config.sheetName,
-                    },
-                    month,
-                    blocksData
-                )
-            } else if (subcategory === 'deficiente') {
-                const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
-                const config = CREAS_DEFICIENTE_SHEET_CONFIG
-                const blocks = config.blocks
-
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = blocks[index]
-                    if (!blockConfig) return null
-
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-
-                    return {
-                        startRow: blockConfig.startRow,
-                        values: values
-                    }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                await updateSheetBlocks(
-                    {
-                        spreadsheetId: config.spreadsheetId,
-                        sheetName: config.sheetName,
-                    },
-                    month,
-                    blocksData
-                )
-            }
+            await updateSheetColumn(sheetConfig, month, orderedValues)
         }
-
     } catch (sheetError: any) {
-        console.error("Sheet Error Full:", JSON.stringify(sheetError, null, 2))
-
-        let debugInfo = "";
-        let specificHint = "";
-
-        if (sheetError.message?.includes("not supported for this document")) {
-            specificHint = " [Dica: Este erro geralmente ocorre quando o arquivo é um Excel (.xlsx) no Drive. Converta-o para o formato nativo do Google Sheets (Arquivo > Salvar como Planilha Google)]";
-        }
-
-        try {
-            // Attempt to diagnose based on the setor/config
-            let diagId = '';
-            let diagSheet = '';
-
-            if (setor === 'beneficios') {
-                diagId = BENEFICIOS_SPREADSHEET_ID;
-                diagSheet = 'BENEFICIOS';
-            } else if (setor === 'cras') {
-                diagId = CRAS_SPREADSHEET_ID;
-                diagSheet = formData._unit || 'CRAS';
-            } else if (directorate.sheet_config) {
-                const cfg = directorate.sheet_config as SheetConfig;
-                diagId = cfg.spreadsheetId;
-                diagSheet = cfg.sheetName;
-            }
-
-            if (diagId) {
-                const Validation = await validateSheetExists(diagId, diagSheet);
-                if (!Validation.exists && Validation.available.length > 0) {
-                    debugInfo = ` (Abas disponíveis: ${Validation.available.join(', ')})`;
-                }
-            }
-        } catch (e) {
-            console.error("Failed to validate sheets", e)
-        }
-
-        return { error: `Erro Google Sheets: ${sheetError.message || sheetError.toString()}${specificHint}${debugInfo}` }
+        console.error("Sheet Error:", sheetError)
+        return { error: `Erro Google Sheets: ${sheetError.message || sheetError.toString()}` }
     }
 
     revalidatePath('/dashboard', 'layout')
-    // revalidateTag('submissions')
-    // revalidateTag(`submissions-${directorateId}`)
     return { success: true }
 }
 
