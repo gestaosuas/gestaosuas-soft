@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { CRAS_UNITS } from "../cras-config"
 
-export function UnitSelector({ currentUnit }: { currentUnit: string }) {
+export function UnitSelector({ currentUnit, units = CRAS_UNITS }: { currentUnit: string, units?: string[] }) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -22,7 +22,7 @@ export function UnitSelector({ currentUnit }: { currentUnit: string }) {
                 className="h-10 w-[220px] appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus:ring-zinc-300 cursor-pointer font-bold text-blue-900 dark:text-blue-100"
             >
                 <option value="all">Todas as Unidades</option>
-                {CRAS_UNITS.map((unit, index) => (
+                {units.map((unit, index) => (
                     <option key={index} value={unit}>
                         {unit}
                     </option>

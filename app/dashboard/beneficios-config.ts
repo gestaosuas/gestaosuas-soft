@@ -30,7 +30,7 @@ export const BENEFICIOS_FORM_DEFINITION: FormDefinition = {
                 { id: "numero_nis", label: "Numero NIS", type: "number" },
                 { id: "dmae", label: "DMAE", type: "number" },
                 { id: "pro_pao", label: "Pró - pão", type: "number" },
-                { id: "auxilio_documento", label: "Auxílio Documento", type: "number" },
+                { id: "auxilio_documento", label: "Auxílio Documento", type: "number", tooltip: "Soma de Cert. Nasc, Cert. Cas. e Cert. Óbito." },
                 { id: "guia_foto", label: "Guia de foto", type: "number" },
                 { id: "carteirinha_idoso", label: "Carteirinha do Idoso", type: "number" },
                 { id: "bpc_presencial", label: "BPC/ Presencial", type: "number" },

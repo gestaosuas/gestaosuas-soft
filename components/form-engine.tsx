@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Info } from "lucide-react"
 
 export type FieldDefinition = {
     id: string
@@ -12,6 +14,7 @@ export type FieldDefinition = {
     type: 'text' | 'number' | 'date'
     required?: boolean
     disabled?: boolean
+    tooltip?: string
 }
 
 export type SectionDefinition = {
@@ -88,6 +91,18 @@ export function FormEngine({
                                     className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-0.5"
                                 >
                                     {field.label}
+                                    {field.tooltip && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="h-3.5 w-3.5 text-green-600 dark:text-green-500 cursor-help hover:text-green-700 dark:hover:text-green-400 transition-colors inline-block ml-1.5 align-middle mb-0.5" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p className="max-w-[200px] text-xs font-medium">{field.tooltip}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
                                 </Label>
                                 <Input
                                     id={field.id}

@@ -13,6 +13,7 @@ import { MonthSelector } from "./month-selector"
 import { YearSelector } from "@/components/year-selector"
 import { UnitSelector } from "./unit-selector"
 import { CRAS_UNITS } from "../cras-config"
+import { CEAI_UNITS } from "../ceai-config"
 
 function findFieldId(fields: any[], keywords: string[]): string | undefined {
     // Search for a field where label contains ALL keywords (case insensitive)
@@ -56,6 +57,7 @@ export default async function GraficosPage({
     let isBeneficios = setor === 'beneficios'
     let isCRAS = setor === 'cras'
     let isCREAS = setor === 'creas'
+    let isCEAI = setor === 'ceai'
 
     if (!directorate) {
         if (isBeneficios) {
@@ -107,6 +109,7 @@ export default async function GraficosPage({
         else if (normName.includes('formacao') || normName.includes('centro') || normName.includes('profissional')) isCP = true
         else if (normName.includes('cras')) isCRAS = true
         else if (normName.includes('creas')) isCREAS = true
+        else if (normName.includes('ceai')) isCEAI = true
     }
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
@@ -232,7 +235,143 @@ export default async function GraficosPage({
         )
     }
 
-    // --- CREAS Dashboard ---
+    // --- CEAI Dashboard ---
+    if (isCEAI) {
+        const selectedUnit = unit || 'all'
+        const selectedMonth = month || 'all'
+        const unitDataByMonth = new Map<number, any>()
+
+        submissions.forEach(sub => {
+            let dataToUse = null
+            if (selectedUnit === 'all') {
+                const sumData: any = {}
+                if (sub.data._is_multi_unit && sub.data.units) {
+                    Object.values(sub.data.units).forEach((uData: any) => {
+                        Object.keys(uData).forEach(key => {
+                            const val = Number(uData[key])
+                            if (!isNaN(val)) {
+                                sumData[key] = (sumData[key] || 0) + val
+                            }
+                        })
+                    })
+                } else {
+                    Object.keys(sub.data).forEach(key => {
+                        const val = Number(sub.data[key])
+                        if (!isNaN(val)) {
+                            sumData[key] = (sumData[key] || 0) + val
+                        }
+                    })
+                }
+                dataToUse = sumData
+            } else {
+                if (sub.data._is_multi_unit && sub.data.units?.[selectedUnit]) {
+                    dataToUse = sub.data.units[selectedUnit]
+                } else if (sub.data._unit === selectedUnit) {
+                    dataToUse = sub.data
+                }
+            }
+            if (dataToUse) unitDataByMonth.set(sub.month, dataToUse)
+        })
+
+        const monthsWithData = Array.from(unitDataByMonth.keys()).sort((a, b) => b - a)
+        const selectedMonthNum = selectedMonth === 'all' ? 0 : Number(selectedMonth)
+        let latestData: any = {}
+        let selectedMonthName = ""
+
+        if (selectedMonth === 'all') {
+            selectedMonthName = "Ano Inteiro"
+            // Stock variables: Take from latest month
+            if (monthsWithData.length > 0) {
+                const lastMonthData = unitDataByMonth.get(monthsWithData[0])
+                latestData.atendidos_anterior_masc = lastMonthData.atendidos_anterior_masc
+                latestData.atendidos_anterior_fem = lastMonthData.atendidos_anterior_fem
+            }
+            // Flow variables: Sum all months
+            unitDataByMonth.forEach((mData) => {
+                ['inseridos_masc', 'inseridos_fem', 'desligados_masc', 'desligados_fem'].forEach(key => {
+                    const val = Number(mData[key])
+                    if (!isNaN(val)) latestData[key] = (latestData[key] || 0) + val
+                })
+            })
+        } else {
+            latestData = unitDataByMonth.get(selectedMonthNum) || {}
+            selectedMonthName = monthNames[selectedMonthNum - 1] || "N/A"
+        }
+
+        const cardsData = [
+            { label: "Admitidos Masc.", value: Number(latestData.inseridos_masc || 0), color: "#0ea5e9" },
+            { label: "Admitidos Fem.", value: Number(latestData.inseridos_fem || 0), color: "#0ea5e9" },
+            { label: "Desligados Masc.", value: Number(latestData.desligados_masc || 0), color: "#0ea5e9" },
+            { label: "Desligados Fem.", value: Number(latestData.desligados_fem || 0), color: "#0ea5e9" },
+            { label: "Atend. Ant. Masc.", value: Number(latestData.atendidos_anterior_masc || 0), color: "#0ea5e9" },
+            { label: "Atend. Ant. Fem.", value: Number(latestData.atendidos_anterior_fem || 0), color: "#0ea5e9" },
+        ]
+
+        const chartData = monthNames.map((name, index) => {
+            const data = unitDataByMonth.get(index + 1) || {}
+            const prevM = Number(data.atendidos_anterior_masc || 0)
+            const prevF = Number(data.atendidos_anterior_fem || 0)
+            const insM = Number(data.inseridos_masc || 0)
+            const insF = Number(data.inseridos_fem || 0)
+            const desM = Number(data.desligados_masc || 0)
+            const desF = Number(data.desligados_fem || 0)
+
+            // Logic: Total Atendidos = (Previous + Inserted) - Discharged
+            // Or simply Previous + Inserted (Total processed)? Usually Total Atendidos means active + served.
+            // If the graph is "Active at end of month", then it is Prev + Ins - Des.
+            // If "Total served during month", it is Prev + Ins.
+            // Given the high numbers in "Atend. Ant", "Total Atendidos" is likely the Active Count.
+
+            const total = (prevM + prevF + insM + insF) - (desM + desF)
+
+            return {
+                name,
+                total: total > 0 ? total : 0,
+                admitidos: insM + insF,
+                desligados: desM + desF
+            }
+        })
+
+        const pieData = [
+            { name: "Feminino", value: Number(latestData.inseridos_fem || 0) },
+            { name: "Masculino", value: Number(latestData.inseridos_masc || 0) }
+        ].filter(d => d.value > 0)
+
+        return (
+            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                        </Link>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
+                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard CEAI <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
+                            </div>
+                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">Unidade <span className="text-blue-600 font-bold">{selectedUnit === 'all' ? "Todas as Unidades" : selectedUnit}</span> • {selectedMonthName}</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Unidade</span><UnitSelector currentUnit={selectedUnit} units={CEAI_UNITS} /></div>
+                        <div className="h-10 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden lg:block"></div>
+                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
+                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonth} /></div>
+                        </div>
+                    </div>
+                </header>
+
+                <MetricsCards data={cardsData} monthName={selectedMonthName} compact={true} />
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                    <GenericLineChart title="Total Atendidos no Mês" data={chartData} dataKey="total" color="#3b82f6" />
+                    <ComparisonLineChart title="Admitidos x Desligados" data={chartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} keys={['Admitidos', 'Desligados']} colors={['#10b981', '#ef4444']} />
+                    <GenericPieChart title="Admitidos no Mês (Gênero)" data={pieData} colors={['#f59e0b', '#3b82f6']} />
+                </div>
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
+    }
     if (isCREAS) {
         const selectedMonth = month || 'all'
         const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
