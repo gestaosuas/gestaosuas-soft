@@ -9,6 +9,7 @@ import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION } from "@/app/dashboard/cras-config"
 import { CEAI_FORM_DEFINITION } from "@/app/dashboard/ceai-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
+import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 
 export default async function NewReportPage({
     searchParams,
@@ -21,6 +22,7 @@ export default async function NewReportPage({
     const isCRAS = setor === 'cras'
     const isCEAI = setor === 'ceai'
     const isCREAS = setor === 'creas'
+    const isPopRua = setor === 'pop_rua'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -96,6 +98,8 @@ export default async function NewReportPage({
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('ceai'))
         } else if (isCREAS) {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('creas'))
+        } else if (isPopRua) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('populacao') && d.name.toLowerCase().includes('rua'))
         }
 
         // If still not found and admin, fetch all to try and find a match
@@ -113,6 +117,8 @@ export default async function NewReportPage({
                 directorate = allDirs?.find(d => normalize(d.name).includes('ceai'))
             } else if (isCREAS) {
                 directorate = allDirs?.find(d => normalize(d.name).includes('creas'))
+            } else if (isPopRua) {
+                directorate = allDirs?.find(d => normalize(d.name).includes('populacao') && normalize(d.name).includes('rua'))
             }
         }
 
@@ -159,6 +165,11 @@ export default async function NewReportPage({
 
     if (setor === 'sine') {
         titleContext = `${directorate.name} (SINE)`
+    }
+
+    if (isPopRua) {
+        formDefinition = POP_RUA_FORM_DEFINITION
+        titleContext = "População de Rua e Migrantes"
     }
 
     if (isCREAS) {

@@ -27,6 +27,7 @@ export default async function DirectoratePage({
     const isCRAS = normalizedName.includes('cras')
     const isCREAS = normalizedName.includes('creas') // CREAS Idoso e Pessoa com Deficiência
     const isCEAI = normalizedName.includes('ceai')
+    const isPopRua = normalizedName.includes('populacao') && normalizedName.includes('rua')
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -435,6 +436,34 @@ export default async function DirectoratePage({
                         </div>
                     </section>
                 </div>
+            ) : isPopRua ? (
+                <section className="space-y-12">
+                    <div className="flex items-center gap-3">
+                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">População de Rua e Migrantes</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[
+                            { label: "Atualizar Dados", desc: "Novos registros mensais", href: `/dashboard/relatorios/novo?setor=pop_rua&directorate_id=${directorate.id}`, icon: FilePlus },
+                            { label: "Relatório Mensal", desc: "Qualitativo e descritivo", href: `/dashboard/relatorios/mensal?setor=pop_rua&directorate_id=${directorate.id}`, icon: FileText },
+                            { label: "Ver Relatórios", desc: "Histórico de envios", href: `/dashboard/relatorios/lista?setor=pop_rua&directorate_id=${directorate.id}`, icon: FolderOpen },
+                            { label: "Ver Dados População de Rua e migrantes", desc: "Banco de dados consolidado", href: `/dashboard/dados?setor=pop_rua&directorate_id=${directorate.id}`, icon: Database },
+                            { label: "Dashboard População de Rua e migrante", desc: "Indicadores e gráficos", href: `/dashboard/graficos?setor=pop_rua&directorate_id=${directorate.id}`, icon: BarChart3 },
+                        ].map((item, idx) => (
+                            <Link key={idx} href={item.href} className="group">
+                                <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                    <CardHeader className="p-8">
+                                        <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                            <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                        </div>
+                                        <CardTitle className=" text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                        <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
             ) : (
                 <div className="flex flex-col items-center justify-center py-20 bg-zinc-50/30 dark:bg-zinc-900/20 rounded-[2.5rem] border border-dashed border-zinc-200 dark:border-zinc-800">
                     <div className="p-5 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 mb-6">

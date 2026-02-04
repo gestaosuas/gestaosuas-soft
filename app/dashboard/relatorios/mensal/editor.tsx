@@ -175,7 +175,7 @@ export default function MonthlyReportEditor({
             const payload = {
                 _report_content: blocks,
                 _report_type: 'monthly_narrative',
-                _attach_indicators: attachIndicators
+                _attach_indicators: false
             }
             const result = await submitReport(payload, Number(month), Number(year), directorateId, setor)
             if (result?.error) alert(result.error)
@@ -261,20 +261,7 @@ export default function MonthlyReportEditor({
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="md:col-span-2 flex items-center gap-4 pt-8 border-t border-zinc-100 dark:border-zinc-800/60">
-                        <div className="flex items-center space-x-3">
-                            <input
-                                type="checkbox"
-                                id="attachIndicators"
-                                checked={attachIndicators}
-                                onChange={(e) => setAttachIndicators(e.target.checked)}
-                                className="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-700 text-blue-900 focus:ring-blue-500 cursor-pointer transition-all"
-                            />
-                            <Label htmlFor="attachIndicators" className="cursor-pointer font-bold text-[12px] text-zinc-700 dark:text-zinc-300 uppercase tracking-tight">
-                                Anexar Tabela de Indicadores Quantitativos no Relatório
-                            </Label>
-                        </div>
-                    </div>
+
                 </CardContent>
             </Card>
 

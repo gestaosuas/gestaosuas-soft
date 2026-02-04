@@ -5,6 +5,7 @@ import { BENEFICIOS_FORM_DEFINITION } from "../beneficios-config"
 import { redirect } from "next/navigation"
 import { MetricsCards, ServicesBarChart, AttendanceLineChart, GenderPieChart, GenericLineChart, ComparisonLineChart, GenericPieChart } from "./charts"
 import { CreasDashboard } from "./creas-dashboard"
+import { PopRuaDashboard } from "./pop-rua-dashboard"
 import { FormDefinition } from "@/components/form-engine"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -57,7 +58,9 @@ export default async function GraficosPage({
     let isBeneficios = setor === 'beneficios'
     let isCRAS = setor === 'cras'
     let isCREAS = setor === 'creas'
+
     let isCEAI = setor === 'ceai'
+    let isPopRua = setor === 'pop_rua'
 
     if (!directorate) {
         if (isBeneficios) {
@@ -110,7 +113,9 @@ export default async function GraficosPage({
         else if (normName.includes('cras')) isCRAS = true
         else if (normName.includes('creas')) isCREAS = true
         else if (normName.includes('ceai')) isCEAI = true
+        else if (normName.includes('populacao') && normName.includes('rua')) isPopRua = true
     }
+
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
     const submissions = allSubmissions.filter((s: any) => s.year === selectedYear)
@@ -299,12 +304,12 @@ export default async function GraficosPage({
         }
 
         const cardsData = [
-            { label: "Admitidos Masc.", value: Number(latestData.inseridos_masc || 0), color: "#0ea5e9" },
-            { label: "Admitidos Fem.", value: Number(latestData.inseridos_fem || 0), color: "#0ea5e9" },
-            { label: "Desligados Masc.", value: Number(latestData.desligados_masc || 0), color: "#0ea5e9" },
-            { label: "Desligados Fem.", value: Number(latestData.desligados_fem || 0), color: "#0ea5e9" },
-            { label: "Atend. Ant. Masc.", value: Number(latestData.atendidos_anterior_masc || 0), color: "#0ea5e9" },
-            { label: "Atend. Ant. Fem.", value: Number(latestData.atendidos_anterior_fem || 0), color: "#0ea5e9" },
+            { label: "Admitidos Masculino", value: Number(latestData.inseridos_masc || 0), color: "#0ea5e9" },
+            { label: "Admitidos Feminino", value: Number(latestData.inseridos_fem || 0), color: "#0ea5e9" },
+            { label: "Desligados Masculino", value: Number(latestData.desligados_masc || 0), color: "#0ea5e9" },
+            { label: "Desligados Feminino", value: Number(latestData.desligados_fem || 0), color: "#0ea5e9" },
+            { label: "Atendimento Anterior Masculino", value: Number(latestData.atendidos_anterior_masc || 0), color: "#0ea5e9" },
+            { label: "Atendimento Anterior Feminino", value: Number(latestData.atendidos_anterior_fem || 0), color: "#0ea5e9" },
         ]
 
         const chartData = monthNames.map((name, index) => {
@@ -399,6 +404,16 @@ export default async function GraficosPage({
                 </header>
 
                 <CreasDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} />
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
+    }
+
+    if (isPopRua) {
+        const selectedMonth = month || 'all'
+        return (
+            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
+                <PopRuaDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} directorateId={directorate.id} />
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )

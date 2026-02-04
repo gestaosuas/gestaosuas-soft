@@ -142,7 +142,7 @@ export function SubmissionFormClient({
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-                } else if (setor === 'cras' || setor === 'creas') {
+                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {
                     window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`
@@ -293,6 +293,17 @@ export function SubmissionFormClient({
 
                                         if (data.total_inseridos !== total) {
                                             setData(prev => ({ ...prev, total_inseridos: total }))
+                                        }
+                                    }
+
+                                    if (setor === 'pop_rua') {
+                                        const c = Number(data.num_atend_centro_ref) || 0
+                                        const a = Number(data.num_atend_abordagem) || 0
+                                        const m = Number(data.num_atend_migracao) || 0
+                                        const total = c + a + m
+
+                                        if (data.num_atend_total !== total) {
+                                            setData(prev => ({ ...prev, num_atend_total: total }))
                                         }
                                     }
 

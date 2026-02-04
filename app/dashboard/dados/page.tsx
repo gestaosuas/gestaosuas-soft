@@ -20,6 +20,7 @@ import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION, CRAS_UNITS } from "@/app/dashboard/cras-config"
 import { CEAI_FORM_DEFINITION, CEAI_UNITS } from "@/app/dashboard/ceai-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
+import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 
@@ -35,6 +36,7 @@ export default async function DataPage({
     let isCRAS = setor === 'cras'
     let isCEAI = setor === 'ceai'
     let isCREAS = setor === 'creas'
+    let isPopRua = setor === 'pop_rua'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -117,7 +119,9 @@ export default async function DataPage({
         else if (norm.includes('formacao') || norm.includes('centro') || norm.includes('profissional')) isCP = true
         else if (norm.includes('cras')) isCRAS = true
         else if (norm.includes('ceai')) isCEAI = true
+        else if (norm.includes('ceai')) isCEAI = true
         else if (norm.includes('creas')) isCREAS = true
+        else if (norm.includes('populacao') && norm.includes('rua')) isPopRua = true
     }
 
     // Choose Form Definition based on setor
@@ -163,6 +167,12 @@ export default async function DataPage({
             ]
         }
         titleContext = `Dados CREAS ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (isPopRua) {
+        formDefinition = POP_RUA_FORM_DEFINITION
+        titleContext = `Dados População de Rua e Migrantes ${selectedYear}`
         printTitle = titleContext
     }
 

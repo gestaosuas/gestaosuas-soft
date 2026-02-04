@@ -14,6 +14,7 @@ import { BENEFICIOS_FORM_DEFINITION, BENEFICIOS_SHEET_BLOCKS, BENEFICIOS_SHEET_N
 import { CRAS_FORM_DEFINITION, CRAS_SHEET_BLOCKS, CRAS_SPREADSHEET_ID } from './cras-config'
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_IDOSO_SHEET_CONFIG, CREAS_DEFICIENTE_FORM_DEFINITION, CREAS_DEFICIENTE_SHEET_CONFIG } from './creas-config'
 import { CEAI_FORM_DEFINITION, CEAI_SHEET_BLOCKS, CEAI_SPREADSHEET_ID } from './ceai-config'
+import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID } from './pop-rua-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 
 export async function submitReport(formData: Record<string, any>, month: number, year: number, directorateId: string, setor?: string) {
@@ -243,6 +244,39 @@ export async function submitReport(formData: Record<string, any>, month: number,
                 month,
                 blocksData
             )
+        } else if (setor === 'pop_rua') {
+            const formDef = POP_RUA_FORM_DEFINITION
+
+            // Group blocks by sheet name because updateSheetBlocks takes one sheet name
+            // We have blocks in different sheets
+            const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
+
+            formDef.sections.forEach((section, index) => {
+                const blockConfig = POP_RUA_SHEET_BLOCKS[index]
+                if (!blockConfig) return
+
+                const values = section.fields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+
+                if (!blocksBySheet.has(blockConfig.sheetName)) {
+                    blocksBySheet.set(blockConfig.sheetName, [])
+                }
+                blocksBySheet.get(blockConfig.sheetName)!.push({
+                    startRow: blockConfig.startRow,
+                    values: values
+                })
+            })
+
+            // Execute updates for each sheet
+            for (const [sheetName, blocks] of blocksBySheet.entries()) {
+                await updateSheetBlocks(
+                    { spreadsheetId: POP_RUA_SPREADSHEET_ID, sheetName: sheetName },
+                    month,
+                    blocks
+                )
+            }
         } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
             // DEFAULT LOGIC (SINE/ETC)
             const formDef = directorate.form_definition as FormDefinition
