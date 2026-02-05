@@ -71,18 +71,25 @@ export function SubmissionFormClient({
                     }
 
                     if (setor === 'creas') {
+                        // New Logic for 5 recurring sections
+                        let prefixes: string[] = []
                         if (subcategory === 'idoso') {
-                            if (prevData.fa_atual !== undefined) {
-                                newData.fa_mes_anterior = getNum(prevData.fa_atual) - getNum(prevData.fa_desligadas)
-                            }
-                            if (prevData.ia_atual !== undefined) {
-                                newData.ia_mes_anterior = getNum(prevData.ia_atual) - getNum(prevData.ia_desligadas)
-                            }
+                            prefixes = ['violencia_fisica', 'abuso_sexual', 'exploracao_sexual', 'negligencia', 'exploracao_financeira']
                         } else if (subcategory === 'deficiente') {
-                            if (prevData.pcd_atual !== undefined) {
-                                newData.pcd_mes_anterior = getNum(prevData.pcd_atual) - getNum(prevData.pcd_desligadas)
-                            }
+                            prefixes = ['def_violencia_fisica', 'def_abuso_sexual', 'def_exploracao_sexual', 'def_negligencia', 'def_exploracao_financeira']
                         }
+
+                        prefixes.forEach(prefix => {
+                            // Logic: Atendidas Anterior = Prev Total - Prev Desligados
+                            // Note: If fields didn't exist in prev month (schema change), this defaults to 0.
+                            const prevTotal = getNum(prevData[`${prefix}_total`])
+                            const prevDesligados = getNum(prevData[`${prefix}_desligados`])
+
+                            // Only set if we have positive value, or 0 if strictly required.
+                            if (prevTotal > 0 || prevDesligados > 0) {
+                                newData[`${prefix}_atendidas_anterior`] = prevTotal - prevDesligados
+                            }
+                        })
                     } else if (setor === 'ceai') {
                         // CEAI logic (Multi-unit)
                         let targetData = prevData
@@ -286,6 +293,24 @@ export function SubmissionFormClient({
                                         }
                                     }
 
+                                    if (setor === 'creas') {
+                                        let prefixes: string[] = []
+                                        if (subcategory === 'idoso') {
+                                            prefixes = ['violencia_fisica', 'abuso_sexual', 'exploracao_sexual', 'negligencia', 'exploracao_financeira']
+                                        } else if (subcategory === 'deficiente') {
+                                            prefixes = ['def_violencia_fisica', 'def_abuso_sexual', 'def_exploracao_sexual', 'def_negligencia', 'def_exploracao_financeira']
+                                        }
+                                        prefixes.forEach(prefix => {
+                                            const ant = Number(data[`${prefix}_atendidas_anterior`]) || 0
+                                            const ins = Number(data[`${prefix}_inseridos`]) || 0
+                                            const total = ant + ins
+
+                                            if (data[`${prefix}_total`] !== total) {
+                                                setData(prev => ({ ...prev, [`${prefix}_total`]: total }))
+                                            }
+                                        })
+                                    }
+
                                     if (setor === 'ceai') {
                                         const inseridos_masc = Number(data.inseridos_masc) || 0
                                         const inseridos_fem = Number(data.inseridos_fem) || 0
@@ -307,34 +332,7 @@ export function SubmissionFormClient({
                                         }
                                     }
 
-                                    if (setor === 'creas') {
-                                        // Auto-calc for Families (fa_) and Idosos (ia_)
-                                        // Concept: Atual = Mes Anterior + Admitidas (No subtraction per user request)
-                                        const fa_anterior = Number(data.fa_mes_anterior) || 0
-                                        const fa_admitidas = Number(data.fa_admitidas) || 0
-                                        const fa_total = fa_anterior + fa_admitidas
 
-                                        if (Number(data.fa_atual) !== fa_total) {
-                                            setData(prev => ({ ...prev, fa_atual: fa_total }))
-                                        }
-
-                                        const ia_anterior = Number(data.ia_mes_anterior) || 0
-                                        const ia_admitidas = Number(data.ia_admitidas) || 0
-                                        const ia_total = ia_anterior + ia_admitidas
-
-                                        if (Number(data.ia_atual) !== ia_total) {
-                                            setData(prev => ({ ...prev, ia_atual: ia_total }))
-                                        }
-
-                                        // Auto-calc for PCD
-                                        const pcd_anterior = Number(data.pcd_mes_anterior) || 0
-                                        const pcd_admitidas = Number(data.pcd_admitidas) || 0
-                                        const pcd_total = pcd_anterior + pcd_admitidas
-
-                                        if (Number(data.pcd_atual) !== pcd_total) {
-                                            setData(prev => ({ ...prev, pcd_atual: pcd_total }))
-                                        }
-                                    }
                                 }}
                                 disabled={loading}
                             />

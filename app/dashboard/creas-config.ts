@@ -1,4 +1,4 @@
-import { FormDefinition } from "@/components/form-engine"
+import { FormDefinition, SectionDefinition } from "@/components/form-engine"
 
 export const CREAS_SPREADSHEET_ID = "1lFgnxKgouTqa-xHl-L8sVOhBj16TbuPF11q8mtiFjiQ"
 export const CREAS_IDOSO_SHEET_NAME = "CREAS Idoso"
@@ -8,47 +8,41 @@ export const CREAS_IDOSO_SHEET_CONFIG = {
     spreadsheetId: CREAS_SPREADSHEET_ID,
     sheetName: CREAS_IDOSO_SHEET_NAME,
     // Mapping blocks to row ranges (1-based index from sheet)
-    // Based on user description/image
-    blocks: [
-        { startRow: 2, endRow: 9 },   // Violência (8 rows)
-        { startRow: 14, endRow: 17 }, // Famílias (4 rows)
-        { startRow: 21, endRow: 24 }  // Idosos Acomp (4 rows)
+    blocks: [] as { startRow: number }[]
+}
+
+// Helper to generate the identical victim sections
+const createVictimSection = (title: string, prefix: string): SectionDefinition => ({
+    title: title,
+    fields: [
+        { id: `${prefix}_atendidas_anterior`, label: "Atendidas no mês anterior", type: "number" as const },
+        { id: `${prefix}_inseridos`, label: "Inseridos / Novos", type: "number" as const },
+        { id: `${prefix}_desligados`, label: "Desligados no PAEFI", type: "number" as const },
+        { id: `${prefix}_total`, label: "Total", type: "number" as const, disabled: true }, // Logic: Atendidas Anterior + Inseridos
+    ]
+})
+
+const PAEFI_SECTION: SectionDefinition = {
+    title: "Famílias em Acompanhamento pelo PAEFI/Mês Referência",
+    fields: [
+        { id: "paefi_novos_casos", label: "Casos Novos Recebidos", type: "number" as const },
+        { id: "paefi_acomp_inicio", label: "Famílias em Acomp. 1º Dia Mês", type: "number" as const },
+        { id: "paefi_inseridos", label: "Famílias Inseridos/Atend.", type: "number" as const },
+        { id: "paefi_desligados", label: "Núm de Casos Desligados", type: "number" as const },
+        { id: "paefi_bolsa_familia", label: "Famílias Benef. Bolsa Família", type: "number" as const },
+        { id: "paefi_bpc", label: "Famílias com BPC", type: "number" as const },
+        { id: "paefi_substancias", label: "Famílias com Dep. Substâncias", type: "number" as const },
     ]
 }
 
 export const CREAS_IDOSO_FORM_DEFINITION: FormDefinition = {
     sections: [
-        {
-            title: "IDOSO TIPO DE VIOLÊNCIA",
-            fields: [
-                { id: "violencia_fisica_m", label: "Violência Física/Psicológica Masc.", type: "number" },
-                { id: "violencia_fisica_f", label: "Violência Física/Psicológica Fem.", type: "number" },
-                { id: "negligencia_m", label: "Negligência/Abandono Masc.", type: "number" },
-                { id: "negligencia_f", label: "Negligência/Abandono Fem.", type: "number" },
-                { id: "abuso_sexual_m", label: "Abuso/Exploração Sexual Masc.", type: "number" },
-                { id: "abuso_sexual_f", label: "Abuso/Exploração Sexual Fem.", type: "number" },
-                { id: "exploracao_financeira_m", label: "Exploração Financeira Masc.", type: "number" },
-                { id: "exploracao_financeira_f", label: "Exploração Financeira Fem.", type: "number" },
-            ]
-        },
-        {
-            title: "FAMÍLIAS E ACOMPANHAMENTOS",
-            fields: [
-                { id: "fa_mes_anterior", label: "Mês Anterior", type: "number" },
-                { id: "fa_admitidas", label: "Admitidas", type: "number" },
-                { id: "fa_desligadas", label: "Desligadas", type: "number" },
-                { id: "fa_atual", label: "Atual", type: "number", disabled: true },
-            ]
-        },
-        {
-            title: "IDOSOS EM ACOMPANHAMENTO",
-            fields: [
-                { id: "ia_mes_anterior", label: "Mês Anterior", type: "number" },
-                { id: "ia_admitidas", label: "Admitidas", type: "number" },
-                { id: "ia_desligadas", label: "Desligadas", type: "number" },
-                { id: "ia_atual", label: "Atual", type: "number", disabled: true },
-            ]
-        }
+        PAEFI_SECTION,
+        createVictimSection("Pessoas idosas vítimas de violência física ou psicológica", "violencia_fisica"),
+        createVictimSection("Pessoas idosas vítimas de abuso sexual", "abuso_sexual"),
+        createVictimSection("Pessoas idosas vítimas de exploração sexual", "exploracao_sexual"),
+        createVictimSection("Pessoas idosas vítimas de negligência ou abandono", "negligencia"),
+        createVictimSection("Pessoas idosas vítimas de exploração financeira", "exploracao_financeira"),
     ]
 }
 
@@ -57,35 +51,15 @@ export const CREAS_DEFICIENTE_SHEET_NAME = "CREAS Deficiente"
 export const CREAS_DEFICIENTE_SHEET_CONFIG = {
     spreadsheetId: CREAS_SPREADSHEET_ID,
     sheetName: CREAS_DEFICIENTE_SHEET_NAME,
-    blocks: [
-        { startRow: 2, endRow: 9 },   // Deficiente Tipo Violência (8 rows)
-        { startRow: 12, endRow: 15 }  // Pessoa com Deficiência (4 rows)
-    ]
+    blocks: [] as { startRow: number }[]
 }
 
 export const CREAS_DEFICIENTE_FORM_DEFINITION: FormDefinition = {
     sections: [
-        {
-            title: "DEFICIENTE TIPO DE VIOLÊNCIA",
-            fields: [
-                { id: "def_violencia_fisica_m", label: "Violência Física/Psicológica Masc.", type: "number" },
-                { id: "def_violencia_fisica_f", label: "Violência Física/Psicológica Fem.", type: "number" },
-                { id: "def_negligencia_m", label: "Negligência/Abandono Masc.", type: "number" },
-                { id: "def_negligencia_f", label: "Negligência/Abandono Fem.", type: "number" },
-                { id: "def_abuso_sexual_m", label: "Abuso/Exploração Sexual Masc.", type: "number" },
-                { id: "def_abuso_sexual_f", label: "Abuso/Exploração Sexual Fem.", type: "number" },
-                { id: "def_exploracao_financeira_m", label: "Exploração Financeira Masc.", type: "number" },
-                { id: "def_exploracao_financeira_f", label: "Exploração Financeira Fem.", type: "number" },
-            ]
-        },
-        {
-            title: "PESSOA COM DEFICIÊNCIA",
-            fields: [
-                { id: "pcd_mes_anterior", label: "Mês Anterior", type: "number" },
-                { id: "pcd_admitidas", label: "Admitidas", type: "number" },
-                { id: "pcd_desligadas", label: "Desligadas", type: "number" },
-                { id: "pcd_atual", label: "Atual", type: "number", disabled: true },
-            ]
-        }
+        createVictimSection("Pessoas com deficiência vítimas de violência física ou psicológica", "def_violencia_fisica"),
+        createVictimSection("Pessoas com deficiência vítimas de abuso sexual", "def_abuso_sexual"),
+        createVictimSection("Pessoas com deficiência vítimas de exploração sexual", "def_exploracao_sexual"),
+        createVictimSection("Pessoas com deficiência vítimas de negligência ou abandono", "def_negligencia"),
+        createVictimSection("Pessoas com deficiência vítimas de exploração financeira", "def_exploracao_financeira"),
     ]
 }
