@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { FileText, Plus, Download, Trash2, Calendar, FilePenLine, FilePen, AlertCircle } from "lucide-react"
+import { FileText, Plus, Eye, Trash2, Calendar, FilePenLine, FilePen, AlertCircle } from "lucide-react"
 import { useState, useEffect } from "react"
 import { WorkPlanEditor, Block } from "./work-plan-editor"
 import { saveWorkPlan, getWorkPlans, deleteWorkPlan } from "@/app/dashboard/actions"
@@ -141,10 +141,10 @@ export function WorkPlansManager({ osc, directorateId, isOpen, onOpenChange }: W
                                                 variant="outline"
                                                 size="icon"
                                                 onClick={() => printWorkPlan(plan)}
-                                                title="Baixar PDF / Imprimir"
+                                                title="Visualizar"
                                                 className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
                                             >
-                                                <Download className="h-4 w-4" />
+                                                <Eye className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant="ghost"

@@ -28,17 +28,25 @@ export const printWorkPlan = (plan: any) => {
         </style>
     `
 
+    const parseMarkdown = (text: string) => {
+        if (!text) return ''
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/__(.*?)__/g, '<u>$1</u>')
+    }
+
     const blocksHtml = plan.content.map((block: any) => {
         if (block.type === 'title') {
-            return `<h2>${block.content}</h2>`
+            return `<h2>${parseMarkdown(block.content)}</h2>`
         }
         if (block.type === 'paragraph') {
-            return `<p>${block.content.replace(/\n/g, '<br>')}</p>`
+            return `<p>${parseMarkdown(block.content).replace(/\n/g, '<br>')}</p>`
         }
         if (block.type === 'table') {
-            const headers = (block.content.headers || []).map((h: string) => `<th>${h}</th>`).join('')
+            const headers = (block.content.headers || []).map((h: string) => `<th>${parseMarkdown(h)}</th>`).join('')
             const rows = (block.content.rows || []).map((row: string[]) =>
-                `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+                `<tr>${row.map(cell => `<td>${parseMarkdown(cell)}</td>`).join('')}</tr>`
             ).join('')
             return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`
         }

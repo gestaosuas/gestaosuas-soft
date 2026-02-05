@@ -56,7 +56,7 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
                 />
             </div>
 
-            <div className="flex justify-center gap-3 py-4 sticky top-0 bg-white dark:bg-zinc-950 z-10 border-b border-zinc-100 dark:border-zinc-800 mb-6">
+            <div className="flex justify-center gap-3 py-4 sticky top-0 bg-white dark:bg-zinc-950 z-10 border-b border-zinc-100 dark:border-zinc-800 mb-2">
                 <Button variant="outline" onClick={() => addBlock('title')} className="gap-2 rounded-full h-10 px-6">
                     <Type className="h-4 w-4" /> Novo Título
                 </Button>
@@ -66,6 +66,21 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
                 <Button variant="outline" onClick={() => addBlock('table')} className="gap-2 rounded-full h-10 px-6">
                     <TableIcon className="h-4 w-4" /> Nova Tabela
                 </Button>
+            </div>
+
+            <div className="flex justify-center items-center gap-6 px-4 py-2 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-6">
+                <div className="flex items-center gap-1.5">
+                    <span className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900">**texto**</span>
+                    <span>Negrito</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900">*texto*</span>
+                    <span>Itálico</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900">__texto__</span>
+                    <span>Sublinhado</span>
+                </div>
             </div>
 
             <div className="space-y-6 min-h-[400px]">
