@@ -1,5 +1,5 @@
 
-export const printWorkPlan = (plan: any) => {
+export const printWorkPlan = (plan: any, customLogoUrl?: string) => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
 
@@ -53,7 +53,7 @@ export const printWorkPlan = (plan: any) => {
         return ''
     }).join('')
 
-    const logoUrl = window.location.origin + '/logo-vigilancia.png'
+    const logoUrl = customLogoUrl || "https://ovfpxrepxlrspsjbtpnd.supabase.co/storage/v1/object/public/system/logo-pm-uberlandia.png"
 
     const html = `
         <html>

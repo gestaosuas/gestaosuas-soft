@@ -823,3 +823,60 @@ export async function getWorkPlansCount(directorateId: string) {
 
     return counts
 }
+
+export async function saveOpinionReport(visitId: string, data: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch visit to check permissions
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    const hasAccess = await checkUserPermission(user.id, visit.directorate_id)
+
+    if (!isAdmin && !hasAccess) {
+        throw new Error("Você não tem permissão para salvar o parecer desta visita.")
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            parecer_tecnico: data,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao salvar parecer: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: string, objetivos: string, metas: string, atividades: string }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) throw new Error("Apenas administradores podem cadastrar descrições do plano de trabalho.")
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('oscs')
+        .update(data)
+        .eq('id', oscId)
+
+    if (error) throw new Error("Erro ao salvar descrições: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}

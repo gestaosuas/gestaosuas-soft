@@ -127,6 +127,16 @@ export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], d
                                                     <><Edit2 className="h-3.5 w-3.5" /> Editar</>
                                                 )}
                                             </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={visit.status !== 'finalized'}
+                                                onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`)}
+                                                className="h-9 px-4 rounded-xl border-zinc-200 dark:border-zinc-800 hover:bg-blue-900 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all gap-2 font-bold text-[10px] uppercase tracking-widest"
+                                            >
+                                                <FileText className="h-3.5 w-3.5" /> Relatório
+                                            </Button>
                                             {(visit.status === 'draft' || isAdmin) && (
                                                 <Button
                                                     variant="ghost"

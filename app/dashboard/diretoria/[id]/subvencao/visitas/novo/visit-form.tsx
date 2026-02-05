@@ -375,6 +375,7 @@ export function VisitForm({
                     <WorkPlanSelector
                         oscId={formData.osc_id}
                         oscName={selectedOSC?.name}
+                        logoUrl={logoUrl}
                     />
 
                     <Button

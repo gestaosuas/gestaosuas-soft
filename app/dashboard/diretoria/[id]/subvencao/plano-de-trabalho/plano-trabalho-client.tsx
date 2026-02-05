@@ -16,13 +16,15 @@ interface OSC {
 interface PlanoTrabalhoClientProps {
     directorateId: string
     oscs: OSC[]
+    profile: any
     planCounts: Record<string, number>
+    logoUrl?: string
 }
 
 import { WorkPlansManager } from "./work-plans-manager"
 import { AlertCircle, FileCheck } from "lucide-react"
 
-export function PlanoTrabalhoClient({ directorateId, oscs, planCounts }: PlanoTrabalhoClientProps) {
+export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, logoUrl }: PlanoTrabalhoClientProps) {
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOsc, setSelectedOsc] = useState<OSC | null>(null)
 
@@ -117,8 +119,10 @@ export function PlanoTrabalhoClient({ directorateId, oscs, planCounts }: PlanoTr
             <WorkPlansManager
                 osc={selectedOsc}
                 directorateId={directorateId}
+                profile={profile}
                 isOpen={!!selectedOsc}
                 onOpenChange={(open) => !open && setSelectedOsc(null)}
+                logoUrl={logoUrl}
             />
         </div>
     )

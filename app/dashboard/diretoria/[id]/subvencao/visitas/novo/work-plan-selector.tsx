@@ -10,9 +10,10 @@ import { printWorkPlan } from "../../plano-de-trabalho/print-utils"
 interface WorkPlanSelectorProps {
     oscId: string
     oscName?: string
+    logoUrl?: string
 }
 
-export function WorkPlanSelector({ oscId, oscName }: WorkPlanSelectorProps) {
+export function WorkPlanSelector({ oscId, oscName, logoUrl }: WorkPlanSelectorProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [plans, setPlans] = useState<any[]>([])
@@ -71,7 +72,7 @@ export function WorkPlanSelector({ oscId, oscName }: WorkPlanSelectorProps) {
                                     key={plan.id}
                                     variant="outline"
                                     onClick={() => {
-                                        printWorkPlan(plan)
+                                        printWorkPlan(plan, logoUrl)
                                         setIsOpen(false)
                                     }}
                                     className="w-full justify-between h-auto py-3 px-4 hover:border-blue-500 group"
