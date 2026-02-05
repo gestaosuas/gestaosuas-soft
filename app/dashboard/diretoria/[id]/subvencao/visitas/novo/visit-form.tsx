@@ -500,7 +500,7 @@ export function VisitForm({
                                         value={formData.osc_id}
                                         onValueChange={value => setFormData({ ...formData, osc_id: value })}
                                     >
-                                        <SelectTrigger className="h-12 bg-zinc-50 border-zinc-200/60 rounded-xl focus:ring-4 focus:ring-blue-900/5 transition-all text-blue-950 font-bold">
+                                        <SelectTrigger className="h-14 bg-zinc-50 border-zinc-200/60 rounded-xl focus:ring-4 focus:ring-blue-900/5 transition-all text-blue-950 font-bold">
                                             <SelectValue placeholder="Escolha uma instituição cadastrada" />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-[400px]">
@@ -540,16 +540,17 @@ export function VisitForm({
                                                 value={formData.visit_date_1}
                                                 onChange={e => setFormData({ ...formData, visit_date_1: e.target.value, visit_date: e.target.value })}
                                                 disabled={isLocked || !!initialVisit?.id}
-                                                className="h-10 bg-zinc-50/50 rounded-lg font-bold text-xs"
+                                                className="h-12 bg-zinc-50/50 rounded-lg font-bold text-xs"
                                             />
                                             <Select
                                                 value={formData.visit_shift_1}
                                                 onValueChange={val => setFormData({ ...formData, visit_shift_1: val })}
                                                 disabled={isLocked || !!initialVisit?.id}
                                             >
-                                                <SelectTrigger className="h-10 w-[110px] bg-zinc-50/50 text-xs font-bold">
+                                                <SelectTrigger className="h-12 w-[120px] bg-zinc-50/50 text-xs font-bold">
                                                     <SelectValue placeholder="Turno" />
                                                 </SelectTrigger>
+
                                                 <SelectContent>
                                                     <SelectItem value="Manhã">Manhã</SelectItem>
                                                     <SelectItem value="Tarde">Tarde</SelectItem>
@@ -591,14 +592,14 @@ export function VisitForm({
                                                         value={formData.visit_date_2}
                                                         onChange={e => setFormData({ ...formData, visit_date_2: e.target.value })}
                                                         disabled={isLocked}
-                                                        className="h-10 bg-zinc-50/50 rounded-lg font-bold text-xs"
+                                                        className="h-12 bg-zinc-50/50 rounded-lg font-bold text-xs"
                                                     />
                                                     <Select
                                                         value={formData.visit_shift_2}
                                                         onValueChange={val => setFormData({ ...formData, visit_shift_2: val })}
                                                         disabled={isLocked}
                                                     >
-                                                        <SelectTrigger className="h-10 w-[110px] bg-zinc-50/50 text-xs font-bold">
+                                                        <SelectTrigger className="h-12 w-[120px] bg-zinc-50/50 text-xs font-bold">
                                                             <SelectValue placeholder="Turno" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -731,7 +732,7 @@ export function VisitForm({
                                                     type="time"
                                                     value={atendimento.horario_inicio}
                                                     onChange={e => setAtendimento({ ...atendimento, horario_inicio: e.target.value })}
-                                                    className="h-10 bg-zinc-50/50 rounded-lg text-sm"
+                                                    className="h-12 bg-zinc-50/50 rounded-lg text-sm"
                                                 />
                                             </div>
                                             <div className="md:col-span-1 space-y-1.5">
@@ -740,7 +741,7 @@ export function VisitForm({
                                                     type="time"
                                                     value={atendimento.horario_fim}
                                                     onChange={e => setAtendimento({ ...atendimento, horario_fim: e.target.value })}
-                                                    className="h-10 bg-zinc-50/50 rounded-lg text-sm"
+                                                    className="h-12 bg-zinc-50/50 rounded-lg text-sm"
                                                 />
                                             </div>
                                         </>
@@ -756,7 +757,7 @@ export function VisitForm({
                                             type="number"
                                             value={atendimento.total_atendidos}
                                             onChange={e => setAtendimento({ ...atendimento, total_atendidos: Number(e.target.value) })}
-                                            className="h-10 text-center font-bold"
+                                            className="h-12 text-center font-bold"
                                         />
                                     </div>
 
@@ -766,7 +767,7 @@ export function VisitForm({
                                             type="number"
                                             value={atendimento.subvencionados}
                                             readOnly
-                                            className="h-10 text-center font-bold bg-zinc-100 text-zinc-500 cursor-not-allowed"
+                                            className="h-12 text-center font-bold bg-zinc-100 text-zinc-500 cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
@@ -782,7 +783,7 @@ export function VisitForm({
                                                 type="number"
                                                 value={atendimento.presentes.manha}
                                                 onChange={e => setAtendimento({ ...atendimento, presentes: { ...atendimento.presentes, manha: Number(e.target.value) } })}
-                                                className="h-8 text-center font-bold"
+                                                className="h-10 text-center font-bold"
                                             />
                                         </div>
                                         <div className="text-center space-y-1">
@@ -791,7 +792,7 @@ export function VisitForm({
                                                 type="number"
                                                 value={atendimento.presentes.tarde}
                                                 onChange={e => setAtendimento({ ...atendimento, presentes: { ...atendimento.presentes, tarde: Number(e.target.value) } })}
-                                                className="h-8 text-center font-bold"
+                                                className="h-10 text-center font-bold"
                                             />
                                         </div>
                                         <div className="text-center space-y-1 bg-zinc-900/5 rounded-lg p-1">
@@ -911,6 +912,7 @@ export function VisitForm({
                                             id="demanda_espontanea"
                                             checked={formaAcesso.demanda_espontanea}
                                             onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, demanda_espontanea: !!checked })}
+                                            className="h-5 w-5"
                                         />
                                         <Label htmlFor="demanda_espontanea" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Demanda Espontânea</Label>
                                     </div>
@@ -919,6 +921,7 @@ export function VisitForm({
                                             id="busca_ativa"
                                             checked={formaAcesso.busca_ativa}
                                             onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, busca_ativa: !!checked })}
+                                            className="h-5 w-5"
                                         />
                                         <Label htmlFor="busca_ativa" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Busca Ativa</Label>
                                     </div>
@@ -927,6 +930,7 @@ export function VisitForm({
                                             id="encaminhamento"
                                             checked={formaAcesso.encaminhamento}
                                             onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, encaminhamento: !!checked })}
+                                            className="h-5 w-5"
                                         />
                                         <Label htmlFor="encaminhamento" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Encaminhamento pela rede</Label>
                                     </div>
@@ -935,6 +939,7 @@ export function VisitForm({
                                             id="outros"
                                             checked={formaAcesso.outros}
                                             onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, outros: !!checked })}
+                                            className="h-5 w-5"
                                         />
                                         <Label htmlFor="outros" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Outros</Label>
                                     </div>
@@ -1010,7 +1015,7 @@ export function VisitForm({
                                                             newData[index].cargo = e.target.value
                                                             setRhData(newData)
                                                         }}
-                                                        className="h-7 text-[11px] print:hidden"
+                                                        className="h-9 text-[11px] print:hidden"
                                                     />}
                                                 </>
                                             )}
@@ -1025,7 +1030,7 @@ export function VisitForm({
                                                     }
                                                 }}
                                                 className={cn(
-                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
+                                                    "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
                                                     !isLocked && "hover:border-blue-900",
                                                     row.voluntario && "bg-black print-checkbox-checked"
                                                 )}
@@ -1043,7 +1048,7 @@ export function VisitForm({
                                                     }
                                                 }}
                                                 className={cn(
-                                                    "w-3 h-3 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
+                                                    "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
                                                     !isLocked && "hover:border-blue-900",
                                                     row.subvencao && "bg-black print-checkbox-checked"
                                                 )}
@@ -1063,7 +1068,7 @@ export function VisitForm({
                                                         newData[index].quantidade = e.target.value
                                                         setRhData(newData)
                                                     }}
-                                                    className="h-7 text-[11px] text-center print:hidden"
+                                                    className="h-9 text-[11px] text-center print:hidden"
                                                 />
                                             )}
                                         </TableCell>
@@ -1078,7 +1083,7 @@ export function VisitForm({
                                                         newData[index].outros = e.target.value
                                                         setRhData(newData)
                                                     }}
-                                                    className="h-7 text-[11px] print:hidden"
+                                                    className="h-9 text-[11px] print:hidden"
                                                 />
                                             )}
                                         </TableCell>
@@ -1171,7 +1176,7 @@ export function VisitForm({
                         Nenhuma foto anexada.
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {formData.photos?.map((photo: string, index: number) => (
                             <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50">
                                 <img

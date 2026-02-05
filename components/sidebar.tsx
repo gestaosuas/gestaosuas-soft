@@ -27,10 +27,10 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
             {/* Toggle Button - Minimalist */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute -right-3 top-10 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 hover:text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:hover:text-zinc-100 transition-all"
+                className="absolute -right-3 top-10 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 hover:text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:hover:text-zinc-100 transition-all touch-manipulation"
                 title={isCollapsed ? "Expandir" : "Recolher"}
             >
-                {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
 
             <div className={cn(
