@@ -1,21 +1,29 @@
 
 export const printWorkPlan = (plan: any) => {
-    const printWindow = window.open('', '', 'width=800,height=600')
+    const printWindow = window.open('', '_blank')
     if (!printWindow) return
 
     const styles = `
         <style>
-            body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; }
-            h1 { font-size: 24px; margin-bottom: 20px; text-align: center; text-transform: uppercase; }
-            h2 { font-size: 18px; margin-top: 20px; margin-bottom: 10px; color: #000; font-weight: bold; }
-            p { margin-bottom: 15px; line-height: 1.5; text-align: justify; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: left; font-size: 12px; }
-            th { background-color: #f0f0f0; font-weight: bold; }
-            .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-            .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #666; padding: 10px; }
+            body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; max-width: 900px; margin: 0 auto; background: #f4f4f5; }
+            .document-container { background: white; padding: 60px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border-radius: 8px; min-height: 29.7cm; }
+            h1 { font-size: 24px; margin-bottom: 20px; text-align: center; text-transform: uppercase; color: #1e3a8a; }
+            h2 { font-size: 18px; margin-top: 30px; margin-bottom: 15px; color: #1e3a8a; font-weight: bold; border-left: 4px solid #1e3a8a; padding-left: 15px; }
+            p { margin-bottom: 15px; line-height: 1.6; text-align: justify; color: #444; }
+            table { width: 100%; border-collapse: collapse; margin: 25px 0; }
+            th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; font-size: 13px; }
+            th { background-color: #f8fafc; font-weight: bold; color: #1e3a8a; }
+            .header { text-align: center; margin-bottom: 50px; border-bottom: 1px solid #e5e7eb; padding-bottom: 25px; }
+            .footer { margin-top: 50px; text-align: center; font-size: 11px; color: #94a3b8; padding: 20px; border-top: 1px solid #e5e7eb; }
+            .no-print-toolbar { position: sticky; top: 0; background: #f4f4f5; padding: 10px 0; margin-bottom: 20px; display: flex; justify-content: flex-end; z-index: 100; }
+            .btn-print { background: #1e3a8a; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: opacity 0.2s; }
+            .btn-print:hover { opacity: 0.9; }
+
             @media print {
-                .no-print { display: none; }
+                body { padding: 0; background: white; }
+                .document-container { box-shadow: none; padding: 0; }
+                .no-print { display: none !important; }
+                .no-print-toolbar { display: none !important; }
             }
         </style>
     `
@@ -28,8 +36,8 @@ export const printWorkPlan = (plan: any) => {
             return `<p>${block.content.replace(/\n/g, '<br>')}</p>`
         }
         if (block.type === 'table') {
-            const headers = block.content.headers.map((h: string) => `<th>${h}</th>`).join('')
-            const rows = block.content.rows.map((row: string[]) =>
+            const headers = (block.content.headers || []).map((h: string) => `<th>${h}</th>`).join('')
+            const rows = (block.content.rows || []).map((row: string[]) =>
                 `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
             ).join('')
             return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`
@@ -46,20 +54,22 @@ export const printWorkPlan = (plan: any) => {
             ${styles}
         </head>
         <body>
-            <div class="header">
-                <img src="${logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">
-                <h1>${plan.title}</h1>
-                <p style="text-align: center; margin: 0; font-size: 12px;">Gerado pelo Sistema de Vigilância Socioassistencial</p>
+            <div class="no-print-toolbar">
+                <button class="btn-print" onclick="window.print()">Imprimir Documento</button>
             </div>
-            <div class="content">
-                ${blocksHtml}
+            <div class="document-container">
+                <div class="header">
+                    <img src="${logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">
+                    <h1>${plan.title}</h1>
+                    <p style="text-align: center; margin: 0; font-size: 12px; color: #64748b;">Gerado pelo Sistema de Vigilância Socioassistencial</p>
+                </div>
+                <div class="content">
+                    ${blocksHtml}
+                </div>
+                <div class="footer">
+                    Documento visualizado em ${new Date().toLocaleString('pt-BR')} pela Plataforma de Vigilância Socioassistencial
+                </div>
             </div>
-            <div class="footer">
-                Documento gerado em ${new Date().toLocaleString('pt-BR')} pela Plataforma de Vigilância Socioassistencial
-            </div>
-            <script>
-                window.onload = function() { window.print(); }
-            </script>
         </body>
         </html>
     `

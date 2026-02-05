@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { FileText, Download, Calendar, Loader2 } from "lucide-react"
+import { FileText, Eye, Calendar, Loader2 } from "lucide-react"
 import { getWorkPlans } from "@/app/dashboard/actions"
 import { printWorkPlan } from "../../plano-de-trabalho/print-utils"
 
@@ -83,7 +83,7 @@ export function WorkPlanSelector({ oscId, oscName }: WorkPlanSelectorProps) {
                                             {new Date(plan.created_at).toLocaleDateString('pt-BR')}
                                         </div>
                                     </div>
-                                    <Download className="h-4 w-4 text-zinc-400 group-hover:text-blue-600" />
+                                    <Eye className="h-4 w-4 text-zinc-400 group-hover:text-blue-600" />
                                 </Button>
                             ))
                         )}
