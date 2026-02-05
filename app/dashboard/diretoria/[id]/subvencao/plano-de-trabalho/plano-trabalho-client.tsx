@@ -16,11 +16,13 @@ interface OSC {
 interface PlanoTrabalhoClientProps {
     directorateId: string
     oscs: OSC[]
+    planCounts: Record<string, number>
 }
 
 import { WorkPlansManager } from "./work-plans-manager"
+import { AlertCircle, FileCheck } from "lucide-react"
 
-export function PlanoTrabalhoClient({ directorateId, oscs }: PlanoTrabalhoClientProps) {
+export function PlanoTrabalhoClient({ directorateId, oscs, planCounts }: PlanoTrabalhoClientProps) {
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOsc, setSelectedOsc] = useState<OSC | null>(null)
 
@@ -80,19 +82,35 @@ export function PlanoTrabalhoClient({ directorateId, oscs }: PlanoTrabalhoClient
                         </p>
                     </div>
                 ) : (
-                    filteredOscs.map((osc) => (
-                        <Card
-                            key={osc.id}
-                            onClick={() => setSelectedOsc(osc)}
-                            className="group bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-sm hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-xl cursor-pointer hover:shadow-md"
-                        >
-                            <div className="p-4 flex items-center h-full">
-                                <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 leading-tight">
-                                    {osc.name}
-                                </h3>
-                            </div>
-                        </Card>
-                    ))
+                    filteredOscs.map((osc) => {
+                        const count = planCounts[osc.id] || 0
+                        return (
+                            <Card
+                                key={osc.id}
+                                onClick={() => setSelectedOsc(osc)}
+                                className="group bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-sm hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-xl cursor-pointer hover:shadow-md h-full flex flex-col justify-between"
+                            >
+                                <div className="p-4 flex items-start justify-between gap-3">
+                                    <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 leading-tight">
+                                        {osc.name}
+                                    </h3>
+                                </div>
+                                <div className="px-4 pb-4">
+                                    {count > 0 ? (
+                                        <div className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
+                                            <FileCheck className="h-3 w-3" />
+                                            {count} {count === 1 ? 'Plano' : 'Planos'}
+                                        </div>
+                                    ) : (
+                                        <div className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-200">
+                                            <AlertCircle className="h-3 w-3" />
+                                            Pendente
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        )
+                    })
                 )}
             </div>
 

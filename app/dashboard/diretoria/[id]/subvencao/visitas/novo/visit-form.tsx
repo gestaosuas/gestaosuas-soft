@@ -30,7 +30,9 @@ import {
     Trash2,
     AlertCircle,
     Loader2,
-    Check
+    Check,
+    Camera,
+    X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveVisit, finalizeVisit } from "@/app/dashboard/actions"
@@ -61,6 +63,7 @@ export function VisitForm({
         has_second_visit: initialVisit?.identificacao?.has_second_visit || false,
         visit_date_2: initialVisit?.identificacao?.visit_date_2 || "",
         visit_shift_2: initialVisit?.identificacao?.visit_shift_2 || "",
+        photos: initialVisit?.identificacao?.photos || [],
         ...(initialVisit?.identificacao || {})
     })
 
@@ -173,6 +176,55 @@ export function VisitForm({
             setIsSaving(false)
         }
     }
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            alert("Por favor, selecione apenas imagens.")
+            return
+        }
+
+        // Optimistic update or waiting? Let's wait for upload
+        const uploadFormData = new FormData()
+        uploadFormData.append('file', file)
+
+        try {
+            setLoading(true)
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro no upload')
+            }
+
+            setFormData((prev: any) => ({
+                ...prev,
+                photos: [...(prev.photos || []), data.url]
+            }))
+
+        } catch (error: any) {
+            console.error("Upload error:", error)
+            alert("Erro ao fazer upload da imagem: " + error.message)
+        } finally {
+            setLoading(false)
+            // Reset input
+            e.target.value = ''
+        }
+    }
+
+    const removePhoto = (index: number) => {
+        setFormData((prev: any) => ({
+            ...prev,
+            photos: prev.photos.filter((_: string, i: number) => i !== index)
+        }))
+    }
+
 
     const addRhRow = () => {
         setRhData([...rhData, { cargo: "", voluntario: false, subvencao: false, quantidade: "", outros: "" }])
@@ -1103,6 +1155,71 @@ export function VisitForm({
                     )}
                 </div>
             </div> {/* This closes the main content wrapper for sections I-VII */}
+
+            {/* FOTOS / EVIDÊNCIAS */}
+            <div className={cn(
+                "print-section locked-report",
+                !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
+            )}>
+                <h2 className={cn(
+                    "text-lg font-black tracking-tight mb-4",
+                    !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
+                )}>FOTOS / EVIDÊNCIAS</h2>
+
+                {(!formData.photos || formData.photos.length === 0) && isLocked ? (
+                    <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
+                        Nenhuma foto anexada.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {formData.photos?.map((photo: string, index: number) => (
+                            <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50">
+                                <img
+                                    src={photo}
+                                    alt={`Evidência ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                />
+                                {!isLocked && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removePhoto(index)}
+                                        className="absolute top-2 right-2 bg-red-500/90 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 print:hidden"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        {!isLocked && (
+                            <label className="flex flex-col items-center justify-center gap-2 aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-blue-900/50 hover:bg-blue-50/50 cursor-pointer transition-all group">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={handlePhotoUpload}
+                                    disabled={loading}
+                                />
+                                <div className={cn(
+                                    "p-3 rounded-full bg-zinc-100 group-hover:bg-blue-100 transition-colors",
+                                    loading && "animate-pulse"
+                                )}>
+                                    {loading ? (
+                                        <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+                                    ) : (
+                                        <Camera className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
+                                    )}
+                                </div>
+                                <span className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900">
+                                    {loading ? "Enviando..." : "Adicionar Foto"}
+                                </span>
+                            </label>
+                        )}
+                    </div>
+                )}
+            </div>
+
 
             {/* VIII. ASSINATURAS */}
             <div className={cn(

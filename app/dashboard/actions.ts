@@ -796,3 +796,30 @@ export async function deleteWorkPlan(id: string) {
     revalidatePath('/dashboard', 'page')
     return { success: true }
 }
+
+export async function getWorkPlansCount(directorateId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch all work plans for the directorate
+    const { data, error } = await adminSupabase
+        .from('work_plans')
+        .select('osc_id')
+        .eq('directorate_id', directorateId)
+
+    if (error) {
+        console.error("Fetch Work Plan Counts Error:", error)
+        return {}
+    }
+
+    // Group count by osc_id
+    const counts: Record<string, number> = {}
+    data?.forEach((plan: any) => {
+        counts[plan.osc_id] = (counts[plan.osc_id] || 0) + 1
+    })
+
+    return counts
+}

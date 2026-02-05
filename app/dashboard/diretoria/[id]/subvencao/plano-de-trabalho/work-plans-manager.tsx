@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { FileText, Plus, Download, Trash2, Calendar, FilePenLine, FilePen } from "lucide-react"
+import { FileText, Plus, Download, Trash2, Calendar, FilePenLine, FilePen, AlertCircle } from "lucide-react"
 import { useState, useEffect } from "react"
 import { WorkPlanEditor, Block } from "./work-plan-editor"
 import { saveWorkPlan, getWorkPlans, deleteWorkPlan } from "@/app/dashboard/actions"
@@ -121,7 +121,15 @@ export function WorkPlansManager({ osc, directorateId, isOpen, onOpenChange }: W
                                                 <FilePenLine className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-zinc-900 dark:text-zinc-100">{plan.title}</h4>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100">{plan.title}</h4>
+                                                    {(!plan.content || (Array.isArray(plan.content) && plan.content.length === 0)) && (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            Vazio
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
                                                     <Calendar className="h-3 w-3" />
                                                     <span>{new Date(plan.created_at).toLocaleDateString('pt-BR')}</span>
