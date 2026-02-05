@@ -34,6 +34,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveVisit, finalizeVisit } from "@/app/dashboard/actions"
+import { WorkPlanSelector } from "./work-plan-selector"
 
 export function VisitForm({
     directorateId,
@@ -319,6 +320,11 @@ export function VisitForm({
                 </Button>
 
                 <div className="flex gap-3">
+                    <WorkPlanSelector
+                        oscId={formData.osc_id}
+                        oscName={selectedOSC?.name}
+                    />
+
                     <Button
                         variant="outline"
                         onClick={() => window.print()}

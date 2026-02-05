@@ -722,3 +722,77 @@ export async function getPreviousMonthData(directorateId: string, currentMonth: 
 
     return submission?.data || null
 }
+
+export async function saveWorkPlan(data: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    const { id, ...planData } = data
+
+    if (id) {
+        // Update
+        const { error } = await adminSupabase
+            .from('work_plans')
+            .update({
+                ...planData,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+
+        if (error) throw new Error("Erro ao atualizar plano: " + error.message)
+    } else {
+        // Create
+        const { error } = await adminSupabase
+            .from('work_plans')
+            .insert({
+                ...planData,
+                user_id: user.id
+            })
+
+        if (error) throw new Error("Erro ao criar plano: " + error.message)
+    }
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function getWorkPlans(oscId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    const { data, error } = await adminSupabase
+        .from('work_plans')
+        .select('*')
+        .eq('osc_id', oscId)
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error("Fetch Work Plans Error:", error)
+        return []
+    }
+
+    return data || []
+}
+
+export async function deleteWorkPlan(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    const { error } = await adminSupabase
+        .from('work_plans')
+        .delete()
+        .eq('id', id)
+
+    if (error) throw new Error("Erro ao excluir plano: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
