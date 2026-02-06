@@ -42,8 +42,7 @@ export default async function NewReportPage({
         .eq('id', user.id)
         .single()
 
-    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
-    const isAdmin = profile?.role === 'admin' || isEmailAdmin
+    const isAdmin = profile?.role === 'admin'
 
     let directorate = null;
 
@@ -69,13 +68,6 @@ export default async function NewReportPage({
                     <div className="p-8 text-center">
                         <h2 className="text-xl font-bold text-red-600 mb-2">Acesso não autorizado</h2>
                         <p>Você não tem permissão para acessar a diretoria: <strong>{requestedDirectorate.name}</strong></p>
-                        <div className="mt-4 p-4 bg-zinc-100 dark:bg-zinc-800 rounded text-xs text-left inline-block">
-                            <p>Debug Info:</p>
-                            <p>User Email: {user.email}</p>
-                            <p>Role: {profile?.role}</p>
-                            <p>Is Admin: {isAdmin ? 'Sim' : 'Não'}</p>
-                            <p>Is Linked: {isLinked ? 'Sim' : 'Não'}</p>
-                        </div>
                     </div>
                 )
             }

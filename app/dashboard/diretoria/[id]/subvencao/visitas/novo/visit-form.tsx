@@ -835,7 +835,7 @@ export function VisitForm({
                                 <div className="space-y-8 pt-4">
                                     <div className="space-y-3">
                                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Tipos de atividades desenvolvidas (descritivo)</Label>
-                                        <Textarea
+                                        <Textarea autoResize
                                             value={atendimento.atividades}
                                             onChange={e => setAtendimento({ ...atendimento, atividades: e.target.value })}
                                             disabled={isLocked}
@@ -844,7 +844,7 @@ export function VisitForm({
                                     </div>
                                     <div className="space-y-3">
                                         <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Atividades em execução no momento da visita</Label>
-                                        <Textarea
+                                        <Textarea autoResize
                                             value={atendimento.atividades_momento}
                                             onChange={e => setAtendimento({ ...atendimento, atividades_momento: e.target.value })}
                                             disabled={isLocked}
@@ -1138,7 +1138,7 @@ export function VisitForm({
                                     <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">OBSERVAÇÕES</Label>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
-                                    <Textarea
+                                    <Textarea autoResize
                                         value={observacoes}
                                         onChange={e => setObservacoes(e.target.value)}
                                         className="min-h-[100px] text-xs"
@@ -1150,7 +1150,7 @@ export function VisitForm({
                                     <Label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest">RECOMENDAÇÕES</Label>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
-                                    <Textarea
+                                    <Textarea autoResize
                                         value={recomendacoes}
                                         onChange={e => setRecomendacoes(e.target.value)}
                                         className="min-h-[100px] text-xs"

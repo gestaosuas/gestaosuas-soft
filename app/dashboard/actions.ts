@@ -16,291 +16,321 @@ import { CREAS_IDOSO_FORM_DEFINITION, CREAS_IDOSO_SHEET_CONFIG, CREAS_DEFICIENTE
 import { CEAI_FORM_DEFINITION, CEAI_SHEET_BLOCKS, CEAI_SPREADSHEET_ID } from './ceai-config'
 import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID } from './pop-rua-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
+import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
 
 export async function submitReport(formData: Record<string, any>, month: number, year: number, directorateId: string, setor?: string) {
+    // Validate inputs
+    submissionBaseSchema.parse({ month, year, directorateId, setor })
 
-    // Force refresh of configuration
-    const supabase = await createClient()
+    try {
+        // Force refresh of configuration
+        const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-        throw new Error("Unauthorized")
-    }
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            throw new Error("Unauthorized")
+        }
 
-    // Check Admin & Permission
-    const isAdmin = await isAdminCheck(user.id)
-    const adminSupabase = createAdminClient()
+        // Check Admin & Permission
+        const isAdmin = await isAdminCheck(user.id)
+        const adminSupabase = createAdminClient()
 
-    if (!isAdmin) {
-        const hasAccess = await checkUserPermission(user.id, directorateId)
-        if (!hasAccess) {
+        if (!isAdmin) {
+            const hasAccess = await checkUserPermission(user.id, directorateId)
+            if (!hasAccess) {
+                throw new Error("Directorate not found or unauthorized")
+            }
+        }
+
+        // Fetch directorate to get config (needed for sheets)
+        const { data: directorate } = await adminSupabase.from('directorates').select('*').eq('id', directorateId).single()
+
+        if (!directorate) {
             throw new Error("Directorate not found or unauthorized")
         }
-    }
 
-    // Fetch directorate to get config (needed for sheets)
-    const { data: directorate } = await adminSupabase.from('directorates').select('*').eq('id', directorateId).single()
+        // Security check: Verify that the 'setor' matches the directorate
+        if (setor) {
+            const normName = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            const dirName = normName(directorate.name)
+            let isAuthorized = false
 
-    if (!directorate) {
-        throw new Error("Directorate not found or unauthorized")
-    }
+            if (setor === 'cras' && dirName.includes('cras')) isAuthorized = true
+            else if (setor === 'centros' && (dirName.includes('formacao') || dirName.includes('profissional') || dirName.includes('centro'))) isAuthorized = true
+            else if (setor === 'sine' && (dirName.includes('sine') || dirName.includes('formacao'))) isAuthorized = true
+            else if (setor === 'beneficios' && dirName.includes('beneficios')) isAuthorized = true
+            else if (setor === 'ceai' && dirName.includes('ceai')) isAuthorized = true
+            else if (setor === 'creas' && dirName.includes('creas')) isAuthorized = true
+            else if (setor === 'pop_rua' && dirName.includes('populacao') && dirName.includes('rua')) isAuthorized = true
 
-    // Check if already submitted
-    // Use Admin Client for Write Operations (Bypassing DB RLS)
-
-    // Pre-processing and Calculations based on Sector
-    if (setor === 'cras') {
-        const mes_anterior = Number(formData.mes_anterior) || 0
-        const admitidas = Number(formData.admitidas) || 0
-        formData.atual = mes_anterior + admitidas
-    }
-
-    if (setor === 'creas') {
-        // CREAS Calculation (Redundant check as client does it, but good for safety)
-        // Only calculate if the corresponding fields are present to avoid clearing other subcategory data
-        if (formData.fa_mes_anterior !== undefined || formData.fa_admitidas !== undefined) {
-            const fa_anterior = Number(formData.fa_mes_anterior) || 0
-            const fa_admitidas = Number(formData.fa_admitidas) || 0
-            formData.fa_atual = fa_anterior + fa_admitidas
+            if (!isAdmin && !isAuthorized) {
+                throw new Error(`O setor '${setor}' não corresponde à diretoria '${directorate.name}'.`)
+            }
         }
 
-        if (formData.ia_mes_anterior !== undefined || formData.ia_admitidas !== undefined) {
-            const ia_anterior = Number(formData.ia_mes_anterior) || 0
-            const ia_admitidas = Number(formData.ia_admitidas) || 0
-            formData.ia_atual = ia_anterior + ia_admitidas
+        // Pre-processing and Calculations based on Sector
+        if (setor === 'cras') {
+            const mes_anterior = Number(formData.mes_anterior) || 0
+            const admitidas = Number(formData.admitidas) || 0
+            formData.atual = mes_anterior + admitidas
         }
 
-        if (formData.pcd_mes_anterior !== undefined || formData.pcd_admitidas !== undefined) {
-            const pcd_anterior = Number(formData.pcd_mes_anterior) || 0
-            const pcd_admitidas = Number(formData.pcd_admitidas) || 0
-            formData.pcd_atual = pcd_anterior + pcd_admitidas
+        if (setor === 'creas') {
+            // CREAS Calculation (Redundant check as client does it, but good for safety)
+            // Only calculate if the corresponding fields are present to avoid clearing other subcategory data
+            if (formData.fa_mes_anterior !== undefined || formData.fa_admitidas !== undefined) {
+                const fa_anterior = Number(formData.fa_mes_anterior) || 0
+                const fa_admitidas = Number(formData.fa_admitidas) || 0
+                formData.fa_atual = fa_anterior + fa_admitidas
+            }
+
+            if (formData.ia_mes_anterior !== undefined || formData.ia_admitidas !== undefined) {
+                const ia_anterior = Number(formData.ia_mes_anterior) || 0
+                const ia_admitidas = Number(formData.ia_admitidas) || 0
+                formData.ia_atual = ia_anterior + ia_admitidas
+            }
+
+            if (formData.pcd_mes_anterior !== undefined || formData.pcd_admitidas !== undefined) {
+                const pcd_anterior = Number(formData.pcd_mes_anterior) || 0
+                const pcd_admitidas = Number(formData.pcd_admitidas) || 0
+                formData.pcd_atual = pcd_anterior + pcd_admitidas
+            }
         }
-    }
 
-    // Check if submitted exist
-    const { data: existing } = await adminSupabase
-        .from('submissions')
-        .select('id, data')
-        .eq('directorate_id', directorate.id)
-        .eq('month', month)
-        .eq('year', year)
-        .maybeSingle()
+        // Check if submitted exist
+        const { data: existing } = await adminSupabase
+            .from('submissions')
+            .select('id, data')
+            .eq('directorate_id', directorate.id)
+            .eq('month', month)
+            .eq('year', year)
+            .maybeSingle()
 
-    if (existing) {
-        let mergedData;
-        if (setor === 'cras' || setor === 'ceai') {
-            // Multi-unit handling
-            const unitName = formData._unit || 'Principal'
-            const currentUnits = existing.data.units || {}
-            mergedData = {
-                ...existing.data,
-                _is_multi_unit: true,
-                units: {
-                    ...currentUnits,
-                    [unitName]: formData
+        if (existing) {
+            let mergedData;
+            if (setor === 'cras' || setor === 'ceai') {
+                // Multi-unit handling
+                const unitName = formData._unit || 'Principal'
+                const currentUnits = existing.data.units || {}
+                mergedData = {
+                    ...existing.data,
+                    _is_multi_unit: true,
+                    units: {
+                        ...currentUnits,
+                        [unitName]: formData
+                    }
                 }
+            } else {
+                mergedData = { ...existing.data, ...formData }
+            }
+
+            const { error: updateError } = await adminSupabase
+                .from('submissions')
+                .update({ data: mergedData, created_at: new Date().toISOString() })
+                .eq('id', existing.id)
+
+            if (updateError) {
+                console.error("Update Error:", updateError)
+                throw new Error("Erro ao atualizar relatório.")
             }
         } else {
-            mergedData = { ...existing.data, ...formData }
-        }
-
-        const { error: updateError } = await adminSupabase
-            .from('submissions')
-            .update({ data: mergedData, created_at: new Date().toISOString() })
-            .eq('id', existing.id)
-
-        if (updateError) {
-            console.error("Update Error:", updateError)
-            throw new Error("Erro ao atualizar relatório.")
-        }
-    } else {
-        // New Submission
-        const finalData = (setor === 'cras' || setor === 'ceai') ? {
-            _is_multi_unit: true,
-            units: {
-                [formData._unit || 'Principal']: formData
-            }
-        } : formData
-
-        const submissionData = {
-            user_id: user.id,
-            directorate_id: directorate.id,
-            month,
-            year,
-            data: finalData,
-        }
-
-        const { error: dbError } = await adminSupabase.from('submissions').insert(submissionData)
-
-        if (dbError) {
-            console.error("DB Error:", dbError)
-            return { error: "Erro ao salvar no banco de dados: " + dbError.message }
-        }
-    }
-
-    // Save to Google Sheets
-    try {
-        if (setor === 'centros') {
-            const formDef = CP_FORM_DEFINITION
-            const blocks = CP_SHEET_BLOCKS
-            const blocksData = formDef.sections.map((section, index) => {
-                const blockConfig = blocks[index]
-                if (!blockConfig) return null
-                const values = section.fields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-                return { startRow: blockConfig.startRow, values: values }
-            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-            if (directorate.sheet_config) {
-                await updateSheetBlocks(
-                    { ...directorate.sheet_config as SheetConfig, sheetName: CP_SHEET_NAME },
-                    month,
-                    blocksData
-                )
-            }
-        } else if (setor === 'beneficios') {
-            const formDef = BENEFICIOS_FORM_DEFINITION
-            const blocks = BENEFICIOS_SHEET_BLOCKS
-            const blocksData = formDef.sections.map((section, index) => {
-                const blockConfig = blocks[index]
-                if (!blockConfig) return null
-                const values = section.fields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-                return { startRow: blockConfig.startRow, values: values }
-            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-            if (directorate.sheet_config) {
-                await updateSheetBlocks(
-                    { ...directorate.sheet_config as SheetConfig, sheetName: 'BENEFICIOS', spreadsheetId: BENEFICIOS_SPREADSHEET_ID },
-                    month,
-                    blocksData
-                )
-            }
-        } else if (setor === 'cras') {
-            const formDef = CRAS_FORM_DEFINITION
-            const blocks = CRAS_SHEET_BLOCKS
-            const blocksData = formDef.sections.map((section, index) => {
-                const blockConfig = blocks[index]
-                if (!blockConfig) return null
-                const values = section.fields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-                return { startRow: blockConfig.startRow, values: values }
-            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-            await updateSheetBlocks(
-                { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: formData._unit || 'CRAS' },
-                month,
-                blocksData
-            )
-        } else if (setor === 'creas') {
-            const subcategory = formData._subcategory || 'idoso'
-            if (subcategory === 'idoso') {
-                const formDef = CREAS_IDOSO_FORM_DEFINITION
-                const cfg = CREAS_IDOSO_SHEET_CONFIG
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = cfg.blocks[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-                await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
-            } else {
-                const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
-                const cfg = CREAS_DEFICIENTE_SHEET_CONFIG
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = cfg.blocks[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-                await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
-            }
-        } else if (setor === 'ceai') {
-            const formDef = CEAI_FORM_DEFINITION
-            const blocksData = formDef.sections.map((section, index) => {
-                const blockConfig = CEAI_SHEET_BLOCKS[index]
-                if (!blockConfig) return null
-                const values = section.fields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-                return { startRow: blockConfig.startRow, values: values }
-            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-            await updateSheetBlocks(
-                { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
-                month,
-                blocksData
-            )
-        } else if (setor === 'pop_rua') {
-            const formDef = POP_RUA_FORM_DEFINITION
-
-            // Group blocks by sheet name because updateSheetBlocks takes one sheet name
-            // We have blocks in different sheets
-            const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
-
-            formDef.sections.forEach((section, index) => {
-                const blockConfig = POP_RUA_SHEET_BLOCKS[index]
-                if (!blockConfig) return
-
-                const values = section.fields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-
-                if (!blocksBySheet.has(blockConfig.sheetName)) {
-                    blocksBySheet.set(blockConfig.sheetName, [])
+            // New Submission
+            const finalData = (setor === 'cras' || setor === 'ceai') ? {
+                _is_multi_unit: true,
+                units: {
+                    [formData._unit || 'Principal']: formData
                 }
-                blocksBySheet.get(blockConfig.sheetName)!.push({
-                    startRow: blockConfig.startRow,
-                    values: values
-                })
-            })
+            } : formData
 
-            // Execute updates for each sheet
-            for (const [sheetName, blocks] of blocksBySheet.entries()) {
-                await updateSheetBlocks(
-                    { spreadsheetId: POP_RUA_SPREADSHEET_ID, sheetName: sheetName },
-                    month,
-                    blocks
-                )
+            const submissionData = {
+                user_id: user.id,
+                directorate_id: directorate.id,
+                month,
+                year,
+                data: finalData,
             }
-        } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
-            // DEFAULT LOGIC (SINE/ETC)
-            const formDef = directorate.form_definition as FormDefinition
-            const allFields = formDef.sections.flatMap(s => s.fields)
-            const orderedValues = allFields.map(field => {
-                const val = formData[field.id]
-                return val !== undefined && val !== '' ? Number(val) : 0
-            })
-            let sheetConfig = directorate.sheet_config as SheetConfig
-            if (sheetConfig.sheetName?.toUpperCase().includes('BENEFICIOS')) {
-                sheetConfig = { ...sheetConfig, sheetName: 'BENEFICIOS' }
+
+            const { error: dbError } = await adminSupabase.from('submissions').insert(submissionData)
+
+            if (dbError) {
+                console.error("DB Error:", dbError)
+                return { error: "Erro ao salvar no banco de dados: " + dbError.message }
             }
-            await updateSheetColumn(sheetConfig, month, orderedValues)
         }
-    } catch (sheetError: any) {
-        console.error("Sheet Error:", sheetError)
-        return { error: `Erro Google Sheets: ${sheetError.message || sheetError.toString()}` }
-    }
 
-    revalidatePath('/dashboard', 'layout')
-    return { success: true }
+        // Save to Google Sheets
+        try {
+            if (setor === 'centros') {
+                const formDef = CP_FORM_DEFINITION
+                const blocks = CP_SHEET_BLOCKS
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = blocks[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                if (directorate.sheet_config) {
+                    await updateSheetBlocks(
+                        { ...directorate.sheet_config as SheetConfig, sheetName: CP_SHEET_NAME },
+                        month,
+                        blocksData
+                    )
+                }
+            } else if (setor === 'beneficios') {
+                const formDef = BENEFICIOS_FORM_DEFINITION
+                const blocks = BENEFICIOS_SHEET_BLOCKS
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = blocks[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                if (directorate.sheet_config) {
+                    await updateSheetBlocks(
+                        { ...directorate.sheet_config as SheetConfig, sheetName: 'BENEFICIOS', spreadsheetId: BENEFICIOS_SPREADSHEET_ID },
+                        month,
+                        blocksData
+                    )
+                }
+            } else if (setor === 'cras') {
+                const formDef = CRAS_FORM_DEFINITION
+                const blocks = CRAS_SHEET_BLOCKS
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = blocks[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                await updateSheetBlocks(
+                    { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: formData._unit || 'CRAS' },
+                    month,
+                    blocksData
+                )
+            } else if (setor === 'creas') {
+                const subcategory = formData._subcategory || 'idoso'
+                if (subcategory === 'idoso') {
+                    const formDef = CREAS_IDOSO_FORM_DEFINITION
+                    const cfg = CREAS_IDOSO_SHEET_CONFIG
+                    const blocksData = formDef.sections.map((section, index) => {
+                        const blockConfig = cfg.blocks[index]
+                        if (!blockConfig) return null
+                        const values = section.fields.map(field => {
+                            const val = formData[field.id]
+                            return val !== undefined && val !== '' ? Number(val) : 0
+                        })
+                        return { startRow: blockConfig.startRow, values: values }
+                    }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+                    await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
+                } else {
+                    const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
+                    const cfg = CREAS_DEFICIENTE_SHEET_CONFIG
+                    const blocksData = formDef.sections.map((section, index) => {
+                        const blockConfig = cfg.blocks[index]
+                        if (!blockConfig) return null
+                        const values = section.fields.map(field => {
+                            const val = formData[field.id]
+                            return val !== undefined && val !== '' ? Number(val) : 0
+                        })
+                        return { startRow: blockConfig.startRow, values: values }
+                    }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+                    await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
+                }
+            } else if (setor === 'ceai') {
+                const formDef = CEAI_FORM_DEFINITION
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = CEAI_SHEET_BLOCKS[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                await updateSheetBlocks(
+                    { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
+                    month,
+                    blocksData
+                )
+            } else if (setor === 'pop_rua') {
+                const formDef = POP_RUA_FORM_DEFINITION
+
+                // Group blocks by sheet name because updateSheetBlocks takes one sheet name
+                // We have blocks in different sheets
+                const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
+
+                formDef.sections.forEach((section, index) => {
+                    const blockConfig = POP_RUA_SHEET_BLOCKS[index]
+                    if (!blockConfig) return
+
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+
+                    if (!blocksBySheet.has(blockConfig.sheetName)) {
+                        blocksBySheet.set(blockConfig.sheetName, [])
+                    }
+                    blocksBySheet.get(blockConfig.sheetName)!.push({
+                        startRow: blockConfig.startRow,
+                        values: values
+                    })
+                })
+
+                // Execute updates for each sheet
+                for (const [sheetName, blocks] of blocksBySheet.entries()) {
+                    await updateSheetBlocks(
+                        { spreadsheetId: POP_RUA_SPREADSHEET_ID, sheetName: sheetName },
+                        month,
+                        blocks
+                    )
+                }
+            } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
+                // DEFAULT LOGIC (SINE/ETC)
+                const formDef = directorate.form_definition as FormDefinition
+                const allFields = formDef.sections.flatMap(s => s.fields)
+                const orderedValues = allFields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                let sheetConfig = directorate.sheet_config as SheetConfig
+                if (sheetConfig.sheetName?.toUpperCase().includes('BENEFICIOS')) {
+                    sheetConfig = { ...sheetConfig, sheetName: 'BENEFICIOS' }
+                }
+                await updateSheetColumn(sheetConfig, month, orderedValues)
+            }
+        } catch (sheetError: any) {
+            console.error("Sheet Error:", sheetError)
+            return { error: `Não foi possível sincronizar com a planilha. O dado foi salvo no banco, mas a planilha pode estar desatualizada.` }
+        }
+
+        revalidatePath('/dashboard', 'layout')
+        return { success: true }
+    } catch (error: any) {
+        console.error("Submit Report Error:", error)
+        if (error.name === 'ZodError') {
+            return { error: "Dados inválidos: Verifique os campos preenchidos." }
+        }
+        return { error: error.message || "Erro inesperado ao salvar relatório." }
+    }
 }
 
 export async function submitDailyReport(date: string, directorateId: string, formData: Record<string, any>) {
+    // Validate inputs
+    dailyReportSchema.parse({ date, directorateId, data: formData })
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -425,7 +455,9 @@ export async function submitOSC(data: {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
-    // OSCs are shared for now, but we check if user is at least admin or has a directorate link
+    // Validate inputs
+    oscSchema.parse(data)
+
     const isAdmin = await isAdminCheck(user.id)
     if (!isAdmin) {
         // Verify user is linked to ANY directorate (authorized technician)
@@ -477,6 +509,9 @@ export async function updateOSC(id: string, data: {
     phone: string,
     subsidized_count?: number
 }) {
+    // Validate inputs
+    oscSchema.parse(data)
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -527,6 +562,9 @@ export async function deleteOSC(id: string) {
 }
 
 export async function saveVisit(data: any) {
+    // Validate inputs
+    visitSchema.parse(data)
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -542,6 +580,18 @@ export async function saveVisit(data: any) {
 
     if (id) {
         // Update existing draft
+        // Security Check: Ensure owner or admin
+        const { data: existingVisit } = await adminSupabase
+            .from('visits')
+            .select('user_id')
+            .eq('id', id)
+            .single()
+
+        const isAdmin = await isAdminCheck(user.id)
+        if (!isAdmin && existingVisit?.user_id !== user.id) {
+            throw new Error("Você não tem permissão para alterar este rascunho.")
+        }
+
         const { error } = await adminSupabase
             .from('visits')
             .update({
