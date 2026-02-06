@@ -7,7 +7,7 @@ export const submissionBaseSchema = z.object({
     setor: z.string().optional(),
 });
 
-export const genericDataSchema = z.record(z.union([z.string(), z.number(), z.boolean(), z.null(), z.any()]));
+export const genericDataSchema = z.record(z.string(), z.any());
 
 export const dailyReportSchema = z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
