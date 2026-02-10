@@ -32,7 +32,8 @@ import {
     Loader2,
     Check,
     Camera,
-    X
+    X,
+    FileText
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveVisit, finalizeVisit } from "@/app/dashboard/actions"
@@ -118,6 +119,7 @@ export function VisitForm({
         responsavel: "",
         responsavel_nome: ""
     })
+    const [documents, setDocuments] = useState(initialVisit?.documents || [])
 
     // Selected OSC Data
     const selectedOSC = oscs.find(o => o.id === formData.osc_id)
@@ -162,7 +164,8 @@ export function VisitForm({
                 rh_data: rhData,
                 observacoes,
                 recomendacoes,
-                assinaturas
+                assinaturas,
+                documents
             }
 
             const result = await saveVisit(payload)
@@ -231,6 +234,46 @@ export function VisitForm({
             ...prev,
             photos: prev.photos.filter((_: string, i: number) => i !== index)
         }))
+    }
+
+    const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (file.type !== 'application/pdf') {
+            alert("Por favor, selecione apenas arquivos PDF.")
+            return
+        }
+
+        const uploadFormData = new FormData()
+        uploadFormData.append('file', file)
+
+        try {
+            setLoading(true)
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro no upload')
+            }
+
+            setDocuments((prev: any) => [...(prev || []), { name: file.name, url: data.url }])
+
+        } catch (error: any) {
+            console.error("Upload error:", error)
+            alert("Erro ao fazer upload do documento: " + error.message)
+        } finally {
+            setLoading(false)
+            e.target.value = ''
+        }
+    }
+
+    const removeDocument = (index: number) => {
+        setDocuments((prev: any) => prev.filter((_: any, i: number) => i !== index))
     }
 
 
@@ -1250,6 +1293,89 @@ export function VisitForm({
                     )}
                 </div>
             </div> {/* This closes the main content wrapper for sections I-VII */}
+
+            {/* PDF DOCUMENTS (Only for Emendas e Fundos) */}
+            {isEmendas && (
+                <div className={cn(
+                    "print-section locked-report",
+                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
+                )}>
+                    <h2 className={cn(
+                        "text-lg font-black tracking-tight mb-4",
+                        !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
+                    )}>BALANÇO FINANCEIRO</h2>
+
+                    {(documents.length === 0) && isLocked ? (
+                        <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
+                            Nenhum documento anexado.
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {documents?.map((doc: any, index: number) => (
+                                    <div key={index} className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-zinc-50/50 group hover:border-blue-900/20 transition-all">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="p-2 bg-red-100 text-red-600 rounded-lg">
+                                                <FileText className="h-5 w-5" />
+                                            </div>
+                                            <div className="flex flex-col overflow-hidden">
+                                                <span className="text-xs font-bold text-zinc-900 truncate">{doc.name}</span>
+                                                <a
+                                                    href={doc.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-900 uppercase tracking-tight"
+                                                >
+                                                    Visualizar Documento
+                                                </a>
+                                            </div>
+                                        </div>
+                                        {!isLocked && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeDocument(index)}
+                                                className="h-8 w-8 text-zinc-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {!isLocked && (
+                                <label className="flex items-center justify-center gap-3 p-8 rounded-2xl border-2 border-dashed border-zinc-200 hover:border-blue-900/30 hover:bg-blue-50/50 cursor-pointer transition-all group">
+                                    <input
+                                        type="file"
+                                        accept="application/pdf"
+                                        className="hidden"
+                                        onChange={handleDocumentUpload}
+                                        disabled={loading}
+                                    />
+                                    <div className={cn(
+                                        "p-4 rounded-full bg-zinc-50 group-hover:bg-blue-100 transition-colors",
+                                        loading && "animate-pulse"
+                                    )}>
+                                        {loading ? (
+                                            <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+                                        ) : (
+                                            <Plus className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-zinc-900 group-hover:text-blue-900">
+                                            {loading ? "Enviando Balanço..." : "Fazer Upload de Balanço Financeiro"}
+                                        </span>
+                                        <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">Apenas arquivos .pdf</span>
+                                    </div>
+                                </label>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* FOTOS / EVIDÊNCIAS */}
             <div className={cn(

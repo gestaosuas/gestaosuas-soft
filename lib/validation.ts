@@ -22,8 +22,12 @@ export const visitSchema = z.object({
     technician_name1: z.string().optional(),
     technician_name2: z.string().optional(),
     status: z.enum(['draft', 'finalized']).optional(),
+    documents: z.array(z.object({
+        name: z.string(),
+        url: z.string()
+    })).optional(),
     data: genericDataSchema.optional(),
-});
+}).passthrough();
 
 export const oscSchema = z.object({
     name: z.string().min(2),
