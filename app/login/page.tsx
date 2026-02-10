@@ -61,7 +61,7 @@ export default async function LoginPage({
                                     id="email"
                                     name="email"
                                     type="email"
-                                    placeholder="exemplo@uberlandia.mg.gov.br"
+                                    placeholder=""
                                     required
                                     className="h-11 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 focus-visible:border-blue-400 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-none text-zinc-900 dark:text-zinc-100"
                                 />
@@ -86,7 +86,7 @@ export default async function LoginPage({
                                     id="password"
                                     name="password"
                                     type="password"
-                                    placeholder="••••••••"
+                                    placeholder=""
                                     required
                                     className="h-11 bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 focus-visible:border-blue-400 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-none text-zinc-900 dark:text-zinc-100"
                                 />

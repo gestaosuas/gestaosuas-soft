@@ -16,7 +16,7 @@ export default async function PlanoTrabalhoPage({
     if (!user) redirect('/login')
 
     const profile = await getCachedProfile(user.id)
-    const oscs = await getOSCs()
+    const oscs = await getOSCs(id)
     const counts = await getWorkPlansCount(id)
     const settings = await getSystemSettings()
 

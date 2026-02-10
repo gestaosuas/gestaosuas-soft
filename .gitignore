@@ -44,3 +44,13 @@ next-env.d.ts
 dashboard-vigilancia-*.json
 credentials.json
 debug_users.ts
+
+# local scripts
+audit-links.js
+audit-oscs.js
+debug-dir-table.js
+debug-oscs-table.js
+detailed-audit-oscs.js
+fix-permissions.js
+test-dir-retrieval.js
+debug-permissions.ts

@@ -40,11 +40,13 @@ import { WorkPlanSelector } from "./work-plan-selector"
 
 export function VisitForm({
     directorateId,
+    directorateName,
     oscs,
     initialVisit,
     logoUrl
 }: {
     directorateId: string,
+    directorateName: string,
     oscs: any[],
     initialVisit?: any,
     logoUrl?: string
@@ -52,6 +54,8 @@ export function VisitForm({
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+
+    const isEmendas = directorateName.toLowerCase().includes('emendas')
 
     // Form State
     const [formData, setFormData] = useState({
@@ -67,17 +71,21 @@ export function VisitForm({
         ...(initialVisit?.identificacao || {})
     })
 
-    const [atendimento, setAtendimento] = useState(initialVisit?.atendimento || {
+    const [atendimento, setAtendimento] = useState({
         tipo_horario: initialVisit?.atendimento?.tipo_horario || "periodo",
-        horario_inicio: "",
-        horario_fim: "",
-        total_atendidos: 0,
-        subvencionados: 0,
-        presentes: { manha: 0, tarde: 0 },
-        lista_espera: "nao",
-        lista_espera_qtd: 0,
-        atividades: "",
-        atividades_momento: ""
+        horario_inicio: initialVisit?.atendimento?.horario_inicio || "",
+        horario_fim: initialVisit?.atendimento?.horario_fim || "",
+        total_atendidos: initialVisit?.atendimento?.total_atendidos || 0,
+        subvencionados: initialVisit?.atendimento?.subvencionados || 0,
+        presentes: initialVisit?.atendimento?.presentes || { manha: 0, tarde: 0 },
+        lista_espera: initialVisit?.atendimento?.lista_espera || "nao",
+        lista_espera_qtd: initialVisit?.atendimento?.lista_espera_qtd || 0,
+        atividades: initialVisit?.atendimento?.atividades || "",
+        atividades_momento: initialVisit?.atendimento?.atividades_momento || "",
+        aplicacao_recurso: initialVisit?.atendimento?.aplicacao_recurso || "",
+        resultados_aplicacao: initialVisit?.atendimento?.resultados_aplicacao || "",
+        itens_identificados: initialVisit?.atendimento?.itens_identificados || "",
+        itens_nao_identificados: initialVisit?.atendimento?.itens_nao_identificados || ""
     })
 
     const [formaAcesso, setFormaAcesso] = useState(initialVisit?.forma_acesso || {
@@ -689,20 +697,49 @@ export function VisitForm({
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase text-zinc-900">Tipos de atividades desenvolvidas (descritivo):</p>
-                                    <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
-                                        {atendimento.atividades || "Não detalhado"}
+                            {isEmendas ? (
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-blue-900/60">Aplicação do recurso, conforme objeto estabelecido e prestação de contas: (Contribuições)</p>
+                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-blue-200 pl-3 italic">
+                                            {atendimento.aplicacao_recurso || "Não detalhado"}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-blue-900/60">Resultados da aplicação dos recursos no atendimento: (Contribuições)</p>
+                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-blue-200 pl-3 italic">
+                                            {atendimento.resultados_aplicacao || "Não detalhado"}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-blue-900/60">Itens identificados no momento da visita técnica na OSC, conforme objeto estabelecido e prestação de contas. (anexar foto) (Auxílios)</p>
+                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-blue-200 pl-3 italic">
+                                            {atendimento.itens_identificados || "Não detalhado"}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-blue-900/60">Itens não identificados na OSC no momento da visita técnica (se houver): (Auxílios)</p>
+                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-blue-200 pl-3 italic">
+                                            {atendimento.itens_nao_identificados || "Não detalhado"}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase text-zinc-900">Atividades em execução no momento da visita:</p>
-                                    <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
-                                        {atendimento.atividades_momento || "Não detalhado"}
+                            ) : (
+                                <div className="space-y-2">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-zinc-900">Tipos de atividades desenvolvidas (descritivo):</p>
+                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
+                                            {atendimento.atividades || "Não detalhado"}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-zinc-900">Atividades em execução no momento da visita:</p>
+                                        <div className="text-[11px] font-medium leading-[1.3] text-zinc-800 border-l border-zinc-300 pl-3 italic">
+                                            {atendimento.atividades_momento || "Não detalhado"}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* EDIT VIEW */}
@@ -832,128 +869,74 @@ export function VisitForm({
                                     </div>
                                 </div>
 
-                                <div className="space-y-8 pt-4">
-                                    <div className="space-y-3">
-                                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Tipos de atividades desenvolvidas (descritivo)</Label>
-                                        <Textarea autoResize
-                                            value={atendimento.atividades}
-                                            onChange={e => setAtendimento({ ...atendimento, atividades: e.target.value })}
-                                            disabled={isLocked}
-                                            className="min-h-[120px] bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium leading-relaxed"
-                                        />
+                                {isEmendas && (
+                                    <div className="space-y-8 pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-900/60">Aplicação do recurso, conforme objeto estabelecido e prestação de contas: (Contribuições)</Label>
+                                            <Textarea autoResize
+                                                value={atendimento.aplicacao_recurso}
+                                                onChange={e => setAtendimento({ ...atendimento, aplicacao_recurso: e.target.value })}
+                                                disabled={isLocked}
+                                                placeholder="Descreva a aplicação do recurso..."
+                                                className="min-h-[100px] bg-white border-blue-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-900/60">Resultados da aplicação dos recursos no atendimento: (Contribuições)</Label>
+                                            <Textarea autoResize
+                                                value={atendimento.resultados_aplicacao}
+                                                onChange={e => setAtendimento({ ...atendimento, resultados_aplicacao: e.target.value })}
+                                                disabled={isLocked}
+                                                placeholder="Descreva os resultados..."
+                                                className="min-h-[100px] bg-white border-blue-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-900/60 flex items-center gap-2">
+                                                Itens identificados no momento da visita técnica na OSC, conforme objeto estabelecido e prestação de contas. (anexar foto) (Auxílios)
+                                                <Camera className="h-3 w-3 text-zinc-400" />
+                                            </Label>
+                                            <Textarea autoResize
+                                                value={atendimento.itens_identificados}
+                                                onChange={e => setAtendimento({ ...atendimento, itens_identificados: e.target.value })}
+                                                disabled={isLocked}
+                                                placeholder="Liste os itens identificados..."
+                                                className="min-h-[100px] bg-white border-blue-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-900/60">Itens não identificados na OSC no momento da visita técnica (se houver): (Auxílios)</Label>
+                                            <Textarea autoResize
+                                                value={atendimento.itens_nao_identificados}
+                                                onChange={e => setAtendimento({ ...atendimento, itens_nao_identificados: e.target.value })}
+                                                disabled={isLocked}
+                                                placeholder="Liste os itens não identificados, se houver..."
+                                                className="min-h-[100px] bg-white border-blue-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Atividades em execução no momento da visita</Label>
-                                        <Textarea autoResize
-                                            value={atendimento.atividades_momento}
-                                            onChange={e => setAtendimento({ ...atendimento, atividades_momento: e.target.value })}
-                                            disabled={isLocked}
-                                            className="min-h-[120px] bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium leading-relaxed"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                                )}
 
-                {/* III. FORMA DE ACESSO */}
-                <div className={cn(
-                    "print-section locked-report",
-                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
-                )}>
-                    <h2 className={cn(
-                        "text-lg font-black tracking-tight mb-4",
-                        !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
-                    )}>FORMA DE ACESSO DO USUÁRIO</h2>
-
-                    <div className={cn(isLocked ? "space-y-1.5 px-2" : "space-y-6")}>
-                        {/* REPORT/PRINT VIEW */}
-                        <div className={cn("flex flex-col gap-2", !isLocked && "hidden print:flex")}>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div className="flex items-center gap-2">
-                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")}>
-                                        {formaAcesso.demanda_espontanea && <Check className="h-2 w-2 text-white print:text-black" />}
-                                    </div>
-                                    <span className="text-[10px] font-bold">Demanda Espontânea</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.busca_ativa && "bg-black print-checkbox-checked")}>
-                                        {formaAcesso.busca_ativa && <Check className="h-2 w-2 text-white print:text-black" />}
-                                    </div>
-                                    <span className="text-[10px] font-bold">Busca Ativa</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")}>
-                                        {formaAcesso.encaminhamento && <Check className="h-2 w-2 text-white print:text-black" />}
-                                    </div>
-                                    <span className="text-[10px] font-bold">Encaminhamento</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")}>
-                                        {formaAcesso.outros && <Check className="h-2 w-2 text-white print:text-black" />}
-                                    </div>
-                                    <span className="text-[10px] font-bold">Outros</span>
-                                </div>
-                            </div>
-                            {formaAcesso.encaminhamento && (
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-[10px] font-black uppercase shrink-0">Quem encaminha?</span>
-                                    <span className="text-[11px] font-medium border-b border-dotted border-zinc-300 grow pb-px italic">{formaAcesso.quem_encaminha || "-"}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* EDIT VIEW */}
-                        {!isLocked && (
-                            <div className="space-y-6 print:hidden">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id="demanda_espontanea"
-                                            checked={formaAcesso.demanda_espontanea}
-                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, demanda_espontanea: !!checked })}
-                                            className="h-5 w-5"
-                                        />
-                                        <Label htmlFor="demanda_espontanea" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Demanda Espontânea</Label>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id="busca_ativa"
-                                            checked={formaAcesso.busca_ativa}
-                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, busca_ativa: !!checked })}
-                                            className="h-5 w-5"
-                                        />
-                                        <Label htmlFor="busca_ativa" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Busca Ativa</Label>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id="encaminhamento"
-                                            checked={formaAcesso.encaminhamento}
-                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, encaminhamento: !!checked })}
-                                            className="h-5 w-5"
-                                        />
-                                        <Label htmlFor="encaminhamento" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Encaminhamento pela rede</Label>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id="outros"
-                                            checked={formaAcesso.outros}
-                                            onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, outros: !!checked })}
-                                            className="h-5 w-5"
-                                        />
-                                        <Label htmlFor="outros" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Outros</Label>
-                                    </div>
-                                </div>
-                                {formaAcesso.encaminhamento && (
-                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Quem encaminha?</Label>
-                                        <Input
-                                            placeholder="Especifique o órgão ou entidade"
-                                            value={formaAcesso.quem_encaminha}
-                                            onChange={e => setFormaAcesso({ ...formaAcesso, quem_encaminha: e.target.value })}
-                                            className="h-12 bg-zinc-50/50 dark:bg-zinc-950/50 border-blue-100 dark:border-blue-900/30 rounded-xl focus:ring-4 focus:ring-blue-900/10 font-medium"
-                                        />
+                                {!isEmendas && (
+                                    <div className="space-y-8 pt-4">
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Tipos de atividades desenvolvidas (descritivo)</Label>
+                                            <Textarea autoResize
+                                                value={atendimento.atividades}
+                                                onChange={e => setAtendimento({ ...atendimento, atividades: e.target.value })}
+                                                disabled={isLocked}
+                                                className="min-h-[120px] bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium leading-relaxed"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Atividades em execução no momento da visita</Label>
+                                            <Textarea autoResize
+                                                value={atendimento.atividades_momento}
+                                                onChange={e => setAtendimento({ ...atendimento, atividades_momento: e.target.value })}
+                                                disabled={isLocked}
+                                                className="min-h-[120px] bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 focus:ring-4 focus:ring-blue-900/10 font-medium leading-relaxed"
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -961,153 +944,259 @@ export function VisitForm({
                     </div>
                 </div>
 
-                {/* V. RECURSOS HUMANOS */}
-                <div className={cn(
-                    "print-section locked-report",
-                    !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
-                )}>
+                {!isEmendas && (
                     <div className={cn(
-                        "flex items-center justify-between mb-4",
-                        !isLocked ? "border-b border-zinc-200 pb-2 print:border-b-2 print:border-black" : "border-b-2 border-black"
+                        "print-section locked-report",
+                        !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
                     )}>
                         <h2 className={cn(
-                            "text-lg font-black tracking-tight",
-                            !isLocked ? "text-blue-900 print:text-black" : "text-black"
-                        )}>RECURSOS HUMANOS</h2>
-                        {!isLocked && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={addRhRow}
-                                className="h-8 rounded-lg border-blue-200 text-blue-900 font-bold text-[9px] uppercase tracking-widest gap-2 print:hidden"
-                            >
-                                <Plus className="h-3 w-3" />
-                                Adicionar Cargo
-                            </Button>
-                        )}
-                    </div>
+                            "text-lg font-black tracking-tight mb-4",
+                            !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
+                        )}>FORMA DE ACESSO DO USUÁRIO</h2>
 
-                    <div className="overflow-x-auto">
-                        <Table className={cn(isLocked && "border border-zinc-200")}>
-                            <TableHeader className={cn(isLocked ? "bg-zinc-50" : "bg-zinc-50/50")}>
-                                <TableRow className="hover:bg-transparent h-8">
-                                    <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Cargo / Função</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Voluntário</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Subvenção</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Quantidade</TableHead>
-                                    <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Outros / Observações</TableHead>
-                                    {!isLocked && <TableHead className="w-[40px]"></TableHead>}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {rhData.map((row: any, index: number) => (
-                                    <TableRow key={index} className={cn("hover:bg-zinc-50/20 transition-colors h-8", isLocked && "border-zinc-100")}>
-                                        <TableCell className="px-4 py-1 font-bold text-zinc-700 h-8">
-                                            {index < 9 ? (
-                                                <span className="text-[11px]">{row.cargo}</span>
-                                            ) : (
-                                                <>
-                                                    <span className={cn("text-[11px] text-zinc-900", !isLocked && "hidden print:inline")}>{row.cargo}</span>
-                                                    {!isLocked && <Input
-                                                        placeholder="Cargo"
-                                                        value={row.cargo}
+                        <div className={cn(isLocked ? "space-y-1.5 px-2" : "space-y-6")}>
+                            {/* REPORT/PRINT VIEW */}
+                            <div className={cn("flex flex-col gap-2", !isLocked && "hidden print:flex")}>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.demanda_espontanea && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.demanda_espontanea && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
+                                        <span className="text-[10px] font-bold">Demanda Espontânea</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.busca_ativa && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.busca_ativa && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
+                                        <span className="text-[10px] font-bold">Busca Ativa</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.encaminhamento && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.encaminhamento && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
+                                        <span className="text-[10px] font-bold">Encaminhamento</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-3 h-3 rounded border border-black print-checkbox", formaAcesso.outros && "bg-black print-checkbox-checked")}>
+                                            {formaAcesso.outros && <Check className="h-2 w-2 text-white print:text-black" />}
+                                        </div>
+                                        <span className="text-[10px] font-bold">Outros</span>
+                                    </div>
+                                </div>
+                                {formaAcesso.encaminhamento && (
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-[10px] font-black uppercase shrink-0">Quem encaminha?</span>
+                                        <span className="text-[11px] font-medium border-b border-dotted border-zinc-300 grow pb-px italic">{formaAcesso.quem_encaminha || "-"}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* EDIT VIEW */}
+                            {!isLocked && (
+                                <div className="space-y-6 print:hidden">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id="demanda_espontanea"
+                                                checked={formaAcesso.demanda_espontanea}
+                                                onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, demanda_espontanea: !!checked })}
+                                                className="h-5 w-5"
+                                            />
+                                            <Label htmlFor="demanda_espontanea" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Demanda Espontânea</Label>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id="busca_ativa"
+                                                checked={formaAcesso.busca_ativa}
+                                                onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, busca_ativa: !!checked })}
+                                                className="h-5 w-5"
+                                            />
+                                            <Label htmlFor="busca_ativa" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Busca Ativa</Label>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id="encaminhamento"
+                                                checked={formaAcesso.encaminhamento}
+                                                onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, encaminhamento: !!checked })}
+                                                className="h-5 w-5"
+                                            />
+                                            <Label htmlFor="encaminhamento" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Encaminhamento pela rede</Label>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id="outros"
+                                                checked={formaAcesso.outros}
+                                                onCheckedChange={(checked) => setFormaAcesso({ ...formaAcesso, outros: !!checked })}
+                                                className="h-5 w-5"
+                                            />
+                                            <Label htmlFor="outros" className="text-[11px] font-bold text-zinc-700 cursor-pointer">Outros</Label>
+                                        </div>
+                                    </div>
+                                    {formaAcesso.encaminhamento && (
+                                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Quem encaminha?</Label>
+                                            <Input
+                                                placeholder="Especifique o órgão ou entidade"
+                                                value={formaAcesso.quem_encaminha}
+                                                onChange={e => setFormaAcesso({ ...formaAcesso, quem_encaminha: e.target.value })}
+                                                className="h-12 bg-zinc-50/50 dark:bg-zinc-950/50 border-blue-100 dark:border-blue-900/30 rounded-xl focus:ring-4 focus:ring-blue-900/10 font-medium"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {!isEmendas && (
+                    <div className={cn(
+                        "print-section locked-report",
+                        !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
+                    )}>
+                        <div className={cn(
+                            "flex items-center justify-between mb-4",
+                            !isLocked ? "border-b border-zinc-200 pb-2 print:border-b-2 print:border-black" : "border-b-2 border-black"
+                        )}>
+                            <h2 className={cn(
+                                "text-lg font-black tracking-tight",
+                                !isLocked ? "text-blue-900 print:text-black" : "text-black"
+                            )}>RECURSOS HUMANOS</h2>
+                            {!isLocked && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addRhRow}
+                                    className="h-8 rounded-lg border-blue-200 text-blue-900 font-bold text-[9px] uppercase tracking-widest gap-2 print:hidden"
+                                >
+                                    <Plus className="h-3 w-3" />
+                                    Adicionar Cargo
+                                </Button>
+                            )}
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <Table className={cn(isLocked && "border border-zinc-200")}>
+                                <TableHeader className={cn(isLocked ? "bg-zinc-50" : "bg-zinc-50/50")}>
+                                    <TableRow className="hover:bg-transparent h-8">
+                                        <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Cargo / Função</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Voluntário</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Subvenção</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Quantidade</TableHead>
+                                        <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Outros / Observações</TableHead>
+                                        {!isLocked && <TableHead className="w-[40px]"></TableHead>}
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {rhData.map((row: any, index: number) => (
+                                        <TableRow key={index} className={cn("hover:bg-zinc-50/20 transition-colors h-8", isLocked && "border-zinc-100")}>
+                                            <TableCell className="px-4 py-1 font-bold text-zinc-700 h-8">
+                                                {index < 9 ? (
+                                                    <span className="text-[11px]">{row.cargo}</span>
+                                                ) : (
+                                                    <>
+                                                        <span className={cn("text-[11px] text-zinc-900", !isLocked && "hidden print:inline")}>{row.cargo}</span>
+                                                        {!isLocked && <Input
+                                                            placeholder="Cargo"
+                                                            value={row.cargo}
+                                                            onChange={e => {
+                                                                const newData = [...rhData]
+                                                                newData[index].cargo = e.target.value
+                                                                setRhData(newData)
+                                                            }}
+                                                            className="h-9 text-[11px] print:hidden"
+                                                        />}
+                                                    </>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="py-1 text-center h-8">
+                                                <div
+                                                    onClick={() => {
+                                                        if (!isLocked) {
+                                                            const newData = [...rhData]
+                                                            newData[index].voluntario = !newData[index].voluntario
+                                                            setRhData(newData)
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
+                                                        !isLocked && "hover:border-blue-900",
+                                                        row.voluntario && "bg-black print-checkbox-checked"
+                                                    )}
+                                                >
+                                                    {row.voluntario && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="py-1 text-center h-8">
+                                                <div
+                                                    onClick={() => {
+                                                        if (!isLocked) {
+                                                            const newData = [...rhData]
+                                                            newData[index].subvencao = !newData[index].subvencao
+                                                            setRhData(newData)
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
+                                                        !isLocked && "hover:border-blue-900",
+                                                        row.subvencao && "bg-black print-checkbox-checked"
+                                                    )}
+                                                >
+                                                    {row.subvencao && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="py-1 px-4 h-8 text-center">
+                                                <span className={cn("text-[11px] font-bold text-zinc-900", !isLocked && "hidden print:inline")}>{row.quantidade || "-"}</span>
+                                                {!isLocked && (
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="0"
+                                                        value={row.quantidade}
                                                         onChange={e => {
                                                             const newData = [...rhData]
-                                                            newData[index].cargo = e.target.value
+                                                            newData[index].quantidade = e.target.value
+                                                            setRhData(newData)
+                                                        }}
+                                                        className="h-9 text-[11px] text-center print:hidden"
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-1 h-8">
+                                                <span className={cn("text-[10px] text-zinc-600 italic leading-none", !isLocked && "hidden print:inline")}>{row.outros || "-"}</span>
+                                                {!isLocked && (
+                                                    <Input
+                                                        placeholder="..."
+                                                        value={row.outros}
+                                                        onChange={e => {
+                                                            const newData = [...rhData]
+                                                            newData[index].outros = e.target.value
                                                             setRhData(newData)
                                                         }}
                                                         className="h-9 text-[11px] print:hidden"
-                                                    />}
-                                                </>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="py-1 text-center h-8">
-                                            <div
-                                                onClick={() => {
-                                                    if (!isLocked) {
-                                                        const newData = [...rhData]
-                                                        newData[index].voluntario = !newData[index].voluntario
-                                                        setRhData(newData)
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
-                                                    !isLocked && "hover:border-blue-900",
-                                                    row.voluntario && "bg-black print-checkbox-checked"
-                                                )}
-                                            >
-                                                {row.voluntario && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="py-1 text-center h-8">
-                                            <div
-                                                onClick={() => {
-                                                    if (!isLocked) {
-                                                        const newData = [...rhData]
-                                                        newData[index].subvencao = !newData[index].subvencao
-                                                        setRhData(newData)
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
-                                                    !isLocked && "hover:border-blue-900",
-                                                    row.subvencao && "bg-black print-checkbox-checked"
-                                                )}
-                                            >
-                                                {row.subvencao && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="py-1 px-4 h-8 text-center">
-                                            <span className={cn("text-[11px] font-bold text-zinc-900", !isLocked && "hidden print:inline")}>{row.quantidade || "-"}</span>
-                                            {!isLocked && (
-                                                <Input
-                                                    type="number"
-                                                    placeholder="0"
-                                                    value={row.quantidade}
-                                                    onChange={e => {
-                                                        const newData = [...rhData]
-                                                        newData[index].quantidade = e.target.value
-                                                        setRhData(newData)
-                                                    }}
-                                                    className="h-9 text-[11px] text-center print:hidden"
-                                                />
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="px-4 py-1 h-8">
-                                            <span className={cn("text-[10px] text-zinc-600 italic leading-none", !isLocked && "hidden print:inline")}>{row.outros || "-"}</span>
-                                            {!isLocked && (
-                                                <Input
-                                                    placeholder="..."
-                                                    value={row.outros}
-                                                    onChange={e => {
-                                                        const newData = [...rhData]
-                                                        newData[index].outros = e.target.value
-                                                        setRhData(newData)
-                                                    }}
-                                                    className="h-9 text-[11px] print:hidden"
-                                                />
-                                            )}
-                                        </TableCell>
-                                        {!isLocked && (
-                                            <TableCell className="px-2 text-right h-8">
-                                                {index >= 9 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => removeRhRow(index)}
-                                                        className="h-6 w-6 text-zinc-300 hover:text-red-500"
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                    </Button>
+                                                    />
                                                 )}
                                             </TableCell>
-                                        )}
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                            {!isLocked && (
+                                                <TableCell className="px-2 text-right h-8">
+                                                    {index >= 9 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => removeRhRow(index)}
+                                                            className="h-6 w-6 text-zinc-300 hover:text-red-500"
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* VI & VII. OBSERVAÇÕES E RECOMENDAÇÕES */}
                 <div className={cn(

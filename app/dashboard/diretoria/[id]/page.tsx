@@ -23,7 +23,7 @@ export default async function DirectoratePage({
     const isSINE = normalizedName.includes('sine') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isCP = normalizedName.includes('formacao') || normalizedName.includes('profissional') || normalizedName.includes('centro') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-    const isSubvencao = normalizedName.includes('subvencao') || id === '63553b96-3771-4842-9f45-630c7558adac'
+    const isSubvencao = normalizedName.includes('subvencao') || normalizedName.includes('emendas') || id === '63553b96-3771-4842-9f45-630c7558adac'
     const isCRAS = normalizedName.includes('cras')
     const isCREAS = normalizedName.includes('creas') // CREAS Idoso e Pessoa com Deficiência
     const isCEAI = normalizedName.includes('ceai')

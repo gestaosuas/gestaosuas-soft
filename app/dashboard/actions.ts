@@ -449,7 +449,8 @@ export async function submitOSC(data: {
     number: string,
     neighborhood: string,
     phone: string,
-    subsidized_count?: number
+    subsidized_count?: number,
+    directorate_id: string
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -480,19 +481,34 @@ export async function submitOSC(data: {
     return { success: true }
 }
 
-export async function getOSCs() {
+export async function getOSCs(directorateId?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error("Usuário não autenticado")
 
     const adminSupabase = createAdminClient()
-    const { data, error } = await adminSupabase
+    let query = adminSupabase
         .from('oscs')
         .select('*')
-        .order('created_at', { ascending: false })
+
+    if (directorateId) {
+        query = query.eq('directorate_id', directorateId)
+    } else {
+        // If no ID is provided, and user is not admin, maybe they shouldn't see anything or only their linked ones?
+        // For now, let's keep it as is but emphasize that directorateId is usually required for isolation.
+        // Actually, let's make it so if not admin, it MUST have a directorateId.
+        const isAdmin = await isAdminCheck(user.id)
+        if (!isAdmin) {
+            // Fetch linked directorate for the user if not provided? 
+            // Better to just filter by what's passed or return empty if ambiguous.
+            if (!directorateId) return []
+        }
+    }
+
+    const { data, error } = await query.order('name', { ascending: true })
 
     if (error) {
-        console.error("OSC Fetch Error:", error)
+        console.error("OSC Fetch Error:", JSON.stringify(error, null, 2))
         return []
     }
 
@@ -507,7 +523,8 @@ export async function updateOSC(id: string, data: {
     number: string,
     neighborhood: string,
     phone: string,
-    subsidized_count?: number
+    subsidized_count?: number,
+    directorate_id?: string
 }) {
     // Validate inputs
     oscSchema.parse(data)
@@ -567,13 +584,13 @@ export async function saveVisit(data: any) {
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error("Usuário não autenticado (Sessão expirada?)")
 
     const { directorate_id } = data
-    if (!directorate_id) throw new Error("Directorate ID is required")
+    if (!directorate_id) throw new Error("ID da diretoria é obrigatório")
 
     const hasAccess = await checkUserPermission(user.id, directorate_id)
-    if (!hasAccess) throw new Error("Unauthorized to save visits for this directorate")
+    if (!hasAccess) throw new Error("Você não tem permissão para salvar visitas nesta diretoria")
 
     const adminSupabase = createAdminClient()
     const { id, ...visitData } = data
@@ -625,7 +642,7 @@ export async function saveVisit(data: any) {
 export async function finalizeVisit(id: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user) throw new Error("Usuário não autenticado (Sessão expirada?)")
 
     const adminSupabase = createAdminClient()
 

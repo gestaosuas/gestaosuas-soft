@@ -34,4 +34,5 @@ export const oscSchema = z.object({
     neighborhood: z.string(),
     phone: z.string(),
     subsidized_count: z.number().optional().nullable(),
+    directorate_id: z.string().uuid().optional(),
 });

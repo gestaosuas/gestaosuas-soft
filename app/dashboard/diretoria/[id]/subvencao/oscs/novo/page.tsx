@@ -14,7 +14,7 @@ export default async function NewOSCPage({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    const oscs = await getOSCs()
+    const oscs = await getOSCs(id)
 
     return (
         <OSCManagementClient directorateId={id} initialOscs={oscs} />

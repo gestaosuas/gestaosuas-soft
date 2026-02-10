@@ -62,7 +62,7 @@ export default async function AdminPage({
                                     id="name"
                                     name="name"
                                     required
-                                    placeholder="João da Silva"
+                                    placeholder=""
                                     className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium whitespace-nowrap"
                                 />
                             </div>
@@ -73,7 +73,7 @@ export default async function AdminPage({
                                     name="email"
                                     type="email"
                                     required
-                                    placeholder="usuario@uberlandia.mg.gov.br"
+                                    placeholder=""
                                     className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 transition-all font-medium whitespace-nowrap"
                                 />
                             </div>
@@ -85,7 +85,7 @@ export default async function AdminPage({
                                     type="password"
                                     required
                                     minLength={6}
-                                    placeholder="••••••"
+                                    placeholder=""
                                     className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 transition-all font-medium whitespace-nowrap"
                                 />
                             </div>

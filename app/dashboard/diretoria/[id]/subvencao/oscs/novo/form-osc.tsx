@@ -158,7 +158,7 @@ export function FormOSC({
             if (oscToEdit?.id) {
                 result = await updateOSC(oscToEdit.id, formData)
             } else {
-                result = await submitOSC(formData)
+                result = await submitOSC({ ...formData, directorate_id: directorateId })
             }
 
             if (result.success) {
