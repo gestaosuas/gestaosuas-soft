@@ -163,6 +163,23 @@ export default function MonthlyReportEditor({
         updateBlockContent(blockId, { ...block.content, headers: newHeaders, rows: newRows })
     }
 
+    const removeRow = (blockId: string, rowIndex: number) => {
+        const block = blocks.find(b => b.id === blockId)
+        if (!block || block.type !== 'table') return
+        if (block.content.rows.length <= 1) return
+        const newRows = block.content.rows.filter((_: any, i: number) => i !== rowIndex)
+        updateBlockContent(blockId, { ...block.content, rows: newRows })
+    }
+
+    const removeColumn = (blockId: string, colIndex: number) => {
+        const block = blocks.find(b => b.id === blockId)
+        if (!block || block.type !== 'table') return
+        if (block.content.headers.length <= 1) return
+        const newHeaders = block.content.headers.filter((_: any, i: number) => i !== colIndex)
+        const newRows = block.content.rows.map((row: string[]) => row.filter((_: any, j: number) => j !== colIndex))
+        updateBlockContent(blockId, { ...block.content, headers: newHeaders, rows: newRows })
+    }
+
     const handleSubmit = async () => {
         if (blocks.length === 0) {
             alert("Adicione pelo menos um bloco de conteúdo.")
@@ -309,19 +326,28 @@ export default function MonthlyReportEditor({
                                         <thead>
                                             <tr>
                                                 {block.content.headers.map((header: string, i: number) => (
-                                                    <th key={i} className="border border-zinc-200 p-1 bg-zinc-50 min-w-[150px]">
+                                                    <th key={i} className="group/col border border-zinc-200 p-1 bg-zinc-50 min-w-[150px] relative">
                                                         <Input
                                                             value={header}
                                                             onChange={(e) => handleHeaderChange(block.id, i, e.target.value)}
                                                             className="h-8 border-transparent hover:border-zinc-300 focus:border-indigo-500 bg-transparent font-bold text-center"
                                                         />
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-4 w-4 absolute -top-1 -right-1 opacity-0 group-hover/col:opacity-100 bg-white dark:bg-zinc-800 border shadow-sm"
+                                                            onClick={() => removeColumn(block.id, i)}
+                                                        >
+                                                            <Trash className="h-2 w-2 text-red-500" />
+                                                        </Button>
                                                     </th>
                                                 ))}
+                                                <th className="w-8 border-none bg-transparent" />
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {block.content.rows.map((row: string[], i: number) => (
-                                                <tr key={i}>
+                                                <tr key={i} className="group/row">
                                                     {row.map((cell: string, j: number) => (
                                                         <td key={j} className="border border-zinc-200 p-1 min-w-[150px]">
                                                             <Input
@@ -331,6 +357,16 @@ export default function MonthlyReportEditor({
                                                             />
                                                         </td>
                                                     ))}
+                                                    <td className="w-8 p-1 border-none bg-transparent">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-6 w-6 opacity-0 group-hover/row:opacity-100"
+                                                            onClick={() => removeRow(block.id, i)}
+                                                        >
+                                                            <Trash className="h-3 w-3 text-red-500" />
+                                                        </Button>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>

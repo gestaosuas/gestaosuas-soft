@@ -42,6 +42,23 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
         setBlocks(blocks.filter(b => b.id !== id))
     }
 
+    const removeRow = (blockId: string, rowIndex: number) => {
+        const block = blocks.find(b => b.id === blockId)
+        if (!block || block.type !== 'table') return
+        if (block.content.rows.length <= 1) return
+        const newRows = block.content.rows.filter((_: any, i: number) => i !== rowIndex)
+        updateBlock(blockId, { ...block.content, rows: newRows })
+    }
+
+    const removeColumn = (blockId: string, colIndex: number) => {
+        const block = blocks.find(b => b.id === blockId)
+        if (!block || block.type !== 'table') return
+        if (block.content.headers.length <= 1) return
+        const newHeaders = block.content.headers.filter((_: any, i: number) => i !== colIndex)
+        const newRows = block.content.rows.map((row: string[]) => row.filter((_: any, j: number) => j !== colIndex))
+        updateBlock(blockId, { ...block.content, headers: newHeaders, rows: newRows })
+    }
+
     const handleSave = () => {
         onSave(title, blocks)
     }
@@ -114,7 +131,7 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
                                     <thead>
                                         <tr>
                                             {block.content.headers.map((header: string, i: number) => (
-                                                <th key={i} className="p-2 border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
+                                                <th key={i} className="group/col p-2 border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 relative">
                                                     <input
                                                         value={header}
                                                         onChange={(e) => {
@@ -124,6 +141,14 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
                                                         }}
                                                         className="w-full bg-transparent font-bold outline-none"
                                                     />
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-4 w-4 absolute -top-1 -right-1 opacity-0 group-hover/col:opacity-100 bg-white dark:bg-zinc-800 border shadow-sm"
+                                                        onClick={() => removeColumn(block.id, i)}
+                                                    >
+                                                        <Trash2 className="h-2 w-2 text-red-500" />
+                                                    </Button>
                                                 </th>
                                             ))}
                                             <th className="w-8 p-1 border-none bg-transparent">
@@ -144,7 +169,7 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
                                     </thead>
                                     <tbody>
                                         {block.content.rows.map((row: string[], i: number) => (
-                                            <tr key={i}>
+                                            <tr key={i} className="group/row">
                                                 {row.map((cell: string, j: number) => (
                                                     <td key={j} className="p-2 border border-zinc-200 dark:border-zinc-700">
                                                         <input
@@ -158,6 +183,16 @@ export function WorkPlanEditor({ initialTitle = "Novo Plano de Trabalho", initia
                                                         />
                                                     </td>
                                                 ))}
+                                                <td className="w-8 p-1 border-none bg-transparent">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-6 w-6 opacity-0 group-hover/row:opacity-100"
+                                                        onClick={() => removeRow(block.id, i)}
+                                                    >
+                                                        <Trash2 className="h-3 w-3 text-red-500" />
+                                                    </Button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
