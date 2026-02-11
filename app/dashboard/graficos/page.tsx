@@ -482,7 +482,7 @@ export default async function GraficosPage({
         ]
 
         return (
-            <div className="min-h-screen bg-[#f8fafc] dark:bg-zinc-950 p-4 sm:p-8 space-y-8 pb-12">
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
                 <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
@@ -495,7 +495,7 @@ export default async function GraficosPage({
                                 Dashboard Benefícios <span className="text-blue-600 font-bold">{selectedYear}</span>
                             </h1>
                             <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight">
-                                {selectedMonthInput === 'all' ? "Visão consolidada do Ano Inteiro" : `Resultados de ${selectedMonthName}`}
+                                {selectedMonthInput === 'all' ? "" : `Resultados de ${selectedMonthName}`}
                             </p>
                         </div>
                     </div>
@@ -515,7 +515,7 @@ export default async function GraficosPage({
 
                 <MetricsCards data={cardsData} monthName={selectedMonthName} />
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <GenericLineChart
                         title="Famílias Beneficiadas no BPF"
                         subtitle={selectedMonthInput === 'all' ? "Jan - Dez 2026" : selectedMonthName}
@@ -530,9 +530,6 @@ export default async function GraficosPage({
                         dataKey="value"
                         color="#f59e0b"
                     />
-                </div>
-
-                <div className="grid grid-cols-1 gap-8">
                     <GenericPieChart
                         title="Visitas Domiciliares"
                         data={visitas_ids.map(v => ({ name: v.label, value: Number(latestData[v.id] || 0) })).filter(d => d.value > 0)}
