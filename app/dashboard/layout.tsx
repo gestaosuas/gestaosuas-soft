@@ -21,9 +21,9 @@ export default async function DashboardLayout({
     const settings = await getSystemSettings()
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 font-sans antialiased text-zinc-900 selection:bg-cyan-500 selection:text-white flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible relative">
-            {/* Elegant Background Layering - Lighter Futuristic Theme */}
-            <div className="absolute inset-0 -z-10 bg-slate-50">
+        <div className="flex h-screen overflow-hidden font-sans antialiased text-zinc-900 selection:bg-cyan-500 selection:text-white flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible relative">
+            {/* Elegant Background Layering - Synchronized with Theme */}
+            <div className="absolute inset-0 -z-10 bg-inherit">
                 {/* Primary Glow - Sutil agora que o fundo é claro */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(6,182,212,0.05),rgba(0,0,0,0))] pointer-events-none"></div>
                 {/* Secondary Bottom Glow */}
