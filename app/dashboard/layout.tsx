@@ -21,11 +21,15 @@ export default async function DashboardLayout({
     const settings = await getSystemSettings()
 
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950 font-sans antialiased text-zinc-900 dark:text-zinc-50 selection:bg-zinc-900 selection:text-zinc-50 dark:selection:bg-zinc-100 dark:selection:text-zinc-900 flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible">
-            {/* Elegant Background Layering */}
-            <div className="absolute inset-0 -z-10 bg-white dark:bg-zinc-950">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.03),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.02),rgba(0,0,0,0))] pointer-events-none"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay pointer-events-none"></div>
+        <div className="flex h-screen overflow-hidden bg-[#020617] font-sans antialiased text-zinc-100 selection:bg-cyan-500 selection:text-white flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible">
+            {/* Elegant Background Layering - Futuristic Theme */}
+            <div className="absolute inset-0 -z-10 bg-[#020617]">
+                {/* Primary Glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(6,182,212,0.15),rgba(0,0,0,0))] pointer-events-none"></div>
+                {/* Secondary Bottom Glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,rgba(120,119,198,0.08),rgba(0,0,0,0))] pointer-events-none"></div>
+                {/* Grain Texture */}
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
             </div>
 
             <div className="print:hidden">

@@ -5,12 +5,42 @@ import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, LogOut, ShieldCheck, Building2, ChevronLeft, ChevronRight, HandHeart, Activity, ClipboardList } from "lucide-react"
+import {
+    LayoutDashboard,
+    Users,
+    LogOut,
+    ShieldCheck,
+    Building2,
+    ChevronLeft,
+    ChevronRight,
+    HandHeart,
+    Activity,
+    ClipboardList,
+    GraduationCap,
+    Home,
+    HeartPulse,
+    MapPin,
+    Coins,
+    Briefcase
+} from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [isCollapsed, setIsCollapsed] = useState(false)
+
+    const getDirectorateIcon = (name: string) => {
+        const lowerName = name.toLowerCase()
+        if (lowerName.includes('benefícios')) return HandHeart
+        if (lowerName.includes('formação') || lowerName.includes('sine')) return GraduationCap
+        if (lowerName.includes('cras')) return Home
+        if (lowerName.includes('ceai')) return Users
+        if (lowerName.includes('creas')) return HeartPulse
+        if (lowerName.includes('população') || lowerName.includes('rua') || lowerName.includes('migrantes')) return MapPin
+        if (lowerName.includes('emendas') || lowerName.includes('fundos')) return Coins
+        if (lowerName.includes('subvenção')) return ClipboardList
+        return Building2
+    }
 
     // Separate directorates by category
     const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes']
@@ -21,7 +51,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
 
     return (
         <div className={cn(
-            "hidden md:flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-card-foreground z-20 relative transition-all duration-300 ease-in-out print:hidden",
+            "hidden md:flex flex-col border-r border-cyan-900/20 bg-[#020617] text-card-foreground z-20 relative transition-all duration-300 ease-in-out print:hidden",
             isCollapsed ? "w-20" : "w-72"
         )}>
             {/* Toggle Button - Minimalist */}
@@ -89,11 +119,11 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                 "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg",
                                 isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                 pathname === "/dashboard"
-                                    ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                    : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                    ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                    : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
                             )}
                         >
-                            <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", pathname === "/dashboard" ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                            <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", pathname === "/dashboard" ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
                             {!isCollapsed && <span>Painel Geral</span>}
                         </Button>
                     </Link>
@@ -122,12 +152,15 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                                 "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
                                                 isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
                                                 isActive
-                                                    ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                                    : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                                    ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                                    : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
                                             )}
                                             title={dir.name}
                                         >
-                                            <Building2 className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                            {(() => {
+                                                const Icon = getDirectorateIcon(dir.name)
+                                                return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                                            })()}
                                             {!isCollapsed && <span className="truncate">{dir.name}</span>}
                                         </Button>
                                     </div>
@@ -159,12 +192,15 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                                 "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
                                                 isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
                                                 isActive
-                                                    ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                                    : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                                    ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                                    : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
                                             )}
                                             title={dir.name}
                                         >
-                                            <Activity className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                            {(() => {
+                                                const Icon = getDirectorateIcon(dir.name)
+                                                return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                                            })()}
                                             {!isCollapsed && <span className="truncate">{dir.name}</span>}
                                         </Button>
                                     </div>
@@ -186,11 +222,11 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                     "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg",
                                     isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                     pathname?.startsWith("/dashboard/admin")
-                                        ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                        : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                        ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                        : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
                                 )}
                             >
-                                <Users className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/admin") ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                <Users className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/admin") ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Usuários</span>}
                             </Button>
                         </Link>
@@ -201,11 +237,11 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                     "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mt-1",
                                     isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                     pathname?.startsWith("/dashboard/configuracoes")
-                                        ? "bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-50 shadow-none border border-blue-100/50 dark:border-blue-800/20"
-                                        : "text-zinc-500 dark:text-zinc-400 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                                        ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                        : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
                                 )}
                             >
-                                <ShieldCheck className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/configuracoes") ? "text-blue-900 dark:text-blue-400" : "text-zinc-400", !isCollapsed && "mr-3")} />
+                                <ShieldCheck className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/configuracoes") ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Configurações</span>}
                             </Button>
                         </Link>
@@ -213,19 +249,19 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 )}
             </nav>
 
-            <div className="p-4 border-t border-zinc-100 dark:border-zinc-800/60 transition-all bg-white dark:bg-zinc-950">
+            <div className="p-4 border-t border-cyan-900/20 transition-all bg-[#010409]">
                 {userName && !isCollapsed && (
                     <div className="px-3 mb-6 animate-in fade-in">
-                        <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.15em] mb-1.5">Sessão Ativa</p>
-                        <p className="text-[13px] font-bold text-zinc-800 dark:text-zinc-200 truncate pr-2" title={userName}>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.15em] mb-1.5">Sessão Ativa</p>
+                        <p className="text-[13px] font-bold text-zinc-200 truncate pr-2" title={userName}>
                             {userName}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                             <div className={cn(
-                                "h-1.5 w-1.5 rounded-full ring-2 ring-blue-50 dark:ring-blue-900/20",
-                                role === 'admin' ? "bg-blue-600" : "bg-blue-400"
+                                "h-1.5 w-1.5 rounded-full ring-2 ring-cyan-500/20 shadow-[0_0_8px_rgba(6,182,212,0.5)]",
+                                "bg-cyan-400"
                             )}></div>
-                            <p className="text-[10px] font-bold text-blue-900 dark:text-blue-400 uppercase tracking-widest">
+                            <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">
                                 {role === 'admin' ? 'Administrador' : 'Agente'}
                             </p>
                         </div>
@@ -235,7 +271,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                     <Button
                         variant="ghost"
                         className={cn(
-                            "w-full h-11 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors group",
+                            "w-full h-11 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-colors group",
                             isCollapsed ? "justify-center px-0" : "justify-start px-3"
                         )}
                     >
