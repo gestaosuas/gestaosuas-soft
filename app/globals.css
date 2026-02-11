@@ -110,7 +110,7 @@
   }
 
   body {
-    @apply bg-[#020617] text-foreground antialiased selection:bg-cyan-500 selection:text-white;
+    @apply bg-[#eef2ff] text-zinc-900 antialiased selection:bg-[#366cb0] selection:text-white;
   }
 }
 
