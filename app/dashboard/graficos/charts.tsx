@@ -239,8 +239,9 @@ export function GenericLineChart({ data, title, dataKey, color, subtitle }: { da
                             strokeWidth={3}
                             fillOpacity={1}
                             fill={`url(#color-${dataKey})`}
-                            dot={false}
+                            dot={{ r: 4, fill: color, strokeWidth: 2, stroke: '#fff' }}
                             activeDot={{ r: 6, fill: color, stroke: '#fff', strokeWidth: 2 }}
+                            label={{ position: 'top', fill: color, fontSize: 10, fontWeight: 'bold', dy: -10, formatter: (val: any) => Number(val) > 0 ? val.toLocaleString('pt-BR') : '' }}
                         />
                     </AreaChart>
                 </ResponsiveContainer>
