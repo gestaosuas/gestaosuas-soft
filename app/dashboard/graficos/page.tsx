@@ -460,40 +460,84 @@ export default async function GraficosPage({
             { id: "visitas_pro_pao", label: "Visitas Pró-pão" }
         ]
 
+        const getHistory = (id: string) => monthNames.map((name, i) => ({
+            name,
+            value: Number(dataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        const getTrend = (id: string) => {
+            const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
         const cardsData = [
-            { label: "Inclusão CadUnico (Total)", value: Number(latestData[id_inclusao] || 0), color: "#0ea5e9" },
-            { label: "Atualização CadUnico (Total)", value: Number(latestData[id_atualizacao] || 0), color: "#0ea5e9" },
-            { label: "Pró-Pão (Total)", value: Number(latestData[id_pro_pao] || 0), color: "#0ea5e9" },
-            { label: "Cesta Básica (Total)", value: Number(latestData[id_cesta] || 0), color: "#0ea5e9" },
+            { label: "Inclusão CadÚnico", value: Number(latestData[id_inclusao] || 0), color: "#3b82f6", trend: getTrend(id_inclusao), history: getHistory(id_inclusao) },
+            { label: "Atualização CadÚnico", value: Number(latestData[id_atualizacao] || 0), color: "#0ea5e9", trend: getTrend(id_atualizacao), history: getHistory(id_atualizacao) },
+            { label: "Pró-Pão Total", value: Number(latestData[id_pro_pao] || 0), color: "#f59e0b", trend: getTrend(id_pro_pao), history: getHistory(id_pro_pao) },
+            { label: "Cesta Básica", value: Number(latestData[id_cesta] || 0), color: "#10b981", trend: getTrend(id_cesta), history: getHistory(id_cesta) },
         ]
 
         return (
-            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
-                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+            <div className="min-h-screen bg-[#f8fafc] dark:bg-zinc-950 p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
-                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard Benefícios <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                            </div>
-                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">{selectedMonthName}</p>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard Benefícios <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight">
+                                {selectedMonthInput === 'all' ? "Visão consolidada do Ano Inteiro" : `Resultados de ${selectedMonthName}`}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonthInput} /></div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                                <div className="flex items-center gap-2">
+                                    <YearSelector currentYear={selectedYear} />
+                                    <MonthSelector currentMonth={selectedMonthInput} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </header>
-                <MetricsCards data={cardsData} monthName={selectedMonthName} compact={true} />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <GenericLineChart title="Famílias Beneficiadas no BPF" data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_familias_pbf] || 0) }))} dataKey="value" color="#3b82f6" />
-                    <GenericLineChart title="Pessoas Cadastradas" data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_pessoas_cadunico] || 0) }))} dataKey="value" color="#f59e0b" />
-                    <GenericPieChart title="Visitas Domiciliares" data={visitas_ids.map(v => ({ name: v.label, value: Number(latestData[v.id] || 0) })).filter(d => d.value > 0)} colors={['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#f97316']} />
+
+                <MetricsCards data={cardsData} monthName={selectedMonthName} />
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <GenericLineChart
+                        title="Famílias Beneficiadas no BPF"
+                        subtitle={selectedMonthInput === 'all' ? "Jan - Dez 2026" : selectedMonthName}
+                        data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_familias_pbf] || 0) }))}
+                        dataKey="value"
+                        color="#3b82f6"
+                    />
+                    <GenericLineChart
+                        title="Pessoas Cadastradas"
+                        subtitle="Tendência Acumulada"
+                        data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_pessoas_cadunico] || 0) }))}
+                        dataKey="value"
+                        color="#f59e0b"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 gap-8">
+                    <GenericPieChart
+                        title="Visitas Domiciliares"
+                        data={visitas_ids.map(v => ({ name: v.label, value: Number(latestData[v.id] || 0) })).filter(d => d.value > 0)}
+                        colors={['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#f97316']}
+                    />
                 </div>
             </div>
         )

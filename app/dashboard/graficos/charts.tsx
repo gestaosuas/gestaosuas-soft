@@ -19,26 +19,62 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function MetricsCards({ data, monthName, compact = false }: { data: any, monthName: string, compact?: boolean }) {
-    // data is { label: string, value: number, color: string }[]
+export function MetricsCards({ data, monthName, compact = false }: { data: any[], monthName: string, compact?: boolean }) {
     return (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-${Math.min(data.length, 7)} gap-3`}>
-            {data.map((item: any, i: number) => (
-                <Card key={i} className={`border-l-4 shadow-sm transition-all hover:translate-y-[-2px] ${compact ? 'py-1.5' : 'py-2'}`} style={{ borderLeftColor: item.color }}>
-                    <CardHeader className={`${compact ? 'p-3' : 'p-4'} pb-1`}>
-                        <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-tight">
-                            {item.label}
-                        </h3>
-                    </CardHeader>
-                    <CardContent className={`${compact ? 'p-3' : 'p-4'} pt-0`}>
-                        <div className="text-2xl font-black tracking-tight" style={{ color: item.color }}>
-                            {item.value.toLocaleString('pt-BR')}
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4`}>
+            {data.map((item: any, i: number) => {
+                const isPositive = (item.trend || 0) >= 0;
+
+                return (
+                    <Card key={i} className="rounded-[2rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 overflow-hidden group">
+                        <CardHeader className="p-6 pb-2">
+                            <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] leading-tight">
+                                {item.label}
+                            </h3>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-0 flex items-center justify-between">
+                            <div className="space-y-2">
+                                <div className="text-4xl font-black tracking-tight text-slate-800 dark:text-white" style={{ color: item.color ? item.color : undefined }}>
+                                    {item.value.toLocaleString('pt-BR')}
+                                </div>
+                                {item.trend !== undefined && (
+                                    <div className={`flex items-center gap-1.5 text-[11px] font-bold ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                        <span className="flex items-center">
+                                            {isPositive ? '↗' : '↘'} {Math.abs(item.trend)}%
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {item.history && (
+                                <div className="w-[120px] h-[50px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={item.history}>
+                                            <defs>
+                                                <linearGradient id={`gradient-${i}`} x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor={item.color || '#3b82f6'} stopOpacity={0.1} />
+                                                    <stop offset="95%" stopColor={item.color || '#3b82f6'} stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <Area
+                                                type="monotone"
+                                                dataKey="value"
+                                                stroke={item.color || '#3b82f6'}
+                                                strokeWidth={2}
+                                                fillOpacity={1}
+                                                fill={`url(#gradient-${i})`}
+                                                isAnimationActive={false}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                );
+            })}
         </div>
-    )
+    );
 }
 
 export function ServicesBarChart({ data }: { data: any[] }) {
@@ -156,44 +192,57 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
     )
 }
 
-export function GenericLineChart({ data, title, dataKey, color }: { data: any[], title: string, dataKey: string, color: string }) {
+export function GenericLineChart({ data, title, dataKey, color, subtitle }: { data: any[], title: string, dataKey: string, color: string, subtitle?: string }) {
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="p-3">
-                <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+            <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between space-y-0">
+                <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
-                    {title}
-                </CardTitle>
+                    <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight">
+                        {title}
+                    </CardTitle>
+                </div>
+                {subtitle && (
+                    <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tight">{subtitle}</span>
+                )}
             </CardHeader>
-            <CardContent className="h-[220px] p-2 pt-0">
+            <CardContent className="h-[300px] p-8 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <AreaChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id={`color-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={color} stopOpacity={0.1} />
+                                <stop offset="95%" stopColor={color} stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis
                             dataKey="name"
-                            tick={{ fontSize: 11, fill: '#9ca3af' }}
+                            tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
-                            tickMargin={10}
+                            tickMargin={15}
                         />
                         <YAxis
-                            tick={{ fontSize: 11, fill: '#9ca3af' }}
+                            tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
+                            hide
                         />
                         <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
                         />
-                        <Line
+                        <Area
                             type="monotone"
                             dataKey={dataKey}
                             stroke={color}
                             strokeWidth={3}
-                            dot={{ r: 4, fill: color, strokeWidth: 2, stroke: '#fff' }}
-                            activeDot={{ r: 6 }}
-                            label={{ position: 'top', fill: color, fontSize: 10, dy: -5, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                            fillOpacity={1}
+                            fill={`url(#color-${dataKey})`}
+                            dot={false}
+                            activeDot={{ r: 6, fill: color, stroke: '#fff', strokeWidth: 2 }}
                         />
-                    </LineChart>
+                    </AreaChart>
                 </ResponsiveContainer>
             </CardContent>
         </Card>
