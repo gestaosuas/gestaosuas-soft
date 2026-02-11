@@ -48,7 +48,7 @@ export default async function DirectoratePage({
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000">
             <header className="space-y-2">
-                <h1 className="text-4xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                <h1 className="text-4xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
                     {directorate.name}
                 </h1>
                 <p className="text-[15px] text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl leading-relaxed">

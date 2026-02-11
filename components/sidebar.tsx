@@ -51,7 +51,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
 
     return (
         <div className={cn(
-            "hidden md:flex flex-col border-r border-cyan-900/20 bg-[#020617] text-card-foreground z-20 relative transition-all duration-300 ease-in-out print:hidden",
+            "hidden md:flex flex-col border-r border-white/10 bg-[#366cb0] text-white z-20 relative transition-all duration-300 ease-in-out print:hidden",
             isCollapsed ? "w-20" : "w-72"
         )}>
             {/* Toggle Button - Minimalist */}
@@ -64,27 +64,29 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
             </button>
 
             <div className={cn(
-                "flex flex-col items-center justify-center border-b border-zinc-100 dark:border-zinc-800/60 transition-all",
-                isCollapsed ? "min-h-20 py-2 px-0" : "min-h-[120px] py-8 px-6"
+                "flex flex-col items-center justify-start border-b border-white/10 transition-all bg-gradient-to-b from-white via-white/95 to-[#366cb0]",
+                isCollapsed ? "min-h-20 py-2 px-0" : "min-h-[200px] pt-4 pb-8"
             )}>
-                <div className="flex flex-col items-center justify-center gap-2 relative z-10 w-full overflow-hidden text-center">
+                <div className="flex flex-col items-center justify-start gap-0 relative z-10 w-full overflow-hidden text-center flex-1">
                     {!isCollapsed && (
                         logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={logoUrl} alt="Logo" className="h-16 w-auto max-w-[200px] object-contain mb-2 animate-in fade-in duration-500" />
+                            <div className="w-full flex items-center justify-center mb-auto">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={logoUrl} alt="Logo" className="w-full h-auto max-h-[160px] object-contain animate-in slide-in-from-top-4 duration-1000" />
+                            </div>
                         ) : (
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-white transition-all mb-1 shadow-lg shadow-blue-900/10">
-                                <ShieldCheck className="h-7 w-7" />
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 transition-all mb-auto mt-4 shadow-lg shadow-cyan-900/20">
+                                <ShieldCheck className="h-9 w-9" />
                             </div>
                         )
                     )}
 
                     {!isCollapsed && (
-                        <div className="flex flex-col animate-in fade-in duration-500 w-full">
-                            <span className="text-[15px] font-bold tracking-tight text-blue-950 dark:text-blue-50 leading-tight">
+                        <div className="flex flex-col animate-in fade-in duration-500 w-full pb-2">
+                            <span className="text-[15px] font-bold tracking-tight text-white/90 leading-tight">
                                 {systemName || "Sistema de Vigilância"}
                             </span>
-                            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-[0.15em] mt-1.5 translate-y-[1px]">
+                            <span className="text-[10px] text-white font-bold uppercase tracking-[0.2em] mt-1 translate-y-[1px]">
                                 Socioassistencial • 2026
                             </span>
                         </div>
@@ -110,7 +112,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 `}</style>
                 <div className="space-y-1">
                     {!isCollapsed && (
-                        <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em]">Principal</h3>
+                        <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">Principal</h3>
                     )}
                     <Link href="/dashboard">
                         <Button
@@ -120,10 +122,10 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                 isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                 pathname === "/dashboard"
                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
-                                    : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
+                                    : "text-white hover:text-cyan-400 hover:bg-white/5"
                             )}
                         >
-                            <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", pathname === "/dashboard" ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                            <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", pathname === "/dashboard" ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                             {!isCollapsed && <span>Painel Geral</span>}
                         </Button>
                     </Link>
@@ -132,7 +134,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 {mainDirectorates.length > 0 && (
                     <div className="space-y-1">
                         {!isCollapsed && (
-                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em]">Diretorias</h3>
+                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">Diretorias</h3>
                         )}
                         {mainDirectorates.map((dir) => {
                             const isPathActive = pathname?.includes(`/dashboard/diretoria/${dir.id}`)
@@ -153,13 +155,13 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                                 isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
                                                 isActive
                                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
-                                                    : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
+                                                    : "text-white hover:text-cyan-400 hover:bg-white/5"
                                             )}
                                             title={dir.name}
                                         >
                                             {(() => {
                                                 const Icon = getDirectorateIcon(dir.name)
-                                                return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                                                return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                             })()}
                                             {!isCollapsed && <span className="truncate">{dir.name}</span>}
                                         </Button>
@@ -173,7 +175,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 {monitoringDirectorates.length > 0 && (
                     <div className="space-y-1">
                         {!isCollapsed && (
-                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em] mt-2">Monitoramentos</h3>
+                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mt-2">Monitoramentos</h3>
                         )}
                         {monitoringDirectorates.map((dir) => {
                             const isPathActive = pathname?.includes(`/dashboard/diretoria/${dir.id}`)
@@ -193,13 +195,13 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                                 isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
                                                 isActive
                                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
-                                                    : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
+                                                    : "text-white hover:text-cyan-400 hover:bg-white/5"
                                             )}
                                             title={dir.name}
                                         >
                                             {(() => {
                                                 const Icon = getDirectorateIcon(dir.name)
-                                                return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                                                return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                             })()}
                                             {!isCollapsed && <span className="truncate">{dir.name}</span>}
                                         </Button>
@@ -213,7 +215,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 {role === 'admin' && (
                     <div className="space-y-1">
                         {!isCollapsed && (
-                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em]">Gestão</h3>
+                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">Gestão</h3>
                         )}
                         <Link href="/dashboard/admin">
                             <Button
@@ -223,10 +225,10 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                     isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                     pathname?.startsWith("/dashboard/admin")
                                         ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
-                                        : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
+                                        : "text-white hover:text-cyan-400 hover:bg-white/5"
                                 )}
                             >
-                                <Users className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/admin") ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                                <Users className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/admin") ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Usuários</span>}
                             </Button>
                         </Link>
@@ -238,10 +240,10 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                     isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                     pathname?.startsWith("/dashboard/configuracoes")
                                         ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
-                                        : "text-zinc-500 hover:text-cyan-400 hover:bg-zinc-900/50"
+                                        : "text-white hover:text-cyan-400 hover:bg-white/5"
                                 )}
                             >
-                                <ShieldCheck className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/configuracoes") ? "text-cyan-400" : "text-zinc-500", !isCollapsed && "mr-3")} />
+                                <ShieldCheck className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/configuracoes") ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Configurações</span>}
                             </Button>
                         </Link>
@@ -249,7 +251,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 )}
             </nav>
 
-            <div className="p-4 border-t border-cyan-900/20 transition-all bg-[#010409]">
+            <div className="p-4 border-t border-white/10 transition-all bg-[#2a5a96]">
                 {userName && !isCollapsed && (
                     <div className="px-3 mb-6 animate-in fade-in">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.15em] mb-1.5">Sessão Ativa</p>
@@ -271,12 +273,12 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                     <Button
                         variant="ghost"
                         className={cn(
-                            "w-full h-11 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-colors group",
+                            "w-full h-11 rounded-lg text-zinc-300 hover:text-red-400 hover:bg-red-500/5 transition-colors group",
                             isCollapsed ? "justify-center px-0" : "justify-start px-3"
                         )}
                     >
                         <LogOut className={cn("h-[18px] w-[18px] transition-transform", !isCollapsed && "mr-3")} />
-                        {!isCollapsed && <span className="text-[13px] font-semibold">Sair</span>}
+                        {!isCollapsed && <span className="text-[13px] font-semibold text-zinc-300">Sair</span>}
                     </Button>
                 </form>
             </div>
