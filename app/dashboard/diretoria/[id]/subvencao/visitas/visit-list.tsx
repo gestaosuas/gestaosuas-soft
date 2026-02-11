@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Building, FileText, Eye, Edit2, Trash2, Loader2, CheckCircle2 } from "lucide-react"
 import { deleteVisit } from "@/app/dashboard/actions"
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], directorateId: string, isAdmin?: boolean }) {
     const router = useRouter()
@@ -67,6 +68,7 @@ export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], d
                                 <TableHead className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Data e OSC</TableHead>
                                 <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Técnicos Responsáveis</TableHead>
                                 <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Status</TableHead>
+                                <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Registrado por</TableHead>
                                 <TableHead className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400 text-right">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -113,6 +115,14 @@ export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], d
                                             </span>
                                         )}
                                     </TableCell>
+                                    <TableCell className="py-6">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                                            <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] text-blue-900 dark:text-blue-400">
+                                                {(visit.profiles?.full_name || "U")[0]}
+                                            </div>
+                                            {visit.profiles?.full_name || "Desconhecido"}
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="px-8 py-6 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Button
@@ -133,9 +143,17 @@ export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], d
                                                 size="sm"
                                                 disabled={visit.status !== 'finalized'}
                                                 onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`)}
-                                                className="h-9 px-4 rounded-xl border-zinc-200 dark:border-zinc-800 hover:bg-blue-900 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all gap-2 font-bold text-[10px] uppercase tracking-widest"
+                                                className={cn(
+                                                    "h-9 px-4 rounded-xl transition-all gap-2 font-bold text-[10px] uppercase tracking-widest border",
+                                                    !visit.parecer_tecnico?.status && "border-zinc-200 dark:border-zinc-800 hover:bg-blue-900 hover:text-white",
+                                                    visit.parecer_tecnico?.status === 'draft' && "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-600 hover:text-white dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400",
+                                                    visit.parecer_tecnico?.status === 'finalized' && "bg-green-50 border-green-200 text-green-700 hover:bg-green-600 hover:text-white dark:bg-green-900/20 dark:border-green-800 dark:text-green-400",
+                                                    "disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit"
+                                                )}
                                             >
-                                                <FileText className="h-3.5 w-3.5" /> Relatório
+                                                <FileText className="h-3.5 w-3.5" />
+                                                {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório Final' :
+                                                    visit.parecer_tecnico?.status === 'draft' ? 'Relatório (Rascunho)' : 'Relatório'}
                                             </Button>
                                             {(visit.status === 'draft' || isAdmin) && (
                                                 <Button

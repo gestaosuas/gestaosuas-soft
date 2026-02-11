@@ -693,7 +693,7 @@ export async function getVisits(directorateId: string) {
         .from('visits')
         .select(`
             *,
-            oscs (name)
+            oscs(name)
         `)
         .eq('directorate_id', directorateId)
 
@@ -702,14 +702,35 @@ export async function getVisits(directorateId: string) {
         query = query.eq('user_id', user.id)
     }
 
+    // If default join fails, we fallback or try with explicit relation if schemas are complex
+    // Note: If you receive an error here, check if visits.user_id has a foreign key to profiles.id
     const { data, error } = await query.order('visit_date', { ascending: false })
 
     if (error) {
-        console.error("Fetch Visitas Error:", error)
+        console.error("Fetch Visitas Error Details:", JSON.stringify(error, null, 2))
         return []
     }
 
-    return data || []
+    const visits = data || []
+
+    // Since direct join to profiles is missing FK in DB, fetch manually
+    if (visits.length > 0) {
+        const userIds = Array.from(new Set(visits.map((v: any) => v.user_id).filter(Boolean)))
+        const { data: profiles } = await adminSupabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds)
+
+        if (profiles) {
+            const profileMap = new Map(profiles.map(p => [p.id, p.full_name]))
+            return visits.map((v: any) => ({
+                ...v,
+                profiles: { full_name: profileMap.get(v.user_id) || "Desconhecido" }
+            }))
+        }
+    }
+
+    return visits || []
 }
 
 export async function getVisitById(id: string) {
@@ -891,7 +912,7 @@ export async function getWorkPlansCount(directorateId: string) {
     return counts
 }
 
-export async function saveOpinionReport(visitId: string, data: any) {
+export async function saveOpinionReport(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -917,12 +938,55 @@ export async function saveOpinionReport(visitId: string, data: any) {
     const { error } = await adminSupabase
         .from('visits')
         .update({
-            parecer_tecnico: data,
+            parecer_tecnico: {
+                ...data,
+                status: status
+            },
             updated_at: new Date().toISOString()
         })
         .eq('id', visitId)
 
     if (error) throw new Error("Erro ao salvar parecer: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function finalizeOpinionReport(visitId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch current report to check its current status
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('parecer_tecnico, user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin && visit.user_id !== user.id) {
+        throw new Error("Apenas o autor ou administradores podem finalizar este parecer.")
+    }
+
+    const updatedData = {
+        ...(visit.parecer_tecnico || {}),
+        status: 'finalized'
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            parecer_tecnico: updatedData,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao finalizar parecer: " + error.message)
 
     revalidatePath('/dashboard', 'page')
     return { success: true }

@@ -49,7 +49,7 @@ export function WorkPlanSelector({ oscId, oscName, logoUrl }: WorkPlanSelectorPr
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Planos de Trabalho</DialogTitle>
                         <DialogDescription>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ArrowLeft, Save, Printer, Loader2, CheckCircle } from "lucide-react"
 import { SignaturePad } from "@/components/signature-pad"
-import { saveOpinionReport } from "@/app/dashboard/actions"
+import { saveOpinionReport, finalizeOpinionReport } from "@/app/dashboard/actions"
 import { cn } from "@/lib/utils"
 import {
     Table,
@@ -60,7 +60,8 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                 tecnico2: "",
                 tecnico2_nome: ""
             },
-            date: new Date().toISOString().split('T')[0]
+            date: new Date().toISOString().split('T')[0],
+            status: 'draft'
         }
 
         if (!visit.parecer_tecnico) return defaultReport
@@ -69,9 +70,12 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
             ...defaultReport,
             ...visit.parecer_tecnico,
             item5_qualitativos: visit.parecer_tecnico.item5_qualitativos || defaultReport.item5_qualitativos,
-            item5_quantitativos: visit.parecer_tecnico.item5_quantitativos || defaultReport.item5_quantitativos
+            item5_quantitativos: visit.parecer_tecnico.item5_quantitativos || defaultReport.item5_quantitativos,
+            status: visit.parecer_tecnico.status || 'draft'
         }
     })
+
+    const isFinalized = report.status === 'finalized'
 
     const finalLogoUrl = logoUrl || "https://ovfpxrepxlrspsjbtpnd.supabase.co/storage/v1/object/public/system/logo-pm-uberlandia.png"
     const oscName = visit.oscs?.name || "Entidade não identificada"
@@ -87,16 +91,34 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
         return report.item4_custom
     }
 
-    const handleSave = async () => {
+    const handleSaveDraft = async () => {
         setIsSaving(true)
         try {
-            const result = await saveOpinionReport(visit.id, report)
+            const result = await saveOpinionReport(visit.id, report, 'draft')
             if (result.success) {
-                alert("Parecer salvo com sucesso!")
+                alert("Rascunho do parecer salvo!")
                 router.refresh()
             }
         } catch (error: any) {
             alert("Erro ao salvar: " + error.message)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleFinalize = async () => {
+        if (!window.confirm("ATENÇÃO: Após finalizar e bloquear, o parecer não poderá mais ser editado. Deseja continuar?")) return
+
+        setIsSaving(true)
+        try {
+            const result = await finalizeOpinionReport(visit.id)
+            if (result.success) {
+                alert("Parecer finalizado e bloqueado com sucesso!")
+                setReport((prev: any) => ({ ...prev, status: 'finalized' }))
+                router.refresh()
+            }
+        } catch (error: any) {
+            alert("Erro ao finalizar: " + error.message)
         } finally {
             setIsSaving(false)
         }
@@ -167,10 +189,32 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                             </Button>
                         </>
                     )}
-                    <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] px-8">
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Salvar Parecer
-                    </Button>
+                    {!isFinalized && (
+                        <>
+                            <Button onClick={handleSaveDraft} variant="outline" disabled={isSaving} className="gap-2 border-zinc-200 dark:border-zinc-800 text-zinc-600 hover:text-blue-900 font-bold uppercase text-[10px] px-6">
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                Salvar Rascunho
+                            </Button>
+                            {/* Finalize only appears if the report has been saved as draft at least once */}
+                            {(visit.parecer_tecnico || report.status === 'draft') && !visit.parecer_tecnico?.status && (
+                                <div className="text-[9px] text-zinc-400 font-bold uppercase italic px-2">
+                                    Salve como rascunho primeiro para habilitar a finalização
+                                </div>
+                            )}
+                            {visit.parecer_tecnico && (
+                                <Button onClick={handleFinalize} disabled={isSaving} className="gap-2 bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] px-8">
+                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                                    Finalizar e Bloquear
+                                </Button>
+                            )}
+                        </>
+                    )}
+                    {isFinalized && (
+                        <div className="flex items-center gap-2 px-6 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-xl border border-green-100 dark:border-green-900/30">
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Relatório Finalizado e Bloqueado</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -211,7 +255,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                             )}>1. Objeto do relatório</h2>
                             <p className="text-[10px] text-zinc-500 italic">Colocar o mesmo objeto do Plano de Trabalho (Objetivo e especificação do nome do projeto)</p>
                         </div>
-                        {!isPreview && (
+                        {!isPreview && !isFinalized && (
                             <div className="no-print">
                                 <Textarea autoResize
                                     placeholder="Digite aqui o objeto do relatório..."
@@ -221,10 +265,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 />
                             </div>
                         )}
-                        {(isPreview || typeof window !== 'undefined') && (
+                        {(isPreview || isFinalized || typeof window !== 'undefined') && (
                             <div className={cn(
                                 "whitespace-pre-wrap min-h-[60px] border-b border-dotted border-zinc-300",
-                                isPreview ? "block" : "hidden print:block"
+                                (isPreview || isFinalized) ? "block" : "hidden print:block"
                             )}>
                                 {report.objeto_relatorio || "________________________________________________________________________________________________________________________________________________________________"}
                             </div>
@@ -240,7 +284,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label className="font-bold text-xs uppercase underline underline-offset-4 decoration-zinc-200">a) - Dos objetivos</Label>
-                                {!isPreview && (
+                                {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <Textarea autoResize
                                             value={report.item2_a_objetivos}
@@ -249,10 +293,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
                                     <div className={cn(
                                         "whitespace-pre-wrap min-h-[40px] border-b border-dotted border-zinc-300",
-                                        isPreview ? "block" : "hidden print:block"
+                                        (isPreview || isFinalized) ? "block" : "hidden print:block"
                                     )}>
                                         {report.item2_a_objetivos || "________________________________________________________________________________________________________________________________________________________________"}
                                     </div>
@@ -261,7 +305,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
                             <div className="space-y-2">
                                 <Label className="font-bold text-xs uppercase underline underline-offset-4 decoration-zinc-200">b) - Das metas estabelecidas</Label>
-                                {!isPreview && (
+                                {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <Textarea autoResize
                                             value={report.item2_b_metas}
@@ -270,10 +314,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
                                     <div className={cn(
                                         "whitespace-pre-wrap min-h-[40px] border-b border-dotted border-zinc-300",
-                                        isPreview ? "block" : "hidden print:block"
+                                        (isPreview || isFinalized) ? "block" : "hidden print:block"
                                     )}>
                                         {report.item2_b_metas || "________________________________________________________________________________________________________________________________________________________________"}
                                     </div>
@@ -282,7 +326,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
                             <div className="space-y-2">
                                 <Label className="font-bold text-xs uppercase underline underline-offset-4 decoration-zinc-200">c) - Das atividades</Label>
-                                {!isPreview && (
+                                {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <Textarea autoResize
                                             value={report.item2_c_atividades}
@@ -291,10 +335,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
                                     <div className={cn(
                                         "whitespace-pre-wrap min-h-[40px] border-b border-dotted border-zinc-300",
-                                        isPreview ? "block" : "hidden print:block"
+                                        (isPreview || isFinalized) ? "block" : "hidden print:block"
                                     )}>
                                         {report.item2_c_atividades || "________________________________________________________________________________________________________________________________________________________________"}
                                     </div>
@@ -311,7 +355,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                             )}>3. Resultados</h2>
                             <p className="text-[10px] text-zinc-500 italic">explicitar os resultados detectados na visita em relação aos objetivos, metas e atividades</p>
                         </div>
-                        {!isPreview && (
+                        {!isPreview && !isFinalized && (
                             <div className="no-print">
                                 <Textarea autoResize
                                     placeholder="Relate as análises realizadas durante o monitoramento..."
@@ -321,17 +365,17 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 />
                             </div>
                         )}
-                        {(isPreview || typeof window !== 'undefined') && (
+                        {(isPreview || isFinalized || typeof window !== 'undefined') && (
                             <div className={cn(
                                 "whitespace-pre-wrap min-h-[100px] border-b border-dotted border-zinc-300",
-                                isPreview ? "block" : "hidden print:block"
+                                (isPreview || isFinalized) ? "block" : "hidden print:block"
                             )}>
                                 {report.item3_resultados || "____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________"}
                             </div>
                         )}
                     </section>
 
-                    {!isPreview && (
+                    {!isPreview && !isFinalized && (
                         <div className="no-print pt-6 border-t border-dashed border-zinc-200">
                             <Button
                                 variant={report.item5_enabled ? "destructive" : "outline"}
@@ -355,16 +399,16 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                     <h3 className="font-bold text-sm">a) Qualitativos (preencher referente ao trimestre)</h3>
                                     <div className="flex items-baseline gap-2">
                                         <span className="font-bold text-sm shrink-0">Período:</span>
-                                        {!isPreview && (
+                                        {!isPreview && !isFinalized && (
                                             <div className="grow no-print">
                                                 <Input
                                                     value={report.item5_periodo}
                                                     onChange={e => setReport({ ...report, item5_periodo: e.target.value })}
-                                                    className="h-8 border-zinc-200"
+                                                    className="h-8 border-zinc-200 font-bold"
                                                 />
                                             </div>
                                         )}
-                                        <span className={cn("hidden print:inline grow border-b border-black", isPreview && "inline")}>
+                                        <span className={cn("hidden print:inline grow border-b border-black", (isPreview || isFinalized) && "inline")}>
                                             {report.item5_periodo || "________________________________________________________________________________"}
                                         </span>
                                     </div>
@@ -387,7 +431,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                                 {report.item5_qualitativos.map((row: any, idx: number) => (
                                                     <TableRow key={idx} className="border-b border-black hover:bg-transparent h-10">
                                                         <TableCell className="p-0 border-r border-black w-24">
-                                                            {!isPreview ? (
+                                                            {!isPreview && !isFinalized ? (
                                                                 <Input
                                                                     className="border-none text-center text-xs h-10 w-full rounded-none focus-visible:ring-0"
                                                                     value={row.data}
@@ -398,11 +442,11 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                                                     }}
                                                                 />
                                                             ) : (
-                                                                <div className="text-center text-xs px-1">{row.data}</div>
+                                                                <div className="text-center text-xs px-1 font-bold">{row.data}</div>
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="p-0 border-r border-black">
-                                                            {!isPreview ? (
+                                                            {!isPreview && !isFinalized ? (
                                                                 <Textarea
                                                                     autoResize
                                                                     className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
@@ -414,11 +458,11 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                                                     }}
                                                                 />
                                                             ) : (
-                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap">{row.situacao}</div>
+                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.situacao}</div>
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="p-0 border-r border-black">
-                                                            {!isPreview ? (
+                                                            {!isPreview && !isFinalized ? (
                                                                 <Textarea
                                                                     autoResize
                                                                     className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
@@ -430,11 +474,11 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                                                     }}
                                                                 />
                                                             ) : (
-                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap">{row.recomendacoes}</div>
+                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.recomendacoes}</div>
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="p-0">
-                                                            {!isPreview ? (
+                                                            {!isPreview && !isFinalized ? (
                                                                 <Textarea
                                                                     autoResize
                                                                     className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
@@ -446,7 +490,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                                                     }}
                                                                 />
                                                             ) : (
-                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap">{row.observacao}</div>
+                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.observacao}</div>
                                                             )}
                                                         </TableCell>
                                                     </TableRow>
@@ -505,7 +549,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                                         </TableCell>
                                                         {['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'].map(month => (
                                                             <TableCell key={month} className="border-r border-black p-0">
-                                                                {!isPreview ? (
+                                                                {!isPreview && !isFinalized ? (
                                                                     <Input
                                                                         className="border-none text-center h-8 w-full rounded-none focus-visible:ring-0 text-[11px] p-0 font-bold"
                                                                         value={(report.item5_quantitativos as any)[row.key][month]}
@@ -542,7 +586,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                             isPreview && "text-black"
                         )}>5. CUMPRIMENTO DO OBJETO ATÉ A PRESENTE DATA</h2>
 
-                        {!isPreview && (
+                        {!isPreview && !isFinalized && (
                             <div className="no-print space-y-6 bg-zinc-50 dark:bg-zinc-950/30 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                                 <RadioGroup value={report.item4_type} onValueChange={val => setReport({ ...report, item4_type: val })}>
                                     <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
@@ -574,7 +618,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         <Textarea autoResize
                                             value={report.item4_custom}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReport({ ...report, item4_custom: e.target.value })}
-                                            className="bg-white dark:bg-zinc-950"
+                                            className="bg-white dark:bg-zinc-950 font-bold"
                                         />
                                     </div>
                                 )}
@@ -592,7 +636,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                     <section className="pt-20 break-inside-avoid print:break-inside-avoid">
                         <div className="grid grid-cols-2 gap-20">
                             <div className="space-y-2">
-                                {!isPreview && (
+                                {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <SignaturePad
                                             label=""
@@ -607,10 +651,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
                                     <div className={cn(
                                         "space-y-2",
-                                        isPreview ? "block" : "hidden print:block"
+                                        (isPreview || isFinalized) ? "block" : "hidden print:block"
                                     )}>
                                         {report.assinaturas.tecnico1 && (
                                             <div className="flex justify-center">
@@ -626,7 +670,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                             </div>
 
                             <div className="space-y-2">
-                                {!isPreview && (
+                                {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <SignaturePad
                                             label=""
@@ -641,10 +685,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
                                     <div className={cn(
                                         "space-y-2",
-                                        isPreview ? "block" : "hidden print:block"
+                                        (isPreview || isFinalized) ? "block" : "hidden print:block"
                                     )}>
                                         {report.assinaturas.tecnico2 && (
                                             <div className="flex justify-center">

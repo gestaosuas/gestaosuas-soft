@@ -19,6 +19,13 @@ import {
     SelectValue
 } from "@/components/ui/select"
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import {
     ArrowLeft,
     Save,
     CheckCircle,
@@ -55,6 +62,11 @@ export function VisitForm({
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const isEmendas = directorateName.toLowerCase().includes('emendas')
 
@@ -139,6 +151,7 @@ export function VisitForm({
     }, [formData.osc_id, oscs, isLocked])
 
     const [oscSearch, setOscSearch] = useState("")
+    const [isOscSelectOpen, setIsOscSelectOpen] = useState(false)
 
     // Filtered OSCs based on search
     const filteredOSCs = (oscs || []).filter(osc =>
@@ -548,39 +561,76 @@ export function VisitForm({
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 print:hidden">
                                 <div className="md:col-span-8 space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900/40">Selecione a Organização Social Civil (OSC)</Label>
-                                    <Select
-                                        value={formData.osc_id}
-                                        onValueChange={value => setFormData({ ...formData, osc_id: value })}
-                                    >
-                                        <SelectTrigger className="h-14 bg-zinc-50 border-zinc-200/60 rounded-xl focus:ring-4 focus:ring-blue-900/5 transition-all text-blue-950 font-bold">
-                                            <SelectValue placeholder="Escolha uma instituição cadastrada" />
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-[400px]">
-                                            <div className="p-2 sticky top-0 bg-white z-10 border-b border-zinc-100">
-                                                <Input
-                                                    placeholder="Digite para filtrar..."
-                                                    value={oscSearch}
-                                                    onChange={(e) => setOscSearch(e.target.value)}
-                                                    onKeyDown={(e) => e.stopPropagation()}
-                                                    className="h-9 text-sm rounded-lg"
-                                                />
-                                            </div>
-                                            {filteredOSCs.length === 0 ? (
-                                                <div className="p-4 text-center text-xs text-zinc-500 font-medium">
-                                                    Nenhuma OSC encontrada
+                                    <Dialog open={isOscSelectOpen} onOpenChange={setIsOscSelectOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full h-14 bg-zinc-50 border-zinc-200/60 rounded-xl justify-between px-4 text-blue-950 font-bold hover:bg-zinc-100 transition-all border-2 border-transparent hover:border-blue-900/10 shadow-sm"
+                                            >
+                                                {selectedOSC ? (
+                                                    <div className="flex flex-col items-start overflow-hidden">
+                                                        <span className="truncate w-full">{selectedOSC.name}</span>
+                                                        <span className="text-[10px] text-zinc-500 font-medium">{selectedOSC.activity_type}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-zinc-400">Escolha uma instituição cadastrada</span>
+                                                )}
+                                                <Building2 className="h-4 w-4 opacity-30 shrink-0 ml-2" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[500px] p-0 overflow-hidden rounded-3xl border border-zinc-200/50 shadow-2xl bg-white focus:outline-none">
+                                            <DialogHeader className="p-6 pb-0">
+                                                <DialogTitle className="text-xl font-black text-blue-900 uppercase tracking-tight">Selecionar Organização</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="p-6 space-y-4">
+                                                <div className="relative">
+                                                    <Input
+                                                        placeholder="Digite o nome da OSC para filtrar..."
+                                                        value={oscSearch}
+                                                        onChange={(e) => setOscSearch(e.target.value)}
+                                                        className="h-12 pl-4 rounded-2xl border-zinc-200 focus:ring-4 focus:ring-blue-900/5 transition-all font-medium"
+                                                        autoFocus
+                                                    />
                                                 </div>
-                                            ) : (
-                                                filteredOSCs.map((osc) => (
-                                                    <SelectItem key={osc.id} value={osc.id} className="cursor-pointer py-3">
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-blue-950">{osc.name}</span>
-                                                            <span className="text-[10px] text-zinc-500">{osc.activity_type}</span>
+                                                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                                                    {filteredOSCs.length === 0 ? (
+                                                        <div className="py-12 text-center text-zinc-500 font-medium bg-zinc-50 rounded-2xl border-2 border-dashed border-zinc-100">
+                                                            Nenhuma OSC encontrada
                                                         </div>
-                                                    </SelectItem>
-                                                ))
-                                            )}
-                                        </SelectContent>
-                                    </Select>
+                                                    ) : (
+                                                        filteredOSCs.map((osc) => (
+                                                            <button
+                                                                key={osc.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFormData({ ...formData, osc_id: osc.id })
+                                                                    setIsOscSelectOpen(false)
+                                                                    setOscSearch("")
+                                                                }}
+                                                                className={cn(
+                                                                    "w-full text-left p-4 rounded-2xl transition-all border-2 flex items-center justify-between group",
+                                                                    formData.osc_id === osc.id
+                                                                        ? "bg-blue-50 border-blue-200 shadow-sm"
+                                                                        : "bg-white border-transparent hover:border-zinc-100 hover:bg-zinc-50"
+                                                                )}
+                                                            >
+                                                                <div className="flex flex-col flex-1 overflow-hidden pr-4">
+                                                                    <span className={cn(
+                                                                        "font-bold transition-colors truncate",
+                                                                        formData.osc_id === osc.id ? "text-blue-900" : "text-blue-950"
+                                                                    )}>{osc.name}</span>
+                                                                    <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">{osc.activity_type}</span>
+                                                                </div>
+                                                                {formData.osc_id === osc.id && (
+                                                                    <CheckCircle className="h-5 w-5 text-blue-900 shrink-0" />
+                                                                )}
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                                 <div className="md:col-span-4 space-y-4">
                                     {/* 1st Visit */}
@@ -1556,7 +1606,10 @@ export function VisitForm({
 
             {/* Print Only Footer */}
             <div className="hidden print:block print-footer">
-                Documento gerado eletronicamente pelo Sistema Vigilância Socioassistencial 2026 em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                Documento gerado eletronicamente pelo Sistema Vigilância Socioassistencial 2026
+                {mounted && (
+                    <> em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</>
+                )}
             </div>
         </div>
     )

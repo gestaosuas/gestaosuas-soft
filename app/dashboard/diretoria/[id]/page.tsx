@@ -363,17 +363,31 @@ export default async function DirectoratePage({
                             </Card>
                         </Link>
 
-                        <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/plano-de-trabalho`} className="group">
-                            <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-                                <CardHeader className="p-8">
-                                    <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
-                                        <FolderOpen className="w-6 h-6 text-zinc-500 group-hover:text-white" />
-                                    </div>
-                                    <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Plano de Trabalho</CardTitle>
-                                    <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Gerenciar planos de trabalho e documentação das OSCs parceiras.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </Link>
+                        {isAdmin ? (
+                            <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/plano-de-trabalho`} className="group">
+                                <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                    <CardHeader className="p-8">
+                                        <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                            <FolderOpen className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                        </div>
+                                        <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Plano de Trabalho</CardTitle>
+                                        <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Gerenciar planos de trabalho e documentação das OSCs parceiras.</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+                        ) : (
+                            <div className="group cursor-not-allowed opacity-60 grayscale select-none">
+                                <Card className="h-full bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-2xl">
+                                    <CardHeader className="p-8">
+                                        <div className="p-3 w-fit bg-zinc-200 dark:bg-zinc-800/50 rounded-xl mb-6 shadow-sm">
+                                            <FolderOpen className="w-6 h-6 text-zinc-400" />
+                                        </div>
+                                        <CardTitle className="text-lg font-bold text-zinc-500 dark:text-zinc-500">Plano de Trabalho</CardTitle>
+                                        <CardDescription className="text-[13px] text-zinc-400 mt-2 font-medium">Acesso restrito a administradores.</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </div>
+                        )}
                     </div>
                 </section>
             ) : isCEAI ? (
