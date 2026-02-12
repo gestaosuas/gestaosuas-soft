@@ -81,12 +81,17 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
     const oscName = visit.oscs?.name || "Entidade não identificada"
     const today = new Date().toLocaleDateString('pt-BR')
 
+    const isEmendas = directorateId === '12b2a325-113f-4bc5-a74a-4f58a569be24' || directorateId === '63553b96-3771-4842-9f45-630c7558adac'
+    const [termType, setTermType] = useState<"fomento" | "colaboracao">("colaboracao")
+
     const getOptionText = (type: string) => {
+        const termText = termType === 'fomento' ? "Termo de Fomento" : "Termo de Colaboração"
+
         if (type === 'fully') {
-            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do Termo de Colaboração, desenvolvendo as atividades e atingindo tanto os objetivos quanto as metas qualitativas e quantitativas estabelecidas, logo, cumprindo o objeto pactuado.`
+            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText}, desenvolvendo as atividades e atingindo tanto os objetivos quanto as metas qualitativas e quantitativas estabelecidas, logo, cumprindo o objeto pactuado.`
         }
         if (type === 'partially') {
-            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do Termo de Colaboração no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado até a presente data.`
+            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText} no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado até a presente data.`
         }
         if (type === 'custom') {
             return `constatou-se que a parceria com a entidade ${oscName} ${report.item4_custom}`
@@ -591,6 +596,34 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
                         {!isPreview && !isFinalized && (
                             <div className="no-print space-y-6 bg-zinc-50 dark:bg-zinc-950/30 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                                {isEmendas && (
+                                    <div className="flex gap-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 mb-4 items-center justify-center">
+                                        <span className="text-[10px] font-black uppercase text-zinc-500 mr-2">Tipo de Termo:</span>
+                                        <Button
+                                            size="sm"
+                                            variant={termType === 'fomento' ? 'default' : 'outline'}
+                                            onClick={() => setTermType('fomento')}
+                                            className={cn(
+                                                "text-[10px] font-bold uppercase",
+                                                termType === 'fomento' ? "bg-blue-900 text-white hover:bg-blue-800" : "text-zinc-500 bg-transparent border-zinc-300"
+                                            )}
+                                        >
+                                            Termo de Fomento
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={termType === 'colaboracao' ? 'default' : 'outline'}
+                                            onClick={() => setTermType('colaboracao')}
+                                            className={cn(
+                                                "text-[10px] font-bold uppercase",
+                                                termType === 'colaboracao' ? "bg-blue-900 text-white hover:bg-blue-800" : "text-zinc-500 bg-transparent border-zinc-300"
+                                            )}
+                                        >
+                                            Termo de Colaboração
+                                        </Button>
+                                    </div>
+                                )}
+
                                 <RadioGroup value={report.item4_type} onValueChange={val => setReport({ ...report, item4_type: val })}>
                                     <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
                                         <RadioGroupItem value="fully" id="fully" className="mt-1" />
@@ -621,7 +654,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         <Textarea autoResize
                                             value={report.item4_custom}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReport({ ...report, item4_custom: e.target.value })}
-                                            className="bg-white dark:bg-zinc-950 font-bold"
+                                            className="bg-white dark:bg-zinc-900 font-bold"
                                         />
                                     </div>
                                 )}

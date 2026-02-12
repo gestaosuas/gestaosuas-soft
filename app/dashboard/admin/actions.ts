@@ -97,6 +97,23 @@ export async function deleteUser(userId: string) {
     if (!isAdmin) throw new Error("Unauthorized")
 
     const supabaseAdmin = createAdminClient()
+    const adminId = user.id
+
+    // 1. Remove permissions/linked directorates
+    await supabaseAdmin.from('profile_directorates').delete().eq('profile_id', userId)
+
+    // 2. Reassign ownership of Visits (Instrumentais)
+    await supabaseAdmin.from('visits').update({ user_id: adminId }).eq('user_id', userId)
+
+    // 3. Reassign ownership of key entities to the Admin to prevent data loss
+    await supabaseAdmin.from('oscs').update({ user_id: adminId }).eq('user_id', userId)
+    await supabaseAdmin.from('submissions').update({ user_id: adminId }).eq('user_id', userId)
+    await supabaseAdmin.from('daily_reports').update({ user_id: adminId }).eq('user_id', userId)
+
+    // 4. Remove profile
+    await supabaseAdmin.from('profiles').delete().eq('id', userId)
+
+    // 5. Delete Auth User
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (error) {

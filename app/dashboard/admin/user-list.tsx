@@ -43,8 +43,8 @@ export function UserList({ users, directorates }: { users: UserData[], directora
         try {
             await deleteUser(userId)
             // Toast success
-        } catch (e) {
-            alert("Erro ao excluir usuário")
+        } catch (e: any) {
+            alert("Erro ao excluir usuário: " + (e.message || "Erro desconhecido"))
         } finally {
             setIsDeleting(null)
         }
