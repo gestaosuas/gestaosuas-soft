@@ -39,6 +39,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
         if (lowerName.includes('população') || lowerName.includes('rua') || lowerName.includes('migrantes')) return MapPin
         if (lowerName.includes('emendas') || lowerName.includes('fundos')) return Coins
         if (lowerName.includes('subvenção')) return ClipboardList
+        if (lowerName.includes('outros')) return Activity
         return Building2
     }
 

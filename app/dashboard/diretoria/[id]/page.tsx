@@ -23,7 +23,8 @@ export default async function DirectoratePage({
     const isSINE = normalizedName.includes('sine') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isCP = normalizedName.includes('formacao') || normalizedName.includes('profissional') || normalizedName.includes('centro') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-    const isSubvencao = normalizedName.includes('subvencao') || normalizedName.includes('emendas') || id === '63553b96-3771-4842-9f45-630c7558adac'
+    const isSubvencao = (normalizedName.includes('subvencao') || normalizedName.includes('emendas') || id === '63553b96-3771-4842-9f45-630c7558adac') && !normalizedName.includes('outros')
+    const isOutros = normalizedName.includes('outros') || id === '82471122-9b28-4d9a-90d4-f5e437d15761'
     const isCRAS = normalizedName.includes('cras')
     const isCREAS = normalizedName.includes('creas') // CREAS Idoso e Pessoa com Deficiência
     const isCEAI = normalizedName.includes('ceai')
@@ -462,6 +463,52 @@ export default async function DirectoratePage({
                         </div>
                     </section>
                 </div>
+            ) : isOutros ? (
+                <section className="space-y-12">
+                    <div className="flex items-center gap-3">
+                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Monitoramento • Outros</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {isAdmin ? (
+                            <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/oscs/novo`} className="group">
+                                <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                    <CardHeader className="p-8">
+                                        <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                            <FilePlus className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                        </div>
+                                        <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Cadastrar OSC</CardTitle>
+                                        <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Cadastrar nova Organização da Sociedade Civil nesta categoria.</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+                        ) : (
+                            <div className="group cursor-not-allowed opacity-60 grayscale select-none">
+                                <Card className="h-full bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-2xl">
+                                    <CardHeader className="p-8">
+                                        <div className="p-3 w-fit bg-zinc-200 dark:bg-zinc-800/50 rounded-xl mb-6 shadow-sm">
+                                            <FilePlus className="w-6 h-6 text-zinc-400" />
+                                        </div>
+                                        <CardTitle className="text-lg font-bold text-zinc-500 dark:text-zinc-500">Cadastrar OSC</CardTitle>
+                                        <CardDescription className="text-[13px] text-zinc-400 mt-2 font-medium">Acesso restrito a administradores.</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </div>
+                        )}
+
+                        <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/visitas`} className="group">
+                            <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                <CardHeader className="p-8">
+                                    <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                        <ClipboardList className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                    </div>
+                                    <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Instrumental de Visita</CardTitle>
+                                    <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Registrar e gerenciar visitas técnicas e monitoramento nesta categoria.</CardDescription>
+                                </CardHeader>
+                            </Card>
+                        </Link>
+                    </div>
+                </section>
             ) : isPopRua ? (
                 <section className="space-y-12">
                     <div className="flex items-center gap-3">

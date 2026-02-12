@@ -86,7 +86,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
             return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do Termo de Colaboração, desenvolvendo as atividades e atingindo tanto os objetivos quanto as metas qualitativas e quantitativas estabelecidas, logo, cumprindo o objeto pactuado.`
         }
         if (type === 'partially') {
-            return `está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do Termo de Colaboração no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto a meta quantitativa não foi alcançada, logo, cumprindo parcialmente o objeto pactuado.`
+            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do Termo de Colaboração no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado até a presente data.`
+        }
+        if (type === 'custom') {
+            return `constatou-se que a parceria com a entidade ${oscName} ${report.item4_custom}`
         }
         return report.item4_custom
     }

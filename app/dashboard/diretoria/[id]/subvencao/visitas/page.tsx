@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { getCachedDirectorate } from "@/app/dashboard/cached-data"
 import { VisitList } from "./visit-list"
 import { getVisits } from "@/app/dashboard/actions"
 import { Plus, ArrowLeft, FileText } from "lucide-react"
@@ -20,10 +21,14 @@ export default async function VisitasPage({
         redirect('/login')
     }
 
-    const [visits, isAdmin] = await Promise.all([
+    const [visits, isAdmin, directorate] = await Promise.all([
         getVisits(id),
-        checkAdmin(user.id)
+        checkAdmin(user.id),
+        getCachedDirectorate(id)
     ])
+
+    const dirName = directorate?.name?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""
+    const isEmendas = dirName.includes('emenda') || dirName.includes('fundo') || id === '63553b96-3771-4842-9f45-630c7558adac' || id === '12b2a325-113f-4bc5-a74a-4f58a569be24'
 
     return (
         <div className="container mx-auto py-8 space-y-12">
@@ -67,7 +72,12 @@ export default async function VisitasPage({
                 </div>
             </div>
 
-            <VisitList visits={visits} directorateId={id} isAdmin={isAdmin} />
+            <VisitList
+                visits={visits}
+                directorateId={id}
+                isAdmin={isAdmin}
+                isEmendas={isEmendas}
+            />
         </div>
     )
 }

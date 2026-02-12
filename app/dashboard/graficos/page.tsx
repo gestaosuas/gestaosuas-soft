@@ -185,14 +185,28 @@ export default async function GraficosPage({
         const atual = Number(latestData.atual || 0)
         const taxaRetencaoValue = atual > 0 ? (((atual - desligadas) / atual) * 100).toFixed(1) : "0.0"
 
+        const getHistory = (id: string) => monthNames.map((name, i) => ({
+            name,
+            value: Number(unitDataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        const getTrend = (id: string) => {
+            const currentMonthNum = selectedMonthNum || monthsWithData[0] || 0
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = Number(unitDataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = Number(unitDataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
         const cardsData = [
-            { label: "Famílias em Acomp. PAIF", value: atual, color: "#0ea5e9" },
-            { label: "Visita Domiciliar", value: Number(latestData.visita_domiciliar || 0), color: "#0ea5e9" },
-            { label: "Cadastros Novos", value: Number(latestData.cadastros_novos || 0), color: "#0ea5e9" },
-            { label: "Atualização Cadastral", value: Number(latestData.recadastros || 0), color: "#0ea5e9" },
-            { label: "Admitidas PAIF", value: Number(latestData.admitidas || 0), color: "#0ea5e9" },
-            { label: "Desligadas PAIF", value: desligadas, color: "#0ea5e9" },
-            { label: "Taxa de Retenção", value: `${taxaRetencaoValue}%`, color: "#0ea5e9" },
+            { label: "Ativ. PAIF", value: atual, color: "#3b82f6", trend: getTrend('atual'), history: getHistory('atual') },
+            { label: "Visita Dom.", value: Number(latestData.visita_domiciliar || 0), color: "#60a5fa", trend: getTrend('visita_domiciliar'), history: getHistory('visita_domiciliar') },
+            { label: "Cadastros Novos", value: Number(latestData.cadastros_novos || 0), color: "#0ea5e9", trend: getTrend('cadastros_novos'), history: getHistory('cadastros_novos') },
+            { label: "Atualização Cad.", value: Number(latestData.recadastros || 0), color: "#f59e0b", trend: getTrend('recadastros'), history: getHistory('recadastros') },
+            { label: "Admitidas", value: Number(latestData.admitidas || 0), color: "#10b981", trend: getTrend('admitidas'), history: getHistory('admitidas') },
+            { label: "Desligadas", value: desligadas, color: "#ef4444", trend: getTrend('desligadas'), history: getHistory('desligadas') },
+            { label: "Taxa Retenção", value: `${taxaRetencaoValue}%`, color: "#8b5cf6" },
         ]
 
         const chartData = (field1: string, field2?: string) => monthNames.map((name, index) => {
@@ -204,36 +218,51 @@ export default async function GraficosPage({
         })
 
         return (
-            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
-                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
-                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard CRAS <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                            </div>
-                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">Unidade <span className="text-blue-600 font-bold">{selectedUnit === 'all' ? "Todas as Unidades" : selectedUnit}</span> • {selectedMonthName}</p>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard CRAS <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                <span className="text-blue-600">Unidade {selectedUnit === 'all' ? "Geral" : selectedUnit}</span>
+                                <span className="text-zinc-300">•</span>
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Unidade</span><UnitSelector currentUnit={selectedUnit} /></div>
-                        <div className="h-10 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden lg:block"></div>
-                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonth} /></div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Unidade</span>
+                                <UnitSelector currentUnit={selectedUnit} />
+                            </div>
+                            <div className="h-8 w-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                                <div className="flex items-center gap-2">
+                                    <YearSelector currentYear={selectedYear} />
+                                    <MonthSelector currentMonth={selectedMonth} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </header>
 
-                <MetricsCards data={cardsData} monthName={selectedMonthName} compact={true} />
+                <MetricsCards data={cardsData} monthName={selectedMonthName} />
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     <ComparisonLineChart title="Cadastros e Recadastros" data={monthNames.map((name, i) => ({ name, "Cadastros Novos": Number(unitDataByMonth.get(i + 1)?.cadastros_novos || 0), "Recadastros": Number(unitDataByMonth.get(i + 1)?.recadastros || 0) }))} keys={['Cadastros Novos', 'Recadastros']} colors={['#3b82f6', '#f59e0b']} />
-                    <ComparisonLineChart title="Famílias Admitidas e Desligadas" data={monthNames.map((name, i) => ({ name, "Admitidas": Number(unitDataByMonth.get(i + 1)?.admitidas || 0), "Desligadas": Number(unitDataByMonth.get(i + 1)?.desligadas || 0) }))} keys={['Admitidas', 'Desligadas']} colors={['#3b82f6', '#f59e0b']} />
+                    <ComparisonLineChart title="Famílias Admitidas e Desligadas" data={monthNames.map((name, i) => ({ name, "Admitidas": Number(unitDataByMonth.get(i + 1)?.admitidas || 0), "Desligadas": Number(unitDataByMonth.get(i + 1)?.desligadas || 0) }))} keys={['Admitidas', 'Desligadas']} colors={['#10b981', '#ef4444']} />
                     <GenericLineChart title="Evolução de Atendimentos" data={chartData('atendimentos')} dataKey="atendimentos" color="#3b82f6" />
-                    <GenericLineChart title="Famílias em Acompanhamento" data={chartData('atual')} dataKey="atual" color="#3b82f6" />
+                    <GenericLineChart title="Famílias em Acompanhamento" data={chartData('atual')} dataKey="atual" color="#8b5cf6" />
                 </div>
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
@@ -285,13 +314,11 @@ export default async function GraficosPage({
 
         if (selectedMonth === 'all') {
             selectedMonthName = "Ano Inteiro"
-            // Stock variables: Take from latest month
             if (monthsWithData.length > 0) {
                 const lastMonthData = unitDataByMonth.get(monthsWithData[0])
-                latestData.atendidos_anterior_masc = lastMonthData.atendidos_anterior_masc
-                latestData.atendidos_anterior_fem = lastMonthData.atendidos_anterior_fem
+                latestData.atendidos_anterior_masc = lastMonthData?.atendidos_anterior_masc
+                latestData.atendidos_anterior_fem = lastMonthData?.atendidos_anterior_fem
             }
-            // Flow variables: Sum all months
             unitDataByMonth.forEach((mData) => {
                 ['inseridos_masc', 'inseridos_fem', 'desligados_masc', 'desligados_fem'].forEach(key => {
                     const val = Number(mData[key])
@@ -303,32 +330,38 @@ export default async function GraficosPage({
             selectedMonthName = monthNames[selectedMonthNum - 1] || "N/A"
         }
 
+        const getHistory = (id: string) => monthNames.map((name, i) => ({
+            name,
+            value: Number(unitDataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        const getTrend = (id: string) => {
+            const currentMonthNum = selectedMonthNum || (monthsWithData.length > 0 ? monthsWithData[0] : 0)
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = Number(unitDataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = Number(unitDataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
         const cardsData = [
-            { label: "Admitidos Masculino", value: Number(latestData.inseridos_masc || 0), color: "#0ea5e9" },
-            { label: "Admitidos Feminino", value: Number(latestData.inseridos_fem || 0), color: "#0ea5e9" },
-            { label: "Desligados Masculino", value: Number(latestData.desligados_masc || 0), color: "#0ea5e9" },
-            { label: "Desligados Feminino", value: Number(latestData.desligados_fem || 0), color: "#0ea5e9" },
-            { label: "Atendimento Anterior Masculino", value: Number(latestData.atendidos_anterior_masc || 0), color: "#0ea5e9" },
-            { label: "Atendimento Anterior Feminino", value: Number(latestData.atendidos_anterior_fem || 0), color: "#0ea5e9" },
+            { label: "Admitidos Masc.", value: Number(latestData.inseridos_masc || 0), color: "#3b82f6", trend: getTrend('inseridos_masc'), history: getHistory('inseridos_masc') },
+            { label: "Admitidos Fem.", value: Number(latestData.inseridos_fem || 0), color: "#f472b6", trend: getTrend('inseridos_fem'), history: getHistory('inseridos_fem') },
+            { label: "Desligados Masc.", value: Number(latestData.desligados_masc || 0), color: "#64748b", trend: getTrend('desligados_masc'), history: getHistory('desligados_masc') },
+            { label: "Desligados Fem.", value: Number(latestData.desligados_fem || 0), color: "#94a3b8", trend: getTrend('desligados_fem'), history: getHistory('desligados_fem') },
+            { label: "Atend. Ant. Masc.", value: Number(latestData.atendidos_anterior_masc || 0), color: "#3b82f6" },
+            { label: "Atend. Ant. Fem.", value: Number(latestData.atendidos_anterior_fem || 0), color: "#f472b6" },
         ]
 
-        const chartData = monthNames.map((name, index) => {
-            const data = unitDataByMonth.get(index + 1) || {}
-            const prevM = Number(data.atendidos_anterior_masc || 0)
-            const prevF = Number(data.atendidos_anterior_fem || 0)
-            const insM = Number(data.inseridos_masc || 0)
-            const insF = Number(data.inseridos_fem || 0)
-            const desM = Number(data.desligados_masc || 0)
-            const desF = Number(data.desligados_fem || 0)
-
-            // Logic: Total Atendidos = (Previous + Inserted) - Discharged
-            // Or simply Previous + Inserted (Total processed)? Usually Total Atendidos means active + served.
-            // If the graph is "Active at end of month", then it is Prev + Ins - Des.
-            // If "Total served during month", it is Prev + Ins.
-            // Given the high numbers in "Atend. Ant", "Total Atendidos" is likely the Active Count.
-
+        const ceaiChartData = monthNames.map((name, index) => {
+            const mData = unitDataByMonth.get(index + 1) || {}
+            const prevM = Number(mData.atendidos_anterior_masc || 0)
+            const prevF = Number(mData.atendidos_anterior_fem || 0)
+            const insM = Number(mData.inseridos_masc || 0)
+            const insF = Number(mData.inseridos_fem || 0)
+            const desM = Number(mData.desligados_masc || 0)
+            const desF = Number(mData.desligados_fem || 0)
             const total = (prevM + prevF + insM + insF) - (desM + desF)
-
             return {
                 name,
                 total: total > 0 ? total : 0,
@@ -343,62 +376,85 @@ export default async function GraficosPage({
         ].filter(d => d.value > 0)
 
         return (
-            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
-                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
-                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard CEAI <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                            </div>
-                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">Unidade <span className="text-blue-600 font-bold">{selectedUnit === 'all' ? "Todas as Unidades" : selectedUnit}</span> • {selectedMonthName}</p>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard CEAI <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                <span className="text-blue-600">Unidade {selectedUnit === 'all' ? "Geral" : selectedUnit}</span>
+                                <span className="text-zinc-300">•</span>
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Unidade</span><UnitSelector currentUnit={selectedUnit} units={CEAI_UNITS} /></div>
-                        <div className="h-10 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden lg:block"></div>
-                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonth} /></div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Unidade</span>
+                                <UnitSelector currentUnit={selectedUnit} units={CEAI_UNITS} />
+                            </div>
+                            <div className="h-8 w-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                                <div className="flex items-center gap-2">
+                                    <YearSelector currentYear={selectedYear} />
+                                    <MonthSelector currentMonth={selectedMonth} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </header>
 
-                <MetricsCards data={cardsData} monthName={selectedMonthName} compact={true} />
+                <MetricsCards data={cardsData} monthName={selectedMonthName} />
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-                    <GenericLineChart title="Total Atendidos no Mês" data={chartData} dataKey="total" color="#3b82f6" />
-                    <ComparisonLineChart title="Admitidos x Desligados" data={chartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} keys={['Admitidos', 'Desligados']} colors={['#10b981', '#ef4444']} />
-                    <GenericPieChart title="Admitidos no Mês (Gênero)" data={pieData} colors={['#f59e0b', '#3b82f6']} />
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <GenericLineChart title="Total Atendidos no Mês" data={ceaiChartData} dataKey="total" color="#3b82f6" />
+                    <ComparisonLineChart title="Admitidos x Desligados" data={ceaiChartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} keys={['Admitidos', 'Desligados']} colors={['#10b981', '#ef4444']} />
+                    <GenericPieChart title="Admitidos no Mês (Gênero)" data={pieData} colors={['#f472b6', '#3b82f6']} />
                 </div>
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )
     }
+
     if (isCREAS) {
         const selectedMonth = month || 'all'
         const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
 
         return (
-            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
-                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
-                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard CREAS <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                            </div>
-                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">{selectedMonthName}</p>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard CREAS <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonth} /></div>
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonth} />
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -412,7 +468,22 @@ export default async function GraficosPage({
     if (isPopRua) {
         const selectedMonth = month || 'all'
         return (
-            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard Pop Rua <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                        </div>
+                    </div>
+                </header>
+
                 <PopRuaDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} directorateId={directorate.id} />
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
@@ -494,20 +565,18 @@ export default async function GraficosPage({
                             <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
                                 Dashboard Benefícios <span className="text-blue-600 font-bold">{selectedYear}</span>
                             </h1>
-                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight">
-                                {selectedMonthInput === 'all' ? "" : `Resultados de ${selectedMonthName}`}
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
-                        <div className="flex items-center gap-4">
-                            <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
-                                <div className="flex items-center gap-2">
-                                    <YearSelector currentYear={selectedYear} />
-                                    <MonthSelector currentMonth={selectedMonthInput} />
-                                </div>
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonthInput} />
                             </div>
                         </div>
                     </div>
@@ -552,45 +621,72 @@ export default async function GraficosPage({
         const sumFields = (data: any, fields: string[]) => fields.reduce((acc, f) => acc + (Number(data[f]) || 0), 0)
         let totalCursos = 0, totalTurmas = 0
         dataByMonth.forEach(d => { totalCursos += Number(d[id_cursos] || 0); totalTurmas += Number(d[id_turmas] || 0); })
+
+        const getHistory = (id: string, isSumField = false, fields?: string[]) => monthNames.map((name, i) => ({
+            name,
+            value: isSumField && fields ? sumFields(dataByMonth.get(i + 1) || {}, fields) : Number(dataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        const getTrend = (id: string, isSumField = false, fields?: string[]) => {
+            const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = isSumField && fields ? sumFields(dataByMonth.get(currentMonthNum) || {}, fields) : Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = isSumField && fields ? sumFields(dataByMonth.get(currentMonthNum - 1) || {}, fields) : Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
         const cardsData = [
-            { label: "Concluintes", value: Number(latestData[id_concluintes] || 0), color: "#0ea5e9" },
-            { label: "Atendimentos", value: sumFields(latestData, atendimentosFields), color: "#0ea5e9" },
-            { label: "Procedimentos", value: sumFields(latestData, procedimentosFields), color: "#0ea5e9" },
-            { label: "Cursos (Total)", value: totalCursos, color: "#0ea5e9" },
-            { label: "Turmas (Total)", value: totalTurmas, color: "#0ea5e9" },
+            { label: "Concluintes", value: Number(latestData[id_concluintes] || 0), color: "#3b82f6", trend: getTrend(id_concluintes), history: getHistory(id_concluintes) },
+            { label: "Atendimentos", value: sumFields(latestData, atendimentosFields), color: "#60a5fa", trend: getTrend('', true, atendimentosFields), history: getHistory('', true, atendimentosFields) },
+            { label: "Procedimentos", value: sumFields(latestData, procedimentosFields), color: "#0ea5e9", trend: getTrend('', true, procedimentosFields), history: getHistory('', true, procedimentosFields) },
+            { label: "Cursos Total", value: totalCursos, color: "#f59e0b" },
+            { label: "Turmas Total", value: totalTurmas, color: "#10b981" },
         ]
+
         return (
-            <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
-                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
-                            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                                <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard CP <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                            </div>
-                            <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">{selectedMonthName}</p>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard CP <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                            <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonthInput} /></div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonthInput} />
+                            </div>
                         </div>
                     </div>
                 </header>
-                <MetricsCards data={cardsData} monthName={selectedMonthName} compact={true} />
+
+                <MetricsCards data={cardsData} monthName={selectedMonthName} />
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                     <GenericLineChart title="Concluintes" data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_concluintes] || 0) }))} dataKey="value" color="#0ea5e9" />
-                    <ComparisonLineChart title="Atendimentos e Procedimentos" data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, Atendimentos: sumFields(mData, atendimentosFields), Procedimentos: sumFields(mData, procedimentosFields) } })} keys={['Atendimentos', 'Procedimentos']} colors={['#2563eb', '#60a5fa']} />
+                    <ComparisonLineChart title="Atendimentos e Procedimentos" data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, Atendimentos: sumFields(mData, atendimentosFields), Procedimentos: sumFields(mData, procedimentosFields) } })} keys={['Atendimentos', 'Procedimentos']} colors={['#3b82f6', '#10b981']} />
                     <GenderPieChart data={[{ name: "Homem", value: Number(latestData[id_homens] || 0) }, { name: "Mulher", value: Number(latestData[id_mulheres] || 0) }].filter(d => d.value > 0)} />
                 </div>
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )
     }
 
+    // --- SINE Dashboard ---
     const ids = {
         inseridos: findFieldId(allFields, ['Inseridos', 'Mercado']),
         entrevistas: findFieldId(allFields, ['Entrevistas']),
@@ -603,37 +699,60 @@ export default async function GraficosPage({
         atend_empregador: findFieldId(allFields, ['Atendimento', 'Empregador']),
         atend_trabalhador: findFieldId(allFields, ['Atendimento', 'Trabalhador']),
     }
-    const cardsData = [
-        { label: "Inseridos no Mercado", value: Number(latestData[ids.inseridos || ''] || 0), color: "#0ea5e9" },
-        { label: "Entrevistas", value: Number(latestData[ids.entrevistas || ''] || 0), color: "#0ea5e9" },
-        { label: "Vagas Captadas", value: Number(latestData[ids.vagas || ''] || 0), color: "#0ea5e9" },
-        { label: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0), color: "#0ea5e9" },
-        { label: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0), color: "#0ea5e9" },
+    const getHistorySine = (id: string) => monthNames.map((name, i) => ({
+        name,
+        value: Number(dataByMonth.get(i + 1)?.[id] || 0)
+    }))
+
+    const getTrendSine = (id: string) => {
+        const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
+        if (!currentMonthNum || currentMonthNum === 1) return 0
+        const currentVal = Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
+        const prevVal = Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+        if (prevVal === 0) return currentVal > 0 ? 100 : 0
+        return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+    }
+
+    const sineCardsData = [
+        { label: "Inseridos no Mercado", value: Number(latestData[ids.inseridos || ''] || 0), color: "#3b82f6", trend: getTrendSine(ids.inseridos || ''), history: getHistorySine(ids.inseridos || '') },
+        { label: "Entrevistas", value: Number(latestData[ids.entrevistas || ''] || 0), color: "#60a5fa", trend: getTrendSine(ids.entrevistas || ''), history: getHistorySine(ids.entrevistas || '') },
+        { label: "Vagas Captadas", value: Number(latestData[ids.vagas || ''] || 0), color: "#0ea5e9", trend: getTrendSine(ids.vagas || ''), history: getHistorySine(ids.vagas || '') },
+        { label: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0), color: "#f59e0b", trend: getTrendSine(ids.seguro || ''), history: getHistorySine(ids.seguro || '') },
+        { label: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0), color: "#10b981", trend: getTrendSine(ids.curriculos || ''), history: getHistorySine(ids.curriculos || '') },
     ]
 
     return (
-        <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-2 sm:p-4 space-y-3 pb-8">
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
+        <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
                     <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
-                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
+                        <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                            <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                        </Button>
                     </Link>
                     <div>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                            <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard SINE <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                        </div>
-                        <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">{selectedMonthName}</p>
+                        <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                            Dashboard SINE <span className="text-blue-600 font-bold">{selectedYear}</span>
+                        </h1>
+                        <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                            {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                        </p>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-6">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                        <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonthInput} /></div>
+
+                <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                        <div className="flex items-center gap-2">
+                            <YearSelector currentYear={selectedYear} />
+                            <MonthSelector currentMonth={selectedMonthInput} />
+                        </div>
                     </div>
                 </div>
             </header>
-            <MetricsCards data={cardsData} monthName={selectedMonthName} compact={true} />
+
+            <MetricsCards data={sineCardsData} monthName={selectedMonthName} />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ServicesBarChart data={[
                     { name: "Orientação Profissional", value: Number(latestData[ids.orientacao || ''] || 0) },
@@ -644,7 +763,7 @@ export default async function GraficosPage({
                 ]} />
                 <AttendanceLineChart data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, empregador: Number(mData[ids.atend_empregador || ''] || 0), trabalhador: Number(mData[ids.atend_trabalhador || ''] || 0) } })} />
             </div>
-            <div className="text-xs text-muted-foreground text-center pt-8">* Dados baseados nos relatórios enviados.</div>
+            <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
         </div>
     )
 }

@@ -20,8 +20,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function MetricsCards({ data, monthName, compact = false }: { data: any[], monthName: string, compact?: boolean }) {
+    const colSpan = data.length === 5 ? 'xl:grid-cols-5' : data.length >= 4 ? 'lg:grid-cols-4' : `grid-cols-${data.length}`;
+
     return (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${colSpan} gap-4`}>
             {data.map((item: any, i: number) => {
                 const isPositive = (item.trend || 0) >= 0;
 
@@ -33,8 +35,8 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
                             </h3>
                         </CardHeader>
                         <CardContent className="p-6 pt-0 flex items-center justify-between">
-                            <div className="space-y-2">
-                                <div className="text-4xl font-black tracking-tight text-slate-800 dark:text-white" style={{ color: item.color ? item.color : undefined }}>
+                            <div className="space-y-1">
+                                <div className="text-3xl font-black tracking-tight text-slate-800 dark:text-white" style={{ color: item.color ? item.color : undefined }}>
                                     {item.value.toLocaleString('pt-BR')}
                                 </div>
                                 {item.trend !== undefined && (
@@ -47,7 +49,7 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
                             </div>
 
                             {item.history && (
-                                <div className="w-[120px] h-[50px]">
+                                <div className="w-[80px] h-[40px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={item.history}>
                                             <defs>
@@ -79,41 +81,46 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
 
 export function ServicesBarChart({ data }: { data: any[] }) {
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="p-3">
-                <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                    Serviços
+        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+            <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Serviços Prestados
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[220px] p-2 pt-0">
+            <CardContent className="h-[350px] p-8 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         layout="vertical"
                         data={data}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        margin={{ top: 5, right: 60, left: 20, bottom: 5 }}
+                        barGap={12}
                     >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e5e7eb" />
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                         <XAxis type="number" hide />
                         <YAxis
                             dataKey="name"
                             type="category"
-                            width={150}
-                            tick={{ fontSize: 12, fill: '#6b7280' }}
+                            width={140}
+                            tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
                         />
                         <Tooltip
-                            cursor={{ fill: '#f3f4f6' }}
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            cursor={{ fill: 'transparent' }}
+                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                         />
                         <Bar
                             dataKey="value"
-                            fill="#0ea5e9"
-                            radius={[0, 4, 4, 0]}
-                            barSize={30}
-                            label={{ position: 'right', fill: '#0ea5e9', fontSize: 12, fontWeight: 'bold' }}
-                        />
+                            fill="#3b82f6"
+                            radius={[0, 10, 10, 0]}
+                            barSize={24}
+                            label={{ position: 'right', fill: '#64748b', fontSize: 11, fontWeight: '800', dx: 10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                        >
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#3b82f6' : '#60a5fa'} />
+                            ))}
+                        </Bar>
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
@@ -123,18 +130,18 @@ export function ServicesBarChart({ data }: { data: any[] }) {
 
 export function AttendanceLineChart({ data }: { data: any[] }) {
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="p-3">
-                <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                    Atendimento ao Empregador e ao Trabalhador
+        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+            <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-slate-800"></span>
+                    Atendimento ao Empregador e Trabalhador
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[220px] p-2 pt-0">
+            <CardContent className="h-[350px] p-8 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
                     >
                         <defs>
                             <linearGradient id="colorTrabalhador" x1="0" y1="0" x2="0" y2="1">
@@ -146,44 +153,47 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
                                 <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis
                             dataKey="name"
-                            tick={{ fontSize: 11, fill: '#9ca3af' }}
+                            tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
-                            tickMargin={10}
+                            tickMargin={15}
                         />
                         <YAxis
-                            tick={{ fontSize: 11, fill: '#9ca3af' }}
+                            tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
                             tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
+                            hide
                         />
                         <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
                         />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '20px', color: '#64748b' }} />
 
                         <Area
                             type="monotone"
                             dataKey="trabalhador"
-                            name="Atendimento ao Trabalhador"
+                            name="Trabalhador"
                             stroke="#3b82f6"
-                            strokeWidth={2}
+                            strokeWidth={3}
                             fillOpacity={1}
                             fill="url(#colorTrabalhador)"
-                            label={{ position: 'top', fill: '#3b82f6', fontSize: 10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                            dot={{ r: 3, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                            label={{ position: 'top', fill: '#3b82f6', fontSize: 10, fontWeight: 'bold', dy: -10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
                         />
                         <Area
                             type="monotone"
                             dataKey="empregador"
-                            name="Atendimento ao Empregador"
+                            name="Empregador"
                             stroke="#0f172a"
-                            strokeWidth={2}
+                            strokeWidth={3}
                             fillOpacity={1}
                             fill="url(#colorEmpregador)"
-                            label={{ position: 'top', fill: '#0f172a', fontSize: 10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                            dot={{ r: 3, fill: '#0f172a', strokeWidth: 2, stroke: '#fff' }}
+                            label={{ position: 'top', fill: '#0f172a', fontSize: 10, fontWeight: 'bold', dy: -10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
                         />
                     </AreaChart>
                 </ResponsiveContainer>

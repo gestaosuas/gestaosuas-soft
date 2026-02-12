@@ -314,13 +314,13 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
                                     radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fill: GENDER_COLORS.Feminino }}
+                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
                                     radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fill: GENDER_COLORS.Masculino }}
+                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
@@ -345,13 +345,13 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
                                     radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fill: GENDER_COLORS.Feminino }}
+                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
                                     radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fill: GENDER_COLORS.Masculino }}
+                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>

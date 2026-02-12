@@ -9,7 +9,7 @@ import { deleteVisit } from "@/app/dashboard/actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
-export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], directorateId: string, isAdmin?: boolean }) {
+export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visits: any[], directorateId: string, isAdmin?: boolean, isEmendas?: boolean }) {
     const router = useRouter()
     const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -66,6 +66,9 @@ export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], d
                         <TableHeader>
                             <TableRow className="border-zinc-100 dark:border-zinc-800 hover:bg-transparent">
                                 <TableHead className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Data e OSC</TableHead>
+                                {isEmendas && (
+                                    <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Identificador</TableHead>
+                                )}
                                 <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Técnicos Responsáveis</TableHead>
                                 <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Status</TableHead>
                                 <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Registrado por</TableHead>
@@ -92,6 +95,13 @@ export function VisitList({ visits, directorateId, isAdmin }: { visits: any[], d
                                             </div>
                                         </div>
                                     </TableCell>
+                                    {isEmendas && (
+                                        <TableCell className="py-6">
+                                            <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded w-fit">
+                                                {visit.identificacao?.identifier || "—"}
+                                            </div>
+                                        </TableCell>
+                                    )}
                                     <TableCell className="py-6">
                                         <div className="flex flex-col gap-1">
                                             <div className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
