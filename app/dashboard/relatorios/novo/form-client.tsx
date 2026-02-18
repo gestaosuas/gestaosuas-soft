@@ -42,7 +42,7 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            if (setor !== 'creas' && setor !== 'ceai') {
+            if (setor !== 'creas' && setor !== 'ceai' && setor !== 'cras') {
                 if (isMounted) {
                     setLoading(false)
                     setDataLoaded(true)
@@ -103,6 +103,17 @@ export function SubmissionFormClient({
                         if (targetData.atendidos_anterior_fem !== undefined || targetData.inseridos_fem !== undefined) {
                             newData.atendidos_anterior_fem = getNum(targetData.atendidos_anterior_fem) + getNum(targetData.inseridos_fem) - getNum(targetData.desligados_fem)
                         }
+                    } else if (setor === 'cras') {
+                        // CRAS logic (Multi-unit)
+                        let targetData = prevData
+                        if (prevData._is_multi_unit && prevData.units && unit) {
+                            targetData = prevData.units[unit] || {}
+                        }
+
+                        // Mês Anterior = Atual - Desligadas (do mês anterior)
+                        if (targetData.atual !== undefined || targetData.desligadas !== undefined) {
+                            newData.mes_anterior = getNum(targetData.atual) - getNum(targetData.desligadas)
+                        }
                     }
 
                     console.log("Fetched Previous Data:", prevData)
@@ -125,7 +136,7 @@ export function SubmissionFormClient({
         loadPreviousData()
 
         return () => { isMounted = false }
-    }, [month, year, directorateId, setor, subcategory])
+    }, [month, year, directorateId, setor, subcategory, unit])
 
 
     const handleSubmit = async (data: Record<string, any>) => {
@@ -136,11 +147,10 @@ export function SubmissionFormClient({
         setLoading(true)
         try {
             // Include unit and subcategory in data if present
-            const finalData = { ...data, ...fetchedInitialData, _unit: unit, _subcategory: subcategory }
-            // Note: attributes from form (data) overwrite fetchedInitialData if collision.
-            // But we want the opposite for 'mes_anterior' if user didn't touch it?
-            // Actually 'data' comes from FormEngine. If FormEngine was initialized with fetchedInitialData, 'data' will contain it (or modified version).
-            // So just `...data` is enough, `fetchedInitialData` is passed to FormEngine.
+            const finalData = { ...fetchedInitialData, ...data, _unit: unit, _subcategory: subcategory }
+            // Note: attributes from form (data) overwrite fetchedInitialData.
+            // This is correct because data contains the current state of the form, 
+            // which was initialized with fetchedInitialData but may have been modified by the user.
 
             const result = await submitReport(finalData, Number(month), Number(year), directorateId, setor)
             if (result?.error) {
