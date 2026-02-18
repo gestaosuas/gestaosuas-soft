@@ -53,10 +53,10 @@ export const getCachedDirectorates = async () => {
                 .order('name')
             return data
         },
-        ['all-directorates-v2'],
+        ['all-directorates-v3'],
         {
             tags: ['directorates'],
-            revalidate: 1 // Force refresh to clear ghosts
+            revalidate: 1
         }
     )()
 }
@@ -72,7 +72,7 @@ export const getCachedDirectorate = async (id: string) => {
                 .single()
             return data
         },
-        [`directorate-v2-${id}`],
+        [`directorate-v3-${id}`],
         {
             tags: [`directorate-${id}`, 'directorates'],
             revalidate: 1

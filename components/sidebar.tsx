@@ -22,7 +22,7 @@ import {
     MapPin,
     Coins,
     Briefcase,
-    Baby
+    Backpack
 } from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
@@ -41,7 +41,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
         if (lowerName.includes('emendas') || lowerName.includes('fundos')) return Coins
         if (lowerName.includes('subvenção')) return ClipboardList
         if (lowerName.includes('outros')) return Activity
-        if (lowerName.includes('naica')) return Baby
+        if (lowerName.includes('naica')) return Backpack
         return Building2
     }
 
