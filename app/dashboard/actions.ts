@@ -111,13 +111,18 @@ export async function submitReport(formData: Record<string, any>, month: number,
             if (setor === 'cras' || setor === 'ceai') {
                 // Multi-unit handling
                 const unitName = formData._unit || 'Principal'
+                console.log(`Updating CRAS/CEAI unit ${unitName} for ${month}/${year}`)
+
                 const currentUnits = existing.data.units || {}
                 mergedData = {
                     ...existing.data,
                     _is_multi_unit: true,
                     units: {
                         ...currentUnits,
-                        [unitName]: formData
+                        [unitName]: {
+                            ...currentUnits[unitName],
+                            ...formData
+                        }
                     }
                 }
             } else {

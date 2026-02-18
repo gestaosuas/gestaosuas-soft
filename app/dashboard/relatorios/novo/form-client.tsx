@@ -2,7 +2,7 @@
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
 import { submitReport, getPreviousMonthData } from "@/app/dashboard/actions"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card"
@@ -138,6 +138,57 @@ export function SubmissionFormClient({
         return () => { isMounted = false }
     }, [month, year, directorateId, setor, subcategory, unit])
 
+    const handleDataChange = useCallback((data: Record<string, any>, setData: any) => {
+        if (setor === 'cras') {
+            const mes_anterior = Number(data.mes_anterior) || 0
+            const admitidas = Number(data.admitidas) || 0
+            const total = mes_anterior + admitidas
+
+            if (data.atual !== total) {
+                setData((prev: any) => ({ ...prev, atual: total }))
+            }
+        }
+
+        if (setor === 'creas') {
+            let prefixes: string[] = []
+            if (subcategory === 'idoso') {
+                prefixes = ['violencia_fisica', 'abuso_sexual', 'exploracao_sexual', 'negligencia', 'exploracao_financeira']
+            } else if (subcategory === 'deficiente') {
+                prefixes = ['def_violencia_fisica', 'def_abuso_sexual', 'def_exploracao_sexual', 'def_negligencia', 'def_exploracao_financeira']
+            }
+            prefixes.forEach(prefix => {
+                const ant = Number(data[`${prefix}_atendidas_anterior`]) || 0
+                const ins = Number(data[`${prefix}_inseridos`]) || 0
+                const total = ant + ins
+
+                if (data[`${prefix}_total`] !== total) {
+                    setData((prev: any) => ({ ...prev, [`${prefix}_total`]: total }))
+                }
+            })
+        }
+
+        if (setor === 'ceai') {
+            const inseridos_masc = Number(data.inseridos_masc) || 0
+            const inseridos_fem = Number(data.inseridos_fem) || 0
+            const total = inseridos_masc + inseridos_fem
+
+            if (data.total_inseridos !== total) {
+                setData((prev: any) => ({ ...prev, total_inseridos: total }))
+            }
+        }
+
+        if (setor === 'pop_rua') {
+            const c = Number(data.num_atend_centro_ref) || 0
+            const a = Number(data.num_atend_abordagem) || 0
+            const m = Number(data.num_atend_migracao) || 0
+            const total = c + a + m
+
+            if (data.num_atend_total !== total) {
+                setData((prev: any) => ({ ...prev, num_atend_total: total }))
+            }
+        }
+    }, [setor, subcategory])
+
 
     const handleSubmit = async (data: Record<string, any>) => {
         if (!confirm(`Confirma o envio do relatório de ${directorateName} referente a ${month}/${year}?`)) {
@@ -147,10 +198,11 @@ export function SubmissionFormClient({
         setLoading(true)
         try {
             // Include unit and subcategory in data if present
+            // We merge fetchedInitialData first, then data (user input), then metadata.
+            // This ensures that mes_anterior (from fetchedInitialData) is present even if not touched.
             const finalData = { ...fetchedInitialData, ...data, _unit: unit, _subcategory: subcategory }
-            // Note: attributes from form (data) overwrite fetchedInitialData.
-            // This is correct because data contains the current state of the form, 
-            // which was initialized with fetchedInitialData but may have been modified by the user.
+
+            console.log("Submitting CRAS data for unit:", unit, finalData)
 
             const result = await submitReport(finalData, Number(month), Number(year), directorateId, setor)
             if (result?.error) {
@@ -288,62 +340,11 @@ export function SubmissionFormClient({
                         </CardHeader>
                         <CardContent className="p-10">
                             <FormEngine
-                                key={`${month}-${year}`} // Reset form when month/year changes to load new initialData
+                                key={`${month}-${year}-${unit}-${subcategory}`}
                                 definition={definition}
                                 initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}
-                                onDataChange={(data, setData) => {
-                                    if (setor === 'cras') {
-                                        const mes_anterior = Number(data.mes_anterior) || 0
-                                        const admitidas = Number(data.admitidas) || 0
-                                        const total = mes_anterior + admitidas
-
-                                        if (data.atual !== total) {
-                                            setData(prev => ({ ...prev, atual: total }))
-                                        }
-                                    }
-
-                                    if (setor === 'creas') {
-                                        let prefixes: string[] = []
-                                        if (subcategory === 'idoso') {
-                                            prefixes = ['violencia_fisica', 'abuso_sexual', 'exploracao_sexual', 'negligencia', 'exploracao_financeira']
-                                        } else if (subcategory === 'deficiente') {
-                                            prefixes = ['def_violencia_fisica', 'def_abuso_sexual', 'def_exploracao_sexual', 'def_negligencia', 'def_exploracao_financeira']
-                                        }
-                                        prefixes.forEach(prefix => {
-                                            const ant = Number(data[`${prefix}_atendidas_anterior`]) || 0
-                                            const ins = Number(data[`${prefix}_inseridos`]) || 0
-                                            const total = ant + ins
-
-                                            if (data[`${prefix}_total`] !== total) {
-                                                setData(prev => ({ ...prev, [`${prefix}_total`]: total }))
-                                            }
-                                        })
-                                    }
-
-                                    if (setor === 'ceai') {
-                                        const inseridos_masc = Number(data.inseridos_masc) || 0
-                                        const inseridos_fem = Number(data.inseridos_fem) || 0
-                                        const total = inseridos_masc + inseridos_fem
-
-                                        if (data.total_inseridos !== total) {
-                                            setData(prev => ({ ...prev, total_inseridos: total }))
-                                        }
-                                    }
-
-                                    if (setor === 'pop_rua') {
-                                        const c = Number(data.num_atend_centro_ref) || 0
-                                        const a = Number(data.num_atend_abordagem) || 0
-                                        const m = Number(data.num_atend_migracao) || 0
-                                        const total = c + a + m
-
-                                        if (data.num_atend_total !== total) {
-                                            setData(prev => ({ ...prev, num_atend_total: total }))
-                                        }
-                                    }
-
-
-                                }}
+                                onDataChange={handleDataChange}
                                 disabled={loading}
                             />
                         </CardContent>

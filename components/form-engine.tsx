@@ -47,8 +47,8 @@ export function FormEngine({
     }
 
     React.useEffect(() => {
-        if (Object.keys(initialData).length > 0) {
-            setFormData(prev => ({ ...prev, ...initialData }))
+        if (initialData && Object.keys(initialData).length > 0) {
+            setFormData(prev => ({ ...initialData, ...prev }))
         }
     }, [initialData])
 
