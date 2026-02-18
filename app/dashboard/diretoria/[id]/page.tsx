@@ -6,6 +6,8 @@ import Link from "next/link"
 import { CRAS_UNITS } from "@/app/dashboard/cras-config"
 import { CEAI_UNITS } from "@/app/dashboard/ceai-config"
 import { createClient } from "@/utils/supabase/server"
+import { NAICA_UNITS } from "@/app/dashboard/naica-config"
+import { cn } from "@/lib/utils"
 
 export default async function DirectoratePage({
     params,
@@ -29,6 +31,7 @@ export default async function DirectoratePage({
     const isCREAS = normalizedName.includes('creas') // CREAS Idoso e Pessoa com Deficiência
     const isCEAI = normalizedName.includes('ceai')
     const isPopRua = normalizedName.includes('populacao') && normalizedName.includes('rua')
+    const isNAICA = normalizedName.includes('naica')
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -128,7 +131,7 @@ export default async function DirectoratePage({
                         <section className="space-y-8">
                             <div className="flex items-center gap-3">
                                 <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                                <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Formação Profissional</h2>
+                                <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Qualificação Profissional</h2>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {[
@@ -509,6 +512,76 @@ export default async function DirectoratePage({
                         </Link>
                     </div>
                 </section>
+            ) : isNAICA ? (
+                <div className="space-y-16">
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Consolidado NAICA</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[
+                                { label: "Dashboard NAICA", desc: "Indicadores e gráficos de desempenho", href: `/dashboard/graficos?setor=naica&directorate_id=${directorate.id}`, icon: BarChart3 },
+                                { label: "Ver Dados NAICA", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=naica&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=naica&directorate_id=${directorate.id}`, icon: FileText },
+                                { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=naica&directorate_id=${directorate.id}`, icon: FolderOpen },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className=" text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-green-600 dark:bg-green-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Unidades NAICA</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {NAICA_UNITS.map((unit, idx) => {
+                                const unitSubmissions = submissions?.filter(s => {
+                                    if (s.data._is_multi_unit && s.data.units) {
+                                        return !!s.data.units[unit]
+                                    }
+                                    return s.data._unit === unit
+                                })
+                                const unitLatestSub = unitSubmissions?.[0]
+                                const latestUnitMonth = unitLatestSub ? getMonthName(unitLatestSub.month) : null
+
+                                return (
+                                    <Link key={idx} href={`/dashboard/relatorios/novo?setor=naica&directorate_id=${directorate.id}&unit=${encodeURIComponent(unit)}`} className="group">
+                                        <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                            <CardHeader className="p-6">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
+                                                        <FilePlus className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                    </div>
+                                                    {latestUnitMonth && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-md">
+                                                            <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                                                            <span className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês: {latestUnitMonth}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <CardTitle className="text-[15px] font-bold text-blue-900 dark:text-blue-100 transition-colors">Atualizar Dados</CardTitle>
+                                                <CardDescription className="text-[12px] text-zinc-500 dark:text-zinc-400 mt-1 font-semibold truncate" title={unit}>{unit}</CardDescription>
+                                            </CardHeader>
+                                        </Card>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    </section>
+                </div>
             ) : isPopRua ? (
                 <section className="space-y-12">
                     <div className="flex items-center gap-3">

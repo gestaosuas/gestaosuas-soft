@@ -15,6 +15,7 @@ import { CRAS_FORM_DEFINITION, CRAS_SHEET_BLOCKS, CRAS_SPREADSHEET_ID } from './
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_IDOSO_SHEET_CONFIG, CREAS_DEFICIENTE_FORM_DEFINITION, CREAS_DEFICIENTE_SHEET_CONFIG } from './creas-config'
 import { CEAI_FORM_DEFINITION, CEAI_SHEET_BLOCKS, CEAI_SPREADSHEET_ID } from './ceai-config'
 import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID } from './pop-rua-config'
+import { NAICA_FORM_DEFINITION, NAICA_SHEET_BLOCKS, NAICA_SPREADSHEET_ID } from './naica-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
 
@@ -62,6 +63,7 @@ export async function submitReport(formData: Record<string, any>, month: number,
             else if (setor === 'ceai' && dirName.includes('ceai')) isAuthorized = true
             else if (setor === 'creas' && dirName.includes('creas')) isAuthorized = true
             else if (setor === 'pop_rua' && dirName.includes('populacao') && dirName.includes('rua')) isAuthorized = true
+            else if (setor === 'naica' && dirName.includes('naica')) isAuthorized = true
 
             if (!isAdmin && !isAuthorized) {
                 throw new Error(`O setor '${setor}' não corresponde à diretoria '${directorate.name}'.`)
@@ -108,10 +110,10 @@ export async function submitReport(formData: Record<string, any>, month: number,
 
         if (existing) {
             let mergedData;
-            if (setor === 'cras' || setor === 'ceai') {
+            if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
                 // Multi-unit handling
                 const unitName = formData._unit || 'Principal'
-                console.log(`Updating CRAS/CEAI unit ${unitName} for ${month}/${year}`)
+                console.log(`Updating ${setor.toUpperCase()} unit ${unitName} for ${month}/${year}`)
 
                 const currentUnits = existing.data.units || {}
                 mergedData = {
@@ -140,7 +142,7 @@ export async function submitReport(formData: Record<string, any>, month: number,
             }
         } else {
             // New Submission
-            const finalData = (setor === 'cras' || setor === 'ceai') ? {
+            const finalData = (setor === 'cras' || setor === 'ceai' || setor === 'naica') ? {
                 _is_multi_unit: true,
                 units: {
                     [formData._unit || 'Principal']: formData
@@ -302,6 +304,26 @@ export async function submitReport(formData: Record<string, any>, month: number,
                         blocks
                     )
                 }
+            } else if (setor === 'naica') {
+                const formDef = NAICA_FORM_DEFINITION
+                const blocksData = formDef.sections.map((section, index) => {
+                    const blockConfig = NAICA_SHEET_BLOCKS[index]
+                    if (!blockConfig) return null
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+                    return { startRow: blockConfig.startRow, values: values }
+                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+                const unitName = formData._unit || 'Principal'
+                console.log(`[NAICA] Updating blocks for ${unitName} (Month: ${month}):`, JSON.stringify(blocksData))
+
+                await updateSheetBlocks(
+                    { spreadsheetId: NAICA_SPREADSHEET_ID, sheetName: unitName, baseColumn: 'C' },
+                    month,
+                    blocksData
+                )
             } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
                 // DEFAULT LOGIC (SINE/ETC)
                 const formDef = directorate.form_definition as FormDefinition

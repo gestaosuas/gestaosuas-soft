@@ -15,6 +15,7 @@ import { YearSelector } from "@/components/year-selector"
 import { UnitSelector } from "./unit-selector"
 import { CRAS_UNITS } from "../cras-config"
 import { CEAI_UNITS } from "../ceai-config"
+import { NAICA_UNITS } from "../naica-config"
 
 function findFieldId(fields: any[], keywords: string[]): string | undefined {
     // Search for a field where label contains ALL keywords (case insensitive)
@@ -61,6 +62,7 @@ export default async function GraficosPage({
 
     let isCEAI = setor === 'ceai'
     let isPopRua = setor === 'pop_rua'
+    let isNAICA = setor === 'naica'
 
     if (!directorate) {
         if (isBeneficios) {
@@ -114,6 +116,7 @@ export default async function GraficosPage({
         else if (normName.includes('creas')) isCREAS = true
         else if (normName.includes('ceai')) isCEAI = true
         else if (normName.includes('populacao') && normName.includes('rua')) isPopRua = true
+        else if (normName.includes('naica')) isNAICA = true
     }
 
 
@@ -420,6 +423,166 @@ export default async function GraficosPage({
                     <GenericLineChart title="Total Atendidos no Mês" data={ceaiChartData} dataKey="total" color="#3b82f6" />
                     <ComparisonLineChart title="Admitidos x Desligados" data={ceaiChartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} keys={['Admitidos', 'Desligados']} colors={['#10b981', '#ef4444']} />
                     <GenericPieChart title="Admitidos no Mês (Gênero)" data={pieData} colors={['#f472b6', '#3b82f6']} />
+                </div>
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
+    }
+
+    // --- NAICA Dashboard ---
+    if (isNAICA) {
+        const selectedUnit = unit || 'all'
+        const selectedMonth = month || 'all'
+        const unitDataByMonth = new Map<number, any>()
+
+        submissions.forEach(sub => {
+            let dataToUse = null
+            if (selectedUnit === 'all') {
+                const sumData: any = {}
+                if (sub.data._is_multi_unit && sub.data.units) {
+                    Object.values(sub.data.units).forEach((uData: any) => {
+                        Object.keys(uData).forEach(key => {
+                            const val = Number(uData[key])
+                            if (!isNaN(val)) {
+                                sumData[key] = (sumData[key] || 0) + val
+                            }
+                        })
+                    })
+                } else {
+                    Object.keys(sub.data).forEach(key => {
+                        const val = Number(sub.data[key])
+                        if (!isNaN(val)) {
+                            sumData[key] = (sumData[key] || 0) + val
+                        }
+                    })
+                }
+                dataToUse = sumData
+            } else {
+                if (sub.data._is_multi_unit && sub.data.units?.[selectedUnit]) {
+                    dataToUse = sub.data.units[selectedUnit]
+                } else if (sub.data._unit === selectedUnit) {
+                    dataToUse = sub.data
+                }
+            }
+            if (dataToUse) unitDataByMonth.set(sub.month, dataToUse)
+        })
+
+        const monthsWithData = Array.from(unitDataByMonth.keys()).sort((a, b) => b - a)
+        const selectedMonthNum = selectedMonth === 'all' ? 0 : Number(selectedMonth)
+        let latestData: any = {}
+        let selectedMonthName = ""
+
+        if (selectedMonth === 'all') {
+            selectedMonthName = "Ano Inteiro"
+            unitDataByMonth.forEach((mData) => {
+                ['inseridos_masc', 'inseridos_fem', 'desligados_masc', 'desligados_fem'].forEach(key => {
+                    const val = Number(mData[key])
+                    if (!isNaN(val)) latestData[key] = (latestData[key] || 0) + val
+                })
+            })
+            if (monthsWithData.length > 0) {
+                const lastMonthData = unitDataByMonth.get(monthsWithData[0])
+                latestData.total_atendidas = lastMonthData?.total_atendidas
+                latestData.mes_anterior_masc = lastMonthData?.mes_anterior_masc
+                latestData.mes_anterior_fem = lastMonthData?.mes_anterior_fem
+            }
+        } else {
+            latestData = unitDataByMonth.get(selectedMonthNum) || {}
+            selectedMonthName = monthNames[selectedMonthNum - 1] || "N/A"
+        }
+
+        const getHistory = (id: string) => monthNames.map((name, i) => ({
+            name,
+            value: Number(unitDataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        const getTrend = (id: string) => {
+            const currentMonthNum = selectedMonthNum || (monthsWithData.length > 0 ? monthsWithData[0] : 0)
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = Number(unitDataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = Number(unitDataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
+        // Metrics calculations
+        const admitidos = (Number(latestData.inseridos_masc) || 0) + (Number(latestData.inseridos_fem) || 0)
+        const desligados = (Number(latestData.desligados_masc) || 0) + (Number(latestData.desligados_fem) || 0)
+        const emAcompanhamento = (Number(latestData.total_atendidas) || 0)
+
+        // Capacidade estimada (exemplo: 120 por NAICA)
+        const capacidadeTotal = selectedUnit === 'all' ? 120 * NAICA_UNITS.length : 120
+        const taxaOcupacao = emAcompanhamento > 0 ? ((emAcompanhamento / capacidadeTotal) * 100).toFixed(1) : "0.0"
+        const taxaRetencao = emAcompanhamento > 0 ? (((emAcompanhamento - desligados) / emAcompanhamento) * 100).toFixed(1) : "0.0"
+
+        const cardsData = [
+            { label: "Total em Acompanhamento", value: emAcompanhamento, color: "#3b82f6", trend: getTrend('total_atendidas'), history: getHistory('total_atendidas') },
+            { label: "Taxa de Ocupação", value: `${taxaOcupacao}%`, color: "#8b5cf6" },
+            { label: "Taxa de Retenção", value: `${taxaRetencao}%`, color: "#10b981" },
+            { label: "Admitidos Masculino", value: Number(latestData.inseridos_masc || 0), color: "#3b82f6", trend: getTrend('inseridos_masc'), history: getHistory('inseridos_masc') },
+            { label: "Admitidos Feminino", value: Number(latestData.inseridos_fem || 0), color: "#f472b6", trend: getTrend('inseridos_fem'), history: getHistory('inseridos_fem') },
+        ]
+
+        const naicaChartData = monthNames.map((name, index) => {
+            const mData = unitDataByMonth.get(index + 1) || {}
+            return {
+                name,
+                acompanhamento: Number(mData.total_atendidas || 0),
+                admitidos: (Number(mData.inseridos_masc) || 0) + (Number(mData.inseridos_fem) || 0),
+                desligados: (Number(mData.desligados_masc) || 0) + (Number(mData.desligados_fem) || 0)
+            }
+        })
+
+        const pieData = [
+            { name: "Feminino", value: Number(latestData.inseridos_fem || 0) },
+            { name: "Masculino", value: Number(latestData.inseridos_masc || 0) }
+        ].filter(d => d.value > 0)
+
+        return (
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard NAICA <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                <span className="text-blue-600">Unidade {selectedUnit === 'all' ? "Geral" : selectedUnit}</span>
+                                <span className="text-zinc-300">•</span>
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Unidade</span>
+                                <UnitSelector currentUnit={selectedUnit} units={NAICA_UNITS} />
+                            </div>
+                            <div className="h-8 w-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                                <div className="flex items-center gap-2">
+                                    <YearSelector currentYear={selectedYear} />
+                                    <MonthSelector currentMonth={selectedMonth} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <MetricsCards data={cardsData} monthName={selectedMonthName} />
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <GenericLineChart title="Crianças e Adolescentes em Acompanhamento" data={naicaChartData} dataKey="acompanhamento" color="#3b82f6" />
+                    <ComparisonLineChart title="Admitidos e Desligados" data={naicaChartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} keys={['Admitidos', 'Desligados']} colors={['#10b981', '#ef4444']} />
+                    <GenericPieChart title="Crianças e Adolescentes Admitidos" data={pieData} colors={['#f472b6', '#3b82f6']} />
                 </div>
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>

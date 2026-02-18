@@ -121,7 +121,7 @@ Armazena as diretorias da assistência social.
 | `created_at` | TIMESTAMP | Data de criação |
 
 **Diretorias Cadastradas:**
-- Formação Profissional e SINE
+- Qualificação Profissional e SINE
 - Benefícios Socioassistenciais
 - CRAS (Centro de Referência de Assistência Social)
 - CREAS (Centro de Referência Especializado de Assistência Social)
@@ -338,7 +338,7 @@ Cada diretoria possui um formulário dinâmico configurável para submissão de 
 - Cálculo de atendidos: `(Mês Anterior + Inseridos) - Desligados`
 - Campos específicos para masculino e feminino
 
-##### **Formação Profissional e SINE**
+##### **Qualificação Profissional e SINE**
 - Indicadores de atendimento (trabalhador, empregador, online)
 - Seguro desemprego, CTPS Digital
 - Vagas captadas, currículos, entrevistas

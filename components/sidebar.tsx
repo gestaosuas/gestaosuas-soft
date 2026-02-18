@@ -21,7 +21,8 @@ import {
     HeartPulse,
     MapPin,
     Coins,
-    Briefcase
+    Briefcase,
+    Baby
 } from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
@@ -40,11 +41,12 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
         if (lowerName.includes('emendas') || lowerName.includes('fundos')) return Coins
         if (lowerName.includes('subvenção')) return ClipboardList
         if (lowerName.includes('outros')) return Activity
+        if (lowerName.includes('naica')) return Baby
         return Building2
     }
 
     // Separate directorates by category
-    const mainNames = ['Benefícios Socioassistenciais', 'Formação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes']
+    const mainNames = ['Benefícios Socioassistenciais', 'Qualificação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes', 'NAICAs']
     const mainDirectorates = directorates
         .filter(d => mainNames.includes(d.name))
         .sort((a, b) => mainNames.indexOf(a.name) - mainNames.indexOf(b.name))

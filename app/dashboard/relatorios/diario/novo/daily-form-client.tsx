@@ -140,7 +140,7 @@ export function DailyFormClient({ directorateId }: { directorateId: string }) {
                             <Save className="w-5 h-5 text-white" />
                         </div>
                         <div className="space-y-0.5">
-                            <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100">Formação Profissional</CardTitle>
+                            <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100">Qualificação Profissional</CardTitle>
                             <CardDescription className="text-[12px] font-medium text-zinc-500">Distribuição de procedimentos por unidade técnica.</CardDescription>
                         </div>
                     </div>

@@ -10,6 +10,7 @@ import { CRAS_FORM_DEFINITION } from "@/app/dashboard/cras-config"
 import { CEAI_FORM_DEFINITION } from "@/app/dashboard/ceai-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
+import { NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
 
 export default async function NewReportPage({
     searchParams,
@@ -23,6 +24,7 @@ export default async function NewReportPage({
     const isCEAI = setor === 'ceai'
     const isCREAS = setor === 'creas'
     const isPopRua = setor === 'pop_rua'
+    const isNAICA = setor === 'naica'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -92,6 +94,8 @@ export default async function NewReportPage({
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('creas'))
         } else if (isPopRua) {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('populacao') && d.name.toLowerCase().includes('rua'))
+        } else if (isNAICA) {
+            directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('naica'))
         }
 
         // If still not found and admin, fetch all to try and find a match
@@ -111,6 +115,8 @@ export default async function NewReportPage({
                 directorate = allDirs?.find(d => normalize(d.name).includes('creas'))
             } else if (isPopRua) {
                 directorate = allDirs?.find(d => normalize(d.name).includes('populacao') && normalize(d.name).includes('rua'))
+            } else if (isNAICA) {
+                directorate = allDirs?.find(d => normalize(d.name).includes('naica'))
             }
         }
 
@@ -162,6 +168,11 @@ export default async function NewReportPage({
     if (isPopRua) {
         formDefinition = POP_RUA_FORM_DEFINITION
         titleContext = "População de Rua e Migrantes"
+    }
+
+    if (isNAICA) {
+        formDefinition = NAICA_FORM_DEFINITION
+        titleContext = "NAICAs"
     }
 
     if (isCREAS) {

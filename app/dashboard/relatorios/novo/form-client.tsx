@@ -42,7 +42,7 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            if (setor !== 'creas' && setor !== 'ceai' && setor !== 'cras') {
+            if (setor !== 'creas' && setor !== 'ceai' && setor !== 'cras' && setor !== 'naica') {
                 if (isMounted) {
                     setLoading(false)
                     setDataLoaded(true)
@@ -110,10 +110,22 @@ export function SubmissionFormClient({
                             targetData = prevData.units[unit] || {}
                         }
 
-                        // Mês Anterior = Atual - Desligadas (do mês anterior)
+                        // Mês Anterior = Prev Atual - Prev Desligadas
                         if (targetData.atual !== undefined || targetData.desligadas !== undefined) {
                             newData.mes_anterior = getNum(targetData.atual) - getNum(targetData.desligadas)
                         }
+                    } else if (setor === 'naica') {
+                        // NAICA Logic (Multi-unit)
+                        let targetData = prevData
+                        if (prevData._is_multi_unit && prevData.units && unit) {
+                            targetData = prevData.units[unit] || {}
+                        }
+
+                        // Mês Anterior Masculino = (Anterior M + Inseridos M) - Desligados M
+                        newData.mes_anterior_masc = (getNum(targetData.mes_anterior_masc) + getNum(targetData.inseridos_masc)) - getNum(targetData.desligados_masc)
+
+                        // Mês Anterior Feminino = (Anterior F + Inseridos F) - Desligados F
+                        newData.mes_anterior_fem = (getNum(targetData.mes_anterior_fem) + getNum(targetData.inseridos_fem)) - getNum(targetData.desligados_fem)
                     }
 
                     console.log("Fetched Previous Data:", prevData)
@@ -187,6 +199,18 @@ export function SubmissionFormClient({
                 setData((prev: any) => ({ ...prev, num_atend_total: total }))
             }
         }
+
+        if (setor === 'naica') {
+            const m1 = Number(data.mes_anterior_masc) || 0
+            const f1 = Number(data.mes_anterior_fem) || 0
+            const am = Number(data.inseridos_masc) || 0
+            const af = Number(data.inseridos_fem) || 0
+            const total = m1 + f1 + am + af
+
+            if (data.total_atendidas !== total) {
+                setData((prev: any) => ({ ...prev, total_atendidas: total }))
+            }
+        }
     }, [setor, subcategory])
 
 
@@ -211,7 +235,7 @@ export function SubmissionFormClient({
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua') {
+                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {
                     window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`
