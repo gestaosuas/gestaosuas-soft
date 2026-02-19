@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Table as TableIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
     Table,
     TableBody,
@@ -18,7 +19,7 @@ import { FormDefinition } from "@/components/form-engine"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION, CRAS_UNITS } from "@/app/dashboard/cras-config"
-import { CEAI_FORM_DEFINITION, CEAI_UNITS } from "@/app/dashboard/ceai-config"
+import { CEAI_FORM_DEFINITION, CEAI_UNITS, CONDOMINIO_IDOSO_FORM_DEFINITION } from "@/app/dashboard/ceai-config"
 import { NAICA_UNITS, NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
@@ -28,9 +29,9 @@ import { YearSelector } from "@/components/year-selector"
 export default async function DataPage({
     searchParams,
 }: {
-    searchParams: Promise<{ year?: string, setor?: string, directorate_id?: string }>
+    searchParams: Promise<{ year?: string, setor?: string, directorate_id?: string, subcategory?: string }>
 }) {
-    const { year, setor, directorate_id } = await searchParams
+    const { year, setor, directorate_id, subcategory } = await searchParams
     const selectedYear = Number(year) || new Date().getFullYear()
     let isCP = setor === 'centros'
     let isBeneficios = setor === 'beneficios'
@@ -157,8 +158,13 @@ export default async function DataPage({
     }
 
     if (isCEAI) {
-        formDefinition = CEAI_FORM_DEFINITION
-        titleContext = `Dados CEAI ${selectedYear}`
+        if (subcategory === 'condominio') {
+            formDefinition = CONDOMINIO_IDOSO_FORM_DEFINITION
+            titleContext = `Dados Condomínio do Idoso ${selectedYear}`
+        } else {
+            formDefinition = CEAI_FORM_DEFINITION
+            titleContext = `Dados CEAI ${selectedYear}`
+        }
         printTitle = titleContext
     }
 
@@ -215,7 +221,13 @@ export default async function DataPage({
     })
 
     // If not CRAS, we expect only one logical unit (the directorate itself)
-    const unitsToRender = isCRAS ? CRAS_UNITS : isCEAI ? CEAI_UNITS : isNAICA ? NAICA_UNITS : ['Principal']
+    const unitsToRender = isCRAS
+        ? CRAS_UNITS
+        : (isCEAI && subcategory !== 'condominio')
+            ? CEAI_UNITS
+            : isNAICA
+                ? NAICA_UNITS
+                : ['Principal']
 
     const months = [
         "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -313,7 +325,7 @@ export default async function DataPage({
 
                     return (
                         <div key={unitName} className="space-y-12 pb-12 border-b border-zinc-100 dark:border-zinc-800 last:border-0 last:pb-0">
-                            {(isCRAS || isCEAI || isNAICA) && (
+                            {(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) && (
                                 <div className="flex items-center gap-4 px-2">
                                     <h2 className="text-xl font-black text-blue-900 dark:text-blue-100 uppercase tracking-tight">
                                         {unitName}
@@ -327,10 +339,18 @@ export default async function DataPage({
 
                                 return (
                                     <div key={sIdx} className="space-y-8 print-section">
-                                        {(!isCRAS && !isCEAI && !isNAICA) && (
+                                        {(!isCRAS && (!isCEAI || subcategory === 'condominio') && !isNAICA) && (
                                             <div className="flex items-center gap-3 px-2">
-                                                <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                                                <h2 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">
+                                                <div className={cn(
+                                                    "h-1 w-6 rounded-full",
+                                                    subcategory === 'condominio' ? "bg-orange-600 dark:bg-orange-400" : "bg-blue-600 dark:bg-blue-400"
+                                                )}></div>
+                                                <h2 className={cn(
+                                                    "uppercase tracking-[0.2em]",
+                                                    subcategory === 'condominio'
+                                                        ? "text-lg font-black text-blue-900 dark:text-blue-100"
+                                                        : "text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60"
+                                                )}>
                                                     {section.title}
                                                 </h2>
                                             </div>

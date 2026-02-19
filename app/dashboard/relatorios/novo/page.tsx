@@ -7,7 +7,7 @@ import { createAdminClient } from "@/utils/supabase/admin"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { CRAS_FORM_DEFINITION } from "@/app/dashboard/cras-config"
-import { CEAI_FORM_DEFINITION } from "@/app/dashboard/ceai-config"
+import { CEAI_FORM_DEFINITION, CONDOMINIO_IDOSO_FORM_DEFINITION } from "@/app/dashboard/ceai-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
@@ -157,8 +157,13 @@ export default async function NewReportPage({
     }
 
     if (isCEAI) {
-        formDefinition = CEAI_FORM_DEFINITION
-        titleContext = "CEAI"
+        if (subcategory === 'condominio') {
+            formDefinition = CONDOMINIO_IDOSO_FORM_DEFINITION
+            titleContext = "Condomínio do Idoso"
+        } else {
+            formDefinition = CEAI_FORM_DEFINITION
+            titleContext = "CEAI"
+        }
     }
 
     if (setor === 'sine') {

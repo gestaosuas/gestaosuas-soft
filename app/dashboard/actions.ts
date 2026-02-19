@@ -64,6 +64,8 @@ export async function submitReport(formData: Record<string, any>, month: number,
             else if (setor === 'creas' && dirName.includes('creas')) isAuthorized = true
             else if (setor === 'pop_rua' && dirName.includes('populacao') && dirName.includes('rua')) isAuthorized = true
             else if (setor === 'naica' && dirName.includes('naica')) isAuthorized = true
+            else if (setor === 'creas_protetivo' && (dirName.includes('protecao') || dirName.includes('especial'))) isAuthorized = true
+            else if (setor === 'creas_socioeducativo' && (dirName.includes('protecao') || dirName.includes('especial'))) isAuthorized = true
 
             if (!isAdmin && !isAuthorized) {
                 throw new Error(`O setor '${setor}' não corresponde à diretoria '${directorate.name}'.`)
@@ -255,22 +257,24 @@ export async function submitReport(formData: Record<string, any>, month: number,
                     await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
                 }
             } else if (setor === 'ceai') {
-                const formDef = CEAI_FORM_DEFINITION
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = CEAI_SHEET_BLOCKS[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+                if (formData._subcategory !== 'condominio') {
+                    const formDef = CEAI_FORM_DEFINITION
+                    const blocksData = formDef.sections.map((section, index) => {
+                        const blockConfig = CEAI_SHEET_BLOCKS[index]
+                        if (!blockConfig) return null
+                        const values = section.fields.map(field => {
+                            const val = formData[field.id]
+                            return val !== undefined && val !== '' ? Number(val) : 0
+                        })
+                        return { startRow: blockConfig.startRow, values: values }
+                    }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
 
-                await updateSheetBlocks(
-                    { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
-                    month,
-                    blocksData
-                )
+                    await updateSheetBlocks(
+                        { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
+                        month,
+                        blocksData
+                    )
+                }
             } else if (setor === 'pop_rua') {
                 const formDef = POP_RUA_FORM_DEFINITION
 

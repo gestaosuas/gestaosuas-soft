@@ -54,3 +54,5 @@ detailed-audit-oscs.js
 fix-permissions.js
 test-dir-retrieval.js
 debug-permissions.ts
+check-database.js
+fix-create-directorate.js

@@ -12,7 +12,7 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
     const pathname = usePathname()
 
     // Separate directorates by category
-    const mainNames = ['Benefícios Socioassistenciais', 'Qualificação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes', 'NAICAs']
+    const mainNames = ['Benefícios Socioassistenciais', 'Qualificação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes', 'NAICAs', 'Proteção Especial à Criança e Adolescente']
     const mainDirectorates = directorates.filter(d => mainNames.includes(d.name))
     const monitoringDirectorates = directorates.filter(d => !mainNames.includes(d.name))
 

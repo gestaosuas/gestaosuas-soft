@@ -42,11 +42,12 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
         if (lowerName.includes('subvenção')) return ClipboardList
         if (lowerName.includes('outros')) return Activity
         if (lowerName.includes('naica')) return Backpack
+        if (lowerName.includes('proteção especial') || lowerName.includes('criança') || lowerName.includes('adolescente')) return ShieldCheck
         return Building2
     }
 
     // Separate directorates by category
-    const mainNames = ['Benefícios Socioassistenciais', 'Qualificação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes', 'NAICAs']
+    const mainNames = ['Benefícios Socioassistenciais', 'Qualificação Profissional e SINE', 'CRAS', 'CEAI', 'CREAS Idoso e Pessoa com Deficiência', 'População de Rua e Migrantes', 'NAICAs', 'Proteção Especial à Criança e Adolescente']
     const mainDirectorates = directorates
         .filter(d => mainNames.includes(d.name))
         .sort((a, b) => mainNames.indexOf(a.name) - mainNames.indexOf(b.name))

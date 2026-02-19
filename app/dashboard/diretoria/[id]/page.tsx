@@ -32,6 +32,7 @@ export default async function DirectoratePage({
     const isCEAI = normalizedName.includes('ceai')
     const isPopRua = normalizedName.includes('populacao') && normalizedName.includes('rua')
     const isNAICA = normalizedName.includes('naica')
+    const isProtecaoEspecial = normalizedName.includes('protecao especial') || normalizedName.includes('crianca') || normalizedName.includes('adolescente')
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -465,6 +466,44 @@ export default async function DirectoratePage({
                             })}
                         </div>
                     </section>
+
+                    {/* Condomínio do Idoso Section */}
+                    <section className="space-y-8 pb-10">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Condomínio do Idoso</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[
+                                {
+                                    label: "Atualizar dados Condomínio",
+                                    desc: "Novos registros e atendimentos",
+                                    href: `/dashboard/relatorios/novo?setor=ceai&directorate_id=${directorate.id}&subcategory=condominio`,
+                                    icon: FilePlus
+                                },
+                                {
+                                    label: "Ver Dados Condomínio",
+                                    desc: "Histórico de registros do condomínio",
+                                    href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}&subcategory=condominio`,
+                                    icon: Database
+                                }
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-orange-600 dark:hover:border-orange-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-6">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-orange-600 dark:group-hover:bg-orange-500 transition-colors">
+                                                    <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
+                                                </div>
+                                            </div>
+                                            <CardTitle className="text-[15px] font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[12px] text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
                 </div>
             ) : isOutros ? (
                 <section className="space-y-12">
@@ -610,6 +649,88 @@ export default async function DirectoratePage({
                         ))}
                     </div>
                 </section>
+            ) : isProtecaoEspecial ? (
+                <div className="space-y-16">
+                    {/* Seção Relatórios */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Relatórios</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=protecao_especial&directorate_id=${directorate.id}`, icon: FileText },
+                                { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=protecao_especial&directorate_id=${directorate.id}`, icon: FolderOpen },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* CREAS Protetivo */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">CREAS Protetivo</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[
+                                { label: "Atualizar Dados Protetivo", desc: "Novos registros mensais", href: `/dashboard/relatorios/novo?setor=creas_protetivo&directorate_id=${directorate.id}`, icon: FilePlus },
+                                { label: "Dados Protetivo", desc: "Banco de dados consolidado", href: `/dashboard/dados?setor=creas_protetivo&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dashboard Protetivo", desc: "Indicadores e gráficos", href: `/dashboard/graficos?setor=creas_protetivo&directorate_id=${directorate.id}`, icon: BarChart3 },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-orange-600 dark:hover:border-orange-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-orange-600 dark:group-hover:bg-orange-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className=" text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* CREAS Socioeducativo */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="h-1 w-6 bg-green-600 dark:bg-green-400 rounded-full"></div>
+                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">CREAS Socioeducativo</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[
+                                { label: "Atualizar Dados Socioeducativo", desc: "Novos registros mensais", href: `/dashboard/relatorios/novo?setor=creas_socioeducativo&directorate_id=${directorate.id}`, icon: FilePlus },
+                                { label: "Dados Socioeducativo", desc: "Banco de dados consolidado", href: `/dashboard/dados?setor=creas_socioeducativo&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dashboard Socioeducativo", desc: "Indicadores e gráficos", href: `/dashboard/graficos?setor=creas_socioeducativo&directorate_id=${directorate.id}`, icon: BarChart3 },
+                            ].map((item, idx) => (
+                                <Link key={idx} href={item.href} className="group">
+                                    <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                        <CardHeader className="p-8">
+                                            <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors mb-6 shadow-sm">
+                                                <item.icon className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                            </div>
+                                            <CardTitle className=" text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">{item.label}</CardTitle>
+                                            <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">{item.desc}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-20 bg-zinc-50/30 dark:bg-zinc-900/20 rounded-[2.5rem] border border-dashed border-zinc-200 dark:border-zinc-800">
                     <div className="p-5 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 mb-6">
