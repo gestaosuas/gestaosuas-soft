@@ -210,7 +210,7 @@ export default async function DirectoratePage({
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
-                                { label: "Ver Dados CRAS", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=cras&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dados CRAS", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=cras&directorate_id=${directorate.id}`, icon: Database },
                                 { label: "Dashboard CRAS", desc: "Resultados e metas institucionais", href: `/dashboard/graficos?setor=cras&directorate_id=${directorate.id}`, icon: BarChart3 },
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=cras&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=cras&directorate_id=${directorate.id}`, icon: FolderOpen },
@@ -405,7 +405,7 @@ export default async function DirectoratePage({
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
-                                { label: "Ver Dados CEAI", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dados CEAI", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}`, icon: Database },
                                 { label: "Dashboard CEAI", desc: "Resultados e metas institucionais", href: `/dashboard/graficos?setor=ceai&directorate_id=${directorate.id}`, icon: BarChart3 },
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=ceai&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=ceai&directorate_id=${directorate.id}`, icon: FolderOpen },
@@ -482,7 +482,7 @@ export default async function DirectoratePage({
                                     icon: FilePlus
                                 },
                                 {
-                                    label: "Ver Dados Condomínio",
+                                    label: "Dados Condomínio",
                                     desc: "Histórico de registros do condomínio",
                                     href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}&subcategory=condominio`,
                                     icon: Database
@@ -561,7 +561,7 @@ export default async function DirectoratePage({
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
                                 { label: "Dashboard NAICA", desc: "Indicadores e gráficos de desempenho", href: `/dashboard/graficos?setor=naica&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                { label: "Ver Dados NAICA", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=naica&directorate_id=${directorate.id}`, icon: Database },
+                                { label: "Dados NAICA", desc: "Histórico consolidado de todas as unidades", href: `/dashboard/dados?setor=naica&directorate_id=${directorate.id}`, icon: Database },
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=naica&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=naica&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => (
@@ -632,7 +632,7 @@ export default async function DirectoratePage({
                             { label: "Atualizar Dados", desc: "Novos registros mensais", href: `/dashboard/relatorios/novo?setor=pop_rua&directorate_id=${directorate.id}`, icon: FilePlus },
                             { label: "Relatório Mensal", desc: "Qualitativo e descritivo", href: `/dashboard/relatorios/mensal?setor=pop_rua&directorate_id=${directorate.id}`, icon: FileText },
                             { label: "Ver Relatórios", desc: "Histórico de envios", href: `/dashboard/relatorios/lista?setor=pop_rua&directorate_id=${directorate.id}`, icon: FolderOpen },
-                            { label: "Ver Dados População de Rua e migrantes", desc: "Banco de dados consolidado", href: `/dashboard/dados?setor=pop_rua&directorate_id=${directorate.id}`, icon: Database },
+                            { label: "Dados População de Rua e migrantes", desc: "Banco de dados consolidado", href: `/dashboard/dados?setor=pop_rua&directorate_id=${directorate.id}`, icon: Database },
                             { label: "Dashboard População de Rua e migrante", desc: "Indicadores e gráficos", href: `/dashboard/graficos?setor=pop_rua&directorate_id=${directorate.id}`, icon: BarChart3 },
                         ].map((item, idx) => (
                             <Link key={idx} href={item.href} className="group">

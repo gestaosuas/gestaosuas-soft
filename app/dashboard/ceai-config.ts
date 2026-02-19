@@ -13,8 +13,8 @@ export const CEAI_FORM_DEFINITION: FormDefinition = {
         {
             title: "Atendimentos e Movimentação",
             fields: [
-                { id: "atendidos_anterior_masc", label: "Atendidos no 1º dia do Mês (Masc)", type: "number" },
-                { id: "atendidos_anterior_fem", label: "Atendidos no 1º dia do Mês (Fem)", type: "number" },
+                { id: "atendidos_anterior_masc", label: "Matriculados no 1º dia do Mês (Masc)", type: "number" },
+                { id: "atendidos_anterior_fem", label: "Matriculados no 1º dia do Mês (Fem)", type: "number" },
                 { id: "inseridos_masc", label: "Inseridos no mês (Masc)", type: "number" },
                 { id: "inseridos_fem", label: "Inseridos no mês (Fem)", type: "number" },
                 { id: "desligados_masc", label: "Desligados (Masc)", type: "number" },
