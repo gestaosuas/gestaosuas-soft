@@ -1,4 +1,4 @@
-import { FormDefinition } from "@/components/form-engine"
+import type { FormDefinition } from "@/components/form-engine"
 
 export const NAICA_UNITS = [
     "Canaã",
@@ -17,7 +17,8 @@ export const NAICA_UNITS = [
 export const NAICA_SPREADSHEET_ID = "1HUF1G-3c_oZJ0ZwMbNyEU_pso3LtJh_AtLnQitFWdOY"
 
 export const NAICA_SHEET_BLOCKS = [
-    { startRow: 2, endRow: 8 } // Block mapping for rows 2 to 8
+    { startRow: 2 }, // Block 1: Rows 2 to 8 (7 fields)
+    { startRow: 9 }  // Block 2: Row 9 (1 field)
 ]
 
 export const NAICA_FORM_DEFINITION: FormDefinition = {
@@ -32,6 +33,12 @@ export const NAICA_FORM_DEFINITION: FormDefinition = {
                 { id: "desligados_masc", label: "Desligados Masculino", type: "number" },
                 { id: "desligados_fem", label: "Desligados Feminino", type: "number" },
                 { id: "total_atendidas", label: "Total Crianças Inseridas", type: "number", disabled: true },
+            ]
+        },
+        {
+            title: "INDICADORES ADICIONAIS",
+            fields: [
+                { id: "atendimentos", label: "Atendimentos", type: "number" },
             ]
         }
     ]

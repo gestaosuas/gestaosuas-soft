@@ -2,6 +2,7 @@
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
 import { submitReport, getPreviousMonthData } from "@/app/dashboard/actions"
+import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { useState, useEffect, useCallback } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -32,7 +33,7 @@ export function SubmissionFormClient({
     const [loading, setLoading] = useState(false)
     const [fetchedInitialData, setFetchedInitialData] = useState<Record<string, any>>({})
     const [dataLoaded, setDataLoaded] = useState(false)
-
+    const [dynamicDefinition, setDynamicDefinition] = useState<FormDefinition>(definition)
 
     // Effect to fetch previous month data when month/year changes
     useEffect(() => {
@@ -150,6 +151,51 @@ export function SubmissionFormClient({
         return () => { isMounted = false }
     }, [month, year, directorateId, setor, subcategory, unit])
 
+    // Effect to load CEAI Oficinas and dynamically modify the FormDefinition
+    useEffect(() => {
+        let isMounted = true
+
+        async function loadOficinas() {
+            if (setor === 'ceai' && subcategory !== 'condominio' && unit) {
+                try {
+                    const oficinas = await getOficinasComCategorias(unit)
+
+                    if (isMounted && oficinas && oficinas.length > 0) {
+                        // Create a new definition based on the original one
+                        const baseDefinition = { ...definition, sections: [...definition.sections] }
+
+                        // Map the oficinas to form fields
+                        const oficinaFields = oficinas.map((oficina: any) => ({
+                            id: `oficina_${oficina.id}_vagas_ocupadas`,
+                            label: `${oficina.activity_name} (${oficina.category_name}) - ${oficina.vacancies}v/${oficina.classes_count}t`,
+                            type: "number" as const,
+                            tooltip: `Configuração: ${oficina.vacancies} vagas por turma | ${oficina.classes_count} turmas | Total: ${oficina.total_vacancies} vagas disponíveis.`
+                        }))
+
+                        // Add the new section
+                        baseDefinition.sections.push({
+                            title: "Ocupação de Oficinas",
+                            fields: oficinaFields
+                        })
+
+                        setDynamicDefinition(baseDefinition)
+                    } else if (isMounted) {
+                        setDynamicDefinition(definition)
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar oficinas:", error)
+                    if (isMounted) setDynamicDefinition(definition)
+                }
+            } else {
+                if (isMounted) setDynamicDefinition(definition)
+            }
+        }
+
+        loadOficinas()
+
+        return () => { isMounted = false }
+    }, [definition, setor, subcategory, unit])
+
     const handleDataChange = useCallback((data: Record<string, any>, setData: any) => {
         if (setor === 'cras') {
             const mes_anterior = Number(data.mes_anterior) || 0
@@ -209,6 +255,73 @@ export function SubmissionFormClient({
 
             if (data.total_atendidas !== total) {
                 setData((prev: any) => ({ ...prev, total_atendidas: total }))
+            }
+        }
+
+        if (setor === 'creas_socioeducativo') {
+            // Famílias
+            const fam_1 = Number(data.fam_acompanhamento_1_dia) || 0
+            const fam_ins = Number(data.fam_inseridas) || 0
+            const fam_total = fam_1 + fam_ins
+            if (data.fam_total_acompanhamento !== fam_total) {
+                setData((prev: any) => ({ ...prev, fam_total_acompanhamento: fam_total }))
+            }
+
+            // Masculino
+            const masc_1 = Number(data.masc_acompanhamento_1_dia) || 0
+            const masc_adm = Number(data.masc_admitidos) || 0
+            const masc_total = masc_1 + masc_adm
+            if (data.masc_total_parcial !== masc_total) {
+                setData((prev: any) => ({ ...prev, masc_total_parcial: masc_total }))
+            }
+
+            // Feminino
+            const fem_1 = Number(data.fem_acompanhamento_1_dia) || 0
+            const fem_adm = Number(data.fem_admitidos) || 0
+            const fem_total = fem_1 + fem_adm
+            if (data.fem_total_parcial !== fem_total) {
+                setData((prev: any) => ({ ...prev, fem_total_parcial: fem_total }))
+            }
+
+            // Medidas Masculino
+            const m_la_1 = Number(data.med_masc_la_andamento) || 0
+            const m_la_novas = Number(data.med_masc_la_novas) || 0
+            const m_la_total = m_la_1 + m_la_novas
+            if (data.med_masc_la_total_parcial !== m_la_total) {
+                setData((prev: any) => ({ ...prev, med_masc_la_total_parcial: m_la_total }))
+            }
+
+            const m_psc_1 = Number(data.med_masc_psc_andamento) || 0
+            const m_psc_novas = Number(data.med_masc_psc_novas) || 0
+            const m_psc_total = m_psc_1 + m_psc_novas
+            if (data.med_masc_psc_total_parcial !== m_psc_total) {
+                setData((prev: any) => ({ ...prev, med_masc_psc_total_parcial: m_psc_total }))
+            }
+
+            // Medidas Feminino
+            const f_la_1 = Number(data.med_fem_la_andamento) || 0
+            const f_la_novas = Number(data.med_fem_la_novas) || 0
+            const f_la_total = f_la_1 + f_la_novas
+            if (data.med_fem_la_total_parcial !== f_la_total) {
+                setData((prev: any) => ({ ...prev, med_fem_la_total_parcial: f_la_total }))
+            }
+
+            const f_psc_1 = Number(data.med_fem_psc_andamento) || 0
+            const f_psc_novas = Number(data.med_fem_psc_novas) || 0
+            const f_psc_total = f_psc_1 + f_psc_novas
+            if (data.med_fem_psc_total_parcial !== f_psc_total) {
+                setData((prev: any) => ({ ...prev, med_fem_psc_total_parcial: f_psc_total }))
+            }
+
+            // Totais Gerais
+            const total_la_geral = m_la_total + f_la_total
+            if (data.med_total_la_geral !== total_la_geral) {
+                setData((prev: any) => ({ ...prev, med_total_la_geral: total_la_geral }))
+            }
+
+            const total_psc_geral = m_psc_total + f_psc_total
+            if (data.med_total_psc_geral !== total_psc_geral) {
+                setData((prev: any) => ({ ...prev, med_total_psc_geral: total_psc_geral }))
             }
         }
     }, [setor, subcategory])
@@ -357,15 +470,12 @@ export function SubmissionFormClient({
                                     <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Indicadores Operacionais</h3>
                                     <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
                                 </div>
-                                <span className="hidden sm:inline-flex items-center px-3 py-1 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[10px] font-bold rounded-full uppercase tracking-widest">
-                                    Formulário Oficial
-                                </span>
                             </div>
                         </CardHeader>
                         <CardContent className="p-10">
                             <FormEngine
-                                key={`${month}-${year}-${unit}-${subcategory}`}
-                                definition={definition}
+                                key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
+                                definition={dynamicDefinition}
                                 initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}
                                 onDataChange={handleDataChange}

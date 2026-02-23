@@ -67,7 +67,8 @@ export async function createUser(formData: FormData) {
     if (directorateIds.length > 0) {
         const assignments = directorateIds.map(dirId => ({
             profile_id: userData.user!.id,
-            directorate_id: dirId
+            directorate_id: dirId,
+            allowed_units: null // Default: all units when first created
         }))
 
         const { error: assignError } = await supabaseAdmin
@@ -123,7 +124,7 @@ export async function deleteUser(userId: string) {
     revalidatePath('/dashboard/admin', 'page')
 }
 
-export async function updateUserAccess(userId: string, directorateIds: string[]) {
+export async function updateUserAccess(userId: string, directorates: { id: string, allowed_units: string[] | null }[]) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Acesso não autorizado: Sessão expirada.")
@@ -156,10 +157,11 @@ export async function updateUserAccess(userId: string, directorateIds: string[])
     if (deleteError) throw new Error("Failed to clear existing permissions")
 
     // 2. Add new assignments
-    if (directorateIds.length > 0) {
-        const assignments = directorateIds.map(dirId => ({
+    if (directorates.length > 0) {
+        const assignments = directorates.map(dir => ({
             profile_id: userId,
-            directorate_id: dirId
+            directorate_id: dir.id,
+            allowed_units: dir.allowed_units
         }))
 
         const { error: insertError } = await supabaseAdmin

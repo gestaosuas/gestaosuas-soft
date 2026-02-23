@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { SubmissionFormClient } from "./form-client"
-import { FormDefinition } from "@/components/form-engine"
+import type { FormDefinition } from "@/components/form-engine"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createAdminClient } from "@/utils/supabase/admin"
@@ -11,6 +11,8 @@ import { CEAI_FORM_DEFINITION, CONDOMINIO_IDOSO_FORM_DEFINITION } from "@/app/da
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
+import { SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
+import { getUserAllowedUnits } from "@/lib/auth-utils"
 
 export default async function NewReportPage({
     searchParams,
@@ -25,6 +27,7 @@ export default async function NewReportPage({
     const isCREAS = setor === 'creas'
     const isPopRua = setor === 'pop_rua'
     const isNAICA = setor === 'naica'
+    const isSocioeducativo = setor === 'creas_socioeducativo'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -59,7 +62,7 @@ export default async function NewReportPage({
         if (requestedDirectorate) {
             // Check permissions: Admin or Linked
             // @ts-ignore
-            const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates) || []
+            const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates).filter(Boolean) || []
 
             const isLinked = userDirectorates.some((d: any) => d.id === directorate_id)
 
@@ -79,7 +82,7 @@ export default async function NewReportPage({
     // Fallback if no ID provided or not found
     if (!directorate) {
         // @ts-ignore
-        const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates) || []
+        const userDirectorates = profile?.profile_directorates?.map(pd => pd.directorates).filter(Boolean) || []
 
         // Try to find by keyword in assigned directorates
         if (isBeneficios) {
@@ -137,6 +140,18 @@ export default async function NewReportPage({
         )
     }
 
+    const allowedUnits = directorate ? await getUserAllowedUnits(user.id, directorate.id) : []
+
+    if (unit && allowedUnits && !allowedUnits.includes(unit)) {
+        return (
+            <div className="p-8 text-center">
+                <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito à Unidade</h2>
+                <p>Você não tem permissão para preencher relatórios para a unidade: <strong>{unit}</strong>.</p>
+                <Link href={`/dashboard/diretoria/${directorate.id}`} className="mt-4 inline-block text-blue-600 underline">Voltar para a Diretoria</Link>
+            </div>
+        )
+    }
+
     // Choose Form Definition based on setor
     let formDefinition = (directorate as any).form_definition as FormDefinition
     let titleContext = directorate.name
@@ -178,6 +193,11 @@ export default async function NewReportPage({
     if (isNAICA) {
         formDefinition = NAICA_FORM_DEFINITION
         titleContext = "NAICAs"
+    }
+
+    if (isSocioeducativo) {
+        formDefinition = SOCIOEDUCATIVO_FORM_DEFINITION
+        titleContext = "CREAS Socioeducativo"
     }
 
     if (isCREAS) {

@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { getCachedSubmissionsForUser, getCachedProfile, getCachedDirectorates } from "@/app/dashboard/cached-data"
+import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,7 @@ import { CEAI_FORM_DEFINITION, CEAI_UNITS, CONDOMINIO_IDOSO_FORM_DEFINITION } fr
 import { NAICA_UNITS, NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
+import { SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 
@@ -40,6 +42,7 @@ export default async function DataPage({
     let isCREAS = setor === 'creas'
     let isPopRua = setor === 'pop_rua'
     let isNAICA = setor === 'naica'
+    let isProtecaoEspecial = setor === 'creas_socioeducativo'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -126,6 +129,7 @@ export default async function DataPage({
         else if (norm.includes('creas')) isCREAS = true
         else if (norm.includes('populacao') && norm.includes('rua')) isPopRua = true
         else if (norm.includes('naica')) isNAICA = true
+        else if (norm.includes('protecao especial') || norm.includes('crianca') || norm.includes('adolescente')) isProtecaoEspecial = true
     }
 
     // Choose Form Definition based on setor
@@ -171,6 +175,12 @@ export default async function DataPage({
     if (isNAICA) {
         formDefinition = NAICA_FORM_DEFINITION
         titleContext = `Dados NAICA ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (setor === 'creas_socioeducativo') {
+        formDefinition = SOCIOEDUCATIVO_FORM_DEFINITION
+        titleContext = `Dados CREAS Socioeducativo ${selectedYear}`
         printTitle = titleContext
     }
 
@@ -220,19 +230,38 @@ export default async function DataPage({
         }
     })
 
+    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
+    const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
+
+    const getFilteredUnits = (units: string[]) => {
+        if (!allowedUnits) return units // null means 'all access'
+        return units.filter(u => allowedUnits.includes(u))
+    }
+
     // If not CRAS, we expect only one logical unit (the directorate itself)
     const unitsToRender = isCRAS
-        ? CRAS_UNITS
+        ? getFilteredUnits(CRAS_UNITS)
         : (isCEAI && subcategory !== 'condominio')
-            ? CEAI_UNITS
+            ? getFilteredUnits(CEAI_UNITS)
             : isNAICA
-                ? NAICA_UNITS
+                ? getFilteredUnits(NAICA_UNITS)
                 : ['Principal']
 
     const months = [
         "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
         "Jul", "Ago", "Set", "Out", "Nov", "Dez"
     ]
+
+    // Pre-fetch Oficinas if CEAI
+    const oficinasPorUnit = new Map<string, any[]>()
+    if (isCEAI && subcategory !== 'condominio') {
+        await Promise.all(
+            unitsToRender.map(async (unit) => {
+                const oficinas = await getOficinasComCategorias(unit)
+                oficinasPorUnit.set(unit, oficinas || [])
+            })
+        )
+    }
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 w-full max-w-[98%] mx-auto py-8">
@@ -415,6 +444,169 @@ export default async function DataPage({
                                     </div>
                                 )
                             })}
+
+                            {/* OFICINAS RENDER (CEAI ONLY) */}
+                            {isCEAI && subcategory !== 'condominio' && (oficinasPorUnit.get(unitName)?.length ?? 0) > 0 && (
+                                <div className="space-y-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
+                                    <div className="flex items-center gap-3 px-2">
+                                        <div className="h-1 w-6 rounded-full bg-blue-600 dark:bg-blue-400"></div>
+                                        <h2 className="uppercase tracking-[0.2em] text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60">
+                                            Ocupação de Oficinas
+                                        </h2>
+                                    </div>
+
+                                    {/* Table 1: Vagas Disponíveis */}
+                                    <div className="space-y-3">
+                                        <h3 className="px-2 text-sm font-bold text-zinc-900 dark:text-zinc-100">Vagas Disponíveis</h3>
+                                        <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
+                                            <div className="overflow-x-auto custom-scrollbar">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Atividade
+                                                            </TableHead>
+                                                            {months.map((m, i) => (
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
+                                                                    {m}
+                                                                </TableHead>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                                                        {(oficinasPorUnit.get(unitName) || []).map((oficina: any) => (
+                                                            <TableRow key={oficina.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
+                                                                <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight">
+                                                                    {oficina.activity_name} ({oficina.category_name})
+                                                                </TableCell>
+                                                                {months.map((_, idx) => {
+                                                                    const monthNum = idx + 1
+                                                                    const monthData = unitData.get(monthNum)
+                                                                    return (
+                                                                        <TableCell key={idx} className="text-center text-[12px] font-bold text-zinc-900 dark:text-zinc-100 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
+                                                                            {monthData ? (
+                                                                                <span>{oficina.total_vacancies}</span>
+                                                                            ) : (
+                                                                                <span className="text-zinc-200 dark:text-zinc-800">-</span>
+                                                                            )}
+                                                                        </TableCell>
+                                                                    )
+                                                                })}
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </Card>
+                                    </div>
+
+                                    {/* Table 2: Vagas Ocupadas */}
+                                    <div className="space-y-3 pt-6">
+                                        <h3 className="px-2 text-sm font-bold text-zinc-900 dark:text-zinc-100">Total de Vagas Ocupadas</h3>
+                                        <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
+                                            <div className="overflow-x-auto custom-scrollbar">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Atividade
+                                                            </TableHead>
+                                                            {months.map((m, i) => (
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
+                                                                    {m}
+                                                                </TableHead>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                                                        {(oficinasPorUnit.get(unitName) || []).map((oficina: any) => {
+                                                            const jsonKey = `oficina_${oficina.id}_vagas_ocupadas`
+                                                            return (
+                                                                <TableRow key={oficina.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
+                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight">
+                                                                        {oficina.activity_name} ({oficina.category_name})
+                                                                    </TableCell>
+                                                                    {months.map((_, idx) => {
+                                                                        const monthNum = idx + 1
+                                                                        const monthData = unitData.get(monthNum)
+                                                                        const val = monthData?.[jsonKey]
+
+                                                                        return (
+                                                                            <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
+                                                                                {val !== undefined && val !== '' ? (
+                                                                                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{val}</span>
+                                                                                ) : <span className="text-zinc-200 dark:text-zinc-800">-</span>}
+                                                                            </TableCell>
+                                                                        )
+                                                                    })}
+                                                                </TableRow>
+                                                            )
+                                                        })}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </Card>
+                                    </div>
+
+                                    {/* Table 3: Taxa de Ocupação */}
+                                    <div className="space-y-3 pt-6">
+                                        <h3 className="px-2 text-sm font-bold text-zinc-900 dark:text-zinc-100">Taxa de Ocupação (%)</h3>
+                                        <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden">
+                                            <div className="overflow-x-auto custom-scrollbar">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Atividade
+                                                            </TableHead>
+                                                            {months.map((m, i) => (
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
+                                                                    {m}
+                                                                </TableHead>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                                                        {(oficinasPorUnit.get(unitName) || []).map((oficina: any) => {
+                                                            const jsonKey = `oficina_${oficina.id}_vagas_ocupadas`
+                                                            const disponiveis = oficina.total_vacancies
+                                                            return (
+                                                                <TableRow key={oficina.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
+                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight">
+                                                                        {oficina.activity_name} ({oficina.category_name})
+                                                                    </TableCell>
+                                                                    {months.map((_, idx) => {
+                                                                        const monthNum = idx + 1
+                                                                        const monthData = unitData.get(monthNum)
+                                                                        const val = monthData?.[jsonKey]
+                                                                        const numVal = Number(val)
+
+                                                                        let taxa: string | React.ReactNode = <span className="text-zinc-200 dark:text-zinc-800">-</span>
+                                                                        if (!isNaN(numVal) && val !== undefined && val !== '') {
+                                                                            if (disponiveis > 0) {
+                                                                                const percent = (numVal / disponiveis) * 100
+                                                                                taxa = <span className="font-bold text-zinc-900 dark:text-zinc-100">{percent.toFixed(1)}%</span>
+                                                                            } else {
+                                                                                taxa = <span className="font-bold text-zinc-900 dark:text-zinc-100">0%</span>
+                                                                            }
+                                                                        }
+
+                                                                        return (
+                                                                            <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
+                                                                                {taxa}
+                                                                            </TableCell>
+                                                                        )
+                                                                    })}
+                                                                </TableRow>
+                                                            )
+                                                        })}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )
                 })}

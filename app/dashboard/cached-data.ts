@@ -5,34 +5,35 @@ import { createAdminClient } from '@/utils/supabase/admin'
 export const getCachedProfile = async (userId: string) => {
     return await unstable_cache(
         async () => {
-            const supabase = createAdminClient()
+            try {
+                const supabase = createAdminClient()
 
-            // Fetch profile and joined directorates via the junction table
-            // Note: We try both the old 'directorates' relation (if it exists) and new 'profile_directorates'
-            // But since likely we dropped the FK or just ignore it, let's focus on the new table.
-            // Query: profile -> profile_directorates -> directorates
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select(`
-                    *,
-                    profile_directorates (
-                        directorates (*)
-                    )
-                `)
-                .eq('id', userId)
-                .single()
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select(`
+                        *,
+                        profile_directorates (
+                            directorates (*)
+                        )
+                    `)
+                    .eq('id', userId)
+                    .single()
 
-            if (!profile) return null
+                if (error || !profile) return null
 
-            // Flatten the structure: profile.directorates = [dir1, dir2]
-            // Accessing the nested data safely
-            const rawDirectorates = profile.profile_directorates || []
-            // @ts-ignore
-            const flatDirectorates = rawDirectorates.map(pd => pd.directorates).filter(Boolean)
+                // Flatten the structure safely
+                const flatDirectorates = (profile.profile_directorates || [])
+                    // @ts-ignore
+                    .map(pd => pd.directorates)
+                    .filter(Boolean)
 
-            return {
-                ...profile,
-                directorates: flatDirectorates
+                return {
+                    ...profile,
+                    directorates: flatDirectorates
+                }
+            } catch (error) {
+                console.error("Error in getCachedProfile:", error)
+                return null
             }
         },
         [`user-profile-${userId}`],

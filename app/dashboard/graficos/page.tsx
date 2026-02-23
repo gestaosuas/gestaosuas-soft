@@ -120,8 +120,36 @@ export default async function GraficosPage({
     }
 
 
+    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
+    const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
+
+    const getFilteredUnits = (units: string[]) => {
+        if (!allowedUnits) return units // null means 'all access'
+        return units.filter(u => allowedUnits.includes(u))
+    }
+
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
-    const submissions = allSubmissions.filter((s: any) => s.year === selectedYear)
+    const rawSubmissions = allSubmissions.filter((s: any) => s.year === selectedYear)
+
+    // Filter unit data out of submissions if user doesn't have access
+    const submissions = rawSubmissions.map((sub: any) => {
+        if (!allowedUnits) return sub;
+
+        if (sub.data._is_multi_unit && sub.data.units) {
+            const filteredUnits: any = {}
+            for (const [k, v] of Object.entries(sub.data.units)) {
+                if (allowedUnits.includes(k)) {
+                    filteredUnits[k] = v;
+                }
+            }
+            return { ...sub, data: { ...sub.data, units: filteredUnits } }
+        } else {
+            const uName = sub.data._unit || 'Principal';
+            if (allowedUnits.includes(uName)) return sub;
+            return null;
+        }
+    }).filter(Boolean) as any[]
+
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
     // --- CRAS Dashboard ---
@@ -245,7 +273,7 @@ export default async function GraficosPage({
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Unidade</span>
-                                <UnitSelector currentUnit={selectedUnit} />
+                                <UnitSelector currentUnit={selectedUnit} units={getFilteredUnits(CRAS_UNITS)} />
                             </div>
                             <div className="h-8 w-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
                             <div className="flex flex-col">
@@ -403,7 +431,7 @@ export default async function GraficosPage({
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Unidade</span>
-                                <UnitSelector currentUnit={selectedUnit} units={CEAI_UNITS} />
+                                <UnitSelector currentUnit={selectedUnit} units={getFilteredUnits(CEAI_UNITS)} />
                             </div>
                             <div className="h-8 w-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
                             <div className="flex flex-col">
@@ -563,7 +591,7 @@ export default async function GraficosPage({
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Unidade</span>
-                                <UnitSelector currentUnit={selectedUnit} units={NAICA_UNITS} />
+                                <UnitSelector currentUnit={selectedUnit} units={getFilteredUnits(NAICA_UNITS)} />
                             </div>
                             <div className="h-8 w-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
                             <div className="flex flex-col">

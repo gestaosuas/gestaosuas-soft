@@ -6,7 +6,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
 import { redirect } from 'next/navigation'
 import { FormDefinition } from '@/components/form-engine'
-import { checkUserPermission, isAdmin as isAdminCheck } from '@/lib/auth-utils'
+import { checkUserPermission, isAdmin as isAdminCheck, getUserAllowedUnits } from '@/lib/auth-utils'
 
 
 import { CP_FORM_DEFINITION, CP_SHEET_BLOCKS, CP_SHEET_NAME } from './cp-config'
@@ -16,6 +16,7 @@ import { CREAS_IDOSO_FORM_DEFINITION, CREAS_IDOSO_SHEET_CONFIG, CREAS_DEFICIENTE
 import { CEAI_FORM_DEFINITION, CEAI_SHEET_BLOCKS, CEAI_SPREADSHEET_ID } from './ceai-config'
 import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID } from './pop-rua-config'
 import { NAICA_FORM_DEFINITION, NAICA_SHEET_BLOCKS, NAICA_SPREADSHEET_ID } from './naica-config'
+import { SOCIOEDUCATIVO_FORM_DEFINITION, SOCIOEDUCATIVO_SHEET_BLOCKS, SOCIOEDUCATIVO_SPREADSHEET_ID } from './protecao-especial-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
 
@@ -48,6 +49,16 @@ export async function submitReport(formData: Record<string, any>, month: number,
 
         if (!directorate) {
             throw new Error("Directorate not found or unauthorized")
+        }
+
+        // Check unit permission if a unit is submitted
+        const submittedUnit = formData._unit;
+        if (submittedUnit) {
+            const allowedUnits = await getUserAllowedUnits(user.id, directorateId);
+            // If allowedUnits is not null (which means unrestricted), and it doesn't include the unit
+            if (allowedUnits && !allowedUnits.includes(submittedUnit)) {
+                throw new Error(`Sem permissão para preencher relatórios da unidade: ${submittedUnit}`);
+            }
         }
 
         // Security check: Verify that the 'setor' matches the directorate
@@ -328,6 +339,35 @@ export async function submitReport(formData: Record<string, any>, month: number,
                     month,
                     blocksData
                 )
+            } else if (setor === 'creas_socioeducativo') {
+                const formDef = SOCIOEDUCATIVO_FORM_DEFINITION
+                const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
+
+                formDef.sections.forEach((section, index) => {
+                    const blockConfig = SOCIOEDUCATIVO_SHEET_BLOCKS[index]
+                    if (!blockConfig) return
+
+                    const values = section.fields.map(field => {
+                        const val = formData[field.id]
+                        return val !== undefined && val !== '' ? Number(val) : 0
+                    })
+
+                    if (!blocksBySheet.has(blockConfig.sheetName)) {
+                        blocksBySheet.set(blockConfig.sheetName, [])
+                    }
+                    blocksBySheet.get(blockConfig.sheetName)!.push({
+                        startRow: blockConfig.startRow,
+                        values: values
+                    })
+                })
+
+                for (const [sheetName, blocks] of blocksBySheet.entries()) {
+                    await updateSheetBlocks(
+                        { spreadsheetId: SOCIOEDUCATIVO_SPREADSHEET_ID, sheetName: sheetName, baseColumn: 'C' },
+                        month,
+                        blocks
+                    )
+                }
             } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
                 // DEFAULT LOGIC (SINE/ETC)
                 const formDef = directorate.form_definition as FormDefinition

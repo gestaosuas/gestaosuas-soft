@@ -22,17 +22,18 @@ type UserData = {
     email: string
     name: string
     role: string
-    directorateIds: string[] // IDs of assigned directorates
+    directorateAccess: { id: string, allowed_units: string[] | null }[] // IDs and their allowed units.
 }
 
 type Directorate = {
     id: string
     name: string
+    available_units?: string[] | null
 }
 
 export function UserList({ users, directorates }: { users: UserData[], directorates: Directorate[] }) {
     const [editingUser, setEditingUser] = useState<UserData | null>(null)
-    const [selectedDirs, setSelectedDirs] = useState<string[]>([])
+    const [selectedDirs, setSelectedDirs] = useState<{ id: string, allowed_units: string[] | null }[]>([])
     const [isDeleting, setIsDeleting] = useState<string | null>(null)
     const [isSaving, setIsSaving] = useState(false)
 
@@ -52,7 +53,10 @@ export function UserList({ users, directorates }: { users: UserData[], directora
 
     const handleEditClick = (user: UserData) => {
         setEditingUser(user)
-        setSelectedDirs(user.directorateIds || [])
+        setSelectedDirs(user.directorateAccess ? user.directorateAccess.map(da => ({
+            ...da,
+            allowed_units: da.allowed_units === null ? null : [...(da.allowed_units || [])]
+        })) : [])
     }
 
     const handleSavePermissions = async () => {
@@ -69,11 +73,28 @@ export function UserList({ users, directorates }: { users: UserData[], directora
     }
 
     const toggleDir = (dirId: string) => {
-        if (selectedDirs.includes(dirId)) {
-            setSelectedDirs(selectedDirs.filter(id => id !== dirId))
+        if (selectedDirs.some(d => d.id === dirId)) {
+            setSelectedDirs(selectedDirs.filter(d => d.id !== dirId))
         } else {
-            setSelectedDirs([...selectedDirs, dirId])
+            // Default to all units (null) when enabling a directorate
+            setSelectedDirs([...selectedDirs, { id: dirId, allowed_units: null }])
         }
+    }
+
+    const toggleUnit = (dirId: string, unit: string) => {
+        setSelectedDirs(prev => prev.map(d => {
+            if (d.id === dirId) {
+                const currentUnits = d.allowed_units || [];
+                const hasUnit = currentUnits.includes(unit)
+                return {
+                    ...d,
+                    allowed_units: hasUnit
+                        ? currentUnits.filter(u => u !== unit)
+                        : [...currentUnits, unit]
+                }
+            }
+            return d
+        }))
     }
 
     return (
@@ -123,12 +144,12 @@ export function UserList({ users, directorates }: { users: UserData[], directora
                                         <div className="flex flex-wrap gap-2">
                                             {user.role === 'admin' ? (
                                                 <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider italic">Acesso Irrestrito</span>
-                                            ) : user.directorateIds.length > 0 ? (
-                                                user.directorateIds.map(did => {
-                                                    const dir = directorates.find(d => d.id === did)
+                                            ) : user.directorateAccess && user.directorateAccess.length > 0 ? (
+                                                user.directorateAccess.map(da => {
+                                                    const dir = directorates.find(d => d.id === da.id)
                                                     return (
-                                                        <span key={did} className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/50 dark:border-zinc-700/50 uppercase tracking-tight">
-                                                            {dir?.name || 'Área Excluída'}
+                                                        <span key={da.id} className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/50 dark:border-zinc-700/50 uppercase tracking-tight" title={da.allowed_units !== null ? `Unidades: ${da.allowed_units.join(', ')}` : 'Todas as unidades'}>
+                                                            {dir?.name || 'Área Excluída'} {da.allowed_units !== null ? `(${da.allowed_units.length} un.)` : ''}
                                                         </span>
                                                     )
                                                 })
@@ -181,39 +202,108 @@ export function UserList({ users, directorates }: { users: UserData[], directora
 
                     <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-zinc-50/30 dark:bg-zinc-950/20">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {directorates.map(dir => (
-                                <label key={dir.id} className={cn(
-                                    "flex items-center gap-3 p-4 rounded-xl border transition-all cursor-pointer group select-none",
-                                    selectedDirs.includes(dir.id)
-                                        ? "bg-blue-900 dark:bg-blue-600 border-blue-900 dark:border-blue-600 shadow-lg shadow-blue-900/10 scale-[1.02]"
-                                        : "bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800/60 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm"
-                                )}>
-                                    <div className="flex items-center h-5">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedDirs.includes(dir.id)}
-                                            onChange={() => toggleDir(dir.id)}
-                                            className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 opacity-0 absolute"
-                                        />
-                                        <div className={cn(
-                                            "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
-                                            selectedDirs.includes(dir.id)
-                                                ? "bg-white dark:bg-zinc-900 border-transparent shadow-inner"
-                                                : "bg-zinc-50 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 group-hover:border-blue-400"
-                                        )}>
-                                            {selectedDirs.includes(dir.id) && <Check className="w-3.5 h-3.5 text-blue-900 dark:text-blue-500 stroke-[3]" />}
-                                        </div>
-                                    </div>
-                                    <span className={cn(
-                                        "text-[13px] font-bold uppercase tracking-tight transition-colors leading-tight",
-                                        selectedDirs.includes(dir.id)
-                                            ? "text-white dark:text-zinc-50"
-                                            : "text-zinc-500 dark:text-zinc-400 group-hover:text-blue-900 dark:group-hover:text-blue-200"
+                            {directorates.map(dir => {
+                                const isSelected = selectedDirs.some(d => d.id === dir.id)
+                                const selectedDirData = selectedDirs.find(d => d.id === dir.id)
+                                const hasAllUnits = selectedDirData && selectedDirData.allowed_units === null ? true : false
+
+                                return (
+                                    <div key={dir.id} className={cn(
+                                        "flex flex-col p-4 rounded-xl border transition-all select-none group",
+                                        isSelected
+                                            ? "bg-blue-50/10 dark:bg-blue-900/10 border-blue-900/30 dark:border-blue-600/30 shadow-sm"
+                                            : "bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800/60 hover:border-blue-300 dark:hover:border-blue-700"
                                     )}>
-                                        {dir.name}
-                                    </span>
-                                </label>
-                            ))}
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <div className="flex items-center h-5">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleDir(dir.id)}
+                                                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 opacity-0 absolute"
+                                                />
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
+                                                    isSelected
+                                                        ? "bg-blue-900 dark:bg-blue-600 border-transparent shadow-inner"
+                                                        : "bg-zinc-50 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 group-hover:border-blue-400"
+                                                )}>
+                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                                                </div>
+                                            </div>
+                                            <span className={cn(
+                                                "text-[13px] font-bold uppercase tracking-tight transition-colors leading-tight",
+                                                isSelected
+                                                    ? "text-blue-900 dark:text-blue-100"
+                                                    : "text-zinc-500 dark:text-zinc-400 group-hover:text-blue-900 dark:group-hover:text-blue-200"
+                                            )}>
+                                                {dir.name}
+                                            </span>
+                                        </label>
+
+                                        {isSelected && dir.available_units && dir.available_units.length > 0 && (
+                                            <div className="mt-4 pl-8 grid grid-cols-1 gap-2 border-t border-zinc-200/50 dark:border-zinc-700/50 pt-4">
+                                                <label className="flex items-center gap-3 cursor-pointer hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 p-1.5 rounded-lg transition-colors">
+                                                    <div className="flex items-center h-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={hasAllUnits}
+                                                            onChange={() => {
+                                                                if (hasAllUnits) {
+                                                                    // If unchecking "All", select all units individually
+                                                                    setSelectedDirs(prev => prev.map(d => d.id === dir.id ? { ...d, allowed_units: Array.isArray(dir.available_units) ? [...dir.available_units] : [] } : d))
+                                                                } else {
+                                                                    // Checking "All", set null for full access
+                                                                    setSelectedDirs(prev => prev.map(d => d.id === dir.id ? { ...d, allowed_units: null } : d))
+                                                                }
+                                                            }}
+                                                            className="h-3.5 w-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-600 dark:border-zinc-700 dark:bg-zinc-800 opacity-0 absolute"
+                                                        />
+                                                        <div className={cn(
+                                                            "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                                            hasAllUnits
+                                                                ? "bg-blue-600 border-transparent"
+                                                                : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
+                                                        )}>
+                                                            {hasAllUnits && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">
+                                                        Todas as Unidades (Acesso Total)
+                                                    </span>
+                                                </label>
+
+                                                {!hasAllUnits && Array.isArray(dir.available_units) && dir.available_units.map(unit => {
+                                                    const isUnitSelected = selectedDirData && Array.isArray(selectedDirData.allowed_units) ? selectedDirData.allowed_units.includes(unit) : false
+                                                    return (
+                                                        <label key={unit} className="flex items-center gap-3 cursor-pointer hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 p-1.5 rounded-lg transition-colors">
+                                                            <div className="flex items-center h-4">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isUnitSelected}
+                                                                    onChange={() => toggleUnit(dir.id, unit)}
+                                                                    className="h-3.5 w-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-600 dark:border-zinc-700 dark:bg-zinc-800 opacity-0 absolute"
+                                                                />
+                                                                <div className={cn(
+                                                                    "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                                                    isUnitSelected
+                                                                        ? "bg-blue-600 border-transparent"
+                                                                        : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
+                                                                )}>
+                                                                    {isUnitSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+                                                                {unit}
+                                                            </span>
+                                                        </label>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
 
@@ -225,6 +315,6 @@ export function UserList({ users, directorates }: { users: UserData[], directora
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Card>
+        </Card >
     )
 }

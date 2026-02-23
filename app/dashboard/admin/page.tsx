@@ -139,7 +139,8 @@ async function fetchAllUsers() {
             role, 
             full_name,
             profile_directorates (
-                directorate_id
+                directorate_id,
+                allowed_units
             )
         `)
 
@@ -152,15 +153,18 @@ async function fetchAllUsers() {
         // Access nested join safely
         // @ts-ignore
         const rawDirs = profile?.profile_directorates || []
-        // @ts-ignore
-        const dirIds = rawDirs.map(pd => pd.directorate_id)
+
+        const directorateAccess = rawDirs.map((pd: any) => ({
+            id: pd.directorate_id,
+            allowed_units: pd.allowed_units === null ? null : (pd.allowed_units || [])
+        }))
 
         return {
             id: u.id,
             email: u.email || 'No email',
             name: profile?.full_name || u.user_metadata?.full_name || 'Desconhecido',
             role: profile?.role || 'user',
-            directorateIds: dirIds
+            directorateAccess
         }
     })
 
