@@ -24,7 +24,7 @@ import { CEAI_FORM_DEFINITION, CEAI_UNITS, CONDOMINIO_IDOSO_FORM_DEFINITION } fr
 import { NAICA_UNITS, NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
-import { SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
+import { SOCIOEDUCATIVO_FORM_DEFINITION, PROTETIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 
@@ -42,7 +42,8 @@ export default async function DataPage({
     let isCREAS = setor === 'creas'
     let isPopRua = setor === 'pop_rua'
     let isNAICA = setor === 'naica'
-    let isProtecaoEspecial = setor === 'creas_socioeducativo'
+    let isProtetivo = setor === 'creas_protetivo'
+    let isSocioeducativo = setor === 'creas_socioeducativo'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -129,7 +130,10 @@ export default async function DataPage({
         else if (norm.includes('creas')) isCREAS = true
         else if (norm.includes('populacao') && norm.includes('rua')) isPopRua = true
         else if (norm.includes('naica')) isNAICA = true
-        else if (norm.includes('protecao especial') || norm.includes('crianca') || norm.includes('adolescente')) isProtecaoEspecial = true
+        else if (norm.includes('protecao especial') || norm.includes('crianca') || norm.includes('adolescente')) {
+            if (setor === 'creas_protetivo') isProtetivo = true
+            else isSocioeducativo = true
+        }
     }
 
     // Choose Form Definition based on setor
@@ -178,9 +182,15 @@ export default async function DataPage({
         printTitle = titleContext
     }
 
-    if (setor === 'creas_socioeducativo') {
+    if (isSocioeducativo) {
         formDefinition = SOCIOEDUCATIVO_FORM_DEFINITION
         titleContext = `Dados CREAS Socioeducativo ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (isProtetivo) {
+        formDefinition = PROTETIVO_FORM_DEFINITION
+        titleContext = `Dados CREAS Protetivo ${selectedYear}`
         printTitle = titleContext
     }
 

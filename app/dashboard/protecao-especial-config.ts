@@ -5,11 +5,50 @@ export const PROTECAO_ESPECIAL_UNITS = [
     "CREAS Socioeducativo"
 ]
 
-export const CREAS_PROTETIVO_FIELDS = [
-    { id: "atendidos_anterior", label: "Atendidos Mês Anterior", type: "number" },
-    { id: "inseridos", label: "Inseridos no Mês", type: "number" },
-    { id: "desligados", label: "Desligados no Mês", type: "number" },
-    { id: "atual", label: "Atual", type: "number", disabled: true }
+export const PROTETIVO_FORM_DEFINITION: FormDefinition = {
+    sections: [
+        {
+            title: "Famílias em Acompanhamento",
+            fields: [
+                { id: "fam_mes_anterior", label: "Mês Anterior", type: "number" },
+                { id: "fam_admitidas", label: "Admitidas", type: "number" },
+                { id: "fam_desligadas", label: "Desligadas", type: "number" },
+                { id: "fam_atual", label: "Atual", type: "number", disabled: true },
+            ]
+        },
+        {
+            title: "Direitos Violados",
+            fields: [
+                { id: "viol_fis_psic_masc", label: "Violência Física/Psicológica - Masculino", type: "number" },
+                { id: "viol_fis_psic_fem", label: "Violência Física/Psicológica - Feminino", type: "number" },
+                { id: "abuso_sexual_masc", label: "Abuso Sexual - Masculino", type: "number" },
+                { id: "abuso_sexual_fem", label: "Abuso Sexual - Feminino", type: "number" },
+                { id: "expl_sexual_masc", label: "Exploração Sexual - Masculino", type: "number" },
+                { id: "expl_sexual_fem", label: "Exploração Sexual - Feminino", type: "number" },
+                { id: "negli_aband_masc", label: "Negligência/Abandono - Masculino", type: "number" },
+                { id: "negli_aband_fem", label: "Negligência/Abandono - Feminino", type: "number" },
+                { id: "trab_infantil_masc", label: "Trabalho Infantil - Masculino", type: "number" },
+                { id: "trab_infantil_fem", label: "Trabalho Infantil - Feminino", type: "number" },
+            ]
+        },
+        {
+            title: "Atendimento Criança/Adolescentes",
+            fields: [
+                { id: "atend_mes_anterior", label: "Mês Anterior", type: "number" },
+                { id: "atend_admitidas", label: "Admitidas", type: "number" },
+                { id: "atend_desligadas", label: "Desligadas", type: "number" },
+                { id: "atend_atual", label: "Atual", type: "number", disabled: true },
+            ]
+        }
+    ]
+}
+
+export const PROTETIVO_SPREADSHEET_ID = '1Lg5V8JjTneXbl9IKEWPVJmm6OghyaC6JozInoqlqpLA'
+
+export const PROTETIVO_SHEET_BLOCKS = [
+    { sheetName: 'Famílias', startRow: 2 },           // B2:B5
+    { sheetName: 'Direitos Violados', startRow: 2 },  // B2:B11
+    { sheetName: 'Atendimentos', startRow: 2 },       // B2:B5
 ]
 
 export const SOCIOEDUCATIVO_FORM_DEFINITION: FormDefinition = {

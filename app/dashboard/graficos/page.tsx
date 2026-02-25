@@ -5,6 +5,8 @@ import { BENEFICIOS_FORM_DEFINITION } from "../beneficios-config"
 import { redirect } from "next/navigation"
 import { MetricsCards, ServicesBarChart, AttendanceLineChart, GenderPieChart, GenericLineChart, ComparisonLineChart, GenericPieChart } from "./charts"
 import { CreasDashboard } from "./creas-dashboard"
+import { ProtetivoDashboard } from "./protetivo-dashboard"
+import { SocioeducativoDashboard } from "./socioeducativo-dashboard"
 import { PopRuaDashboard } from "./pop-rua-dashboard"
 import { FormDefinition } from "@/components/form-engine"
 import { Button } from "@/components/ui/button"
@@ -59,6 +61,8 @@ export default async function GraficosPage({
     let isBeneficios = setor === 'beneficios'
     let isCRAS = setor === 'cras'
     let isCREAS = setor === 'creas'
+    let isProtetivo = setor === 'creas_protetivo'
+    let isSocioeducativo = setor === 'creas_socioeducativo'
 
     let isCEAI = setor === 'ceai'
     let isPopRua = setor === 'pop_rua'
@@ -113,6 +117,8 @@ export default async function GraficosPage({
         if (normName.includes('beneficios')) isBeneficios = true
         else if (normName.includes('formacao') || normName.includes('centro') || normName.includes('profissional')) isCP = true
         else if (normName.includes('cras')) isCRAS = true
+        else if (normName.includes('creas') && setor === 'creas_protetivo') isProtetivo = true
+        else if (normName.includes('creas') && setor === 'creas_socioeducativo') isSocioeducativo = true
         else if (normName.includes('creas')) isCREAS = true
         else if (normName.includes('ceai')) isCEAI = true
         else if (normName.includes('populacao') && normName.includes('rua')) isPopRua = true
@@ -617,7 +623,8 @@ export default async function GraficosPage({
         )
     }
 
-    if (isCREAS) {
+    if (isCREAS && !isProtetivo && !isSocioeducativo) {
+        // Fallback for regular CREAS... (already implemented)
         const selectedMonth = month || 'all'
         const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
 
@@ -651,6 +658,84 @@ export default async function GraficosPage({
                 </header>
 
                 <CreasDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} />
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
+    }
+
+    if (isProtetivo) {
+        const selectedMonth = month || 'all'
+        const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
+
+        return (
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard CREAS Protetivo <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonth} />
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <ProtetivoDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} />
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
+    }
+
+    if (isSocioeducativo) {
+        const selectedMonth = month || 'all'
+        const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
+
+        return (
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard CREAS Socioeducativo <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonth} />
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <SocioeducativoDashboard submissions={submissions} selectedMonth={selectedMonth} selectedYear={selectedYear} />
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )

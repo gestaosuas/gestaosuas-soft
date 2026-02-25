@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, CheckCircle2, Loader2, Tags, Trash2, Layers } from "lucide-react"
-import { saveCategoria, saveOficina, getCategorias, deleteCategoria, getOficinasComCategorias, deleteOficina } from "./ceai-actions"
+import { saveCategoria, saveOficina, getCategorias, deleteCategoria, getOficinasComCategorias, deleteOficina, updateOficinaCategoria } from "./ceai-actions"
 
 export function CEAIOficinasModals({ unit, directorateId }: { unit: string, directorateId: string }) {
     const [isCategoryOpen, setIsCategoryOpen] = useState(false)
@@ -88,7 +88,7 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
         const activity_name = formData.get('activity_name') as string
         const category_id = formData.get('category_id') as string
 
-        if (!activity_name || (!category_id || category_id === 'empty') || isNaN(vacancies) || isNaN(classesCount)) return
+        if (!activity_name || isNaN(vacancies) || isNaN(classesCount)) return
 
         startTransition(async () => {
             const res = await saveOficina(unit, activity_name, category_id, vacancies, classesCount, directorateId)
@@ -121,6 +121,19 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
         })
     }
 
+    const handleCategoryChange = (ofiId: string, value: string) => {
+        startTransition(async () => {
+            const res = await updateOficinaCategoria(ofiId, value, directorateId)
+            if (res.success) {
+                setOficinaMessage({ type: 'success', text: 'Categoria atualizada!' })
+                await loadOficinas()
+                setTimeout(() => setOficinaMessage(null), 3000)
+            } else {
+                setOficinaMessage({ type: 'error', text: 'Erro ao atualizar categoria.' })
+            }
+        })
+    }
+
     return (
         <div className="flex flex-col gap-2 w-full">
             <Dialog open={isOficinaOpen} onOpenChange={setIsOficinaOpen}>
@@ -144,18 +157,15 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="category_id">Categoria (Tags)</Label>
-                                <Select name="category_id" required disabled={isPending}>
+                                <Select name="category_id" defaultValue="empty" disabled={isPending}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecione uma categoria..." />
+                                        <SelectValue placeholder="Sem Categoria" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {categories.length === 0 ? (
-                                            <SelectItem value="empty" disabled>Nenhuma categoria cadastrada</SelectItem>
-                                        ) : (
-                                            categories.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                            ))
-                                        )}
+                                        <SelectItem value="empty">Sem categoria</SelectItem>
+                                        {categories.map(c => (
+                                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -175,8 +185,8 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
                             </div>
                             {oficinaMessage && (
                                 <div className={`p-3 text-sm rounded-md ${oficinaMessage.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                        oficinaMessage.type === 'info' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                            'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                    oficinaMessage.type === 'info' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                        'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                     }`}>
                                     {oficinaMessage.text}
                                 </div>
@@ -202,9 +212,21 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
                                             <div className="flex flex-col gap-0.5">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{ofi.activity_name}</span>
-                                                    <span className="text-[10px] px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-full text-zinc-500 font-medium">
-                                                        {ofi.category_name}
-                                                    </span>
+                                                    <Select
+                                                        value={ofi.category_id || "empty"}
+                                                        onValueChange={(val) => handleCategoryChange(ofi.id, val)}
+                                                        disabled={isPending}
+                                                    >
+                                                        <SelectTrigger className="h-6 text-[10px] py-0 px-2 w-auto bg-zinc-100 dark:bg-zinc-800 border-none rounded-full text-zinc-500 font-medium">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="empty">Sem categoria</SelectItem>
+                                                            {categories.map(c => (
+                                                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                 </div>
                                                 <div className="flex items-center gap-3 text-[11px] text-zinc-500">
                                                     <span className="flex items-center gap-1">

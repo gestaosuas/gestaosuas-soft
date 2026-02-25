@@ -43,7 +43,7 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            if (setor !== 'creas' && setor !== 'ceai' && setor !== 'cras' && setor !== 'naica') {
+            if (setor !== 'creas' && setor !== 'ceai' && setor !== 'cras' && setor !== 'naica' && setor !== 'creas_protetivo' && setor !== 'creas_socioeducativo') {
                 if (isMounted) {
                     setLoading(false)
                     setDataLoaded(true)
@@ -127,6 +127,16 @@ export function SubmissionFormClient({
 
                         // Mês Anterior Feminino = (Anterior F + Inseridos F) - Desligados F
                         newData.mes_anterior_fem = (getNum(targetData.mes_anterior_fem) + getNum(targetData.inseridos_fem)) - getNum(targetData.desligados_fem)
+                    } else if (setor === 'creas_protetivo') {
+                        // CRAS Protetivo Logic (Famílias e Atendimentos)
+                        // Famílias: Atual (Anterior) - Desligadas (Anterior)
+                        if (prevData.fam_atual !== undefined || prevData.fam_desligadas !== undefined) {
+                            newData.fam_mes_anterior = getNum(prevData.fam_atual) - getNum(prevData.fam_desligadas)
+                        }
+                        // Atendimentos: Atual (Anterior) - Desligadas (Anterior)
+                        if (prevData.atend_atual !== undefined || prevData.atend_desligadas !== undefined) {
+                            newData.atend_mes_anterior = getNum(prevData.atend_atual) - getNum(prevData.atend_desligadas)
+                        }
                     }
 
                     console.log("Fetched Previous Data:", prevData)
@@ -324,6 +334,24 @@ export function SubmissionFormClient({
                 setData((prev: any) => ({ ...prev, med_total_psc_geral: total_psc_geral }))
             }
         }
+
+        if (setor === 'creas_protetivo') {
+            // Famílias
+            const fam_ant = Number(data.fam_mes_anterior) || 0
+            const fam_adm = Number(data.fam_admitidas) || 0
+            const fam_total = fam_ant + fam_adm
+            if (data.fam_atual !== fam_total) {
+                setData((prev: any) => ({ ...prev, fam_atual: fam_total }))
+            }
+
+            // Atendimentos
+            const atend_ant = Number(data.atend_mes_anterior) || 0
+            const atend_adm = Number(data.atend_admitidas) || 0
+            const atend_total = atend_ant + atend_adm
+            if (data.atend_atual !== atend_total) {
+                setData((prev: any) => ({ ...prev, atend_atual: atend_total }))
+            }
+        }
     }, [setor, subcategory])
 
 
@@ -348,7 +376,7 @@ export function SubmissionFormClient({
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica') {
+                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {
                     window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`

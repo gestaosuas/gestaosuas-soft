@@ -11,7 +11,7 @@ import { CEAI_FORM_DEFINITION, CONDOMINIO_IDOSO_FORM_DEFINITION } from "@/app/da
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
-import { SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
+import { PROTETIVO_FORM_DEFINITION, SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { getUserAllowedUnits } from "@/lib/auth-utils"
 
 export default async function NewReportPage({
@@ -27,6 +27,7 @@ export default async function NewReportPage({
     const isCREAS = setor === 'creas'
     const isPopRua = setor === 'pop_rua'
     const isNAICA = setor === 'naica'
+    const isProtetivo = setor === 'creas_protetivo'
     const isSocioeducativo = setor === 'creas_socioeducativo'
 
     const supabase = await createClient()
@@ -198,6 +199,11 @@ export default async function NewReportPage({
     if (isSocioeducativo) {
         formDefinition = SOCIOEDUCATIVO_FORM_DEFINITION
         titleContext = "CREAS Socioeducativo"
+    }
+
+    if (isProtetivo) {
+        formDefinition = PROTETIVO_FORM_DEFINITION
+        titleContext = "CREAS Protetivo"
     }
 
     if (isCREAS) {

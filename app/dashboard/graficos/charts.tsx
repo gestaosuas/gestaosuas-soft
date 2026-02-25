@@ -20,10 +20,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function MetricsCards({ data, monthName, compact = false }: { data: any[], monthName: string, compact?: boolean }) {
-    const colSpan = data.length === 5 ? 'xl:grid-cols-5' : data.length >= 4 ? 'lg:grid-cols-4' : `grid-cols-${data.length}`;
+    let gridClass = "grid-cols-1 sm:grid-cols-2 md:grid-cols-3";
+
+    if (data.length === 7) gridClass = "grid-cols-2 md:grid-cols-4 xl:grid-cols-[repeat(7,minmax(0,1fr))]";
+    else if (data.length === 6) gridClass = "grid-cols-2 md:grid-cols-3 xl:grid-cols-[repeat(6,minmax(0,1fr))] lg:grid-cols-6";
+    else if (data.length === 5) gridClass = "grid-cols-2 md:grid-cols-3 xl:grid-cols-5";
+    else if (data.length === 4) gridClass = "grid-cols-2 lg:grid-cols-4";
+    else if (data.length === 3) gridClass = "grid-cols-1 sm:grid-cols-3";
+    else if (data.length === 2) gridClass = "grid-cols-1 sm:grid-cols-2";
+    else if (data.length === 1) gridClass = "grid-cols-1";
 
     return (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${colSpan} gap-4`}>
+        <div className={`grid gap-3 ${gridClass}`}>
             {data.map((item: any, i: number) => {
                 const isPositive = (item.trend || 0) >= 0;
 
@@ -383,14 +391,14 @@ export function GenericPieChart({ data, title, colors }: { data: any[], title: s
     const COLORS = colors || DEFAULT_COLORS;
 
     return (
-        <Card className="shadow-sm">
-            <CardHeader>
-                <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+            <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[300px] p-8 pt-0 relative">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
