@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Table as TableIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { CEAIFilters } from "@/components/ceai-filters"
 import {
     Table,
     TableBody,
@@ -31,9 +32,9 @@ import { YearSelector } from "@/components/year-selector"
 export default async function DataPage({
     searchParams,
 }: {
-    searchParams: Promise<{ year?: string, setor?: string, directorate_id?: string, subcategory?: string }>
+    searchParams: Promise<{ year?: string, setor?: string, directorate_id?: string, subcategory?: string, unit_filter?: string, category_filter?: string }>
 }) {
-    const { year, setor, directorate_id, subcategory } = await searchParams
+    const { year, setor, directorate_id, subcategory, unit_filter, category_filter } = await searchParams
     const selectedYear = Number(year) || new Date().getFullYear()
     let isCP = setor === 'centros'
     let isBeneficios = setor === 'beneficios'
@@ -249,13 +250,18 @@ export default async function DataPage({
     }
 
     // If not CRAS, we expect only one logical unit (the directorate itself)
-    const unitsToRender = isCRAS
+    let unitsToRender = isCRAS
         ? getFilteredUnits(CRAS_UNITS)
         : (isCEAI && subcategory !== 'condominio')
             ? getFilteredUnits(CEAI_UNITS)
             : isNAICA
                 ? getFilteredUnits(NAICA_UNITS)
                 : ['Principal']
+
+    // Filter by unit if requested (Admin only for CEAI)
+    if (isCEAI && isAdmin && unit_filter && unit_filter !== 'todos') {
+        unitsToRender = unitsToRender.filter(u => u === unit_filter)
+    }
 
     const months = [
         "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -264,11 +270,24 @@ export default async function DataPage({
 
     // Pre-fetch Oficinas if CEAI
     const oficinasPorUnit = new Map<string, any[]>()
+    const allCategories = new Set<string>()
+
     if (isCEAI && subcategory !== 'condominio') {
+        const unitsToFetch = (isAdmin) ? getFilteredUnits(CEAI_UNITS) : unitsToRender; // Need all cats for filter
         await Promise.all(
-            unitsToRender.map(async (unit) => {
+            unitsToFetch.map(async (unit) => {
                 const oficinas = await getOficinasComCategorias(unit)
-                oficinasPorUnit.set(unit, oficinas || [])
+                oficinas?.forEach(o => {
+                    if (o.category_name) allCategories.add(o.category_name)
+                })
+
+                if (unitsToRender.includes(unit)) {
+                    let filteredOficinas = oficinas || []
+                    if (category_filter && category_filter !== 'todos') {
+                        filteredOficinas = filteredOficinas.filter(o => o.category_name === category_filter)
+                    }
+                    oficinasPorUnit.set(unit, filteredOficinas)
+                }
             })
         )
     }
@@ -297,6 +316,14 @@ export default async function DataPage({
                     </div>
                 </div>
                 <div className="flex items-center gap-4 print:hidden">
+                    {isCEAI && subcategory !== 'condominio' && (
+                        <CEAIFilters
+                            isAdmin={isAdmin}
+                            availableUnits={getFilteredUnits(CEAI_UNITS)}
+                            availableCategories={Array.from(allCategories).sort()}
+                        />
+                    )}
+                    <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden md:block"></div>
                     <YearSelector currentYear={selectedYear} />
                     <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden md:block"></div>
                     <PrintExportControls />
@@ -495,7 +522,7 @@ export default async function DataPage({
                                                                     return (
                                                                         <TableCell key={idx} className="text-center text-[12px] font-bold text-zinc-900 dark:text-zinc-100 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
                                                                             {monthData ? (
-                                                                                <span>{oficina.total_vacancies}</span>
+                                                                                <span>{monthData[`oficina_${oficina.id}_vagas_totais`] || 0}</span>
                                                                             ) : (
                                                                                 <span className="text-zinc-200 dark:text-zinc-800">-</span>
                                                                             )}
@@ -590,11 +617,13 @@ export default async function DataPage({
                                                                         const monthData = unitData.get(monthNum)
                                                                         const val = monthData?.[jsonKey]
                                                                         const numVal = Number(val)
+                                                                        const jsonKeyTotais = `oficina_${oficina.id}_vagas_totais`
+                                                                        const disponiveisMensal = Number(monthData?.[jsonKeyTotais]) || 0
 
                                                                         let taxa: string | React.ReactNode = <span className="text-zinc-200 dark:text-zinc-800">-</span>
                                                                         if (!isNaN(numVal) && val !== undefined && val !== '') {
-                                                                            if (disponiveis > 0) {
-                                                                                const percent = (numVal / disponiveis) * 100
+                                                                            if (disponiveisMensal > 0) {
+                                                                                const percent = (numVal / disponiveisMensal) * 100
                                                                                 taxa = <span className="font-bold text-zinc-900 dark:text-zinc-100">{percent.toFixed(1)}%</span>
                                                                             } else {
                                                                                 taxa = <span className="font-bold text-zinc-900 dark:text-zinc-100">0%</span>

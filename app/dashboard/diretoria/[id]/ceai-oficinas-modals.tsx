@@ -24,10 +24,6 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
     const [categoryMessage, setCategoryMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null)
     const [oficinaMessage, setOficinaMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null)
 
-    const [vacancies, setVacancies] = useState<number>(0)
-    const [classesCount, setClassesCount] = useState<number>(0)
-    const totalVacancies = vacancies * classesCount
-
     const [isPending, startTransition] = useTransition()
 
     const loadCategories = async () => {
@@ -88,14 +84,10 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
         const activity_name = formData.get('activity_name') as string
         const category_id = formData.get('category_id') as string
 
-        if (!activity_name || isNaN(vacancies) || isNaN(classesCount)) return
-
         startTransition(async () => {
-            const res = await saveOficina(unit, activity_name, category_id, vacancies, classesCount, directorateId)
+            const res = await saveOficina(unit, activity_name, category_id, 0, 0, directorateId)
             if (res.success) {
                 setOficinaMessage({ type: 'success', text: 'Oficina salva com sucesso!' })
-                setVacancies(0)
-                setClassesCount(0)
                 await loadOficinas()
                 // clean the remaining form
                 const form = e.target as HTMLFormElement
@@ -169,20 +161,7 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="vacancies">Vagas/Turma</Label>
-                                    <Input id="vacancies" name="vacancies" type="number" min="0" required value={vacancies || ""} onChange={e => setVacancies(Number(e.target.value) || 0)} disabled={isPending} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="classes_count">Nº de Turmas</Label>
-                                    <Input id="classes_count" name="classes_count" type="number" min="0" required value={classesCount || ""} onChange={e => setClassesCount(Number(e.target.value) || 0)} disabled={isPending} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="total_vacancies">Vagas Disp.</Label>
-                                    <Input id="total_vacancies" name="total_vacancies" type="number" value={totalVacancies} disabled className="bg-zinc-50 dark:bg-zinc-800/50 cursor-not-allowed" />
-                                </div>
-                            </div>
+
                             {oficinaMessage && (
                                 <div className={`p-3 text-sm rounded-md ${oficinaMessage.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                     oficinaMessage.type === 'info' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
@@ -229,16 +208,8 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
                                                     </Select>
                                                 </div>
                                                 <div className="flex items-center gap-3 text-[11px] text-zinc-500">
-                                                    <span className="flex items-center gap-1">
-                                                        {ofi.vacancies} vagas/turma
-                                                    </span>
-                                                    <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-                                                    <span className="flex items-center gap-1">
-                                                        {ofi.classes_count} turmas
-                                                    </span>
-                                                    <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-                                                    <span className="font-bold text-blue-600 dark:text-blue-400">
-                                                        Total: {ofi.total_vacancies}
+                                                    <span className="italic">
+                                                        Vagas definidas mensalmente na atualização de dados
                                                     </span>
                                                 </div>
                                             </div>

@@ -175,12 +175,18 @@ export function SubmissionFormClient({
                         const baseDefinition = { ...definition, sections: [...definition.sections] }
 
                         // Map the oficinas to form fields
-                        const oficinaFields = oficinas.map((oficina: any) => ({
-                            id: `oficina_${oficina.id}_vagas_ocupadas`,
-                            label: `${oficina.activity_name} (${oficina.category_name}) - ${oficina.vacancies}v/${oficina.classes_count}t`,
-                            type: "number" as const,
-                            tooltip: `Configuração: ${oficina.vacancies} vagas por turma | ${oficina.classes_count} turmas | Total: ${oficina.total_vacancies} vagas disponíveis.`
-                        }))
+                        const oficinaFields = oficinas.flatMap((oficina: any) => ([
+                            {
+                                id: `oficina_${oficina.id}_vagas_totais`,
+                                label: `${oficina.activity_name} (${oficina.category_name}) - Qtd. de Vagas`,
+                                type: "number" as const,
+                            },
+                            {
+                                id: `oficina_${oficina.id}_vagas_ocupadas`,
+                                label: `${oficina.activity_name} (${oficina.category_name}) - Vagas Ocupadas`,
+                                type: "number" as const,
+                            }
+                        ]))
 
                         // Add the new section
                         baseDefinition.sections.push({
