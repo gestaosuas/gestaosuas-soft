@@ -20,6 +20,7 @@ import {
     Home,
     HeartPulse,
     MapPin,
+    Map,
     Coins,
     Briefcase,
     Backpack
@@ -131,6 +132,28 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                         >
                             <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", pathname === "/dashboard" ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                             {!isCollapsed && <span>Painel Geral</span>}
+                        </Button>
+                    </Link>
+                </div>
+
+                <div className="space-y-1">
+                    {!isCollapsed && (
+                        <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mt-2">Mapas</h3>
+                    )}
+                    <Link href="/dashboard/mapas/unidades">
+                        <Button
+                            variant="ghost"
+                            className={cn(
+                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
+                                pathname?.startsWith("/dashboard/mapas/unidades")
+                                    ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                    : "text-white hover:text-cyan-400 hover:bg-white/5"
+                            )}
+                            title="Unidades SMDES"
+                        >
+                            <Map className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname?.startsWith("/dashboard/mapas/unidades") ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
+                            {!isCollapsed && <span className="truncate">Unidades SMDES</span>}
                         </Button>
                     </Link>
                 </div>
@@ -249,6 +272,22 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                             >
                                 <ShieldCheck className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/configuracoes") ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Configurações</span>}
+                            </Button>
+                        </Link>
+                        <Link href="/dashboard/admin/mapas">
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mt-1",
+                                    isCollapsed ? "justify-center px-0" : "justify-start px-3",
+                                    pathname?.startsWith("/dashboard/admin/mapas")
+                                        ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                        : "text-white hover:text-cyan-400 hover:bg-white/5"
+                                )}
+                                title="Gestão de Mapas"
+                            >
+                                <MapPin className={cn("h-[18px] w-[18px] transition-colors", pathname?.startsWith("/dashboard/admin/mapas") ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
+                                {!isCollapsed && <span>Mapas (Painel)</span>}
                             </Button>
                         </Link>
                     </div>

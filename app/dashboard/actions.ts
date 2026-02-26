@@ -515,6 +515,53 @@ export async function deleteReport(reportId: string) {
     return { success: true }
 }
 
+export async function deleteMonthData(directorateId: string, month: number, year: number, unitName?: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const isAdmin = await isAdminCheck(user.id)
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    if (!isAdmin && !isEmailAdmin) {
+        throw new Error("Apenas administradores podem excluir dados mensais.")
+    }
+
+    const adminSupabase = createAdminClient()
+
+    // 1. Fetch the existing submission
+    const { data: existing } = await adminSupabase
+        .from('submissions')
+        .select('*')
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+        .maybeSingle()
+
+    if (!existing) return { success: true }
+
+    if (unitName && existing.data?._is_multi_unit && existing.data?.units) {
+        // Multi-unit cleanup: Just remove the specific unit from the JSON
+        const updatedUnits = { ...existing.data.units }
+        delete updatedUnits[unitName]
+
+        // If no units left, we might as well delete the whole record? 
+        // Or just leave an empty units object. Better delete it if it's the last one.
+        if (Object.keys(updatedUnits).length === 0) {
+            await adminSupabase.from('submissions').delete().eq('id', existing.id)
+        } else {
+            await adminSupabase.from('submissions')
+                .update({ data: { ...existing.data, units: updatedUnits } })
+                .eq('id', existing.id)
+        }
+    } else {
+        // Flat cleanup or no unit specified: Delete the whole record for the month
+        await adminSupabase.from('submissions').delete().eq('id', existing.id)
+    }
+
+    revalidatePath('/dashboard', 'layout')
+    return { success: true }
+}
+
 export async function updateSystemSetting(key: string, value: string) {
     const supabase = await createClient()
 

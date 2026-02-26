@@ -28,6 +28,7 @@ import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { SOCIOEDUCATIVO_FORM_DEFINITION, PROTETIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
+import { DeleteMonthButton } from "@/components/delete-month-button"
 
 export default async function DataPage({
     searchParams,
@@ -431,8 +432,21 @@ export default async function DataPage({
                                                                 Atributo / Indicador
                                                             </TableHead>
                                                             {months.map((m, i) => (
-                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
-                                                                    {m}
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
+                                                                    <div className="flex flex-col items-center justify-center w-full h-full">
+                                                                        <span>{m}</span>
+                                                                        <div className="absolute top-1 right-1">
+                                                                            {isAdmin && (
+                                                                                <DeleteMonthButton
+                                                                                    directorateId={directorate.id}
+                                                                                    month={i + 1}
+                                                                                    year={selectedYear}
+                                                                                    monthName={m}
+                                                                                    unitName={(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) ? unitName : undefined}
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </TableHead>
                                                             ))}
                                                             <TableHead className="text-center font-bold text-zinc-900 dark:text-zinc-50 text-[10px] h-14 px-1 bg-zinc-50/80 dark:bg-zinc-800/40 uppercase tracking-widest">Acumulado</TableHead>
@@ -504,8 +518,21 @@ export default async function DataPage({
                                                                 Atividade
                                                             </TableHead>
                                                             {months.map((m, i) => (
-                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
-                                                                    {m}
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
+                                                                    <div className="flex flex-col items-center justify-center w-full h-full">
+                                                                        <span>{m}</span>
+                                                                        <div className="absolute top-1 right-1">
+                                                                            {isAdmin && (
+                                                                                <DeleteMonthButton
+                                                                                    directorateId={directorate.id}
+                                                                                    month={i + 1}
+                                                                                    year={selectedYear}
+                                                                                    monthName={m}
+                                                                                    unitName={unitName}
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </TableHead>
                                                             ))}
                                                         </TableRow>
@@ -549,8 +576,21 @@ export default async function DataPage({
                                                                 Atividade
                                                             </TableHead>
                                                             {months.map((m, i) => (
-                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
-                                                                    {m}
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
+                                                                    <div className="flex flex-col items-center justify-center w-full h-full">
+                                                                        <span>{m}</span>
+                                                                        <div className="absolute top-1 right-1">
+                                                                            {isAdmin && (
+                                                                                <DeleteMonthButton
+                                                                                    directorateId={directorate.id}
+                                                                                    month={i + 1}
+                                                                                    year={selectedYear}
+                                                                                    monthName={m}
+                                                                                    unitName={unitName}
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </TableHead>
                                                             ))}
                                                         </TableRow>
@@ -597,8 +637,21 @@ export default async function DataPage({
                                                                 Atividade
                                                             </TableHead>
                                                             {months.map((m, i) => (
-                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 px-1 uppercase tracking-tighter">
-                                                                    {m}
+                                                                <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
+                                                                    <div className="flex flex-col items-center justify-center w-full h-full">
+                                                                        <span>{m}</span>
+                                                                        <div className="absolute top-1 right-1">
+                                                                            {isAdmin && (
+                                                                                <DeleteMonthButton
+                                                                                    directorateId={directorate.id}
+                                                                                    month={i + 1}
+                                                                                    year={selectedYear}
+                                                                                    monthName={m}
+                                                                                    unitName={unitName}
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </TableHead>
                                                             ))}
                                                         </TableRow>

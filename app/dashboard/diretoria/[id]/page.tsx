@@ -117,7 +117,7 @@ export default async function DirectoratePage({
                                     { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
                                     { label: "Dados SINE", desc: "Consulta ao banco de registros", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => {
-                                    const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                                    const isDisabled = false
 
                                     if (isDisabled) {
                                         return (
@@ -214,7 +214,7 @@ export default async function DirectoratePage({
                             { label: "Dados Benefícios", desc: "Dados consolidados", href: `/dashboard/dados?setor=beneficios&directorate_id=${directorate.id}`, icon: Database },
                             { label: "Dashboard Benefícios", desc: "Analytics e KPIs", href: `/dashboard/graficos?setor=beneficios&directorate_id=${directorate.id}`, icon: BarChart3 },
                         ].map((item, idx) => {
-                            const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                            const isDisabled = false
 
                             if (isDisabled) {
                                 return (
@@ -273,7 +273,7 @@ export default async function DirectoratePage({
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=cras&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=cras&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => {
-                                const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                                const isDisabled = false
 
                                 if (isDisabled) {
                                     return (
@@ -363,7 +363,7 @@ export default async function DirectoratePage({
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo", href: `/dashboard/relatorios/mensal?setor=creas&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios", href: `/dashboard/relatorios/lista?setor=creas&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => {
-                                const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                                const isDisabled = false
 
                                 if (isDisabled) {
                                     return (
@@ -508,7 +508,7 @@ export default async function DirectoratePage({
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=ceai&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=ceai&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => {
-                                const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                                const isDisabled = false
 
                                 if (isDisabled) {
                                     return (
@@ -691,7 +691,7 @@ export default async function DirectoratePage({
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=naica&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=naica&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => {
-                                const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                                const isDisabled = false
 
                                 if (isDisabled) {
                                     return (
@@ -781,7 +781,7 @@ export default async function DirectoratePage({
                             { label: "Dados População de Rua e migrantes", desc: "Banco de dados consolidado", href: `/dashboard/dados?setor=pop_rua&directorate_id=${directorate.id}`, icon: Database },
                             { label: "Dashboard População de Rua e migrante", desc: "Indicadores e gráficos", href: `/dashboard/graficos?setor=pop_rua&directorate_id=${directorate.id}`, icon: BarChart3 }
                         ].map((item, idx) => {
-                            const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                            const isDisabled = false
 
                             if (isDisabled) {
                                 return (
@@ -828,7 +828,7 @@ export default async function DirectoratePage({
                                 { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=protecao_especial&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=protecao_especial&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => {
-                                const isDisabled = ["Relatório Mensal", "Ver Relatórios"].includes(item.label)
+                                const isDisabled = false
 
                                 if (isDisabled) {
                                     return (
