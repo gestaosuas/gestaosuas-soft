@@ -57,9 +57,9 @@ export function DailyFormClient({ directorateId }: { directorateId: string }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-24">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="flex items-center gap-6">
+                <div className="flex items-start gap-6">
                     <Link href={`/dashboard/diretoria/${directorateId}`}>
-                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all mt-1">
                             <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Button>
                     </Link>
@@ -69,18 +69,21 @@ export function DailyFormClient({ directorateId }: { directorateId: string }) {
                         </h1>
                         <p className="text-[13px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Controle Operacional Diário</p>
                     </div>
-                </div>
-
-                <div className="flex flex-col gap-2.5 min-w-[240px]">
-                    <Label htmlFor="date" className="text-[11px] uppercase tracking-widest font-bold text-zinc-500 ml-0.5">Calendário de Referência</Label>
-                    <Input
-                        id="date"
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-bold uppercase tracking-tight"
-                        required
-                    />
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm">
+                        <div className="flex items-center gap-3 pr-4 sm:border-r border-zinc-100 dark:border-zinc-800/60 w-full sm:w-auto">
+                            <Label htmlFor="date" className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest whitespace-nowrap">Referência</Label>
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Input
+                                id="date"
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="h-9 w-full sm:w-[150px] bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all text-xs font-bold uppercase tracking-tight"
+                                required
+                            />
+                        </div>
+                    </div>
                 </div>
             </header>
 

@@ -406,121 +406,115 @@ export function SubmissionFormClient({
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div className="flex items-start gap-6">
                     <Link href={setor === 'beneficios' ? `/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9` : `/dashboard/diretoria/${directorateId}`}>
-                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all mt-1">
                             <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Button>
                     </Link>
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
-                            Entrada de Dados
-                        </h1>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{directorateName}</span>
-                            {unit && (
-                                <>
-                                    <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">{unit}</span>
-                                </>
-                            )}
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
+                                Entrada de Dados
+                            </h1>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{directorateName}</span>
+                                {unit && (
+                                    <>
+                                        <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                                        <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">{unit}</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Top Reference Filters */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm">
+                            <div className="flex items-center gap-3 pr-4 border-r border-zinc-100 dark:border-zinc-800/60">
+                                <Calendar className="w-4 h-4 text-blue-900 dark:text-blue-400" />
+                                <span className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Referência</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider hidden sm:block">Mês:</Label>
+                                    <Select value={month} onValueChange={setMonth} disabled={loading}>
+                                        <SelectTrigger className="h-9 w-[140px] bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-semibold uppercase tracking-tight">
+                                            <SelectValue placeholder="Mês" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
+                                            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
+                                                const currentDate = new Date()
+                                                const currentMonth = currentDate.getMonth() + 1
+                                                const currentYear = currentDate.getFullYear()
+                                                const selectedYearInt = parseInt(year)
+
+                                                let isDisabled = false
+                                                if (!isAdmin) {
+                                                    if (selectedYearInt > currentYear) isDisabled = true
+                                                    else if (selectedYearInt === currentYear && m > currentMonth) isDisabled = true
+                                                }
+
+                                                return (
+                                                    <SelectItem
+                                                        key={m}
+                                                        value={String(m)}
+                                                        disabled={isDisabled}
+                                                        className="uppercase text-[11px] font-bold py-2 px-3 focus:bg-zinc-900 dark:focus:bg-zinc-50 focus:text-white dark:focus:text-zinc-900 cursor-pointer mb-1 last:mb-0 transition-colors"
+                                                    >
+                                                        {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'short' })}
+                                                    </SelectItem>
+                                                )
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider hidden sm:block">Ano:</Label>
+                                    <Select value={year} onValueChange={setYear} disabled={loading}>
+                                        <SelectTrigger className="h-9 w-[100px] bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-bold tracking-tight">
+                                            <SelectValue placeholder="Ano" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
+                                            {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
+                                                <SelectItem key={y} value={String(y)} className="text-[11px] font-bold py-2 px-3 focus:bg-zinc-900 dark:focus:bg-zinc-50 focus:text-white dark:focus:text-zinc-900 cursor-pointer mb-1 last:mb-0 transition-colors">{y}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Selection Card */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-4">
-                    <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl overflow-hidden sticky top-8">
-                        <CardHeader className="pt-8 px-8 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
-                            <div className="flex items-center gap-3">
-                                <Calendar className="w-4 h-4 text-zinc-900 dark:text-zinc-50" />
-                                <h3 className="text-[12px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Referência</h3>
+            {/* Form Container */}
+            <div className="w-full">
+                <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl w-full">
+                    <CardHeader className="pt-8 px-6 lg:px-10 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Indicadores Operacionais</h3>
+                                <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-8 space-y-8">
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">Ciclo Mensal</Label>
-                                <Select value={month} onValueChange={setMonth} disabled={loading}>
-                                    <SelectTrigger className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-semibold uppercase tracking-tight">
-                                        <SelectValue placeholder="Mês" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
-                                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
-                                            const currentDate = new Date()
-                                            const currentMonth = currentDate.getMonth() + 1
-                                            const currentYear = currentDate.getFullYear()
-                                            const selectedYearInt = parseInt(year)
-
-                                            let isDisabled = false
-                                            if (!isAdmin) {
-                                                if (selectedYearInt > currentYear) isDisabled = true
-                                                else if (selectedYearInt === currentYear && m > currentMonth) isDisabled = true
-                                            }
-
-                                            return (
-                                                <SelectItem
-                                                    key={m}
-                                                    value={String(m)}
-                                                    disabled={isDisabled}
-                                                    className="uppercase text-[11px] font-bold py-3 px-4 focus:bg-zinc-900 dark:focus:bg-zinc-50 focus:text-white dark:focus:text-zinc-900 cursor-pointer mb-1 last:mb-0 transition-colors"
-                                                >
-                                                    {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })}
-                                                </SelectItem>
-                                            )
-                                        })}
-                                    </SelectContent>
-                                </Select>
+                            <div className="hidden md:flex items-center px-4 py-2 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                                <p className="text-[10px] text-blue-900/70 dark:text-blue-400/70 font-bold uppercase tracking-[0.1em] leading-relaxed">
+                                    Consolidando p/ <span className="text-blue-900 dark:text-blue-400">{year}</span> no mês de <span className="text-blue-900 dark:text-blue-400 capitalize">{monthName}</span>
+                                </p>
                             </div>
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-0.5">Exercício</Label>
-                                <Select value={year} onValueChange={setYear} disabled={loading}>
-                                    <SelectTrigger className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-bold tracking-tight">
-                                        <SelectValue placeholder="Ano" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
-                                        {Array.from({ length: 3 }, (_, i) => 2024 + i).map(y => (
-                                            <SelectItem key={y} value={String(y)} className="text-[11px] font-bold py-3 px-4 focus:bg-zinc-900 dark:focus:bg-zinc-50 focus:text-white dark:focus:text-zinc-900 cursor-pointer mb-1 last:mb-0 transition-colors">{y}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/60">
-                                <div className="p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-[0.15em] leading-relaxed">
-                                        Os dados preenchidos serão consolidados para o exercício de <span className="text-zinc-900 dark:text-zinc-100">{year}</span> no mês de <span className="text-zinc-900 dark:text-zinc-100 capitalize">{monthName}</span>.
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="lg:col-span-8">
-                    <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl">
-                        <CardHeader className="pt-8 px-10 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Indicadores Operacionais</h3>
-                                    <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-10">
-                            <FormEngine
-                                key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
-                                definition={dynamicDefinition}
-                                initialData={fetchedInitialData}
-                                onSubmit={handleSubmit}
-                                onDataChange={handleDataChange}
-                                disabled={loading}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-6 lg:p-10 w-full overflow-x-hidden">
+                        <FormEngine
+                            key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
+                            definition={dynamicDefinition}
+                            initialData={fetchedInitialData}
+                            onSubmit={handleSubmit}
+                            onDataChange={handleDataChange}
+                            disabled={loading}
+                        />
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )
