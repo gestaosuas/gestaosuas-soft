@@ -166,12 +166,34 @@ export function VisitForm({
         index: 0
     })
 
+    // Photo Selection State (Mobile Tablet Optimization)
+    const [isPhotoSelectionMode, setIsPhotoSelectionMode] = useState(false)
+    const [selectedPhotos, setSelectedPhotos] = useState<number[]>([])
+
     const openLightbox = (index: number) => {
         setLightbox({ isOpen: true, index })
     }
 
     const closeLightbox = () => {
         setLightbox({ isOpen: false, index: 0 })
+    }
+
+    const togglePhotoSelection = (index: number) => {
+        setSelectedPhotos(prev =>
+            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+        )
+    }
+
+    const removeSelectedPhotos = () => {
+        if (selectedPhotos.length === 0) return
+        if (!confirm(`Deseja realmente excluir as ${selectedPhotos.length} fotos selecionadas?`)) return
+
+        setFormData((prev: any) => ({
+            ...prev,
+            photos: prev.photos.filter((_: string, i: number) => !selectedPhotos.includes(i))
+        }))
+        setSelectedPhotos([])
+        setIsPhotoSelectionMode(false)
     }
 
     const nextPhoto = () => {
@@ -1640,10 +1662,40 @@ export function VisitForm({
                 "print-section locked-report",
                 !isLocked && "bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 print:shadow-none print:p-0"
             )}>
-                <h2 className={cn(
-                    "text-lg font-black tracking-tight mb-4",
-                    !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
-                )}>FOTOS / EVIDÊNCIAS</h2>
+                <div className="flex items-center gap-4 mb-4">
+                    <h2 className={cn(
+                        "text-lg font-black tracking-tight",
+                        !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
+                    )}>FOTOS / EVIDÊNCIAS</h2>
+                    {!isLocked && formData.photos && formData.photos.length > 0 && (
+                        <div className="flex items-center gap-2 print:hidden">
+                            <Button
+                                type="button"
+                                variant={isPhotoSelectionMode ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => {
+                                    setIsPhotoSelectionMode(!isPhotoSelectionMode)
+                                    setSelectedPhotos([])
+                                }}
+                                className={cn("text-[10px] h-7 uppercase font-bold tracking-wider", isPhotoSelectionMode ? "bg-blue-600 text-white hover:bg-blue-700" : "text-zinc-500")}
+                            >
+                                {isPhotoSelectionMode ? "Cancelar Seleção" : "Selecionar para Excluir"}
+                            </Button>
+                            {isPhotoSelectionMode && selectedPhotos.length > 0 && (
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={removeSelectedPhotos}
+                                    className="text-[10px] h-7 uppercase font-bold tracking-wider gap-1.5 animate-in fade-in"
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                    Excluir ({selectedPhotos.length})
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {(!formData.photos || formData.photos.length === 0) && isLocked ? (
                     <div className="text-[11px] font-medium leading-[1.4] text-zinc-800 bg-zinc-50/50 p-3 italic border-l-2 border-zinc-200">
@@ -1652,18 +1704,37 @@ export function VisitForm({
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {formData.photos?.map((photo: string, index: number) => (
-                            <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50">
+                            <div key={index}
+                                className={cn(
+                                    "relative group aspect-square rounded-xl overflow-hidden border bg-zinc-50 transition-all",
+                                    selectedPhotos.includes(index) ? "border-red-500 border-4 scale-[0.98]" : "border-zinc-200"
+                                )}
+                            >
                                 <img
                                     src={photo}
                                     alt={`Evidência ${index + 1}`}
                                     className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
                                     loading="lazy"
-                                    onClick={() => openLightbox(index)}
+                                    onClick={() => isPhotoSelectionMode ? togglePhotoSelection(index) : openLightbox(index)}
                                 />
-                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
-                                    <Maximize2 className="h-6 w-6 text-white" />
-                                </div>
-                                {!isLocked && (
+                                {!isPhotoSelectionMode && (
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                                        <Maximize2 className="h-6 w-6 text-white" />
+                                    </div>
+                                )}
+                                {isPhotoSelectionMode && (
+                                    <div
+                                        className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/50 to-transparent pointer-events-none flex items-start justify-end p-2"
+                                    >
+                                        <div className={cn(
+                                            "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                            selectedPhotos.includes(index) ? "bg-red-500 border-red-500" : "border-white bg-black/20"
+                                        )}>
+                                            {selectedPhotos.includes(index) && <Check className="h-3 w-3 text-white" />}
+                                        </div>
+                                    </div>
+                                )}
+                                {!isLocked && !isPhotoSelectionMode && (
                                     <button
                                         type="button"
                                         onClick={() => removePhoto(index)}
@@ -1675,7 +1746,7 @@ export function VisitForm({
                             </div>
                         ))}
 
-                        {!isLocked && (
+                        {!isLocked && !isPhotoSelectionMode && (
                             <>
                                 <label className="flex flex-col items-center justify-center gap-2 aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-blue-900/50 hover:bg-blue-50/50 cursor-pointer transition-all group">
                                     <input
