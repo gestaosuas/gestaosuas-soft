@@ -181,251 +181,7 @@ export async function submitReport(formData: Record<string, any>, month: number,
 
         // Save to Google Sheets
         try {
-            if (setor === 'centros') {
-                const formDef = CP_FORM_DEFINITION
-                const blocks = CP_SHEET_BLOCKS
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = blocks[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                if (directorate.sheet_config) {
-                    await updateSheetBlocks(
-                        { ...directorate.sheet_config as SheetConfig, sheetName: CP_SHEET_NAME },
-                        month,
-                        blocksData
-                    )
-                }
-            } else if (setor === 'beneficios') {
-                const formDef = BENEFICIOS_FORM_DEFINITION
-                const blocks = BENEFICIOS_SHEET_BLOCKS
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = blocks[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                if (directorate.sheet_config) {
-                    await updateSheetBlocks(
-                        { ...directorate.sheet_config as SheetConfig, sheetName: 'BENEFICIOS', spreadsheetId: BENEFICIOS_SPREADSHEET_ID },
-                        month,
-                        blocksData
-                    )
-                }
-            } else if (setor === 'cras') {
-                const formDef = CRAS_FORM_DEFINITION
-                const blocks = CRAS_SHEET_BLOCKS
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = blocks[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                await updateSheetBlocks(
-                    { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: formData._unit || 'CRAS' },
-                    month,
-                    blocksData
-                )
-            } else if (setor === 'creas') {
-                const subcategory = formData._subcategory || 'idoso'
-                if (subcategory === 'idoso') {
-                    const formDef = CREAS_IDOSO_FORM_DEFINITION
-                    const cfg = CREAS_IDOSO_SHEET_CONFIG
-                    const blocksData = formDef.sections.map((section, index) => {
-                        const blockConfig = cfg.blocks[index]
-                        if (!blockConfig) return null
-                        const values = section.fields.map(field => {
-                            const val = formData[field.id]
-                            return val !== undefined && val !== '' ? Number(val) : 0
-                        })
-                        return { startRow: blockConfig.startRow, values: values }
-                    }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-                    await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
-                } else {
-                    const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
-                    const cfg = CREAS_DEFICIENTE_SHEET_CONFIG
-                    const blocksData = formDef.sections.map((section, index) => {
-                        const blockConfig = cfg.blocks[index]
-                        if (!blockConfig) return null
-                        const values = section.fields.map(field => {
-                            const val = formData[field.id]
-                            return val !== undefined && val !== '' ? Number(val) : 0
-                        })
-                        return { startRow: blockConfig.startRow, values: values }
-                    }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-                    await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
-                }
-            } else if (setor === 'ceai') {
-                if (formData._subcategory !== 'condominio') {
-                    const formDef = CEAI_FORM_DEFINITION
-                    const blocksData = formDef.sections.map((section, index) => {
-                        const blockConfig = CEAI_SHEET_BLOCKS[index]
-                        if (!blockConfig) return null
-                        const values = section.fields.map(field => {
-                            const val = formData[field.id]
-                            return val !== undefined && val !== '' ? Number(val) : 0
-                        })
-                        return { startRow: blockConfig.startRow, values: values }
-                    }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                    await updateSheetBlocks(
-                        { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
-                        month,
-                        blocksData
-                    )
-                }
-            } else if (setor === 'pop_rua') {
-                const formDef = POP_RUA_FORM_DEFINITION
-
-                // Group blocks by sheet name because updateSheetBlocks takes one sheet name
-                // We have blocks in different sheets
-                const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
-
-                formDef.sections.forEach((section, index) => {
-                    const blockConfig = POP_RUA_SHEET_BLOCKS[index]
-                    if (!blockConfig) return
-
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-
-                    if (!blocksBySheet.has(blockConfig.sheetName)) {
-                        blocksBySheet.set(blockConfig.sheetName, [])
-                    }
-                    blocksBySheet.get(blockConfig.sheetName)!.push({
-                        startRow: blockConfig.startRow,
-                        values: values
-                    })
-                })
-
-                // Execute updates for each sheet
-                for (const [sheetName, blocks] of blocksBySheet.entries()) {
-                    await updateSheetBlocks(
-                        { spreadsheetId: POP_RUA_SPREADSHEET_ID, sheetName: sheetName },
-                        month,
-                        blocks
-                    )
-                }
-            } else if (setor === 'naica') {
-                const formDef = NAICA_FORM_DEFINITION
-                const blocksData = formDef.sections.map((section, index) => {
-                    const blockConfig = NAICA_SHEET_BLOCKS[index]
-                    if (!blockConfig) return null
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-                    return { startRow: blockConfig.startRow, values: values }
-                }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
-
-                const unitName = formData._unit || 'Principal'
-                console.log(`[NAICA] Updating blocks for ${unitName} (Month: ${month}):`, JSON.stringify(blocksData))
-
-                await updateSheetBlocks(
-                    { spreadsheetId: NAICA_SPREADSHEET_ID, sheetName: unitName, baseColumn: 'C' },
-                    month,
-                    blocksData
-                )
-            } else if (setor === 'creas_socioeducativo') {
-                const formDef = SOCIOEDUCATIVO_FORM_DEFINITION
-                const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
-
-                formDef.sections.forEach((section, index) => {
-                    const blockConfig = SOCIOEDUCATIVO_SHEET_BLOCKS[index]
-                    if (!blockConfig) return
-
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-
-                    if (!blocksBySheet.has(blockConfig.sheetName)) {
-                        blocksBySheet.set(blockConfig.sheetName, [])
-                    }
-                    blocksBySheet.get(blockConfig.sheetName)!.push({
-                        startRow: blockConfig.startRow,
-                        values: values
-                    })
-                })
-
-                for (const [sheetName, blocks] of blocksBySheet.entries()) {
-                    await updateSheetBlocks(
-                        { spreadsheetId: SOCIOEDUCATIVO_SPREADSHEET_ID, sheetName: sheetName, baseColumn: 'C' },
-                        month,
-                        blocks
-                    )
-                }
-            } else if (setor === 'creas_protetivo') {
-                const formDef = PROTETIVO_FORM_DEFINITION
-                const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
-
-                formDef.sections.forEach((section, index) => {
-                    const blockConfig = PROTETIVO_SHEET_BLOCKS[index]
-                    if (!blockConfig) return
-
-                    const values = section.fields.map(field => {
-                        const val = formData[field.id]
-                        return val !== undefined && val !== '' ? Number(val) : 0
-                    })
-
-                    if (!blocksBySheet.has(blockConfig.sheetName)) {
-                        blocksBySheet.set(blockConfig.sheetName, [])
-                    }
-                    blocksBySheet.get(blockConfig.sheetName)!.push({
-                        startRow: blockConfig.startRow,
-                        values: values
-                    })
-                })
-
-                for (const [sheetName, blocks] of blocksBySheet.entries()) {
-                    await updateSheetBlocks(
-                        { spreadsheetId: PROTETIVO_SPREADSHEET_ID, sheetName: sheetName, baseColumn: 'B' },
-                        month,
-                        blocks
-                    )
-                }
-            } else if (setor === 'sine') {
-                const formDef = SINE_FORM_DEFINITION
-                const allFields = formDef.sections.flatMap(s => s.fields)
-                const orderedValues = allFields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-                if (directorate.sheet_config) {
-                    await updateSheetColumn(
-                        { ...directorate.sheet_config as SheetConfig, sheetName: SINE_SHEET_NAME },
-                        month,
-                        orderedValues
-                    )
-                }
-            } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
-                // DEFAULT LOGIC (SINE/ETC)
-                const formDef = directorate.form_definition as FormDefinition
-                const allFields = formDef.sections.flatMap(s => s.fields)
-                const orderedValues = allFields.map(field => {
-                    const val = formData[field.id]
-                    return val !== undefined && val !== '' ? Number(val) : 0
-                })
-                let sheetConfig = directorate.sheet_config as SheetConfig
-                if (sheetConfig.sheetName?.toUpperCase().includes('BENEFICIOS')) {
-                    sheetConfig = { ...sheetConfig, sheetName: 'BENEFICIOS' }
-                }
-                await updateSheetColumn(sheetConfig, month, orderedValues)
-            }
+            await syncSubmissionToSheets(formData, month, year, directorate, setor)
         } catch (sheetError: any) {
             console.error("Sheet Error:", sheetError)
             return { error: `Não foi possível sincronizar com a planilha. O dado foi salvo no banco, mas a planilha pode estar desatualizada.` }
@@ -441,6 +197,307 @@ export async function submitReport(formData: Record<string, any>, month: number,
         return { error: error.message || "Erro inesperado ao salvar relatório." }
     }
 }
+
+async function syncSubmissionToSheets(formData: Record<string, any>, month: number, year: number, directorate: any, setor?: string) {
+    if (setor === 'centros') {
+        const formDef = CP_FORM_DEFINITION
+        const blocks = CP_SHEET_BLOCKS
+        const blocksData = formDef.sections.map((section, index) => {
+            const blockConfig = blocks[index]
+            if (!blockConfig) return null
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            return { startRow: blockConfig.startRow, values: values }
+        }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+        if (directorate.sheet_config) {
+            await updateSheetBlocks(
+                { ...directorate.sheet_config as SheetConfig, sheetName: CP_SHEET_NAME },
+                month,
+                blocksData
+            )
+        }
+    } else if (setor === 'beneficios') {
+        const formDef = BENEFICIOS_FORM_DEFINITION
+        const blocks = BENEFICIOS_SHEET_BLOCKS
+        const blocksData = formDef.sections.map((section, index) => {
+            const blockConfig = blocks[index]
+            if (!blockConfig) return null
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            return { startRow: blockConfig.startRow, values: values }
+        }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+        if (directorate.sheet_config) {
+            await updateSheetBlocks(
+                { ...directorate.sheet_config as SheetConfig, sheetName: 'BENEFICIOS', spreadsheetId: BENEFICIOS_SPREADSHEET_ID },
+                month,
+                blocksData
+            )
+        }
+    } else if (setor === 'cras') {
+        const formDef = CRAS_FORM_DEFINITION
+        const blocks = CRAS_SHEET_BLOCKS
+        const blocksData = formDef.sections.map((section, index) => {
+            const blockConfig = blocks[index]
+            if (!blockConfig) return null
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            return { startRow: blockConfig.startRow, values: values }
+        }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+        await updateSheetBlocks(
+            { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: formData._unit || 'CRAS' },
+            month,
+            blocksData
+        )
+    } else if (setor === 'creas') {
+        const subcategory = formData._subcategory || 'idoso'
+        if (subcategory === 'idoso') {
+            const formDef = CREAS_IDOSO_FORM_DEFINITION
+            const cfg = CREAS_IDOSO_SHEET_CONFIG
+            const blocksData = formDef.sections.map((section, index) => {
+                const blockConfig = cfg.blocks[index]
+                if (!blockConfig) return null
+                const values = section.fields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                return { startRow: blockConfig.startRow, values: values }
+            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+            await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
+        } else {
+            const formDef = CREAS_DEFICIENTE_FORM_DEFINITION
+            const cfg = CREAS_DEFICIENTE_SHEET_CONFIG
+            const blocksData = formDef.sections.map((section, index) => {
+                const blockConfig = cfg.blocks[index]
+                if (!blockConfig) return null
+                const values = section.fields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                return { startRow: blockConfig.startRow, values: values }
+            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+            await updateSheetBlocks({ spreadsheetId: cfg.spreadsheetId, sheetName: cfg.sheetName }, month, blocksData)
+        }
+    } else if (setor === 'ceai') {
+        if (formData._subcategory !== 'condominio') {
+            const formDef = CEAI_FORM_DEFINITION
+            const blocksData = formDef.sections.map((section, index) => {
+                const blockConfig = CEAI_SHEET_BLOCKS[index]
+                if (!blockConfig) return null
+                const values = section.fields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                return { startRow: blockConfig.startRow, values: values }
+            }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+
+            await updateSheetBlocks(
+                { spreadsheetId: CEAI_SPREADSHEET_ID, sheetName: formData._unit, baseColumn: 'C' },
+                month,
+                blocksData
+            )
+        }
+    } else if (setor === 'pop_rua') {
+        const formDef = POP_RUA_FORM_DEFINITION
+        const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
+        formDef.sections.forEach((section, index) => {
+            const blockConfig = POP_RUA_SHEET_BLOCKS[index]
+            if (!blockConfig) return
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            if (!blocksBySheet.has(blockConfig.sheetName)) {
+                blocksBySheet.set(blockConfig.sheetName, [])
+            }
+            blocksBySheet.get(blockConfig.sheetName)!.push({
+                startRow: blockConfig.startRow,
+                values: values
+            })
+        })
+        for (const [sheetName, blocks] of blocksBySheet.entries()) {
+            await updateSheetBlocks(
+                { spreadsheetId: POP_RUA_SPREADSHEET_ID, sheetName: sheetName },
+                month,
+                blocks
+            )
+        }
+    } else if (setor === 'naica') {
+        const formDef = NAICA_FORM_DEFINITION
+        const blocksData = formDef.sections.map((section, index) => {
+            const blockConfig = NAICA_SHEET_BLOCKS[index]
+            if (!blockConfig) return null
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            return { startRow: blockConfig.startRow, values: values }
+        }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
+        const unitName = formData._unit || 'Principal'
+        await updateSheetBlocks(
+            { spreadsheetId: NAICA_SPREADSHEET_ID, sheetName: unitName, baseColumn: 'C' },
+            month,
+            blocksData
+        )
+    } else if (setor === 'creas_socioeducativo') {
+        const formDef = SOCIOEDUCATIVO_FORM_DEFINITION
+        const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
+        formDef.sections.forEach((section, index) => {
+            const blockConfig = SOCIOEDUCATIVO_SHEET_BLOCKS[index]
+            if (!blockConfig) return
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            if (!blocksBySheet.has(blockConfig.sheetName)) {
+                blocksBySheet.set(blockConfig.sheetName, [])
+            }
+            blocksBySheet.get(blockConfig.sheetName)!.push({
+                startRow: blockConfig.startRow,
+                values: values
+            })
+        })
+        for (const [sheetName, blocks] of blocksBySheet.entries()) {
+            await updateSheetBlocks(
+                { spreadsheetId: SOCIOEDUCATIVO_SPREADSHEET_ID, sheetName: sheetName, baseColumn: 'C' },
+                month,
+                blocks
+            )
+        }
+    } else if (setor === 'creas_protetivo') {
+        const formDef = PROTETIVO_FORM_DEFINITION
+        const blocksBySheet = new Map<string, { startRow: number, values: (string | number)[] }[]>()
+        formDef.sections.forEach((section, index) => {
+            const blockConfig = PROTETIVO_SHEET_BLOCKS[index]
+            if (!blockConfig) return
+            const values = section.fields.map(field => {
+                const val = formData[field.id]
+                return val !== undefined && val !== '' ? Number(val) : 0
+            })
+            if (!blocksBySheet.has(blockConfig.sheetName)) {
+                blocksBySheet.set(blockConfig.sheetName, [])
+            }
+            blocksBySheet.get(blockConfig.sheetName)!.push({
+                startRow: blockConfig.startRow,
+                values: values
+            })
+        })
+        for (const [sheetName, blocks] of blocksBySheet.entries()) {
+            await updateSheetBlocks(
+                { spreadsheetId: PROTETIVO_SPREADSHEET_ID, sheetName: sheetName, baseColumn: 'B' },
+                month,
+                blocks
+            )
+        }
+    } else if (setor === 'sine') {
+        const formDef = SINE_FORM_DEFINITION
+        const allFields = formDef.sections.flatMap(s => s.fields)
+        const orderedValues = allFields.map(field => {
+            const val = formData[field.id]
+            return val !== undefined && val !== '' ? Number(val) : 0
+        })
+        if (directorate.sheet_config) {
+            await updateSheetColumn(
+                { ...directorate.sheet_config as SheetConfig, sheetName: SINE_SHEET_NAME },
+                month,
+                orderedValues
+            )
+        }
+    } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {
+        const formDef = directorate.form_definition as FormDefinition
+        const allFields = formDef.sections.flatMap(s => s.fields)
+        const orderedValues = allFields.map(field => {
+            const val = formData[field.id]
+            return val !== undefined && val !== '' ? Number(val) : 0
+        })
+        let sheetConfig = directorate.sheet_config as SheetConfig
+        if (sheetConfig.sheetName?.toUpperCase().includes('BENEFICIOS')) {
+            sheetConfig = { ...sheetConfig, sheetName: 'BENEFICIOS' }
+        }
+        await updateSheetColumn(sheetConfig, month, orderedValues)
+    }
+}
+
+export async function updateSubmissionCell(id: string, fieldId: string, value: any, unitName?: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) throw new Error("Apenas administradores podem editar dados históricos.")
+
+    const adminSupabase = createAdminClient()
+    const { data: submission } = await adminSupabase
+        .from('submissions')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+    if (!submission) throw new Error("Submission not found")
+
+    let updatedData = { ...submission.data }
+    let unitDataToSync = updatedData
+
+    if (unitName && updatedData._is_multi_unit && updatedData.units) {
+        updatedData.units[unitName] = {
+            ...updatedData.units[unitName],
+            [fieldId]: value
+        }
+        unitDataToSync = updatedData.units[unitName]
+    } else {
+        updatedData[fieldId] = value
+        unitDataToSync = updatedData
+    }
+
+    const { error: dbError } = await adminSupabase
+        .from('submissions')
+        .update({ data: updatedData, created_at: new Date().toISOString() })
+        .eq('id', id)
+
+    if (dbError) throw new Error("Erro ao atualizar banco de dados: " + dbError.message)
+
+    // Sync to Sheets
+    try {
+        const { data: directorate } = await adminSupabase
+            .from('directorates')
+            .select('*')
+            .eq('id', submission.directorate_id)
+            .single()
+
+        let setor = ""
+        const normName = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        const dirName = normName(directorate.name)
+
+        if (dirName.includes('cras')) setor = 'cras'
+        else if (dirName.includes('formacao') || dirName.includes('profissional') || dirName.includes('centro')) setor = 'centros'
+        else if (dirName.includes('sine')) setor = 'sine'
+        else if (dirName.includes('beneficios')) setor = 'beneficios'
+        else if (dirName.includes('ceai')) setor = 'ceai'
+        else if (dirName.includes('populacao') && dirName.includes('rua')) setor = 'pop_rua'
+        else if (dirName.includes('naica')) setor = 'naica'
+        else if (dirName.includes('protecao') || dirName.includes('especial')) {
+            if (unitDataToSync._subcategory === 'socioeducativo') setor = 'creas_socioeducativo'
+            else if (unitDataToSync._subcategory === 'protetivo') setor = 'creas_protetivo'
+            else setor = 'creas'
+        }
+
+        await syncSubmissionToSheets(unitDataToSync, submission.month, submission.year, directorate, setor)
+    } catch (sheetError) {
+        console.error("Sheet Sync Error in updateSubmissionCell:", sheetError)
+    }
+
+    revalidatePath('/dashboard/dados', 'page')
+    return { success: true }
+}
+
 
 export async function submitDailyReport(date: string, directorateId: string, formData: Record<string, any>) {
     // Validate inputs

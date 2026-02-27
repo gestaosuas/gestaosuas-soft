@@ -104,6 +104,8 @@ export function SubmissionFormClient({
                         if (targetData.atendidos_anterior_fem !== undefined || targetData.inseridos_fem !== undefined) {
                             newData.atendidos_anterior_fem = getNum(targetData.atendidos_anterior_fem) + getNum(targetData.inseridos_fem) - getNum(targetData.desligados_fem)
                         }
+                        // Pre-fetch the cumulative total from the previous month
+                        newData.prev_total_atendidos_ano = getNum(targetData.total_inseridos)
                     } else if (setor === 'cras') {
                         // CRAS logic (Multi-unit)
                         let targetData = prevData
@@ -244,7 +246,8 @@ export function SubmissionFormClient({
         if (setor === 'ceai') {
             const inseridos_masc = Number(data.inseridos_masc) || 0
             const inseridos_fem = Number(data.inseridos_fem) || 0
-            const total = inseridos_masc + inseridos_fem
+            const prev_total = Number(data.prev_total_atendidos_ano) || 0
+            const total = prev_total + inseridos_masc + inseridos_fem
 
             if (data.total_inseridos !== total) {
                 setData((prev: any) => ({ ...prev, total_inseridos: total }))

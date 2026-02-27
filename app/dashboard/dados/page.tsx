@@ -30,6 +30,7 @@ import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 import { DeleteMonthButton } from "@/components/delete-month-button"
+import { EditableTableCell } from "@/components/editable-table-cell"
 
 export default async function DataPage({
     searchParams,
@@ -245,8 +246,8 @@ export default async function DataPage({
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
     const submissions = allSubmissions.filter((s: any) => s.year === selectedYear)
 
-    // Organizar dados em um mapa fácil: unit -> month -> dataObject
-    const dataByUnitAndMonth = new Map<string, Map<number, Record<string, any>>>()
+    // Organizar dados em um mapa fácil: unit -> month -> { id, data }
+    const dataByUnitAndMonth = new Map<string, Map<number, { id: string, data: Record<string, any> }>>()
 
     submissions?.forEach(sub => {
         if (sub.data._is_multi_unit && sub.data.units) {
@@ -255,7 +256,7 @@ export default async function DataPage({
                 if (!dataByUnitAndMonth.has(unitName)) {
                     dataByUnitAndMonth.set(unitName, new Map())
                 }
-                dataByUnitAndMonth.get(unitName)!.set(sub.month, unitData)
+                dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: unitData })
             })
         } else {
             // Old flat format or single-unit directorates
@@ -263,7 +264,7 @@ export default async function DataPage({
             if (!dataByUnitAndMonth.has(unitName)) {
                 dataByUnitAndMonth.set(unitName, new Map())
             }
-            dataByUnitAndMonth.get(unitName)!.set(sub.month, sub.data)
+            dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: sub.data })
         }
     })
 
@@ -487,8 +488,8 @@ export default async function DataPage({
                                                                     </TableCell>
                                                                     {months.map((_, idx) => {
                                                                         const monthNum = idx + 1
-                                                                        const monthData = unitData.get(monthNum)
-                                                                        const val = monthData?.[indicator.id]
+                                                                        const monthRecord = unitData.get(monthNum)
+                                                                        const val = monthRecord?.data[indicator.id]
                                                                         const numVal = Number(val)
 
                                                                         if (!isNaN(numVal)) {
@@ -497,13 +498,13 @@ export default async function DataPage({
 
                                                                         return (
                                                                             <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
-                                                                                {val !== undefined && val !== '' ? (
-                                                                                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                                                                                        {val}
-                                                                                    </span>
-                                                                                ) : (
-                                                                                    <span className="text-zinc-200 dark:text-zinc-800">-</span>
-                                                                                )}
+                                                                                <EditableTableCell
+                                                                                    initialValue={val}
+                                                                                    submissionId={monthRecord?.id}
+                                                                                    fieldId={indicator.id}
+                                                                                    unitName={(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) ? unitName : undefined}
+                                                                                    isAdmin={isAdmin}
+                                                                                />
                                                                             </TableCell>
                                                                         )
                                                                     })}
@@ -570,14 +571,18 @@ export default async function DataPage({
                                                                 </TableCell>
                                                                 {months.map((_, idx) => {
                                                                     const monthNum = idx + 1
-                                                                    const monthData = unitData.get(monthNum)
+                                                                    const monthRecord = unitData.get(monthNum)
+                                                                    const val = monthRecord?.data[`oficina_${oficina.id}_vagas_totais`]
+
                                                                     return (
                                                                         <TableCell key={idx} className="text-center text-[12px] font-bold text-zinc-900 dark:text-zinc-100 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
-                                                                            {monthData ? (
-                                                                                <span>{monthData[`oficina_${oficina.id}_vagas_totais`] || 0}</span>
-                                                                            ) : (
-                                                                                <span className="text-zinc-200 dark:text-zinc-800">-</span>
-                                                                            )}
+                                                                            <EditableTableCell
+                                                                                initialValue={val}
+                                                                                submissionId={monthRecord?.id}
+                                                                                fieldId={`oficina_${oficina.id}_vagas_totais`}
+                                                                                unitName={unitName}
+                                                                                isAdmin={isAdmin}
+                                                                            />
                                                                         </TableCell>
                                                                     )
                                                                 })}
@@ -630,14 +635,18 @@ export default async function DataPage({
                                                                     </TableCell>
                                                                     {months.map((_, idx) => {
                                                                         const monthNum = idx + 1
-                                                                        const monthData = unitData.get(monthNum)
-                                                                        const val = monthData?.[jsonKey]
+                                                                        const monthRecord = unitData.get(monthNum)
+                                                                        const val = monthRecord?.data[jsonKey]
 
                                                                         return (
                                                                             <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
-                                                                                {val !== undefined && val !== '' ? (
-                                                                                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{val}</span>
-                                                                                ) : <span className="text-zinc-200 dark:text-zinc-800">-</span>}
+                                                                                <EditableTableCell
+                                                                                    initialValue={val}
+                                                                                    submissionId={monthRecord?.id}
+                                                                                    fieldId={jsonKey}
+                                                                                    unitName={unitName}
+                                                                                    isAdmin={isAdmin}
+                                                                                />
                                                                             </TableCell>
                                                                         )
                                                                     })}
@@ -692,7 +701,8 @@ export default async function DataPage({
                                                                     </TableCell>
                                                                     {months.map((_, idx) => {
                                                                         const monthNum = idx + 1
-                                                                        const monthData = unitData.get(monthNum)
+                                                                        const monthRecord = unitData.get(monthNum)
+                                                                        const monthData = monthRecord?.data
                                                                         const val = monthData?.[jsonKey]
                                                                         const numVal = Number(val)
                                                                         const jsonKeyTotais = `oficina_${oficina.id}_vagas_totais`

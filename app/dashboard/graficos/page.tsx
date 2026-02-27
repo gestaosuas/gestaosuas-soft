@@ -351,17 +351,17 @@ export default async function GraficosPage({
 
         if (selectedMonth === 'all') {
             selectedMonthName = "Ano Inteiro"
-            if (monthsWithData.length > 0) {
-                const lastMonthData = unitDataByMonth.get(monthsWithData[0])
-                latestData.atendidos_anterior_masc = lastMonthData?.atendidos_anterior_masc
-                latestData.atendidos_anterior_fem = lastMonthData?.atendidos_anterior_fem
-            }
             unitDataByMonth.forEach((mData) => {
                 ['inseridos_masc', 'inseridos_fem', 'desligados_masc', 'desligados_fem'].forEach(key => {
                     const val = Number(mData[key])
                     if (!isNaN(val)) latestData[key] = (latestData[key] || 0) + val
                 })
             })
+            if (monthsWithData.length > 0) {
+                // For cumulative "Total of the year", we take the max total_inseridos or the one from the last month
+                const lastMonthData = unitDataByMonth.get(monthsWithData[0])
+                latestData.total_inseridos = lastMonthData?.total_inseridos
+            }
         } else {
             latestData = unitDataByMonth.get(selectedMonthNum) || {}
             selectedMonthName = monthNames[selectedMonthNum - 1] || "N/A"
@@ -386,8 +386,8 @@ export default async function GraficosPage({
             { label: "Admitidos Fem.", value: Number(latestData.inseridos_fem || 0), color: "#f472b6", trend: getTrend('inseridos_fem'), history: getHistory('inseridos_fem') },
             { label: "Desligados Masc.", value: Number(latestData.desligados_masc || 0), color: "#64748b", trend: getTrend('desligados_masc'), history: getHistory('desligados_masc') },
             { label: "Desligados Fem.", value: Number(latestData.desligados_fem || 0), color: "#94a3b8", trend: getTrend('desligados_fem'), history: getHistory('desligados_fem') },
-            { label: "Atend. Ant. Masc.", value: Number(latestData.atendidos_anterior_masc || 0), color: "#3b82f6" },
-            { label: "Atend. Ant. Fem.", value: Number(latestData.atendidos_anterior_fem || 0), color: "#f472b6" },
+            { label: "Total Idosos Atendidos", value: Number(latestData.total_inseridos || 0), color: "#3b82f6" },
+            { label: "Total Atendidos no Mês", value: (Number(latestData.atendidos_anterior_masc || 0) + Number(latestData.atendidos_anterior_fem || 0) + Number(latestData.inseridos_masc || 0) + Number(latestData.inseridos_fem || 0)), color: "#f472b6" },
         ]
 
         const ceaiChartData = monthNames.map((name, index) => {
@@ -398,10 +398,10 @@ export default async function GraficosPage({
             const insF = Number(mData.inseridos_fem || 0)
             const desM = Number(mData.desligados_masc || 0)
             const desF = Number(mData.desligados_fem || 0)
-            const total = (prevM + prevF + insM + insF) - (desM + desF)
+            const totalInMonth = prevM + prevF + insM + insF
             return {
                 name,
-                total: total > 0 ? total : 0,
+                total: totalInMonth > 0 ? totalInMonth : 0,
                 admitidos: insM + insF,
                 desligados: desM + desF
             }

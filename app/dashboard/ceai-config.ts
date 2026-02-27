@@ -19,7 +19,7 @@ export const CEAI_FORM_DEFINITION: FormDefinition = {
                 { id: "inseridos_fem", label: "Inseridos no mês (Fem)", type: "number" },
                 { id: "desligados_masc", label: "Desligados (Masc)", type: "number" },
                 { id: "desligados_fem", label: "Desligados (Fem)", type: "number" },
-                { id: "total_inseridos", label: "Total usuários Inseridos", type: "number", disabled: true },
+                { id: "total_inseridos", label: "Total de Idosos Atendidos (ano)", type: "number", disabled: true },
                 { id: "total_atendimentos", label: "Atendimentos", type: "number" }
             ]
         }
