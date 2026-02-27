@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Table as TableIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getCategoryBadgeColor } from "@/lib/utils"
 import { CEAIFilters } from "@/components/ceai-filters"
 import {
     Table,
@@ -540,8 +540,11 @@ export default async function DataPage({
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
-                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[18%] min-w-[200px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
                                                                 Atividade
+                                                            </TableHead>
+                                                            <TableHead className="w-[12%] min-w-[120px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest text-center px-2 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Categoria
                                                             </TableHead>
                                                             {months.map((m, i) => (
                                                                 <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
@@ -566,8 +569,13 @@ export default async function DataPage({
                                                     <TableBody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
                                                         {(oficinasPorUnit.get(unitName) || []).map((oficina: any) => (
                                                             <TableRow key={oficina.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
-                                                                <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight">
-                                                                    {oficina.activity_name} ({oficina.category_name})
+                                                                <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight truncate max-w-[240px]" title={oficina.activity_name}>
+                                                                    {oficina.activity_name}
+                                                                </TableCell>
+                                                                <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-2 py-3">
+                                                                    <span className={cn("px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md border", getCategoryBadgeColor(oficina.category_name))}>
+                                                                        {oficina.category_name}
+                                                                    </span>
                                                                 </TableCell>
                                                                 {months.map((_, idx) => {
                                                                     const monthNum = idx + 1
@@ -602,8 +610,11 @@ export default async function DataPage({
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
-                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[18%] min-w-[200px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
                                                                 Atividade
+                                                            </TableHead>
+                                                            <TableHead className="w-[12%] min-w-[120px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest text-center px-2 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Categoria
                                                             </TableHead>
                                                             {months.map((m, i) => (
                                                                 <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
@@ -630,8 +641,13 @@ export default async function DataPage({
                                                             const jsonKey = `oficina_${oficina.id}_vagas_ocupadas`
                                                             return (
                                                                 <TableRow key={oficina.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
-                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight">
-                                                                        {oficina.activity_name} ({oficina.category_name})
+                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight truncate max-w-[240px]" title={oficina.activity_name}>
+                                                                        {oficina.activity_name}
+                                                                    </TableCell>
+                                                                    <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-2 py-3">
+                                                                        <span className={cn("px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md border", getCategoryBadgeColor(oficina.category_name))}>
+                                                                            {oficina.category_name}
+                                                                        </span>
                                                                     </TableCell>
                                                                     {months.map((_, idx) => {
                                                                         const monthNum = idx + 1
@@ -667,8 +683,11 @@ export default async function DataPage({
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow className="bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/60">
-                                                            <TableHead className="w-[28%] min-w-[280px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                            <TableHead className="w-[18%] min-w-[200px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest pl-8 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
                                                                 Atividade
+                                                            </TableHead>
+                                                            <TableHead className="w-[12%] min-w-[120px] font-bold text-[11px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest text-center px-2 h-14 border-r border-zinc-100 dark:border-zinc-800/60">
+                                                                Categoria
                                                             </TableHead>
                                                             {months.map((m, i) => (
                                                                 <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
@@ -696,8 +715,13 @@ export default async function DataPage({
                                                             const disponiveis = oficina.total_vacancies
                                                             return (
                                                                 <TableRow key={oficina.id} className="h-12 hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors border-none group">
-                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight">
-                                                                        {oficina.activity_name} ({oficina.category_name})
+                                                                    <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight truncate max-w-[240px]" title={oficina.activity_name}>
+                                                                        {oficina.activity_name}
+                                                                    </TableCell>
+                                                                    <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-2 py-3">
+                                                                        <span className={cn("px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md border", getCategoryBadgeColor(oficina.category_name))}>
+                                                                            {oficina.category_name}
+                                                                        </span>
                                                                     </TableCell>
                                                                     {months.map((_, idx) => {
                                                                         const monthNum = idx + 1

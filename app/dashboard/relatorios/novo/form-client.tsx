@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/
 import { ArrowLeft, Calendar, FileText } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { cn, getCategoryBadgeColor } from "@/lib/utils"
 
 export function SubmissionFormClient({
     definition,
@@ -180,13 +181,23 @@ export function SubmissionFormClient({
                         const oficinaFields = oficinas.flatMap((oficina: any) => ([
                             {
                                 id: `oficina_${oficina.id}_vagas_totais`,
-                                label: `${oficina.activity_name} (${oficina.category_name}) - Qtd. de Vagas`,
+                                label: `${oficina.activity_name} - Qtd. de Vagas`,
                                 type: "number" as const,
+                                badgeNode: (
+                                    <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border", getCategoryBadgeColor(oficina.category_name))}>
+                                        {oficina.category_name}
+                                    </span>
+                                )
                             },
                             {
                                 id: `oficina_${oficina.id}_vagas_ocupadas`,
-                                label: `${oficina.activity_name} (${oficina.category_name}) - Vagas Ocupadas`,
+                                label: `${oficina.activity_name} - Vagas Ocupadas`,
                                 type: "number" as const,
+                                badgeNode: (
+                                    <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border", getCategoryBadgeColor(oficina.category_name))}>
+                                        {oficina.category_name}
+                                    </span>
+                                )
                             }
                         ]))
 

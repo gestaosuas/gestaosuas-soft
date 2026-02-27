@@ -15,6 +15,7 @@ export type FieldDefinition = {
     required?: boolean
     disabled?: boolean
     tooltip?: string
+    badgeNode?: React.ReactNode
 }
 
 export type SectionDefinition = {
@@ -103,6 +104,11 @@ export function FormEngine({
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
+                                        )}
+                                        {field.badgeNode && (
+                                            <span className="ml-2 mb-0.5 inline-block align-middle">
+                                                {field.badgeNode}
+                                            </span>
                                         )}
                                     </Label>
                                 </div>
