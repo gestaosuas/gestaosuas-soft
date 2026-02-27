@@ -12,6 +12,7 @@ import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
 import { PROTETIVO_FORM_DEFINITION, SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
+import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
 import { getUserAllowedUnits } from "@/lib/auth-utils"
 
 export default async function NewReportPage({
@@ -143,6 +144,26 @@ export default async function NewReportPage({
 
     const allowedUnits = directorate ? await getUserAllowedUnits(user.id, directorate.id) : []
 
+    // Granular check for SINE/CP
+    if (allowedUnits) {
+        if (setor === 'sine' && !allowedUnits.includes('SINE')) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                    <p>Você não tem permissão para acessar os formulários do <strong>SINE</strong>.</p>
+                </div>
+            )
+        }
+        if (isCP && !allowedUnits.includes('Centro Profissionalizante')) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                    <p>Você não tem permissão para acessar os formulários do <strong>Centro Profissionalizante</strong>.</p>
+                </div>
+            )
+        }
+    }
+
     if (unit && allowedUnits && !allowedUnits.includes(unit)) {
         return (
             <div className="p-8 text-center">
@@ -183,6 +204,7 @@ export default async function NewReportPage({
     }
 
     if (setor === 'sine') {
+        formDefinition = SINE_FORM_DEFINITION
         titleContext = `${directorate.name} (SINE)`
     }
 

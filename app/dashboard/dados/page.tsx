@@ -26,6 +26,7 @@ import { NAICA_UNITS, NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config
 import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@/app/dashboard/creas-config"
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { SOCIOEDUCATIVO_FORM_DEFINITION, PROTETIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
+import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 import { DeleteMonthButton } from "@/components/delete-month-button"
@@ -119,6 +120,29 @@ export default async function DataPage({
 
     if (!directorate) return <div className="p-8 text-center text-red-500">Você não tem permissão para visualizar dados desta diretoria ou ela não foi encontrada.</div>
 
+    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
+    const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
+
+    // Granular check for SINE/CP
+    if (allowedUnits) {
+        if (setor === 'sine' && !allowedUnits.includes('SINE')) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 mt-12">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                    <p>Você não tem permissão para visualizar os dados do <strong>SINE</strong>.</p>
+                </div>
+            )
+        }
+        if (isCP && !allowedUnits.includes('Centro Profissionalizante')) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 mt-12">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                    <p>Você não tem permissão para visualizar os dados do <strong>Centro Profissionalizante</strong>.</p>
+                </div>
+            )
+        }
+    }
+
     console.log("[DEBUG] DataPage - Final Directorate:", directorate?.name)
 
     // Ensure sector is set based on resolved directorate if it was missing
@@ -157,6 +181,7 @@ export default async function DataPage({
     }
 
     if (setor === 'sine') {
+        formDefinition = SINE_FORM_DEFINITION
         titleContext = `Dados SINE ${selectedYear}`
         printTitle = titleContext
     }
@@ -242,8 +267,8 @@ export default async function DataPage({
         }
     })
 
-    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
-    const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
+    // already fetched above: const { getUserAllowedUnits } = await import("@/lib/auth-utils")
+    // already fetched above: const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
 
     const getFilteredUnits = (units: string[]) => {
         if (!allowedUnits) return units // null means 'all access'

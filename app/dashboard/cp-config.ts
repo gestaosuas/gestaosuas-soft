@@ -8,16 +8,14 @@ export const CP_SHEET_NAME = "CENTRO PROFISSIONALIZANTE"
 // Block 2: CONCLUINTES (A11:M21 -> Data A12:A21 - 10 items)
 // Block 3: ÔNIBUS MEU OFÍCIO (A25:M28 -> Data A26:A28 - 3 items)
 // Block 4: ATENDIMENTOS (A32:M42 -> Data A33:A42 - 10 items)
-// Block 5: PROCEDIMENTOS (A47:M57 -> Data A48:A57 - 10 items)
-// Block 6: PARCERIAS E CURSOS (A63:M65 -> Data A64:A65 - 2 items)
+// Block 5: PARCERIAS E CURSOS (A63:M65 -> Data A64:A65 - 2 items)
 
 export const CP_SHEET_BLOCKS = [
     { startRow: 2, endRow: 9 },   // Block 1
     { startRow: 12, endRow: 21 },  // Block 2
     { startRow: 26, endRow: 28 },  // Block 3
     { startRow: 33, endRow: 42 },  // Block 4
-    { startRow: 48, endRow: 57 },  // Block 5
-    { startRow: 64, endRow: 65 }   // Block 6
+    { startRow: 64, endRow: 65 }   // Block 5
 ]
 
 export const CP_FORM_DEFINITION: FormDefinition = {
@@ -74,25 +72,9 @@ export const CP_FORM_DEFINITION: FormDefinition = {
             ]
         },
         {
-            title: "PROCEDIMENTOS",
-            fields: [
-                { id: "cp_morumbi_procedimentos", label: "CP MORUMBI", type: "number" },
-                { id: "cp_lagoinha_procedimentos", label: "CP LAGOINHA", type: "number" },
-                { id: "cp_campo_alegre_procedimentos", label: "CP CAMPO ALEGRE", type: "number" },
-                { id: "cp_luizote_1_procedimentos", label: "CP LUIZOTE I", type: "number" },
-                { id: "cp_luizote_2_procedimentos", label: "CP LUIZOTE II", type: "number" },
-                { id: "cp_tocantis_procedimentos", label: "CP TOCANTIS", type: "number" },
-                { id: "cp_planalto_procedimentos", label: "CP PLANALTO", type: "number" },
-                { id: "maravilha_procedimentos", label: "MARAVILHA", type: "number" },
-                { id: "uditech_procedimentos", label: "UDITECH", type: "number" },
-                { id: "onibus_procedimentos", label: "ONIBUS", type: "number" },
-            ]
-        },
-        {
             title: "PARCERIAS E CURSOS",
             fields: [
                 { id: "cursos_andamento", label: "Cursos em andamento (CP)", type: "number" },
-                { id: "parceiros", label: "Parceiros", type: "number" },
             ]
         }
     ]

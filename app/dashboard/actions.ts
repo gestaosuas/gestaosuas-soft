@@ -17,6 +17,7 @@ import { CEAI_FORM_DEFINITION, CEAI_SHEET_BLOCKS, CEAI_SPREADSHEET_ID } from './
 import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID } from './pop-rua-config'
 import { NAICA_FORM_DEFINITION, NAICA_SHEET_BLOCKS, NAICA_SPREADSHEET_ID } from './naica-config'
 import { PROTETIVO_FORM_DEFINITION, PROTETIVO_SHEET_BLOCKS, PROTETIVO_SPREADSHEET_ID, SOCIOEDUCATIVO_FORM_DEFINITION, SOCIOEDUCATIVO_SHEET_BLOCKS, SOCIOEDUCATIVO_SPREADSHEET_ID } from './protecao-especial-config'
+import { SINE_FORM_DEFINITION, SINE_SHEET_NAME } from './sine-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
 
@@ -395,6 +396,20 @@ export async function submitReport(formData: Record<string, any>, month: number,
                         { spreadsheetId: PROTETIVO_SPREADSHEET_ID, sheetName: sheetName, baseColumn: 'B' },
                         month,
                         blocks
+                    )
+                }
+            } else if (setor === 'sine') {
+                const formDef = SINE_FORM_DEFINITION
+                const allFields = formDef.sections.flatMap(s => s.fields)
+                const orderedValues = allFields.map(field => {
+                    const val = formData[field.id]
+                    return val !== undefined && val !== '' ? Number(val) : 0
+                })
+                if (directorate.sheet_config) {
+                    await updateSheetColumn(
+                        { ...directorate.sheet_config as SheetConfig, sheetName: SINE_SHEET_NAME },
+                        month,
+                        orderedValues
                     )
                 }
             } else if (directorate.sheet_config && directorate.form_definition && !formData._report_content) {

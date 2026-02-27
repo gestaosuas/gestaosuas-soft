@@ -59,6 +59,32 @@ export default async function MonthlyReportPage({
         </div>
     )
 
+    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
+    const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
+
+    if (allowedUnits) {
+        if (setor === 'sine' && !allowedUnits.includes('SINE')) {
+            return (
+                <div className="flex h-[80vh] items-center justify-center">
+                    <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100">
+                        <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                        <p>Você não tem permissão para os relatórios mensais do <strong>SINE</strong>.</p>
+                    </div>
+                </div>
+            )
+        }
+        if (setor === 'centros' && !allowedUnits.includes('Centro Profissionalizante')) {
+            return (
+                <div className="flex h-[80vh] items-center justify-center">
+                    <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100">
+                        <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                        <p>Você não tem permissão para os relatórios mensais do <strong>Centro Profissionalizante</strong>.</p>
+                    </div>
+                </div>
+            )
+        }
+    }
+
     return (
         <div className="container mx-auto max-w-5xl py-8">
             <MonthlyReportEditor

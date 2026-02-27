@@ -25,6 +25,29 @@ export default async function ReportListPage({
     // This circumvents the broken RLS policies on the database side
     const submissions = await getCachedSubmissionsForUser(user.id, directorate_id || '')
 
+    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
+    const allowedUnits = await getUserAllowedUnits(user.id, directorate_id || '')
+
+    // Granular check for SINE/CP
+    if (allowedUnits) {
+        if (setor === 'sine' && !allowedUnits.includes('SINE')) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 mt-12">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                    <p>Você não tem permissão para visualizar o histórico do <strong>SINE</strong>.</p>
+                </div>
+            )
+        }
+        if (setor === 'centros' && !allowedUnits.includes('Centro Profissionalizante')) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 mt-12">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
+                    <p>Você não tem permissão para visualizar o histórico do <strong>Centro Profissionalizante</strong>.</p>
+                </div>
+            )
+        }
+    }
+
     // Filter to show ONLY Narrative Reports (containing _report_content)
     // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
     const narrativeSubmissions = submissions?.filter((sub) =>

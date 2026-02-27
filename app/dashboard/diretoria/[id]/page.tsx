@@ -45,6 +45,11 @@ export default async function DirectoratePage({
     const { getUserAllowedUnits } = await import("@/lib/auth-utils")
     const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
 
+    // Check if the user has access to each part (if limited)
+    // For this specific directorate, we treat "SINE" and "Centro Profissionalizante" as the unit names
+    const canSeeSINE = !allowedUnits || allowedUnits.includes('SINE')
+    const canSeeCP = !allowedUnits || allowedUnits.includes('Centro Profissionalizante')
+
     const getFilteredUnits = (units: string[]) => {
         if (!allowedUnits) return units // null means 'all access'
         return units.filter(u => allowedUnits.includes(u))
@@ -103,7 +108,7 @@ export default async function DirectoratePage({
                     */}
 
                     {/* SINE */}
-                    {isSINE && (
+                    {isSINE && canSeeSINE && (
                         <section className="space-y-8">
                             <div className="flex items-center gap-3">
                                 <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
@@ -113,8 +118,6 @@ export default async function DirectoratePage({
                                 {[
                                     { label: "Atualizar Dados SINE", desc: "Indicadores numéricos de desempenho", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
                                     { label: "Dashboard SINE", desc: "Gráficos e performance", href: `/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                    { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`, icon: FileText },
-                                    { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
                                     { label: "Dados SINE", desc: "Consulta ao banco de registros", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => {
                                     const isDisabled = false
@@ -164,17 +167,19 @@ export default async function DirectoratePage({
                     )}
 
                     {/* CP */}
-                    {isCP && (
+                    {isCP && canSeeCP && (
                         <section className="space-y-8">
                             <div className="flex items-center gap-3">
                                 <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                                 <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Qualificação Profissional</h2>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
                                     { label: "Atualizar Dados CP", desc: "Performance dos Centros", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
-                                    { label: "Dados CP", desc: "Histórico de procedimentos", href: `/dashboard/dados?setor=centros&directorate_id=${directorate.id}`, icon: Database },
                                     { label: "Dashboard CP", desc: "Gráficos e visualização", href: `/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`, icon: BarChart3 },
+                                    { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=centros&directorate_id=${directorate.id}`, icon: FileText },
+                                    { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=centros&directorate_id=${directorate.id}`, icon: FolderOpen },
+                                    { label: "Dados CP", desc: "Histórico de procedimentos", href: `/dashboard/dados?setor=centros&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => (
                                     <Link key={idx} href={item.href} className="group">
                                         <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">

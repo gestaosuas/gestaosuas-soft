@@ -6,6 +6,7 @@ import ReportActions from "./report-actions"
 import { cn } from "@/lib/utils"
 import { getCachedIndicators } from "@/app/dashboard/cached-data"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
+import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
 import { BENEFICIOS_FORM_DEFINITION } from "@/app/dashboard/beneficios-config"
 import { FormDefinition } from "@/components/form-engine"
 
@@ -59,6 +60,8 @@ export default async function ViewReportPage({
                     formDef = BENEFICIOS_FORM_DEFINITION
                 } else if (dirName.includes('formação') || dirName.includes('cp')) {
                     formDef = CP_FORM_DEFINITION
+                } else if (dirName.includes('sine')) {
+                    formDef = SINE_FORM_DEFINITION
                 }
                 // SINE usually has it in DB, but if not, logic implies it might be missing or handled elsewhere.
                 // If standard SINE config exists in file I should import it, but I don't see sine-config.ts reference.
