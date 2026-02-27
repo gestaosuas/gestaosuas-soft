@@ -1696,7 +1696,7 @@ export function VisitForm({
                                             <Camera className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
                                         )}
                                     </div>
-                                    <span className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900 text-center px-2">
+                                    <span suppressHydrationWarning className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900 text-center px-2">
                                         {loading ? "Enviando..." : "Abrir Câmera"}
                                     </span>
                                 </label>
@@ -1720,7 +1720,7 @@ export function VisitForm({
                                             <Images className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
                                         )}
                                     </div>
-                                    <span className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900 text-center px-2">
+                                    <span suppressHydrationWarning className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900 text-center px-2">
                                         {loading ? "Enviando..." : "Selecionar da Galeria"}
                                     </span>
                                 </label>
