@@ -40,7 +40,12 @@ import {
     Check,
     Camera,
     X,
-    FileText
+    FileText,
+    Images,
+    ChevronLeft,
+    ChevronRight,
+    Download,
+    Maximize2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveVisit, finalizeVisit } from "@/app/dashboard/actions"
@@ -155,14 +160,167 @@ export function VisitForm({
     const [oscSearch, setOscSearch] = useState("")
     const [isOscSelectOpen, setIsOscSelectOpen] = useState(false)
 
+    // Lightbox State
+    const [lightbox, setLightbox] = useState<{ isOpen: boolean; index: number }>({
+        isOpen: false,
+        index: 0
+    })
+
+    const openLightbox = (index: number) => {
+        setLightbox({ isOpen: true, index })
+    }
+
+    const closeLightbox = () => {
+        setLightbox({ isOpen: false, index: 0 })
+    }
+
+    const nextPhoto = () => {
+        setLightbox(prev => ({
+            ...prev,
+            index: (prev.index + 1) % (formData.photos?.length || 1)
+        }))
+    }
+
+    const prevPhoto = () => {
+        setLightbox(prev => ({
+            ...prev,
+            index: (prev.index - 1 + (formData.photos?.length || 1)) % (formData.photos?.length || 1)
+        }))
+    }
+
+    const downloadCurrentPhoto = async () => {
+        const photoUrl = formData.photos[lightbox.index]
+        if (!photoUrl) return
+
+        try {
+            const response = await fetch(photoUrl)
+            const blob = await response.blob()
+            const url = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `foto-visita-${lightbox.index + 1}.jpg`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        } catch (error) {
+            console.error("Download error:", error)
+            alert("Erro ao baixar a imagem.")
+        }
+    }
+
     // Filtered OSCs based on search
-    const filteredOSCs = (oscs || []).filter(osc =>
+    const filteredOSCs = (oscs || []).filter((osc: any) =>
         osc.name.toLowerCase().includes(oscSearch.toLowerCase())
     )
+
+    const DRAFT_KEY = `visit_draft_${directorateId}_${initialVisit?.id || 'new'}`
+
+    // Auto-save logic
+    useEffect(() => {
+        if (!isLocked && mounted) {
+            const interval = setInterval(() => {
+                const draftData = {
+                    formData,
+                    atendimento,
+                    formaAcesso,
+                    rhData,
+                    observacoes,
+                    recomendacoes,
+                    assinaturas,
+                    documents,
+                    timestamp: Date.now()
+                }
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData))
+            }, 5000) // Increased to 5s to avoid excessive writes
+            return () => clearInterval(interval)
+        }
+    }, [formData, atendimento, formaAcesso, rhData, observacoes, recomendacoes, assinaturas, documents, isLocked, mounted, DRAFT_KEY])
+
+    // Restore draft logic
+    useEffect(() => {
+        if (mounted && !isLocked) {
+            const savedDraft = localStorage.getItem(DRAFT_KEY)
+            if (savedDraft) {
+                try {
+                    const parsed = JSON.parse(savedDraft)
+                    // Check if draft is recent (e.g., last 24h) or just prompt
+                    const confirmRestore = window.confirm("Encontramos um rascunho salvo no seu navegador para esta visita. Deseja restaurar os dados?")
+                    if (confirmRestore) {
+                        if (parsed.formData) setFormData(parsed.formData)
+                        if (parsed.atendimento) setAtendimento(parsed.atendimento)
+                        if (parsed.formaAcesso) setFormaAcesso(parsed.formaAcesso)
+                        if (parsed.rhData) setRhData(parsed.rhData)
+                        if (parsed.observacoes) setObservacoes(parsed.observacoes)
+                        if (parsed.recomendacoes) setRecomendacoes(parsed.recomendacoes)
+                        if (parsed.assinaturas) setAssinaturas(parsed.assinaturas)
+                        if (parsed.documents) setDocuments(parsed.documents)
+                    } else {
+                        localStorage.removeItem(DRAFT_KEY)
+                    }
+                } catch (e) {
+                    console.error("Error restoring draft:", e)
+                }
+            }
+        }
+    }, [mounted, isLocked, DRAFT_KEY])
+
+    const compressImage = (file: File): Promise<File> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', 0.8);
+                };
+            };
+        });
+    };
 
     const handleSave = async (finalize = false) => {
         if (!formData.osc_id) {
             alert("Por favor, selecione uma OSC.")
+            return
+        }
+
+        // Offline Check
+        if (!navigator.onLine) {
+            alert("Você parece estar sem internet. O formulário está salvo localmente no seu dispositivo. Por favor, aguarde o sinal voltar para enviar ao sistema.")
             return
         }
 
@@ -185,6 +343,9 @@ export function VisitForm({
 
             const result = await saveVisit(payload)
             if (result.success) {
+                // Clear local draft on success
+                localStorage.removeItem(DRAFT_KEY)
+
                 if (finalize) {
                     const finalResult = await finalizeVisit(result.id || initialVisit.id)
                     if (finalResult.success) {
@@ -197,50 +358,57 @@ export function VisitForm({
                 }
             }
         } catch (error: any) {
-            alert("Erro ao salvar: " + error.message)
+            console.error("Save error:", error)
+            alert("Erro ao salvar: Talvez você esteja com conexão instável. Seus dados continuam seguros neste dispositivo. Tente novamente em instantes.")
         } finally {
             setIsSaving(false)
         }
     }
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        if (!file.type.startsWith('image/')) {
-            alert("Por favor, selecione apenas imagens.")
-            return
-        }
-
-        // Optimistic update or waiting? Let's wait for upload
-        const uploadFormData = new FormData()
-        uploadFormData.append('file', file)
+        const files = e.target.files
+        if (!files || files.length === 0) return
 
         try {
             setLoading(true)
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                body: uploadFormData
-            })
+            const newPhotoUrls: string[] = []
 
-            const data = await response.json()
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i]
+                if (!file.type.startsWith('image/')) continue
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro no upload')
+                // Client-side compression
+                const compressedFile = await compressImage(file);
+
+                const uploadFormData = new FormData()
+                uploadFormData.append('file', compressedFile)
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: uploadFormData
+                })
+
+                const data = await response.json()
+
+                if (response.ok && data.url) {
+                    newPhotoUrls.push(data.url)
+                }
             }
 
-            setFormData((prev: any) => ({
-                ...prev,
-                photos: [...(prev.photos || []), data.url]
-            }))
+            if (newPhotoUrls.length > 0) {
+                setFormData((prev: any) => ({
+                    ...prev,
+                    photos: [...(prev.photos || []), ...newPhotoUrls]
+                }))
+            }
 
         } catch (error: any) {
             console.error("Upload error:", error)
-            alert("Erro ao fazer upload da imagem: " + error.message)
+            alert("Erro ao fazer upload de uma ou mais imagens: " + error.message)
         } finally {
             setLoading(false)
             // Reset input
-            e.target.value = ''
+            if (e.target) e.target.value = ''
         }
     }
 
@@ -1488,8 +1656,13 @@ export function VisitForm({
                                 <img
                                     src={photo}
                                     alt={`Evidência ${index + 1}`}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                                    loading="lazy"
+                                    onClick={() => openLightbox(index)}
                                 />
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                                    <Maximize2 className="h-6 w-6 text-white" />
+                                </div>
                                 {!isLocked && (
                                     <button
                                         type="button"
@@ -1503,29 +1676,55 @@ export function VisitForm({
                         ))}
 
                         {!isLocked && (
-                            <label className="flex flex-col items-center justify-center gap-2 aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-blue-900/50 hover:bg-blue-50/50 cursor-pointer transition-all group">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    className="hidden"
-                                    onChange={handlePhotoUpload}
-                                    disabled={loading}
-                                />
-                                <div className={cn(
-                                    "p-3 rounded-full bg-zinc-100 group-hover:bg-blue-100 transition-colors",
-                                    loading && "animate-pulse"
-                                )}>
-                                    {loading ? (
-                                        <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
-                                    ) : (
-                                        <Camera className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
-                                    )}
-                                </div>
-                                <span className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900">
-                                    {loading ? "Enviando..." : "Adicionar Foto"}
-                                </span>
-                            </label>
+                            <>
+                                <label className="flex flex-col items-center justify-center gap-2 aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-blue-900/50 hover:bg-blue-50/50 cursor-pointer transition-all group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        className="hidden"
+                                        onChange={handlePhotoUpload}
+                                        disabled={loading}
+                                    />
+                                    <div className={cn(
+                                        "p-3 rounded-full bg-zinc-100 group-hover:bg-blue-100 transition-colors",
+                                        loading && "animate-pulse"
+                                    )}>
+                                        {loading ? (
+                                            <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+                                        ) : (
+                                            <Camera className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900 text-center px-2">
+                                        {loading ? "Enviando..." : "Abrir Câmera"}
+                                    </span>
+                                </label>
+
+                                <label className="flex flex-col items-center justify-center gap-2 aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-blue-900/50 hover:bg-blue-50/50 cursor-pointer transition-all group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        className="hidden"
+                                        onChange={handlePhotoUpload}
+                                        disabled={loading}
+                                    />
+                                    <div className={cn(
+                                        "p-3 rounded-full bg-zinc-100 group-hover:bg-blue-100 transition-colors",
+                                        loading && "animate-pulse"
+                                    )}>
+                                        {loading ? (
+                                            <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+                                        ) : (
+                                            <Images className="h-6 w-6 text-zinc-400 group-hover:text-blue-600" />
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] font-bold uppercase text-zinc-400 group-hover:text-blue-900 text-center px-2">
+                                        {loading ? "Enviando..." : "Selecionar da Galeria"}
+                                    </span>
+                                </label>
+                            </>
                         )}
                     </div>
                 )}
@@ -1654,6 +1853,64 @@ export function VisitForm({
                     <> em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</>
                 )}
             </div>
+            {/* Lightbox / Image Viewer */}
+            <Dialog open={lightbox.isOpen} onOpenChange={closeLightbox}>
+                <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none overflow-hidden flex flex-col items-center justify-center rounded-none sm:rounded-3xl">
+                    <DialogHeader className="absolute top-4 left-4 right-4 z-50 flex-row items-center justify-between pointer-events-none">
+                        <div className="bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 pointer-events-auto">
+                            <DialogTitle className="text-white text-xs font-black uppercase tracking-widest leading-none">
+                                Foto {lightbox.index + 1} de {formData.photos?.length}
+                            </DialogTitle>
+                        </div>
+                        <div className="flex gap-2 pointer-events-auto">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={downloadCurrentPhoto}
+                                className="h-10 w-10 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-white hover:text-black border border-white/10"
+                            >
+                                <Download className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={closeLightbox}
+                                className="h-10 w-10 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-white hover:text-black border border-white/10"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="relative w-full h-[80vh] flex items-center justify-center p-4">
+                        {formData.photos?.length > 1 && (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={prevPhoto}
+                                    className="absolute left-4 z-50 h-12 w-12 rounded-full bg-black/50 text-white hover:bg-white hover:text-black"
+                                >
+                                    <ChevronLeft className="h-8 w-8" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={nextPhoto}
+                                    className="absolute right-4 z-50 h-12 w-12 rounded-full bg-black/50 text-white hover:bg-white hover:text-black"
+                                >
+                                    <ChevronRight className="h-8 w-8" />
+                                </Button>
+                            </>
+                        )}
+                        <img
+                            src={formData.photos[lightbox.index]}
+                            alt="Visualização"
+                            className="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300"
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     )
 }
