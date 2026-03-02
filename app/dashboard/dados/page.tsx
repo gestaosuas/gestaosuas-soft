@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server"
 import { getCachedSubmissionsForUser, getCachedProfile, getCachedDirectorates } from "@/app/dashboard/cached-data"
 import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { redirect } from "next/navigation"
+// Trigger deploy
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
