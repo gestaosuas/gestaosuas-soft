@@ -127,3 +127,38 @@ export async function getOficinasComCategorias(unit: string) {
         category_name: item.categoria?.name || 'Sem Categoria'
     }))
 }
+
+export async function updateCategoria(id: string, name: string, directorateId: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('ceai_categorias')
+        .update({ name })
+        .eq('id', id)
+
+    if (error) {
+        console.error("Erro ao atualizar categoria:", error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath(`/dashboard/diretoria/${directorateId}`)
+    return { success: true }
+}
+
+export async function updateOficina(id: string, activity_name: string, category_id: string | null, directorateId: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('ceai_oficinas')
+        .update({
+            activity_name,
+            category_id: category_id === 'empty' || !category_id ? null : category_id
+        })
+        .eq('id', id)
+
+    if (error) {
+        console.error("Erro ao atualizar oficina:", error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath(`/dashboard/diretoria/${directorateId}`)
+    return { success: true }
+}
