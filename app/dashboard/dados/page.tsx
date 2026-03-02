@@ -572,8 +572,11 @@ export default async function DataPage({
                                                                 <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight truncate max-w-[240px]" title={oficina.activity_name}>
                                                                     {oficina.activity_name}
                                                                 </TableCell>
-                                                                <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-2 py-3">
-                                                                    <span className={cn("px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md border", getCategoryBadgeColor(oficina.category_name))}>
+                                                                <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-1 py-1.5">
+                                                                    <span
+                                                                        className={cn("uppercase rounded border inline-block font-medium", getCategoryBadgeColor(oficina.category_name))}
+                                                                        style={{ fontSize: '7.5px', padding: '1px 3px', letterSpacing: '0', lineHeight: '1.2' }}
+                                                                    >
                                                                         {oficina.category_name}
                                                                     </span>
                                                                 </TableCell>
@@ -644,8 +647,11 @@ export default async function DataPage({
                                                                     <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight truncate max-w-[240px]" title={oficina.activity_name}>
                                                                         {oficina.activity_name}
                                                                     </TableCell>
-                                                                    <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-2 py-3">
-                                                                        <span className={cn("px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md border", getCategoryBadgeColor(oficina.category_name))}>
+                                                                    <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-1 py-1.5">
+                                                                        <span
+                                                                            className={cn("uppercase rounded border inline-block font-medium", getCategoryBadgeColor(oficina.category_name))}
+                                                                            style={{ fontSize: '7.5px', padding: '1px 3px', letterSpacing: '0', lineHeight: '1.2' }}
+                                                                        >
                                                                             {oficina.category_name}
                                                                         </span>
                                                                     </TableCell>
@@ -718,8 +724,11 @@ export default async function DataPage({
                                                                     <TableCell className="font-bold text-[11px] text-zinc-700 dark:text-zinc-300 pl-8 py-3 border-r border-zinc-100 dark:border-zinc-800/60 uppercase tracking-tight truncate max-w-[240px]" title={oficina.activity_name}>
                                                                         {oficina.activity_name}
                                                                     </TableCell>
-                                                                    <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-2 py-3">
-                                                                        <span className={cn("px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-md border", getCategoryBadgeColor(oficina.category_name))}>
+                                                                    <TableCell className="border-r border-zinc-100 dark:border-zinc-800/60 text-center px-1 py-1.5">
+                                                                        <span
+                                                                            className={cn("uppercase rounded border inline-block font-medium", getCategoryBadgeColor(oficina.category_name))}
+                                                                            style={{ fontSize: '7.5px', padding: '1px 3px', letterSpacing: '0', lineHeight: '1.2' }}
+                                                                        >
                                                                             {oficina.category_name}
                                                                         </span>
                                                                     </TableCell>
