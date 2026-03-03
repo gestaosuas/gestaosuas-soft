@@ -1402,7 +1402,7 @@ export function VisitForm({
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Voluntário</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Subvenção</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Quantidade</TableHead>
-                                        <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Outros / Observações</TableHead>
+                                        <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Nomes / Observações</TableHead>
                                         {!isLocked && <TableHead className="w-[40px]"></TableHead>}
                                     </TableRow>
                                 </TableHeader>
