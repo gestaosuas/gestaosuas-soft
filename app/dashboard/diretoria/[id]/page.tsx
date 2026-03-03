@@ -45,8 +45,7 @@ export default async function DirectoratePage({
     const { getUserAllowedUnits } = await import("@/lib/auth-utils")
     const allowedUnits = await getUserAllowedUnits(user.id, directorate.id)
 
-    // Check if the user has access to each part (if limited)
-    // For this specific directorate, we treat "SINE" and "Centro Profissionalizante" as the unit names
+    const canSeeDailyReport = !allowedUnits || allowedUnits.includes('Relatório Diário')
     const canSeeSINE = !allowedUnits || allowedUnits.includes('SINE')
     const canSeeCP = !allowedUnits || allowedUnits.includes('Centro Profissionalizante')
 
@@ -79,33 +78,31 @@ export default async function DirectoratePage({
                 </p>
             </header>
 
+            {canSeeDailyReport && (
+                <section className="space-y-8">
+                    <div className="flex items-center gap-3">
+                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Gestão Diária</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Link href={`/dashboard/relatorios/diario/novo?directorate_id=${directorate.id}`} className="group">
+                            <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                <CardHeader className="p-8">
+                                    <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors mb-6 shadow-sm">
+                                        <FilePlus className="w-6 h-6 text-zinc-400 group-hover:text-white" />
+                                    </div>
+                                    <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors flex items-center gap-2">
+                                        Relatório Diário
+                                    </CardTitle>
+                                </CardHeader>
+                            </Card>
+                        </Link>
+                    </div>
+                </section>
+            )}
+
             {(isSINE || isCP) ? (
                 <div className="space-y-16">
-                    {/* Seção Gestão Diária - Comentada para Standby
-                    <section className="space-y-8">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Gestão Diária</h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                <Card className="h-full bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-2xl">
-                                    <CardHeader className="p-8">
-                                        <div className="p-3 w-fit bg-zinc-200 dark:bg-zinc-800/50 rounded-xl mb-6 shadow-sm">
-                                            <FilePlus className="w-6 h-6 text-zinc-400" />
-                                        </div>
-                                        <CardTitle className="text-lg font-bold text-zinc-500 dark:text-zinc-500 transition-colors flex items-center gap-2">
-                                            Relatório Diário
-                                        </CardTitle>
-                                        <CardDescription className="text-[13px] font-medium leading-relaxed text-zinc-400 dark:text-zinc-400 mt-2">
-                                            Preencher indicadores operacionais do dia para consolidação no Painel Geral. (Indisponível)
-                                        </CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </div>
-                        </div>
-                    </section>
-                    */}
 
                     {/* SINE */}
                     {isSINE && canSeeSINE && (
@@ -116,7 +113,7 @@ export default async function DirectoratePage({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: "Atualizar Dados SINE", desc: "Indicadores numéricos de desempenho", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Atualizar Dados Mensais", desc: "Indicadores consolidados do mês", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
                                     { label: "Dashboard SINE", desc: "Gráficos e performance", href: `/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`, icon: BarChart3 },
                                     { label: "Dados SINE", desc: "Consulta ao banco de registros", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => {
@@ -175,7 +172,7 @@ export default async function DirectoratePage({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: "Atualizar Dados CP", desc: "Performance dos Centros", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Atualizar Dados Mensais", desc: "Performance consolidada do mês", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
                                     { label: "Dashboard CP", desc: "Gráficos e visualização", href: `/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`, icon: BarChart3 },
                                     { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=centros&directorate_id=${directorate.id}`, icon: FileText },
                                     { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=centros&directorate_id=${directorate.id}`, icon: FolderOpen },

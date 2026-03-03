@@ -500,50 +500,60 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
 
 export async function submitDailyReport(date: string, directorateId: string, formData: Record<string, any>) {
-    // Validate inputs
-    dailyReportSchema.parse({ date, directorateId, data: formData })
+    try {
+        // Validate inputs
+        dailyReportSchema.parse({ date, directorateId, data: formData })
 
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error("Unauthorized")
 
-    // Permission Check
-    const hasAccess = await checkUserPermission(user.id, directorateId)
-    if (!hasAccess) throw new Error("Unauthorized access to this directorate")
+        // Permission Check
+        const hasAccess = await checkUserPermission(user.id, directorateId)
+        if (!hasAccess) throw new Error("Unauthorized access to this directorate")
 
-    const adminSupabase = createAdminClient()
+        const adminSupabase = createAdminClient()
 
-    // Check existing
-    const { data: existing } = await adminSupabase
-        .from('daily_reports')
-        .select('id, data')
-        .eq('date', date)
-        .eq('directorate_id', directorateId)
-        .single()
-
-    if (existing) {
-        const mergedData = { ...existing.data, ...formData }
-        const { error } = await adminSupabase
+        // Check existing - using maybeSingle to avoid throw on empty results
+        const { data: existing, error: fetchError } = await adminSupabase
             .from('daily_reports')
-            .update({ data: mergedData, updated_at: new Date().toISOString() })
-            .eq('id', existing.id)
+            .select('id, data')
+            .eq('date', date)
+            .eq('directorate_id', directorateId)
+            .maybeSingle()
 
-        if (error) throw new Error("Erro ao atualizar relatório diário: " + error.message)
-    } else {
-        const { error } = await adminSupabase
-            .from('daily_reports')
-            .insert({
-                date,
-                directorate_id: directorateId,
-                data: formData,
-                user_id: user.id // Assuming we might want to track who did it
-            })
+        if (fetchError) throw new Error("Erro ao consultar relatórios: " + fetchError.message)
 
-        if (error) throw new Error("Erro ao salvar relatório diário: " + error.message)
+        if (existing) {
+            const mergedData = { ...existing.data, ...formData }
+            const { error } = await adminSupabase
+                .from('daily_reports')
+                .update({ data: mergedData, updated_at: new Date().toISOString() })
+                .eq('id', existing.id)
+
+            if (error) throw new Error("Erro ao atualizar relatório diário: " + error.message)
+        } else {
+            const { error } = await adminSupabase
+                .from('daily_reports')
+                .insert({
+                    date,
+                    directorate_id: directorateId,
+                    data: formData
+                })
+
+            if (error) throw new Error("Erro ao salvar relatório diário: " + error.message)
+        }
+
+        revalidatePath('/dashboard', 'page')
+        revalidatePath('/dashboard', 'layout')
+        return { success: true }
+    } catch (error: any) {
+        console.error("submitDailyReport Error:", error)
+        if (error.name === 'ZodError') {
+            return { error: "Dados inválidos: Verifique os campos preenchidos." }
+        }
+        return { error: error.message || "Erro inesperado ao salvar relatório diário." }
     }
-
-    revalidatePath('/dashboard', 'page')
-    return { success: true }
 }
 
 export async function deleteReport(reportId: string) {
@@ -1229,4 +1239,33 @@ export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: s
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
+}
+
+export async function getDailyReports(date: string) {
+    try {
+        const adminSupabase = createAdminClient()
+
+        const { data: directorates, error: dirError } = await adminSupabase
+            .from('directorates')
+            .select('id, name')
+            .order('name')
+
+        if (dirError) throw dirError
+
+        const { data: reports, error: repError } = await adminSupabase
+            .from('daily_reports')
+            .select('*, directorate:directorates(name)')
+            .eq('date', date)
+
+        if (repError) throw repError
+
+        return {
+            success: true,
+            data: reports || [],
+            directorates: directorates || []
+        }
+    } catch (error: any) {
+        console.error("getDailyReports Error:", error)
+        return { error: "Erro ao buscar relatórios diários." }
+    }
 }

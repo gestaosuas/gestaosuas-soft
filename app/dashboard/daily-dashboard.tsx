@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,14 +10,23 @@ import { Button } from "@/components/ui/button"
 import {
     Calendar as CalendarIcon, Filter, Info, Users, Briefcase, Phone, ClipboardCheck,
     Laptop, Building, Globe, ShieldCheck, IdCard, PhoneIncoming, PhoneOutgoing,
-    FileText, UserCheck, ListChecks, Compass, TrendingUp, Activity
+    FileText, UserCheck, ListChecks, Compass, TrendingUp, Activity, BarChart3,
+    ChevronLeft, ChevronRight, Pause, Play
 } from "lucide-react"
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+} from 'recharts'
 import { createClient } from "@/utils/supabase/client"
+import { DIARIO_CENTROS, DIARIO_CP_INDICATORS } from "./relatorios/diario-config"
+import { getDailyReports } from "@/app/dashboard/actions"
 
 export function DailyDashboard() {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
     const [reports, setReports] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [currentSlide, setCurrentSlide] = useState(0)
+    const [isPaused, setIsPaused] = useState(false)
+    const [transitioning, setTransitioning] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
@@ -25,18 +35,70 @@ export function DailyDashboard() {
 
     async function fetchReports() {
         setLoading(true)
-        const { data, error } = await supabase
-            .from('daily_reports')
-            .select(`
-                *,
-                directorate:directorates(name)
-            `)
-            .eq('date', date)
+        try {
+            // 1. Fetch existing reports and directorates from server action
+            const result = await getDailyReports(date)
+            const existingReports = result.data || []
+            const directorates = result.directorates || []
 
-        if (!error && data) {
-            setReports(data)
+            // 2. Filter monitorings
+            const filteredDirs = directorates.filter((dir: any) =>
+                !dir.name?.toLowerCase().includes('monitoramento')
+            )
+
+            // 3. Map to slides: every directorate gets a slide
+            const allSlides = filteredDirs.map((dir: any) => {
+                const report = existingReports.find((r: any) => r.directorate_id === dir.id)
+                return {
+                    id: report?.id || `empty-${dir.id}`,
+                    directorate_id: dir.id,
+                    directorate: { name: dir.name },
+                    data: report?.data || {},
+                    is_empty: !report
+                }
+            })
+
+            // Sort: slides with data first, then alphabetically by name
+            allSlides.sort((a: any, b: any) => {
+                if (!a.is_empty && b.is_empty) return -1
+                if (a.is_empty && !b.is_empty) return 1
+                return a.directorate.name.localeCompare(b.directorate.name)
+            })
+
+            setReports(allSlides)
+            setCurrentSlide(0)
+        } catch (err: any) {
+            console.error("Dashboard Fetch Exception:", err)
+            setReports([])
         }
         setLoading(false)
+    }
+
+    // Auto-play logic
+    useEffect(() => {
+        if (isPaused || reports.length <= 1) return
+
+        const timer = setInterval(() => {
+            nextSlide()
+        }, 15000) // 15 seconds per slide
+
+        return () => clearInterval(timer)
+    }, [isPaused, currentSlide, reports.length])
+
+    const nextSlide = () => {
+        setTransitioning(true)
+        setTimeout(() => {
+            setCurrentSlide((prev) => (prev + 1) % reports.length)
+            setTransitioning(false)
+        }, 300)
+    }
+
+    const prevSlide = () => {
+        setTransitioning(true)
+        setTimeout(() => {
+            setCurrentSlide((prev) => (prev - 1 + reports.length) % reports.length)
+            setTransitioning(false)
+        }, 300)
     }
 
     // Helper to extract CP totals
@@ -64,173 +126,231 @@ export function DailyDashboard() {
     }
 
     return (
-        <div className="space-y-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900/50 p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <div className="space-y-1">
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
-                        Acompanhamento Diário
-                    </h2>
-                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium">Consolidado institucional das diretorias por data.</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="relative group">
-                        <Label htmlFor="dash-date" className="sr-only">Data</Label>
-                        <Input
-                            id="dash-date"
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="w-[180px] h-11 rounded-lg bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 font-bold text-zinc-700 dark:text-zinc-300 transition-all"
-                        />
-                    </div>
+        <div className="flex flex-col gap-3 flex-1 h-full min-h-0">
+            {/* COMPACT FILTER BAR */}
+            <div className="flex items-center justify-between gap-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2.5 rounded-xl shadow-sm shrink-0">
+                <p className="text-[12px] font-bold text-blue-600 uppercase tracking-widest hidden sm:block">Acompanhamento em Tempo Real</p>
+
+                <div className="flex items-center gap-4">
+                    <Label htmlFor="dash-date" className="text-[11px] font-black text-zinc-500 uppercase">Data</Label>
+
+                    {reports.length > 1 && (
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 shadow-sm">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={prevSlide}>
+                                    <ChevronLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md hover:text-blue-600" onClick={() => setIsPaused(!isPaused)}>
+                                    {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={nextSlide}>
+                                    <ChevronRight className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <Input
+                        id="dash-date"
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-[140px] h-8 text-xs font-bold rounded-lg bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
+                    />
+
+                    {reports.length > 1 && (
+                        <div className="flex gap-1 items-center px-1">
+                            {reports.map((_, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        setTransitioning(true)
+                                        setTimeout(() => {
+                                            setCurrentSlide(idx)
+                                            setTransitioning(false)
+                                        }, 300)
+                                    }}
+                                    className={cn(
+                                        "h-1.5 rounded-full transition-all duration-300",
+                                        currentSlide === idx ? "w-4 bg-blue-600" : "w-1.5 bg-zinc-300 dark:bg-zinc-700 hover:bg-zinc-400"
+                                    )}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {[1, 2].map(i => (
-                        <div key={i} className="h-96 rounded-2xl bg-zinc-50 dark:bg-zinc-900 animate-pulse border border-zinc-100 dark:border-zinc-800"></div>
-                    ))}
-                </div>
+                <div className="h-64 rounded-xl bg-zinc-50 dark:bg-zinc-900 animate-pulse border border-zinc-100 dark:border-zinc-800"></div>
             ) : reports.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-32 bg-zinc-50/30 dark:bg-zinc-950/20 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800">
-                    <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 mb-4">
-                        <Info className="w-8 h-8 text-zinc-300" />
-                    </div>
-                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">Sem registros para esta data</h3>
-                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium mt-1">Selecione outro período no calendário acima.</p>
+                <div className="flex flex-col items-center justify-center py-20 bg-zinc-50/30 dark:bg-zinc-950/20 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                    <Info className="w-6 h-6 text-zinc-300 mb-2" />
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Sem registros para {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR')}</h3>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
-                    {reports.map(report => {
-                        const cp = getCPTotals(report.data)
-                        const isSineCP = report.directorate?.name?.toLowerCase().includes('sine')
+                <div className="relative group flex-1 flex flex-col min-h-0">
+                    {/* CURRENT SLIDE CONTENT */}
+                    <div className={cn(
+                        "flex-1 flex flex-col min-h-0 transition-all duration-300 transform",
+                        transitioning ? "opacity-0 scale-[0.99] translate-x-2" : "opacity-100 scale-100 translate-x-0"
+                    )}>
+                        {(() => {
+                            const report = reports[currentSlide]
+                            if (!report) return null;
 
-                        return (
-                            <Card key={report.id} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 shadow-sm overflow-hidden rounded-2xl">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 px-8 py-6">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="space-y-1">
-                                            <CardTitle className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                            const isEmpty = Object.keys(report.data).length === 0
+                            const cp = getCPTotals(report.data)
+                            const isSineCP = report.directorate?.name?.toLowerCase().includes('sine')
+
+                            return (
+                                <div key={report.id} className="flex-1 flex flex-col min-h-0">
+                                    <Card className="flex-1 border-zinc-200 dark:border-zinc-800 shadow-none rounded-xl flex flex-col overflow-hidden">
+                                        <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700">
+                                            <h4 className="text-[14px] font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-widest flex items-center gap-2">
+                                                <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
                                                 {report.directorate?.name}
-                                            </CardTitle>
-                                            <CardDescription className="text-sm font-medium text-zinc-500">
-                                                Dados coletados em {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                            </CardDescription>
+                                            </h4>
                                         </div>
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
-                                            <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest leading-none">Relatório Consolidado</span>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="p-8">
-                                    {isSineCP ? (
-                                        <div className="space-y-12">
-                                            {/* SINE SECTION */}
-                                            <div className="space-y-8">
-                                                <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                                                    <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                        SINE • Indicadores de Atendimento
-                                                    </h4>
+                                        <CardContent className="p-6 flex-1 bg-zinc-50/30 dark:bg-zinc-900/10 flex flex-col">
+                                            {isEmpty ? (
+                                                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                                                    <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800">
+                                                        <Compass className="w-8 h-8 text-zinc-300" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Aguardando lançamentos</p>
+                                                        <p className="text-[11px] text-zinc-400 font-medium">Os indicadores operacionais desta diretoria<br />serão exibidos aqui após o registro.</p>
+                                                    </div>
                                                 </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-4">
-                                                    {[
-                                                        { label: "Atendimento Trabalhador", val: report.data.sine_atend_trabalhador, icon: Users },
-                                                        { label: "Atendimento Online", val: report.data.sine_atend_trabalhador_online, icon: Laptop },
-                                                        { label: "Atendimento Empregador", val: report.data.sine_atend_empregador, icon: Building },
-                                                        { label: "Empregador Online", val: report.data.sine_atend_empregador_online, icon: Globe },
-                                                        { label: "Seguro Desemprego", val: report.data.sine_seguro_desemprego, icon: ShieldCheck },
-                                                        { label: "CTPS Digital", val: report.data.sine_ctps_digital, icon: IdCard },
-                                                        { label: "Vagas Captadas", val: report.data.sine_vagas_captadas, icon: Briefcase },
-                                                        { label: "Ligações Recebidas", val: report.data.sine_ligacoes_recebidas, icon: PhoneIncoming },
-                                                        { label: "Ligações Realizadas", val: report.data.sine_ligacoes_realizadas, icon: PhoneOutgoing },
-                                                        { label: "Currículos", val: report.data.sine_curriculos, icon: FileText },
-                                                        { label: "Entrevistados", val: report.data.sine_entrevistados, icon: UserCheck },
-                                                        { label: "Processo Seletivo", val: report.data.sine_processo_seletivo, icon: ListChecks },
-                                                        { label: "Orientação Profissional", val: report.data.sine_orientacao_profissional, icon: Compass },
-                                                    ].map((item, idx) => (
-                                                        <div key={idx} className="flex items-center justify-between group transition-all">
-                                                            <div className="flex items-center gap-3">
-                                                                <item.icon className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors" />
-                                                                <span className="text-[13px] font-medium text-zinc-600 dark:text-zinc-400">{item.label}</span>
+                                            ) : isSineCP ? (
+                                                <div className="flex flex-row gap-2 items-stretch h-full min-h-0">
+                                                    <Card className="w-[420px] shrink-0 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
+                                                        <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-700">
+                                                            <h4 className="text-[10px] font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-tighter">SINE • INDICADORES</h4>
+                                                        </div>
+                                                        <CardContent className="p-2 flex-1">
+                                                            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 h-full">
+                                                                {[
+                                                                    { label: "Atendimento Trabalhador", val: report.data.sine_atend_trabalhador, icon: Users },
+                                                                    { label: "Trabalhador Online", val: report.data.sine_atend_trabalhador_online, icon: Laptop },
+                                                                    { label: "Atendimento Empregador", val: report.data.sine_atend_empregador, icon: Building },
+                                                                    { label: "Empregador Online", val: report.data.sine_atend_empregador_online, icon: Globe },
+                                                                    { label: "Seguro Desemprego", val: report.data.sine_seguro_desemprego, icon: ShieldCheck },
+                                                                    { label: "CTPS Digital", val: report.data.sine_ctps_digital, icon: IdCard },
+                                                                    { label: "Vagas Captadas", val: report.data.sine_vagas_captadas, icon: ListChecks },
+                                                                    { label: "Ligações Atendidas", val: report.data.sine_ligacoes_recebidas, icon: PhoneIncoming },
+                                                                    { label: "Ligações Feitas", val: report.data.sine_ligacoes_realizadas, icon: PhoneOutgoing },
+                                                                    { label: "Currículos", val: report.data.sine_curriculos, icon: FileText },
+                                                                    { label: "Entrevistados", val: report.data.sine_entrevistados, icon: UserCheck },
+                                                                    { label: "Orientação Profissional", val: report.data.sine_orientacao_profissional, icon: Compass },
+                                                                ].map((item, idx) => (
+                                                                    <div key={idx} className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60 pb-1">
+                                                                        <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                                                                            <item.icon className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                                                                            <span className="text-[9px] text-zinc-700 dark:text-zinc-300 font-bold leading-tight tracking-tight">{item.label}</span>
+                                                                        </div>
+                                                                        <span className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-[9px] font-black text-zinc-900 dark:text-zinc-100 px-1.5 py-0.5 rounded shadow-sm min-w-[24px] text-center">
+                                                                            {item.val || 0}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{item.val || 0}</span>
+                                                        </CardContent>
+                                                    </Card>
+
+                                                    <Card className="w-[240px] shrink-0 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
+                                                        <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-700">
+                                                            <h4 className="text-[10px] font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-tighter">CP • CONSOLIDADO</h4>
+                                                        </div>
+                                                        <CardContent className="p-2 flex-1">
+                                                            <div className="grid grid-cols-1 gap-y-1.5 h-full">
+                                                                {[
+                                                                    { label: "Atendimento", val: cp.atendimento, icon: Users },
+                                                                    { label: "Inscrições Realizadas", val: cp.inscricoes, icon: ClipboardCheck },
+                                                                    { label: "Pessoas Presentes", val: cp.pessoas_presentes, icon: UserCheck },
+                                                                    { label: "Ligações Atendidas", val: cp.ligacoes_recebidas, icon: PhoneIncoming },
+                                                                    { label: "Ligações Feitas", val: cp.ligacoes_realizadas, icon: PhoneOutgoing },
+                                                                ].map((item, idx) => (
+                                                                    <div key={idx} className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60 pb-1">
+                                                                        <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                                                                            <item.icon className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                                                                            <span className="text-[9px] text-zinc-700 dark:text-zinc-300 font-bold leading-tight tracking-tight">{item.label}</span>
+                                                                        </div>
+                                                                        <span className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-[9px] font-black text-zinc-900 dark:text-zinc-100 px-1.5 py-0.5 rounded shadow-sm min-w-[24px] text-center">
+                                                                            {item.val || 0}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+
+                                                    <Card className="flex-1 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
+                                                        <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-2.5 py-1 border-b border-zinc-200 dark:border-zinc-700">
+                                                            <h4 className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">PERFORMANCE POR UNIDADE TÉCNICA</h4>
+                                                        </div>
+                                                        <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
+                                                            <table className="w-full text-[9px] border-collapse min-w-max">
+                                                                <thead>
+                                                                    <tr className="bg-zinc-200/50 dark:bg-zinc-950/50 sticky top-0 z-20 h-7">
+                                                                        <th className="px-3 text-left font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-widest border-b border-zinc-200 dark:border-zinc-700 sticky left-0 bg-zinc-200 dark:bg-zinc-950 z-30">Unidade</th>
+                                                                        {DIARIO_CP_INDICATORS.filter(i => i.id !== 'total_procedimentos').map(ind => {
+                                                                            let label = ind.label.split(' ').pop();
+                                                                            if (ind.id === 'inscricoes') label = 'Inscrições';
+                                                                            if (ind.id === 'pessoas_presentes') label = 'Presentes';
+                                                                            if (ind.id === 'ligacoes_recebidas') label = 'Atendidas';
+                                                                            if (ind.id === 'ligacoes_realizadas') label = 'Feitas';
+
+                                                                            return (
+                                                                                <th key={ind.id} className="px-2 text-center font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-widest border-b border-zinc-200 dark:border-zinc-700 whitespace-nowrap">
+                                                                                    {label}
+                                                                                </th>
+                                                                            );
+                                                                        })}
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-zinc-200/50 dark:divide-zinc-800/50">
+                                                                    {DIARIO_CENTROS.map(centro => {
+                                                                        const hasData = DIARIO_CP_INDICATORS.some(ind => report.data[`cp_${centro.id}_${ind.id}`] > 0);
+                                                                        if (!hasData) return null;
+
+                                                                        return (
+                                                                            <tr key={centro.id} className="hover:bg-zinc-50/50 transition-colors h-7 text-[10px]">
+                                                                                <td className="px-3 font-bold text-zinc-800 dark:text-zinc-200 border-r border-zinc-100 dark:border-zinc-800 sticky left-0 bg-white dark:bg-zinc-900 z-10">{centro.label}</td>
+                                                                                {DIARIO_CP_INDICATORS.filter(i => i.id !== 'total_procedimentos').map(ind => (
+                                                                                    <td key={ind.id} className="px-2 text-center text-zinc-900 dark:text-zinc-100 font-medium tabular-nums">{report.data[`cp_${centro.id}_${ind.id}`] || 0}</td>
+                                                                                ))}
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </CardContent>
+                                                    </Card>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                                    {Object.entries(report.data).map(([k, v]: [any, any]) => (
+                                                        <div key={k} className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-300">
+                                                            <div className="flex items-start justify-between mb-4">
+                                                                <span className="text-[10px] text-zinc-400 font-black uppercase tracking-widest leading-tight">{k.replace(/_/g, ' ')}</span>
+                                                                <TrendingUp className="w-3 h-3 text-zinc-300" />
+                                                            </div>
+                                                            <div className="flex items-baseline gap-2">
+                                                                <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tabular-nums">{v}</span>
+                                                                <span className="text-[10px] text-zinc-400 font-bold">Unid.</span>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
-
-                                                {/* SINE TOTAL HIGHLIGHT */}
-                                                <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
-                                                    <div className="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-8 py-5 rounded-2xl shadow-xl shadow-zinc-900/10 flex items-center gap-10">
-                                                        <div className="space-y-0.5">
-                                                            <span className="text-[10px] font-bold uppercase opacity-60 tracking-[0.1em] block">Volume Total SINE</span>
-                                                            <span className="text-3xl font-bold tabular-nums tracking-tight">{report.data.sine_total || 0}</span>
-                                                        </div>
-                                                        <div className="p-3 bg-white/10 dark:bg-black/5 rounded-xl">
-                                                            <TrendingUp className="w-6 h-6" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* CENTROS SECTION */}
-                                            <div className="space-y-8 pt-4">
-                                                <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                                                    <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                        Centros Profissionalizantes • Performance
-                                                    </h4>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-                                                    {[
-                                                        { label: "Atendimento", val: cp.atendimento, icon: Users },
-                                                        { label: "Inscrições", val: cp.inscricoes, icon: ClipboardCheck },
-                                                        { label: "Presenças", val: cp.pessoas_presentes, icon: UserCheck },
-                                                        { label: "Lançamento", val: cp.ligacoes_recebidas, icon: PhoneIncoming },
-                                                        { label: "Retorno", val: cp.ligacoes_realizadas, icon: PhoneOutgoing },
-                                                    ].map((item, idx) => (
-                                                        <div key={idx} className="bg-white dark:bg-zinc-900/50 p-5 rounded-xl border border-zinc-200/60 dark:border-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.02)] group hover:border-zinc-900 dark:hover:border-zinc-50 transition-all">
-                                                            <div className="flex flex-col gap-4">
-                                                                <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-zinc-900 dark:group-hover:bg-zinc-50 transition-colors">
-                                                                    <item.icon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-900 transition-colors" />
-                                                                </div>
-                                                                <div className="space-y-1">
-                                                                    <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
-                                                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums leading-none tracking-tight">{item.val || 0}</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-
-                                                    {/* TOTAL PROCEDIMENTOS */}
-                                                    <div className="bg-zinc-900 dark:bg-zinc-50 p-5 rounded-xl text-white dark:text-zinc-900 sm:col-span-2 lg:col-span-1 flex flex-col justify-between gap-4 shadow-lg shadow-zinc-900/5 transition-transform hover:scale-[1.02] cursor-default">
-                                                        <div className="p-2 w-fit bg-white/10 dark:bg-black/5 rounded-lg">
-                                                            <Activity className="w-3.5 h-3.5" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Proc.</span>
-                                                            <p className="text-2xl font-bold tabular-nums leading-none tracking-tight">{cp.total_procedimentos || 0}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
-                                            {Object.entries(report.data).map(([k, v]: [any, any]) => (
-                                                <div key={k} className="flex items-center justify-between p-4 bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800 rounded-xl hover:border-zinc-900 dark:hover:border-zinc-50 transition-all">
-                                                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase truncate pr-4">{k.replace(/_/g, ' ')}</span>
-                                                    <span className="text-base font-bold text-zinc-900 dark:text-zinc-100">{v}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        )
-                    })}
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            )
+                        })()}
+                    </div>
                 </div>
             )}
         </div>

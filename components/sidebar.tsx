@@ -23,7 +23,8 @@ import {
     Map,
     Coins,
     Briefcase,
-    Backpack
+    Backpack,
+    TrendingUp
 } from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
@@ -125,15 +126,33 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                             className={cn(
                                 "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg",
                                 isCollapsed ? "justify-center px-0" : "justify-start px-3",
-                                pathname === "/dashboard"
+                                (pathname === "/dashboard" && !searchParams.get('view'))
                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
                                     : "text-white hover:text-cyan-400 hover:bg-white/5"
                             )}
                         >
-                            <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", pathname === "/dashboard" ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
+                            <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", (pathname === "/dashboard" && !searchParams.get('view')) ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                             {!isCollapsed && <span>Painel Geral</span>}
                         </Button>
                     </Link>
+
+                    {role === 'admin' && (
+                        <Link href="/dashboard?view=daily">
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mt-1",
+                                    isCollapsed ? "justify-center px-0" : "justify-start px-3",
+                                    searchParams.get('view') === 'daily'
+                                        ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                        : "text-white hover:text-cyan-400 hover:bg-white/5"
+                                )}
+                            >
+                                <TrendingUp className={cn("h-[18px] w-[18px] transition-colors", searchParams.get('view') === 'daily' ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
+                                {!isCollapsed && <span>Visão Diária</span>}
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 <div className="space-y-1">
