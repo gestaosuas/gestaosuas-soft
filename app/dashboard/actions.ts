@@ -142,7 +142,7 @@ export async function submitReport(formData: Record<string, any>, month: number,
                     }
                 }
             } else {
-                mergedData = { ...existing.data, ...formData }
+                mergedData = { ...existing.data, ...formData, _setor: setor }
             }
 
             const { error: updateError } = await adminSupabase
@@ -161,11 +161,11 @@ export async function submitReport(formData: Record<string, any>, month: number,
                 units: {
                     [formData._unit || 'Principal']: formData
                 }
-            } : formData
+            } : { ...formData, _setor: setor }
 
             const submissionData = {
                 user_id: user.id,
-                directorate_id: directorate.id,
+                directorate_id: directorateId,
                 month,
                 year,
                 data: finalData,
@@ -187,6 +187,7 @@ export async function submitReport(formData: Record<string, any>, month: number,
             return { error: `Não foi possível sincronizar com a planilha. O dado foi salvo no banco, mas a planilha pode estar desatualizada.` }
         }
 
+        revalidateTag(`submissions-${directorate.id}`)
         revalidatePath('/dashboard', 'layout')
         return { success: true }
     } catch (error: any) {

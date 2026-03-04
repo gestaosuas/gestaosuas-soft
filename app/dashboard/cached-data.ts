@@ -126,8 +126,17 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             // (We check Admin role OR Link)
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
 
+            // If profile role isn't admin, check auth.users metadata or hardcoded list
+            // Since we can't easily join auth.users, for hardcoded admins we can just rely on their ID 
+            // if we know it, or fetch their email using admin auth API.
+            let isEmailAdmin = false
+            if (profile?.role !== 'admin') {
+                const { data: authData } = await supabase.auth.admin.getUserById(userId)
+                isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(authData?.user?.email || '')
+            }
+
             let hasAccess = false
-            if (profile?.role === 'admin') {
+            if (profile?.role === 'admin' || isEmailAdmin) {
                 hasAccess = true
             } else {
                 // Check direct link (Correct column is profile_id)
@@ -155,8 +164,8 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
         },
         [`submissions-safe-${directorateId}-${userId}`], // Cache per user+directorate
         {
-            tags: ['submissions', `submissions-${directorateId}`],
-            revalidate: 60 // 1 minute is fine for listings
+            tags: ['submissions', `submissions-${directorateId}`, `submissions-user-${userId}`],
+            revalidate: 60
         }
     )()
 }
@@ -177,8 +186,11 @@ export const getCachedSubmission = async (id: string, userId: string) => {
 
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
 
-            // 2. Security Check
-            if (profile?.role === 'admin') return submission
+            // 2. Security Check (Admin OR Owner)
+            const { data: authData } = await supabase.auth.admin.getUserById(userId)
+            const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(authData?.user?.email || '')
+
+            if (profile?.role === 'admin' || isEmailAdmin) return submission
             if (userId === submission.user_id) return submission // Owner access
 
             // Check Directorate Link

@@ -114,6 +114,8 @@ export default async function DirectoratePage({
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
                                     { label: "Atualizar Dados Mensais", desc: "Indicadores consolidados do mês", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`, icon: FileText },
+                                    { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
                                     { label: "Dashboard SINE", desc: "Gráficos e performance", href: `/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`, icon: BarChart3 },
                                     { label: "Dados SINE", desc: "Consulta ao banco de registros", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => {
@@ -145,7 +147,7 @@ export default async function DirectoratePage({
                                                         <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
                                                             <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
                                                         </div>
-                                                        {item.label === "Atualizar Dados SINE" && latestMonthSINE_CP && (
+                                                        {item.label === "Atualizar Dados Mensais" && latestMonthSINE_CP && (
                                                             <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-md">
                                                                 <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
                                                                 <span className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês Atualizado: {latestMonthSINE_CP}</span>
@@ -185,7 +187,7 @@ export default async function DirectoratePage({
                                                     <div className="p-2.5 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
                                                         <item.icon className="w-5 h-5 text-zinc-400 group-hover:text-white" />
                                                     </div>
-                                                    {item.label === "Atualizar Dados CP" && latestMonthSINE_CP && (
+                                                    {item.label === "Atualizar Dados Mensais" && latestMonthSINE_CP && (
                                                         <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-md">
                                                             <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
                                                             <span className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês Atualizado: {latestMonthSINE_CP}</span>

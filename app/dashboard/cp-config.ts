@@ -11,7 +11,7 @@ export const CP_SHEET_NAME = "CENTRO PROFISSIONALIZANTE"
 // Block 5: PARCERIAS E CURSOS (A63:M65 -> Data A64:A65 - 2 items)
 
 export const CP_SHEET_BLOCKS = [
-    { startRow: 2, endRow: 9 },   // Block 1
+    { startRow: 2, endRow: 11 },   // Block 1
     { startRow: 12, endRow: 21 },  // Block 2
     { startRow: 26, endRow: 28 },  // Block 3
     { startRow: 33, endRow: 42 },  // Block 4
@@ -31,6 +31,8 @@ export const CP_FORM_DEFINITION: FormDefinition = {
                 { id: "resumo_homens", label: "Homens", type: "number" },
                 { id: "resumo_mercado_fem", label: "inseridos no mercado de trabalho (feminino)", type: "number" },
                 { id: "resumo_mercado_masc", label: "inseridos no mercado de trabalho (masculino)", type: "number" },
+                { id: "resumo_vagas_ocupadas", label: "Vagas Ocupadas", type: "number" },
+                { id: "resumo_taxa_ocupacao", label: "Taxa de Ocupação (%)", type: "number", disabled: true },
             ]
         },
         {

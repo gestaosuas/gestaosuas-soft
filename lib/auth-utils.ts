@@ -16,6 +16,11 @@ export async function checkUserPermission(userId: string, directorateId: string)
 
     if (profile?.role === 'admin') return true
 
+    // Hardcoded email check (needs auth fetch)
+    const { data: authData } = await supabase.auth.admin.getUserById(userId)
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(authData?.user?.email || '')
+    if (isEmailAdmin) return true
+
     // 2. Check direct link in profile_directorates
     const { data: link } = await supabase
         .from('profile_directorates')
@@ -38,7 +43,10 @@ export async function isAdmin(userId: string): Promise<boolean> {
         .eq('id', userId)
         .single()
 
-    return profile?.role === 'admin'
+    if (profile?.role === 'admin') return true
+
+    const { data: authData } = await supabase.auth.admin.getUserById(userId)
+    return ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(authData?.user?.email || '')
 }
 
 /**
@@ -57,6 +65,9 @@ export async function getUserAllowedUnits(userId: string, directorateId: string)
         .single()
 
     if (profile?.role === 'admin') return null
+
+    const { data: authData } = await supabase.auth.admin.getUserById(userId)
+    if (['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(authData?.user?.email || '')) return null
 
     // 2. Directorate link check
     const { data: link } = await supabase

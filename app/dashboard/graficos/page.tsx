@@ -135,7 +135,10 @@ export default async function GraficosPage({
     }
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
-    const rawSubmissions = allSubmissions.filter((s: any) => s.year === selectedYear)
+    const rawSubmissions = allSubmissions.filter((s: any) =>
+        s.year === selectedYear &&
+        (!setor || !s.data._setor || s.data._setor === setor)
+    )
 
     // Filter unit data out of submissions if user doesn't have access
     const submissions = rawSubmissions.map((sub: any) => {

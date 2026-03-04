@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server"
-import { getCachedSubmissionsForUser } from "@/app/dashboard/cached-data"
+import { getCachedSubmissionsForUser, getCachedProfile } from "@/app/dashboard/cached-data"
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,12 +21,15 @@ export default async function ReportListPage({
 
     if (!user) redirect('/login')
 
+    const cachedProfile = await getCachedProfile(user.id)
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const isAdmin = cachedProfile?.role === 'admin' || isEmailAdmin
+
     // Use Safe Fetcher that checks permission via Service Role
-    // This circumvents the broken RLS policies on the database side
     const submissions = await getCachedSubmissionsForUser(user.id, directorate_id || '')
 
     const { getUserAllowedUnits } = await import("@/lib/auth-utils")
-    const allowedUnits = await getUserAllowedUnits(user.id, directorate_id || '')
+    const allowedUnits = isAdmin ? null : await getUserAllowedUnits(user.id, directorate_id || '')
 
     // Granular check for SINE/CP
     if (allowedUnits) {
@@ -50,11 +53,15 @@ export default async function ReportListPage({
 
     // Filter to show ONLY Narrative Reports (containing _report_content)
     // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
-    const narrativeSubmissions = submissions?.filter((sub) =>
-        sub.data &&
-        sub.data._report_content &&
-        sub.year === selectedYear
-    ) || []
+    const narrativeSubmissions = submissions?.filter((sub: any) => {
+        const matchesYear = sub.year === selectedYear;
+        const hasNarrative = sub.data && sub.data._report_content;
+
+        // If sector is provided in URL, filter by it. 
+        const matchesSector = !setor || !sub.data._setor || sub.data._setor === setor;
+
+        return matchesYear && hasNarrative && matchesSector;
+    }) || []
 
     // Basic permission check
     // Omitted strictly for brevity as we are just listing, but in prod should verify link
@@ -76,6 +83,11 @@ export default async function ReportListPage({
                         </h1>
                         <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
                             Acervo de registros e narrativas consolidadas de {selectedYear}.
+                            {isAdmin && (
+                                <span className="ml-2 text-zinc-300 dark:text-zinc-700 font-normal">
+                                    (Admin: {narrativeSubmissions.length} registros encontrados para este setor/ano)
+                                </span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -85,7 +97,7 @@ export default async function ReportListPage({
             </header>
 
             <div className="grid gap-6">
-                {narrativeSubmissions.map((sub) => {
+                {narrativeSubmissions.map((sub: any) => {
                     const hasContent = sub.data && sub.data._report_content;
 
                     return (

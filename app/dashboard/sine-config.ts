@@ -23,6 +23,7 @@ export const SINE_FORM_DEFINITION: FormDefinition = {
                 { id: "carteira_digital", label: "Carteira digital de trabalho", type: "number" },
                 { id: "orientacao_profissional", label: "Orientação Profissional", type: "number" },
                 { id: "convocacao_trabalhadores", label: "Convocação Trabalhadores", type: "number" },
+                { id: "vagas_alto_valor", label: "Vagas de alto valor agregado", type: "number" },
                 { id: "atendimentos", label: "ATENDIMENTOS", type: "number" }
             ]
         }

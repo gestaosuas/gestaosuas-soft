@@ -372,6 +372,16 @@ export function SubmissionFormClient({
                 setData((prev: any) => ({ ...prev, atend_atual: atend_total }))
             }
         }
+
+        if (setor === 'centros') {
+            const oferecidas = Number(data.resumo_vagas) || 0
+            const ocupadas = Number(data.resumo_vagas_ocupadas) || 0
+            const taxa = oferecidas > 0 ? Number(((ocupadas / oferecidas) * 100).toFixed(1)) : 0
+
+            if (data.resumo_taxa_ocupacao !== taxa) {
+                setData((prev: any) => ({ ...prev, resumo_taxa_ocupacao: taxa }))
+            }
+        }
     }, [setor, subcategory])
 
 
