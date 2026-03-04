@@ -187,7 +187,6 @@ export async function submitReport(formData: Record<string, any>, month: number,
             return { error: `Não foi possível sincronizar com a planilha. O dado foi salvo no banco, mas a planilha pode estar desatualizada.` }
         }
 
-        revalidateTag(`submissions-${directorate.id}`)
         revalidatePath('/dashboard', 'layout')
         return { success: true }
     } catch (error: any) {
