@@ -1,5 +1,8 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 async function getAuthClient() {
     const credentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
@@ -88,6 +91,13 @@ export async function uploadFileToDrive(buffer: Buffer, fileName: string, mimeTy
     console.log(`DEBUG: Starting upload of '${fileName}' to folder '${folderId}'...`);
     console.log(`DEBUG: MIME Type: ${mimeType || 'application/pdf'}, Buffer size: ${buffer.length} bytes`);
 
+    // Abordagem robusta: escrever o buffer em um arquivo temporário e usar fs.createReadStream
+    const tempDir = os.tmpdir();
+    const tempFilePath = path.join(tempDir, `upload_${Date.now()}_${fileName.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`);
+
+    fs.writeFileSync(tempFilePath, buffer);
+    console.log(`DEBUG: Wrote temp file to ${tempFilePath}`);
+
     const fileMetadata = {
         name: fileName,
         parents: [folderId],
@@ -95,7 +105,7 @@ export async function uploadFileToDrive(buffer: Buffer, fileName: string, mimeTy
 
     const media = {
         mimeType: mimeType || 'application/pdf',
-        body: Readable.from(buffer),
+        body: fs.createReadStream(tempFilePath),
     };
 
     try {
@@ -130,5 +140,11 @@ export async function uploadFileToDrive(buffer: Buffer, fileName: string, mimeTy
     } catch (error) {
         console.error('DEBUG: Error in uploadFileToDrive:', error);
         throw error;
+    } finally {
+        // Cleanup do arquivo temporário
+        if (fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+            console.log(`DEBUG: Temp file cleaned up: ${tempFilePath}`);
+        }
     }
 }

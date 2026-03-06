@@ -108,9 +108,9 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             if (isFile(formData.anexo_rma)) {
                 const rmaFile = formData.anexo_rma as File
                 console.log(`DEBUG: CRAS RMA Upload detected. File: ${rmaFile.name}, Size: ${rmaFile.size} bytes`);
-                try {
-                    const buffer = Buffer.from(await rmaFile.arrayBuffer())
+                const buffer = Buffer.from(await rmaFile.arrayBuffer());
 
+                try {
                     if (buffer.length === 0) {
                         console.warn("DEBUG: Buffer is empty!");
                     }
@@ -141,8 +141,33 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     console.log(`DEBUG: Upload successful. Link: ${uploadResult.webViewLink}`);
                     formData.anexo_rma_link = uploadResult.webViewLink
                     formData.anexo_rma_id = uploadResult.id as string
-                } catch (driveError) {
-                    console.error("DEBUG: Failed to upload RMA to Drive:", driveError)
+                } catch (driveError: any) {
+                    console.error("DEBUG: Failed to upload RMA to Drive. Falling back to Supabase:", driveError.message || driveError)
+
+                    // FALLBACK: Se o Google Drive der erro (ex: erro de cota 403 de Service Account), salvamos no Supabase
+                    try {
+                        const filePath = `rmas/${year}/${month}/${formData._unit?.replace(/\s+/g, '_')}_${Date.now()}.pdf`
+
+                        const { data: uploadData, error: supabaseError } = await adminSupabase.storage
+                            .from('system-assets')
+                            .upload(filePath, buffer, {
+                                contentType: 'application/pdf',
+                                upsert: true
+                            })
+
+                        if (supabaseError) throw supabaseError
+
+                        // Get public URL
+                        const { data: { publicUrl } } = adminSupabase.storage
+                            .from('system-assets')
+                            .getPublicUrl(filePath)
+
+                        console.log(`DEBUG: Fallback to Supabase successful. Link: ${publicUrl}`)
+                        formData.anexo_rma_link = publicUrl
+                        formData.anexo_rma_id = filePath // save path as ID for reference
+                    } catch (fallbackError) {
+                        console.error("DEBUG: Both Google Drive and Supabase fallback failed.", fallbackError)
+                    }
                 } finally {
                     // Always remove the File object (or empty object proxy) before saving to DB
                     delete formData.anexo_rma
