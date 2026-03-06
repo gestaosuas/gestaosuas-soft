@@ -10,9 +10,10 @@ interface ReportActionsProps {
     reportId: string
     directorateId: string
     isAdmin: boolean
+    setor?: string
 }
 
-export default function ReportActions({ reportId, directorateId, isAdmin }: ReportActionsProps) {
+export default function ReportActions({ reportId, directorateId, isAdmin, setor }: ReportActionsProps) {
     const [deleting, setDeleting] = useState(false)
 
     const handlePrint = () => {
@@ -30,7 +31,7 @@ export default function ReportActions({ reportId, directorateId, isAdmin }: Repo
                 alert(`Erro: ${result.error}`)
             } else {
                 alert("Relatório excluído com sucesso!")
-                window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
+                window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}${setor ? `&setor=${setor}` : ''}`
             }
         } catch (e: any) {
             console.error('Erro de rede ou exceção:', e)
@@ -43,7 +44,7 @@ export default function ReportActions({ reportId, directorateId, isAdmin }: Repo
     return (
         <div className="flex items-center justify-between mb-10 px-2 print:hidden animate-in fade-in slide-in-from-top-4 duration-1000">
             <div className="flex gap-4">
-                <Link href={`/dashboard/relatorios/lista?directorate_id=${directorateId}`}>
+                <Link href={`/dashboard/relatorios/lista?directorate_id=${directorateId}${setor ? `&setor=${setor}` : ''}`}>
                     <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-900 transition-all shadow-sm">
                         <ArrowLeft className="h-5 w-5 text-zinc-500" />
                     </Button>

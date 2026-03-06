@@ -250,8 +250,8 @@ export default async function DataPage({
         (!setor || !s.data._setor || s.data._setor === setor)
     )
 
-    // Organizar dados em um mapa fácil: unit -> month -> { id, data }
-    const dataByUnitAndMonth = new Map<string, Map<number, { id: string, data: Record<string, any> }>>()
+    // Organizar dados em um mapa fácil: unit -> month -> { id, data, author }
+    const dataByUnitAndMonth = new Map<string, Map<number, { id: string, data: Record<string, any>, author?: string }>>()
 
     submissions?.forEach(sub => {
         if (sub.data._is_multi_unit && sub.data.units) {
@@ -260,7 +260,7 @@ export default async function DataPage({
                 if (!dataByUnitAndMonth.has(unitName)) {
                     dataByUnitAndMonth.set(unitName, new Map())
                 }
-                dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: unitData })
+                dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: unitData, author: sub.profiles?.full_name })
             })
         } else {
             // Old flat format or single-unit directorates
@@ -268,7 +268,7 @@ export default async function DataPage({
             if (!dataByUnitAndMonth.has(unitName)) {
                 dataByUnitAndMonth.set(unitName, new Map())
             }
-            dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: sub.data })
+            dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: sub.data, author: sub.profiles?.full_name })
         }
     })
 
@@ -463,8 +463,17 @@ export default async function DataPage({
                                                             </TableHead>
                                                             {months.map((m, i) => (
                                                                 <TableHead key={i} className="text-center font-bold text-[10px] text-zinc-400 dark:text-zinc-500 h-14 min-w-[60px] px-1 uppercase tracking-tighter relative group/header">
-                                                                    <div className="flex flex-col items-center justify-center w-full h-full">
-                                                                        <span>{m}</span>
+                                                                    <div className="flex flex-col items-center justify-center w-full h-full pt-2">
+                                                                        <span className="mb-1">{m}</span>
+                                                                        {isAdmin && (
+                                                                            <div className="h-4 flex items-center justify-center">
+                                                                                {unitData.get(i + 1)?.author && (
+                                                                                    <span className="text-[7.5px] font-black leading-none text-blue-600/60 dark:text-blue-400/60 uppercase truncate max-w-[50px] italic" title={`Enviado por: ${unitData.get(i + 1)?.author}`}>
+                                                                                        {unitData.get(i + 1)?.author.split(' ')[0]}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
                                                                         <div className="absolute top-1 right-1">
                                                                             {isAdmin && (
                                                                                 <DeleteMonthButton

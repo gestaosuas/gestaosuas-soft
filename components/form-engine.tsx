@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Info } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export type FieldDefinition = {
     id: string
     label: string
-    type: 'text' | 'number' | 'date'
+    type: 'text' | 'number' | 'date' | 'file'
     required?: boolean
     disabled?: boolean
     tooltip?: string
@@ -112,16 +113,47 @@ export function FormEngine({
                                         )}
                                     </Label>
                                 </div>
-                                <Input
-                                    id={field.id}
-                                    name={field.id}
-                                    type={field.type}
-                                    onChange={(e) => handleChange(field.id, e.target.value)}
-                                    disabled={disabled || field.disabled}
-                                    required={field.required}
-                                    value={formData[field.id] || ''}
-                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium"
-                                />
+                                {field.type === 'file' ? (
+                                    <div className="relative">
+                                        <input
+                                            id={field.id}
+                                            name={field.id}
+                                            type="file"
+                                            accept=".pdf"
+                                            disabled={disabled || field.disabled}
+                                            required={field.required}
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0]
+                                                if (file) handleChange(field.id, file)
+                                            }}
+                                            className="hidden"
+                                        />
+                                        <label
+                                            htmlFor={field.id}
+                                            className={cn(
+                                                "flex items-center justify-center w-full h-11 px-4 bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all",
+                                                (disabled || field.disabled) && "opacity-50 cursor-not-allowed"
+                                            )}
+                                        >
+                                            <span className="text-xs font-semibold text-zinc-500 truncate max-w-[200px]">
+                                                {formData[field.id] instanceof File
+                                                    ? (formData[field.id] as File).name
+                                                    : "Selecionar Arquivo PDF"}
+                                            </span>
+                                        </label>
+                                    </div>
+                                ) : (
+                                    <Input
+                                        id={field.id}
+                                        name={field.id}
+                                        type={field.type}
+                                        onChange={(e) => handleChange(field.id, e.target.value)}
+                                        disabled={disabled || field.disabled}
+                                        required={field.required}
+                                        value={formData[field.id] || ''}
+                                        className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium"
+                                    />
+                                )}
                             </div>
                         ))}
                     </div>

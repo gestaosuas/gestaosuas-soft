@@ -113,9 +113,9 @@ export default async function DirectoratePage({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: "Atualizar Dados Mensais", desc: "Indicadores consolidados do mês", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
-                                    { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`, icon: FileText },
-                                    { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
+                                    { label: "Atualizar Dados Mensais SINE", desc: "Indicadores consolidados do mês", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Relatório Mensal SINE", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`, icon: FileText },
+                                    { label: "Ver Relatórios SINE", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
                                     { label: "Dashboard SINE", desc: "Gráficos e performance", href: `/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`, icon: BarChart3 },
                                     { label: "Dados SINE", desc: "Consulta ao banco de registros", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => {
@@ -174,10 +174,10 @@ export default async function DirectoratePage({
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: "Atualizar Dados Mensais", desc: "Performance consolidada do mês", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
+                                    { label: "Atualizar Dados Mensais CP", desc: "Performance consolidada do mês", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
                                     { label: "Dashboard CP", desc: "Gráficos e visualização", href: `/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                    { label: "Relatório Mensal", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=centros&directorate_id=${directorate.id}`, icon: FileText },
-                                    { label: "Ver Relatórios", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=centros&directorate_id=${directorate.id}`, icon: FolderOpen },
+                                    { label: "Relatório Mensal CP", desc: "Consolidado descritivo do período", href: `/dashboard/relatorios/mensal?setor=centros&directorate_id=${directorate.id}`, icon: FileText },
+                                    { label: "Ver Relatórios CP", desc: "Histórico de envios mensais", href: `/dashboard/relatorios/lista?setor=centros&directorate_id=${directorate.id}`, icon: FolderOpen },
                                     { label: "Dados CP", desc: "Histórico de procedimentos", href: `/dashboard/dados?setor=centros&directorate_id=${directorate.id}`, icon: Database },
                                 ].map((item, idx) => (
                                     <Link key={idx} href={item.href} className="group">

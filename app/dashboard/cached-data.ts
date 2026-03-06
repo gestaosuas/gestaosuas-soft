@@ -66,12 +66,20 @@ export const getCachedDirectorate = async (id: string) => {
     return await unstable_cache(
         async () => {
             const supabase = createAdminClient()
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('directorates')
                 .select('*')
                 .eq('id', id)
                 .single()
-            return data
+
+            if (error) {
+                console.error(`[getCachedDirectorate] Error fetching ID ${id}:`, error)
+            }
+            if (!data) {
+                console.warn(`[getCachedDirectorate] No data found for ID ${id}`)
+            }
+
+            return data || null
         },
         [`directorate-v4-${id}`],
         {
@@ -160,7 +168,24 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                 .order('year', { ascending: false })
                 .order('month', { ascending: false })
 
-            return submissions || []
+            if (!submissions || submissions.length === 0) return []
+
+            // 3. Fetch authors names from profiles to join in-memory securely
+            const userIds = Array.from(new Set(submissions.map(s => s.user_id))).filter(Boolean)
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, full_name')
+                .in('id', userIds)
+
+            const profileMap = (profiles || []).reduce((acc: any, p) => {
+                acc[p.id] = p.full_name
+                return acc
+            }, {})
+
+            return (submissions || []).map(s => ({
+                ...s,
+                profiles: { full_name: profileMap[s.user_id] || 'Usuário Desconhecido' }
+            }))
         },
         [`submissions-safe-${directorateId}-${userId}`], // Cache per user+directorate
         {

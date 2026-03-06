@@ -17,7 +17,10 @@ export default async function MonthlyReportPage({
     if (!user) redirect('/login')
 
     const cachedProfile = await getCachedProfile(user.id)
-    const isAdmin = cachedProfile?.role === 'admin'
+
+    // Check if user is admin (role OR hardcoded email)
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const isAdmin = cachedProfile?.role === 'admin' || isEmailAdmin
 
     let directorate = null;
 

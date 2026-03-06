@@ -7,6 +7,7 @@ import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
 import { redirect } from 'next/navigation'
 import { FormDefinition } from '@/components/form-engine'
 import { checkUserPermission, isAdmin as isAdminCheck, getUserAllowedUnits } from '@/lib/auth-utils'
+import { getCachedProfile } from '@/app/dashboard/cached-data'
 
 
 import { CP_FORM_DEFINITION, CP_SHEET_BLOCKS, CP_SHEET_NAME } from './cp-config'
@@ -19,9 +20,20 @@ import { NAICA_FORM_DEFINITION, NAICA_SHEET_BLOCKS, NAICA_SPREADSHEET_ID } from 
 import { PROTETIVO_FORM_DEFINITION, PROTETIVO_SHEET_BLOCKS, PROTETIVO_SPREADSHEET_ID, SOCIOEDUCATIVO_FORM_DEFINITION, SOCIOEDUCATIVO_SHEET_BLOCKS, SOCIOEDUCATIVO_SPREADSHEET_ID } from './protecao-especial-config'
 import { SINE_FORM_DEFINITION, SINE_SHEET_NAME } from './sine-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
+import { uploadFileToDrive, getOrCreateFolder } from '@/lib/google-drive'
 import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
+import { logActivity } from '@/utils/activity-logger'
 
-export async function submitReport(formData: Record<string, any>, month: number, year: number, directorateId: string, setor?: string) {
+export async function submitReport(input: Record<string, any> | FormData, month: number, year: number, directorateId: string, setor?: string) {
+    let formData: Record<string, any> = {}
+
+    if (input instanceof FormData) {
+        for (const [key, value] of input.entries()) {
+            formData[key] = value
+        }
+    } else {
+        formData = { ...input }
+    }
     // Validate inputs
     submissionBaseSchema.parse({ month, year, directorateId, setor })
 
@@ -89,6 +101,68 @@ export async function submitReport(formData: Record<string, any>, month: number,
             const mes_anterior = Number(formData.mes_anterior) || 0
             const admitidas = Number(formData.admitidas) || 0
             formData.atual = mes_anterior + admitidas
+
+            const isFile = (val: any) => val && typeof val === 'object' && (val.constructor?.name === 'File' || (typeof val.arrayBuffer === 'function' && !!val.name));
+
+            // Handle PDF Upload to Google Drive if present
+            if (isFile(formData.anexo_rma)) {
+                const rmaFile = formData.anexo_rma as File
+                console.log(`DEBUG: CRAS RMA Upload detected. File: ${rmaFile.name}, Size: ${rmaFile.size} bytes`);
+                try {
+                    const buffer = Buffer.from(await rmaFile.arrayBuffer())
+
+                    if (buffer.length === 0) {
+                        console.warn("DEBUG: Buffer is empty!");
+                    }
+
+                    // Root folder from user: Plataforma Vigilância
+                    const rootFolderId = "1V-ReKw3wvgg8chtZIIhY_mPYuJMyHQJ9"
+
+                    console.log(`DEBUG: Resolving folder structure for unit: ${formData._unit}`);
+                    // 1. Get or Create "Cras" folder
+                    const crasFolderId = await getOrCreateFolder("Cras", rootFolderId)
+
+                    // 2. Get or Create unit folder
+                    const unitName = formData._unit || 'Geral'
+                    const unitFolderId = await getOrCreateFolder(unitName, crasFolderId)
+
+                    console.log(`DEBUG: Target Unit Folder ID: ${unitFolderId}`);
+
+                    // 3. Document Name: RMA + Mês referência (Portuguese)
+                    const monthNamesPt = [
+                        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+                    ]
+                    const monthName = monthNamesPt[month - 1]
+                    const fileName = `RMA ${monthName} ${year}.pdf`
+
+                    const uploadResult = await uploadFileToDrive(buffer, fileName, rmaFile.type || 'application/pdf', unitFolderId)
+
+                    console.log(`DEBUG: Upload successful. Link: ${uploadResult.webViewLink}`);
+                    formData.anexo_rma_link = uploadResult.webViewLink
+                    formData.anexo_rma_id = uploadResult.id as string
+                } catch (driveError) {
+                    console.error("DEBUG: Failed to upload RMA to Drive:", driveError)
+                } finally {
+                    // Always remove the File object (or empty object proxy) before saving to DB
+                    delete formData.anexo_rma
+                }
+            }
+
+            // Cleanup old fields that might be coming from fetchedInitialData
+            // and ensure we don't save the File object itself to indicators JSONB
+            const crasAllowedFields = CRAS_FORM_DEFINITION.sections.flatMap(s =>
+                s.fields.filter(f => f.type !== 'file').map(f => f.id)
+            );
+            crasAllowedFields.push('mes_anterior', 'admitidas', 'atual', 'anexo_rma_link', 'anexo_rma_id', '_unit', '_subcategory');
+
+            const cleanData: Record<string, any> = {};
+            crasAllowedFields.forEach(field => {
+                if (formData[field] !== undefined) {
+                    cleanData[field] = formData[field];
+                }
+            });
+            formData = cleanData;
         }
 
         if (setor === 'creas') {
@@ -113,16 +187,58 @@ export async function submitReport(formData: Record<string, any>, month: number,
             }
         }
 
+        // Verificação de Limites de Envio (Apenas para não-Admins)
+        const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+        const cachedProfile = await getCachedProfile(user.id)
+        const isAdminUser = cachedProfile?.role === 'admin' || isEmailAdmin
+
+        if (!isAdminUser) {
+            // 1. Restrição de Período (Apenas Mês Atual ou Anterior)
+            const now = new Date()
+            const currentMonth = now.getMonth() + 1
+            const currentYear = now.getFullYear()
+
+            // Lógica simplificada de "janela": mes atual ou (mes atual - 1)
+            // Tratando virada de ano
+            const isCurrentPeriod = (month === currentMonth && year === currentYear)
+            const isPreviousPeriod = (year === (currentMonth === 1 ? currentYear - 1 : currentYear) &&
+                month === (currentMonth === 1 ? 12 : currentMonth - 1))
+
+            if (!isCurrentPeriod && !isPreviousPeriod) {
+                return { error: `Período bloqueado. Você só pode enviar dados do mês atual (${currentMonth}/${currentYear}) ou do mês anterior.` }
+            }
+        }
+
         // Check if submitted exist
         const { data: existing } = await adminSupabase
             .from('submissions')
-            .select('id, data')
+            .select('id, data, user_id')
             .eq('directorate_id', directorate.id)
             .eq('month', month)
             .eq('year', year)
             .maybeSingle()
 
         if (existing) {
+            // Se já existe e não é admin, vamos verificar se podemos editar (sobrescrever)
+            if (!isAdminUser) {
+                // Para Relatório Mensal (Narrativo), o bloqueio é total após o primeiro envio
+                const isNarrative = existing.data?._report_content !== undefined
+                if (isNarrative) {
+                    return { error: "Este relatório narrativo já foi enviado e não pode mais ser editado. Entre em contato com um administrador se precisar de correções." }
+                }
+
+                // Para Indicadores (Multi-unidade), verificamos se ESTA unidade específica já foi enviada
+                if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
+                    const unitName = formData._unit || 'Principal'
+                    if (existing.data?.units && existing.data?.units[unitName]) {
+                        return { error: `Os dados da unidade ${unitName} para ${month}/${year} já foram enviados anteriormente e estão bloqueados para edição.` }
+                    }
+                } else {
+                    // Para Indicadores de unidade única (SINE, CP sem multi-unit, etc)
+                    return { error: `Já existe um registro para ${month}/${year}. Edições não são permitidas após o envio.` }
+                }
+            }
+
             let mergedData;
             if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
                 // Multi-unit handling
@@ -179,15 +295,50 @@ export async function submitReport(formData: Record<string, any>, month: number,
             }
         }
 
-        // Save to Google Sheets
+        // 4. Log Activity AND Revalidate (Do this before sheet sync to ensure log appears even if sync fails)
+        try {
+            // Use adminSupabase to fetch profile to ensure we get the name even if RLS is strict
+            const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+            const unitName = formData._unit || formData._subcategory || ''
+
+            // Format sector name for better readability in the log
+            const sectorTag = setor === 'sine' ? 'SINE' : (setor === 'centros' ? 'CP' : '')
+            const resourceNameStr = (sectorTag ? `${sectorTag} - ` : '') + `Mês ${month}/${year}` + (unitName ? ` (${unitName})` : '')
+
+            // Log activity
+            await logActivity({
+                user_id: user.id,
+                user_name: profile?.full_name || 'Usuário',
+                directorate_id: directorateId,
+                directorate_name: directorate.name,
+                action_type: existing ? 'UPDATE' : 'CREATE', // Keep original logic for UPDATE/CREATE
+                resource_type: 'REPORT',
+                resource_name: `Relatório de ${month}/${year}`,
+                details: {
+                    setor,
+                    unit: unitName, // Use unitName from context
+                    month,
+                    year,
+                    drive_file_id: formData.anexo_rma_id || null, // Use actual ID
+                    drive_file_link: formData.anexo_rma_link || null // Add link
+                }
+            })
+            revalidatePath('/dashboard', 'layout')
+        } catch (logErr) {
+            console.error("Non-critical Log Error:", logErr)
+        }
+
+        // 5. Save to Google Sheets (Last step, non-blocking for the log)
         try {
             await syncSubmissionToSheets(formData, month, year, directorate, setor)
         } catch (sheetError: any) {
             console.error("Sheet Error:", sheetError)
-            return { error: `Não foi possível sincronizar com a planilha. O dado foi salvo no banco, mas a planilha pode estar desatualizada.` }
+            return {
+                success: true,
+                warning: `O relatório foi salvo e registrado, mas houve um erro ao sincronizar com a planilha Google.`
+            }
         }
 
-        revalidatePath('/dashboard', 'layout')
         return { success: true }
     } catch (error: any) {
         console.error("Submit Report Error:", error)
@@ -247,6 +398,7 @@ async function syncSubmissionToSheets(formData: Record<string, any>, month: numb
             if (!blockConfig) return null
             const values = section.fields.map(field => {
                 const val = formData[field.id]
+                if (field.type === 'file') return 0
                 return val !== undefined && val !== '' ? Number(val) : 0
             })
             return { startRow: blockConfig.startRow, values: values }
@@ -494,7 +646,26 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
         console.error("Sheet Sync Error in updateSubmissionCell:", sheetError)
     }
 
+    // Log Activity for Edit
+    try {
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: directorate } = await adminSupabase.from('directorates').select('name').eq('id', submission.directorate_id).single()
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: submission.directorate_id,
+            directorate_name: directorate?.name || 'Diretoria',
+            action_type: 'UPDATE',
+            resource_type: 'REPORT',
+            resource_name: `Mês ${submission.month}/${submission.year} (Célula editada pelo Admin)`
+        })
+    } catch (e) {
+        console.error("Log error in updateSubmissionCell:", e)
+    }
+
     revalidatePath('/dashboard/dados', 'page')
+    revalidatePath('/dashboard', 'layout')
     return { success: true }
 }
 
@@ -544,6 +715,19 @@ export async function submitDailyReport(date: string, directorateId: string, for
             if (error) throw new Error("Erro ao salvar relatório diário: " + error.message)
         }
 
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorateId).single()
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: directorateId,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: existing ? 'UPDATE' : 'CREATE',
+            resource_type: 'REPORT',
+            resource_name: `Relatório Diário - ${date.split('-').reverse().join('/')}`
+        })
+
         revalidatePath('/dashboard', 'page')
         revalidatePath('/dashboard', 'layout')
         return { success: true }
@@ -557,44 +741,71 @@ export async function submitDailyReport(date: string, directorateId: string, for
 }
 
 export async function deleteReport(reportId: string) {
-    const supabase = await createClient()
+    try {
+        const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error("Unauthorized")
 
-    // Check admin
-    const isAdmin = await isAdminCheck(user.id)
+        // Check admin
+        const isAdminUser = await isAdminCheck(user.id)
 
-    // Check Admin or Owner
-    // We need to fetch the submission first (securely via Admin Client) to check ownership
-    const adminSupabase = createAdminClient()
-    const { data: submission } = await adminSupabase
-        .from('submissions')
-        .select('user_id')
-        .eq('id', reportId)
-        .single()
+        // Check Admin or Owner
+        // We need to fetch the submission first (securely via Admin Client) to check ownership
+        const adminSupabase = createAdminClient()
+        const { data: submission, error: fetchErr } = await adminSupabase
+            .from('submissions')
+            .select('user_id')
+            .eq('id', reportId)
+            .single()
 
-    let canDelete = false
+        if (fetchErr || !submission) {
+            console.error("Fetch submission error for delete:", fetchErr)
+            return { error: "Relatório não encontrado (pode já ter sido excluído)." }
+        }
 
-    if (isAdmin) {
-        canDelete = true
-    } else if (submission && submission.user_id === user.id) {
-        canDelete = true // Owner
+        let canDelete = false
+
+        if (isAdminUser) {
+            canDelete = true
+        } else if (submission.user_id === user.id) {
+            canDelete = true // Owner
+        }
+
+        if (!canDelete) {
+            return { error: "Apenas administradores ou o autor do relatório podem excluí-lo." }
+        }
+
+        const { error } = await adminSupabase.from('submissions').delete().eq('id', reportId)
+
+        if (error) {
+            console.error("Delete error from DB:", error)
+            return { error: "Erro ao excluir relatório no banco de dados." }
+        }
+
+        // Log Activity
+        try {
+            const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+            await logActivity({
+                user_id: user.id,
+                user_name: profile?.full_name || 'Usuário',
+                action_type: 'DELETE',
+                resource_type: 'REPORT',
+                resource_name: `Controle #${reportId.split('-')[0]}`
+            })
+        } catch (e) {
+            console.error("Log error in deleteReport (non-critical):", e)
+        }
+
+        revalidatePath('/dashboard', 'page')
+        revalidatePath('/dashboard', 'layout')
+        revalidatePath('/dashboard/relatorios/lista', 'page')
+
+        return { success: true }
+    } catch (err: any) {
+        console.error("Critical error in deleteReport action:", err)
+        return { error: err.message || "Erro inesperado ao processar exclusão." }
     }
-
-    if (!canDelete) {
-        return { error: "Apenas administradores ou o autor do relatório podem excluí-lo." }
-    }
-
-    const { error } = await adminSupabase.from('submissions').delete().eq('id', reportId)
-
-    if (error) {
-        console.error("Delete error:", error)
-        return { error: "Erro ao excluir relatório." }
-    }
-
-    revalidatePath('/dashboard', 'page')
-    return { success: true }
 }
 
 export async function deleteMonthData(directorateId: string, month: number, year: number, unitName?: string) {
@@ -861,8 +1072,35 @@ export async function saveVisit(data: any) {
             .single()
 
         if (error) throw new Error("Erro ao criar visita: " + error.message)
+
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorate_id).single()
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'DRAFT',
+            resource_type: 'VISIT',
+            resource_name: `Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+        })
+
         return { success: true, id: newVisit.id }
     }
+
+    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+    const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorate_id).single()
+
+    await logActivity({
+        user_id: user.id,
+        user_name: profile?.full_name || 'Usuário',
+        directorate_id: directorate_id,
+        directorate_name: dir?.name || 'Diretoria',
+        action_type: 'DRAFT',
+        resource_type: 'VISIT',
+        resource_name: `Atualização de Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+    })
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -897,6 +1135,23 @@ export async function finalizeVisit(id: string) {
         .eq('id', id)
 
     if (error) throw new Error("Erro ao finalizar visita: " + error.message)
+
+    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+    const { data: visitData } = await adminSupabase.from('visits').select('directorate_id, visit_date').eq('id', id).single()
+
+    if (visitData) {
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visitData.directorate_id).single()
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visitData.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'CREATE', // Once finalized, it counts as officially created
+            resource_type: 'VISIT',
+            resource_name: `Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+        })
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -1059,6 +1314,15 @@ export async function saveWorkPlan(data: any) {
             .eq('id', id)
 
         if (error) throw new Error("Erro ao atualizar plano: " + error.message)
+
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            action_type: 'UPDATE',
+            resource_type: 'WORK_PLAN',
+            resource_name: planData.title || 'Plano de Trabalho'
+        })
     } else {
         // Create
         const { error } = await adminSupabase
@@ -1069,6 +1333,15 @@ export async function saveWorkPlan(data: any) {
             })
 
         if (error) throw new Error("Erro ao criar plano: " + error.message)
+
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            action_type: 'CREATE',
+            resource_type: 'WORK_PLAN',
+            resource_name: planData.title || 'Plano de Trabalho'
+        })
     }
 
     revalidatePath('/dashboard', 'page')
@@ -1268,4 +1541,26 @@ export async function getDailyReports(date: string) {
         console.error("getDailyReports Error:", error)
         return { error: "Erro ao buscar relatórios diários." }
     }
+}
+
+export async function checkSubmissionExists(directorateId: string, month: number, year: number, unit?: string, setor?: string) {
+    const adminSupabase = createAdminClient()
+    const { data: existing } = await adminSupabase
+        .from('submissions')
+        .select('id, data')
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+        .maybeSingle()
+
+    if (!existing) return false
+
+    // Para setores multi-unidade, verificamos se a unidade específica existe no JSON
+    if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
+        const unitName = unit || 'Principal'
+        return !!(existing.data?.units && existing.data?.units[unitName])
+    }
+
+    // Para outros (SINE, CP, Narrativos), a existência do registro já significa que foi enviado
+    return true
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { Trash2, Loader2, AlertCircle } from "lucide-react"
-import { deleteMonthData } from "@/app/dashboard/actions"
+import { deleteReport } from "@/app/dashboard/actions"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -15,25 +15,29 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-interface DeleteMonthButtonProps {
-    directorateId: string
-    month: number
-    year: number
+interface DeleteReportButtonProps {
+    reportId: string
     monthName: string
-    unitName?: string
+    year: number
 }
 
-export function DeleteMonthButton({ directorateId, month, year, monthName, unitName }: DeleteMonthButtonProps) {
+export function DeleteReportButton({ reportId, monthName, year }: DeleteReportButtonProps) {
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
 
     const handleDelete = () => {
         startTransition(async () => {
-            const res = await deleteMonthData(directorateId, month, year, unitName)
-            if (res.success) {
-                setOpen(false)
-            } else {
-                alert("Erro ao excluir dados.")
+            try {
+                const res = await deleteReport(reportId)
+                if (res && res.success) {
+                    setOpen(false)
+                    window.location.reload()
+                } else {
+                    alert(res?.error || "Erro ao excluir relatório.")
+                }
+            } catch (err) {
+                console.error("Delete transition error:", err)
+                alert("Erro de conexão ou erro interno ao excluir.")
             }
         })
     }
@@ -42,8 +46,8 @@ export function DeleteMonthButton({ directorateId, month, year, monthName, unitN
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
                 <button
-                    className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                    title={`Limpar dados de ${monthName}`}
+                    className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                    title="Excluir relatório"
                 >
                     <Trash2 className="w-5 h-5" />
                 </button>
@@ -54,10 +58,11 @@ export function DeleteMonthButton({ directorateId, month, year, monthName, unitN
                         <AlertCircle className="w-5 h-5" /> Confirmar Exclusão
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                        Deseja realmente apagar todos os dados de **{monthName} / {year}**
-                        {unitName ? ` para a unidade ${unitName}` : ` de todas as unidades`}?
+                        Deseja realmente apagar o relatório de **{monthName} / {year}**?
                         <br /><br />
-                        <span className="font-bold text-zinc-900 dark:text-zinc-100">Esta ação não pode ser desfeita e os dados serão removidos do banco e dos dashboards.</span>
+                        <span className="font-bold text-zinc-900 dark:text-zinc-100 italic">
+                            Esta ação excluirá permanentemente a narrativa e os dados associados a este registro.
+                        </span>
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -67,13 +72,13 @@ export function DeleteMonthButton({ directorateId, month, year, monthName, unitN
                             e.preventDefault()
                             handleDelete()
                         }}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold"
                         disabled={isPending}
                     >
                         {isPending ? (
                             <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Excluindo...</>
                         ) : (
-                            "Sim, Limpar Dados"
+                            "Sim, Excluir Registro"
                         )}
                     </AlertDialogAction>
                 </AlertDialogFooter>

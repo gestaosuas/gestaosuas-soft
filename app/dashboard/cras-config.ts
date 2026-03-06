@@ -31,24 +31,24 @@ export const CRAS_FORM_DEFINITION: FormDefinition = {
             title: "DADOS DO CRAS",
             fields: [
                 { id: "mes_anterior", label: "Mês Anterior", type: "number" },
-                { id: "admitidas", label: "Admitidas", type: "number" },
-                { id: "desligadas", label: "Desligadas", type: "number" },
+                { id: "admitidas", label: "Famílias Inseridas (PAIF)", type: "number" },
+                { id: "desligadas", label: "Famílias Desligadas (PAIF)", type: "number" },
                 { id: "atual", label: "Atual", type: "number", disabled: true }, // Logic: Mês Anterior + Admitidas
                 { id: "atendimentos", label: "Atendimentos", type: "number" },
-                { id: "procedimentos", label: "Procedimentos", type: "number" },
                 { id: "visita_domiciliar", label: "Visita Domiciliar", type: "number" },
                 { id: "atend_particularizado", label: "Atend. Particularizado", type: "number" },
-                { id: "pro_pao", label: "Pró pão", type: "number" },
+                { id: "pro_pao", label: "Pró Pão (Cestas Entregues)", type: "number" },
                 { id: "dmae", label: "Dmae", type: "number" },
                 { id: "auxilio_documento", label: "Auxílio documento", type: "number" },
                 { id: "cesta_basica", label: "Cesta básica", type: "number" },
-                { id: "fralda_absorvente", label: "Fralda/absorvente", type: "number" },
-                { id: "guia_fotos", label: "Guia fotos", type: "number" },
-                { id: "bpc", label: "BPC", type: "number" },
+                { id: "fralda", label: "Fralda", type: "number" },
+                { id: "absorvente", label: "Absorvente", type: "number" },
+                { id: "bpc", label: "BPC (Orientações)", type: "number" },
                 { id: "carteirinha_idoso", label: "Carteirinha Idoso", type: "number" },
-                { id: "passe_livre_deficiente", label: "Passe Livre do Deficiente", type: "number" },
+                { id: "passe_livre_deficiente", label: "Passe livre do deficiente(Orientações)", type: "number" },
                 { id: "cadastros_novos", label: "Cadastros Novos", type: "number" },
-                { id: "recadastros", label: "Recadastros", type: "number" },
+                { id: "recadastros", label: "Atualização Cadastral", type: "number" },
+                { id: "anexo_rma", label: "Anexar RMA (PDF)", type: "file" },
             ]
         }
     ]

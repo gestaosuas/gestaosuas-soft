@@ -114,6 +114,7 @@ export default async function ViewReportPage({
                 reportId={id}
                 directorateId={submission.directorate_id}
                 isAdmin={isAdmin}
+                setor={submission.data?._setor}
             />
 
             {/* Report Document */}

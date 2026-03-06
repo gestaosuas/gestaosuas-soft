@@ -7,6 +7,7 @@ import { ArrowLeft, FileText, Calendar, Table as TableIcon } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { YearSelector } from "@/components/year-selector"
+import { DeleteReportButton } from "@/components/delete-report-button"
 
 export default async function ReportListPage({
     searchParams,
@@ -60,7 +61,10 @@ export default async function ReportListPage({
         // If sector is provided in URL, filter by it. 
         const matchesSector = !setor || !sub.data._setor || sub.data._setor === setor;
 
-        return matchesYear && hasNarrative && matchesSector;
+        // Visibility restriction: Only owner or admin
+        const canSee = isAdmin || sub.user_id === user.id;
+
+        return matchesYear && hasNarrative && matchesSector && canSee;
     }) || []
 
     // Basic permission check
@@ -79,7 +83,7 @@ export default async function ReportListPage({
                     </Link>
                     <div className="space-y-1">
                         <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
-                            Histórico de Relatórios
+                            Histórico: {setor === 'sine' ? 'SINE' : setor === 'centros' ? 'Centro Profissionalizante' : 'Relatórios'}
                         </h1>
                         <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
                             Acervo de registros e narrativas consolidadas de {selectedYear}.
@@ -108,19 +112,38 @@ export default async function ReportListPage({
                                         {hasContent ? <FileText className="w-6 h-6" /> : <TableIcon className="w-6 h-6" />}
                                     </div>
                                     <div className="space-y-1">
-                                        <CardTitle className="text-lg font-bold capitalize text-blue-900 dark:text-blue-50">
-                                            {monthName(sub.month)} <span className="text-zinc-400 font-medium ml-1">/ {sub.year}</span>
+                                        <CardTitle className="text-lg font-bold capitalize text-blue-900 dark:text-blue-50 flex items-center gap-2">
+                                            {monthName(sub.month)} <span className="text-zinc-400 font-medium">/ {sub.year}</span>
+                                            {sub.data?._setor && (
+                                                <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/40 text-[10px] uppercase font-bold tracking-widest text-blue-600/70 border border-blue-100/50">
+                                                    {sub.data._setor === 'sine' ? 'SINE' : sub.data._setor === 'centros' ? 'CP' : sub.data._setor}
+                                                </span>
+                                            )}
                                         </CardTitle>
                                         <CardDescription className="text-[12px] font-medium text-zinc-500">
                                             Efetivado em {new Date(sub.created_at).toLocaleDateString('pt-BR')} • {sub.data._report_content.length} seções narrativas
+                                            {isAdmin && sub.profiles?.full_name && (
+                                                <span className="block mt-1 text-blue-600/70 dark:text-blue-400/70 font-bold uppercase text-[10px]">
+                                                    Enviado por: {sub.profiles.full_name}
+                                                </span>
+                                            )}
                                         </CardDescription>
                                     </div>
                                 </div>
-                                <Link href={`/dashboard/relatorios/visualizar/${sub.id}`}>
-                                    <Button variant="outline" className="h-10 px-6 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold text-[12px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-                                        Visualizar
-                                    </Button>
-                                </Link>
+                                <div className="flex items-center gap-3">
+                                    {isAdmin && (
+                                        <DeleteReportButton
+                                            reportId={sub.id}
+                                            monthName={monthName(sub.month)}
+                                            year={sub.year}
+                                        />
+                                    )}
+                                    <Link href={`/dashboard/relatorios/visualizar/${sub.id}`}>
+                                        <Button variant="outline" className="h-10 px-6 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold text-[12px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+                                            Visualizar
+                                        </Button>
+                                    </Link>
+                                </div>
                             </CardHeader>
                         </Card>
                     )

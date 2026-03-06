@@ -1,13 +1,13 @@
 'use client'
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
-import { submitReport, getPreviousMonthData } from "@/app/dashboard/actions"
+import { submitReport, getPreviousMonthData, checkSubmissionExists } from "@/app/dashboard/actions"
 import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { useState, useEffect, useCallback } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card"
-import { ArrowLeft, Calendar, FileText } from "lucide-react"
+import { ArrowLeft, Calendar, FileText, AlertTriangle, Lock } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn, getCategoryBadgeColor } from "@/lib/utils"
@@ -35,6 +35,17 @@ export function SubmissionFormClient({
     const [fetchedInitialData, setFetchedInitialData] = useState<Record<string, any>>({})
     const [dataLoaded, setDataLoaded] = useState(false)
     const [dynamicDefinition, setDynamicDefinition] = useState<FormDefinition>(definition)
+    const [alreadySubmitted, setAlreadySubmitted] = useState(false)
+
+    // Effect to check if submission already exists for the selected period
+    useEffect(() => {
+        async function check() {
+            if (!directorateId || !month || !year) return
+            const exists = await checkSubmissionExists(directorateId, Number(month), Number(year), unit, setor)
+            setAlreadySubmitted(exists)
+        }
+        check()
+    }, [month, year, unit, setor, directorateId])
 
     // Effect to fetch previous month data when month/year changes
     useEffect(() => {
@@ -392,20 +403,34 @@ export function SubmissionFormClient({
 
         setLoading(true)
         try {
-            // Include unit and subcategory in data if present
-            // We merge fetchedInitialData first, then data (user input), then metadata.
-            // This ensures that mes_anterior (from fetchedInitialData) is present even if not touched.
-            const finalData = { ...fetchedInitialData, ...data, _unit: unit, _subcategory: subcategory }
+            // Use FormData for file support
+            const fd = new FormData()
 
-            console.log("Submitting CRAS data for unit:", unit, finalData)
+            // Merge labels and values
+            const finalData = { ...fetchedInitialData, ...data }
 
-            const result = await submitReport(finalData, Number(month), Number(year), directorateId, setor)
+            // Append all fields to FormData
+            Object.entries(finalData).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    fd.append(key, value instanceof File ? value : String(value))
+                }
+            })
+
+            // Meta fields
+            fd.append('_unit', unit || '')
+            fd.append('_subcategory', subcategory || '')
+
+            console.log("Submitting form data via FormData")
+
+            const result = await submitReport(fd, Number(month), Number(year), directorateId, setor)
             if (result?.error) {
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
+                } else if (setor === 'centros' || setor === 'sine') {
+                    window.location.href = `/dashboard/relatorios/lista?setor=${setor}&directorate_id=${directorateId}`
                 } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {
@@ -515,7 +540,9 @@ export function SubmissionFormClient({
                     <CardHeader className="pt-8 px-6 lg:px-10 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Indicadores Operacionais</h3>
+                                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 italic">
+                                    {unit ? `Unidade: ${unit}` : directorateName}
+                                </h3>
                                 <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
                             </div>
                             <div className="hidden md:flex items-center px-4 py-2 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
@@ -526,13 +553,30 @@ export function SubmissionFormClient({
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 lg:p-10 w-full overflow-x-hidden">
+                        {alreadySubmitted && !isAdmin && (
+                            <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-4 text-amber-800 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                                    <AlertTriangle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-[15px] mb-1">Registro Já Enviado & Bloqueado</p>
+                                    <p className="text-[13px] leading-relaxed opacity-90">
+                                        Os dados para <strong>{monthName} de {year}</strong> já foram consolidados nesta unidade.
+                                        Para evitar duplicidade ou erros, o reenvio está desativado.
+                                        <br />
+                                        <span className="font-semibold block mt-1 italic">Caso precise realizar alguma correção, entre em contato com a equipe de Gestão/Administração.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <FormEngine
                             key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
                             definition={dynamicDefinition}
                             initialData={fetchedInitialData}
                             onSubmit={handleSubmit}
                             onDataChange={handleDataChange}
-                            disabled={loading}
+                            disabled={loading || (alreadySubmitted && !isAdmin)}
                         />
                     </CardContent>
                 </Card>

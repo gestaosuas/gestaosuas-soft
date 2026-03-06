@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { ActivityFeed } from "@/components/activity-feed"
 
 export default async function DashboardPage({
     searchParams
@@ -57,21 +58,41 @@ export default async function DashboardPage({
             isDailyView ? "space-y-3 w-full max-w-none flex flex-col h-full min-h-0" : "space-y-12 max-w-7xl mx-auto"
         )}>
             {!isDailyView && (
-                <header className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2.5 bg-blue-600 dark:bg-blue-500 rounded-xl shadow-lg shadow-blue-500/20">
-                            <LayoutDashboard className="w-6 h-6 text-white" />
+                <header className="flex flex-col md:flex-row md:items-start justify-between gap-8 pb-8 border-b border-zinc-100 dark:border-zinc-800/60">
+                    <div className="flex items-start gap-4">
+                        <div className="p-3 bg-blue-600 dark:bg-blue-500 rounded-2xl shadow-xl shadow-blue-500/20 mt-1">
+                            <LayoutDashboard className="w-7 h-7 text-white" />
                         </div>
-                        <div className="space-y-0.5">
-                            <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        <div className="space-y-1">
+                            <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
                                 Painel Geral
                             </h1>
-                            <p className="text-[13px] font-bold text-blue-600/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Centro de Operações Estratégicas</p>
+                            <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]">Operações Estratégicas</p>
                         </div>
                     </div>
-                    <p className="text-[15px] text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl leading-relaxed">
-                        Bem-vindo ao centro de comando. Visualize indicadores consolidados e gerencie relatórios institucionais com precisão.
-                    </p>
+
+                    {/* Infrastructure Status - Compact and Left-aligned in its container */}
+                    <div className="flex flex-col gap-3 min-w-[280px]">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </div>
+                            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                                Infraestrutura Online
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 rounded-xl shadow-sm gap-4">
+                                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 whitespace-nowrap">Banco Principal</span>
+                                <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Operacional</span>
+                            </div>
+                            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 rounded-xl shadow-sm gap-4">
+                                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 whitespace-nowrap">Google Sync</span>
+                                <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase">Conectado</span>
+                            </div>
+                        </div>
+                    </div>
                 </header>
             )}
 
@@ -80,56 +101,12 @@ export default async function DashboardPage({
                     <DailyDashboard />
                 </section>
             ) : (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <Card className="p-8 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center space-y-4 rounded-[2rem]">
-                            <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800">
-                                <TrendingUp className="w-8 h-8 text-blue-600" />
-                            </div>
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Visão Consolidada</h3>
-                                <p className="text-sm text-zinc-500 dark:text-zinc-400">Clique em "Visão Diária" no menu lateral para ver os indicadores diários.</p>
-                            </div>
-                            <Link href="/dashboard?view=daily">
-                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full px-6">
-                                    Acessar Agora
-                                </Button>
-                            </Link>
-                        </Card>
+                <div className="w-full">
+                    {/* Real-time Activity Feed - Full Width */}
+                    <div className="w-full">
+                        <ActivityFeed />
                     </div>
-
-                    {/* Status Section - Only on main dashboard */}
-                    <div className="pt-12 border-t border-zinc-100 dark:border-zinc-800/60">
-                        <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-2xl p-8 border border-zinc-100 dark:border-zinc-800">
-                            <div className="flex items-center gap-3 mb-8">
-                                <div className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </div>
-                                <h3 className="text-[12px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
-                                    Status da Infraestrutura
-                                </h3>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between p-5 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.01)]">
-                                    <span className="text-[13px] font-bold text-zinc-700 dark:text-zinc-300">Banco de Dados Principal</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="h-1 w-1 rounded-full bg-emerald-500"></span>
-                                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Operacional</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between p-5 bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.01)]">
-                                    <span className="text-[13px] font-bold text-zinc-700 dark:text-zinc-300">Sincronização Google Sheets</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="h-1 w-1 rounded-full bg-blue-500"></span>
-                                        <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Conectado</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
+                </div>
             )}
         </div>
     )

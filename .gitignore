@@ -56,3 +56,17 @@ test-dir-retrieval.js
 debug-permissions.ts
 check-database.js
 fix-create-directorate.js
+
+# scripts de diagnóstico e temporários
+check-*.js
+debug-*.js
+inspect-*.js
+dump-*.js
+dump-*.json
+search-*.js
+list-*.js
+find-*.js
+global-*.js
+final-*.js
+today.json
+tmp/
