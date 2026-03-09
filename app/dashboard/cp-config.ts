@@ -11,17 +11,17 @@ export const CP_SHEET_NAME = "CENTRO PROFISSIONALIZANTE"
 // Block 5: PARCERIAS E CURSOS (A63:M65 -> Data A64:A65 - 2 items)
 
 export const CP_SHEET_BLOCKS = [
-    { startRow: 2, endRow: 11 },   // Block 1
-    { startRow: 12, endRow: 21 },  // Block 2
-    { startRow: 26, endRow: 28 },  // Block 3
-    { startRow: 33, endRow: 42 },  // Block 4
-    { startRow: 64, endRow: 65 }   // Block 5
+    { startRow: 2, endRow: 11 },   // Block 1: Resumo CP
+    { startRow: 15, endRow: 24 },  // Block 2: Concluintes
+    { startRow: 29, endRow: 31 },  // Block 3: Ônibus Meu Ofício
+    { startRow: 36, endRow: 45 },  // Block 4: Atendimentos
+    { startRow: 51, endRow: 51 }   // Block 5: Parcerias e Cursos
 ]
 
 export const CP_FORM_DEFINITION: FormDefinition = {
     sections: [
         {
-            title: "RESUMO CP E SINE",
+            title: "RESUMO CP",
             fields: [
                 { id: "resumo_vagas", label: "Vagas oferecidas", type: "number" },
                 { id: "resumo_cursos", label: "Cursos", type: "number" },
