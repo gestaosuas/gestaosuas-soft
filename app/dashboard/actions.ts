@@ -34,6 +34,11 @@ export async function submitReport(input: Record<string, any> | FormData, month:
     } else {
         formData = { ...input }
     }
+
+    // Ensure the sector is saved within the data for progress tracking
+    if (setor && !formData._setor) {
+        formData._setor = setor
+    }
     // Validate inputs
     submissionBaseSchema.parse({ month, year, directorateId, setor })
 

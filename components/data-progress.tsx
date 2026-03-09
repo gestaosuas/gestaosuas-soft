@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { CheckCircle2, AlertCircle, Loader2, FileText } from "lucide-react"
 import { getMonthlyProgressData } from "@/app/dashboard/actions"
 import { cn } from "@/lib/utils"
 import { CRAS_UNITS } from "@/app/dashboard/cras-config"
@@ -123,13 +123,39 @@ export function DataProgress({ directorates }: { directorates: Directorate[] }) 
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
                         {directorates.map((dir) => {
                             const prog = getDirectorateProgress(dir)
+                            const dirSubmissions = progressData.filter(s => s.directorate_id === dir.id)
+                            const hasMonthlyReport = dirSubmissions.some(s => s.data?._report_content !== undefined || s.data?.report_content !== undefined)
+
                             return (
                                 <div key={dir.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/10 transition-colors">
-                                    <div className="min-w-[240px]">
-                                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{dir.name}</h3>
-                                        <p className="text-[11px] text-zinc-500 font-medium mt-0.5 uppercase tracking-wider">
-                                            {MULTI_UNIT_CONFIG[dir.name] ? `${MULTI_UNIT_CONFIG[dir.name].length} Unidades` : "Unidade Administrativa"}
-                                        </p>
+                                    <div className="min-w-[280px] space-y-3">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">{dir.name}</h3>
+                                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">
+                                                {MULTI_UNIT_CONFIG[dir.name] ? `${MULTI_UNIT_CONFIG[dir.name].length} Unidades` : "Unidade Administrativa"}
+                                            </p>
+                                        </div>
+
+                                        {/* Relatório Mensal Status */}
+                                        <div className="flex items-center gap-2 pt-1">
+                                            <FileText className={cn("w-3.5 h-3.5", hasMonthlyReport ? "text-blue-600 dark:text-blue-400" : "text-zinc-300 dark:text-zinc-700")} />
+                                            <span className={cn(
+                                                "text-[10px] font-black uppercase tracking-tight",
+                                                hasMonthlyReport ? "text-zinc-800 dark:text-zinc-200" : "text-zinc-400"
+                                            )}>
+                                                Relatório Mensal:
+                                            </span>
+                                            {hasMonthlyReport ? (
+                                                <span className="flex items-center gap-1 text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-900/40">
+                                                    <CheckCircle2 className="w-2.5 h-2.5" />
+                                                    Enviado
+                                                </span>
+                                            ) : (
+                                                <span className="text-[9px] font-black text-zinc-400 uppercase bg-zinc-50 dark:bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-800">
+                                                    Pendente
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="flex-1 flex items-center gap-4">
