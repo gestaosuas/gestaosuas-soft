@@ -266,7 +266,7 @@ export default async function DataPage({
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
     const submissions = allSubmissions.filter((s: any) =>
         s.year === selectedYear &&
-        (!setor || !s.data._setor || s.data._setor === setor)
+        (!setor || s.data._setor === setor || s.data[`_has_${setor}`])
     )
 
     // Organizar dados em um mapa fácil: unit -> month -> { id, data, author }
