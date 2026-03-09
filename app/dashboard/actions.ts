@@ -240,13 +240,20 @@ export async function submitReport(input: Record<string, any> | FormData, month:
         }
 
         // Check if submitted exist
-        const { data: existing } = await adminSupabase
+        let query = adminSupabase
             .from('submissions')
             .select('id, data, user_id')
             .eq('directorate_id', directorate.id)
             .eq('month', month)
             .eq('year', year)
-            .maybeSingle()
+
+        // SINE, CP e outras divisões devem ser registros independentes 
+        // para um não sobrescrever o outro na mesma diretoria.
+        if (setor && setor !== 'cras' && setor !== 'ceai' && setor !== 'naica') {
+            query = query.eq('data->>_setor', setor)
+        }
+
+        const { data: existing } = await query.maybeSingle()
 
         if (existing) {
             // Se já existe e não é admin, vamos verificar se podemos editar (sobrescrever)
