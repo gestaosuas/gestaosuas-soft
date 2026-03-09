@@ -11,6 +11,15 @@ import { ArrowLeft, Calendar, FileText, AlertTriangle, Lock } from "lucide-react
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn, getCategoryBadgeColor } from "@/lib/utils"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export function SubmissionFormClient({
     definition,
@@ -36,6 +45,7 @@ export function SubmissionFormClient({
     const [dataLoaded, setDataLoaded] = useState(false)
     const [dynamicDefinition, setDynamicDefinition] = useState<FormDefinition>(definition)
     const [alreadySubmitted, setAlreadySubmitted] = useState(false)
+    const [showWarning, setShowWarning] = useState(true)
 
     // Effect to check if submission already exists for the selected period
     useEffect(() => {
@@ -431,7 +441,7 @@ export function SubmissionFormClient({
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
                 } else if (setor === 'centros' || setor === 'sine') {
                     window.location.href = `/dashboard/relatorios/lista?setor=${setor}&directorate_id=${directorateId}`
-                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo') {
+                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'casa_da_mulher' || setor === 'diversidade') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {
                     window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`
@@ -581,6 +591,28 @@ export function SubmissionFormClient({
                     </CardContent>
                 </Card>
             </div>
+
+            <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
+                <AlertDialogContent className="rounded-2xl max-w-[22rem] sm:max-w-md p-6 lg:p-8 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+                    <AlertDialogHeader className="space-y-4">
+                        <div className="mx-auto w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mb-1">
+                            <Calendar className="w-7 h-7 text-amber-600 dark:text-amber-500" />
+                        </div>
+                        <AlertDialogTitle className="text-xl font-black text-center text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">
+                            Mês de Referência
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-[13px] text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed">
+                            Antes de começar o preenchimento dos dados, por favor verifique com cuidado se o <strong className="text-zinc-900 dark:text-zinc-100">mês e o ano selecionados</strong> no topo da página correspondem ao período que deseja informar.<br /><br />
+                            O sistema carrega os dados do mês vigente por padrão.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-8 sm:justify-center">
+                        <AlertDialogAction onClick={() => setShowWarning(false)} className="w-full sm:w-[80%] px-8 bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-sm hover:shadow-md font-bold text-[13px] tracking-wide transition-all duration-300 transform active:scale-[0.98]">
+                            Entendido, Prosseguir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

@@ -87,13 +87,13 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
     );
 }
 
-export function ServicesBarChart({ data }: { data: any[] }) {
+export function ServicesBarChart({ data, title = "Serviços Prestados" }: { data: any[], title?: string }) {
     return (
         <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
             <CardHeader className="p-8 pb-4">
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                    Serviços Prestados
+                    {title}
                 </CardTitle>
             </CardHeader>
             <CardContent className="h-[350px] p-8 pt-0">

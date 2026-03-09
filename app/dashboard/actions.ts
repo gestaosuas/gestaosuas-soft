@@ -258,6 +258,14 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     if (existing.data?.units && existing.data?.units[unitName]) {
                         return { error: `Os dados da unidade ${unitName} para ${month}/${year} já foram enviados anteriormente e estão bloqueados para edição.` }
                     }
+                } else if (setor === 'casa_da_mulher') {
+                    if (existing.data?.cm_atend_mulheres_atendidas !== undefined) {
+                        return { error: `Os dados da Casa da Mulher para ${month}/${year} já foram enviados anteriormente e estão bloqueados para edição.` }
+                    }
+                } else if (setor === 'diversidade') {
+                    if (existing.data?.div_atend_mulheres_atendidas !== undefined) {
+                        return { error: `Os dados da Diversidade para ${month}/${year} já foram enviados e estão bloqueados para edição.` }
+                    }
                 } else {
                     // Para Indicadores de unidade única (SINE, CP sem multi-unit, etc)
                     return { error: `Já existe um registro para ${month}/${year}. Edições não são permitidas após o envio.` }
@@ -1584,6 +1592,14 @@ export async function checkSubmissionExists(directorateId: string, month: number
     if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
         const unitName = unit || 'Principal'
         return !!(existing.data?.units && existing.data?.units[unitName])
+    }
+
+    // Para Casa da Mulher e Diversidade, validamos as chaves próprias pois podem compartilhar o mesmo objeto
+    if (setor === 'casa_da_mulher') {
+        return existing.data?.cm_atend_mulheres_atendidas !== undefined
+    }
+    if (setor === 'diversidade') {
+        return existing.data?.div_atend_mulheres_atendidas !== undefined
     }
 
     // Para outros (SINE, CP, Narrativos), a existência do registro já significa que foi enviado

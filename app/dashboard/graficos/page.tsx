@@ -67,6 +67,8 @@ export default async function GraficosPage({
     let isCEAI = setor === 'ceai'
     let isPopRua = setor === 'pop_rua'
     let isNAICA = setor === 'naica'
+    let isCasaDaMulher = setor === 'casa_da_mulher'
+    let isDiversidade = setor === 'diversidade'
 
     if (!directorate) {
         if (isBeneficios) {
@@ -123,6 +125,10 @@ export default async function GraficosPage({
         else if (normName.includes('ceai')) isCEAI = true
         else if (normName.includes('populacao') && normName.includes('rua')) isPopRua = true
         else if (normName.includes('naica')) isNAICA = true
+        else if (normName.includes('casa da mulher') || normName.includes('mulher')) {
+            if (setor === 'diversidade') isDiversidade = true
+            else isCasaDaMulher = true
+        }
     }
 
 
@@ -135,10 +141,13 @@ export default async function GraficosPage({
     }
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
-    const rawSubmissions = allSubmissions.filter((s: any) =>
-        s.year === selectedYear &&
-        (!setor || !s.data._setor || s.data._setor === setor)
-    )
+    const rawSubmissions = allSubmissions.filter((s: any) => {
+        if (s.year !== selectedYear) return false
+        if (isCasaDaMulher) {
+            return !s.data._setor || s.data._setor === 'casa_da_mulher' || s.data._setor === 'diversidade'
+        }
+        return !setor || !s.data._setor || s.data._setor === setor
+    })
 
     // Filter unit data out of submissions if user doesn't have access
     const submissions = rawSubmissions.map((sub: any) => {
@@ -966,83 +975,271 @@ export default async function GraficosPage({
     }
 
     // --- SINE Dashboard ---
-    const ids = {
-        inseridos: findFieldId(allFields, ['Inseridos', 'Mercado']),
-        entrevistas: findFieldId(allFields, ['Entrevistas']),
-        vagas: findFieldId(allFields, ['Vagas', 'Captadas']),
-        seguro: findFieldId(allFields, ['Seguro', 'Desemprego']),
-        curriculos: findFieldId(allFields, ['Currículos']),
-        orientacao: findFieldId(allFields, ['Orientação', 'Profissional']),
-        carteira: findFieldId(allFields, ['Carteira', 'digital']),
-        processo: findFieldId(allFields, ['Processo', 'seletivo']),
-        atend_empregador: findFieldId(allFields, ['Atendimento', 'Empregador']),
-        atend_trabalhador: findFieldId(allFields, ['Atendimento', 'Trabalhador']),
+    if (setor === 'sine') {
+        const ids = {
+            inseridos: findFieldId(allFields, ['Inseridos', 'Mercado']),
+            entrevistas: findFieldId(allFields, ['Entrevistas']),
+            vagas: findFieldId(allFields, ['Vagas', 'Captadas']),
+            seguro: findFieldId(allFields, ['Seguro', 'Desemprego']),
+            curriculos: findFieldId(allFields, ['Currículos']),
+            orientacao: findFieldId(allFields, ['Orientação', 'Profissional']),
+            carteira: findFieldId(allFields, ['Carteira', 'digital']),
+            processo: findFieldId(allFields, ['Processo', 'seletivo']),
+            atend_empregador: findFieldId(allFields, ['Atendimento', 'Empregador']),
+            atend_trabalhador: findFieldId(allFields, ['Atendimento', 'Trabalhador']),
+        }
+        const getHistorySine = (id: string) => monthNames.map((name, i) => ({
+            name,
+            value: Number(dataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        const getTrendSine = (id: string) => {
+            const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
+        const sineCardsData = [
+            { label: "Inseridos no Mercado", value: Number(latestData[ids.inseridos || ''] || 0), color: "#3b82f6", trend: getTrendSine(ids.inseridos || ''), history: getHistorySine(ids.inseridos || '') },
+            { label: "Entrevistas", value: Number(latestData[ids.entrevistas || ''] || 0), color: "#60a5fa", trend: getTrendSine(ids.entrevistas || ''), history: getHistorySine(ids.entrevistas || '') },
+            { label: "Vagas Captadas", value: Number(latestData[ids.vagas || ''] || 0), color: "#0ea5e9", trend: getTrendSine(ids.vagas || ''), history: getHistorySine(ids.vagas || '') },
+            { label: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0), color: "#f59e0b", trend: getTrendSine(ids.seguro || ''), history: getHistorySine(ids.seguro || '') },
+            { label: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0), color: "#10b981", trend: getTrendSine(ids.curriculos || ''), history: getHistorySine(ids.curriculos || '') },
+        ]
+
+        return (
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard SINE <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonthInput} />
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <MetricsCards data={sineCardsData} monthName={selectedMonthName} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <ServicesBarChart data={[
+                        { name: "Orientação Profissional", value: Number(latestData[ids.orientacao || ''] || 0) },
+                        { name: "Carteira Digital", value: Number(latestData[ids.carteira || ''] || 0) },
+                        { name: "Processo Seletivo", value: Number(latestData[ids.processo || ''] || 0) },
+                        { name: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0) },
+                        { name: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0) }
+                    ]} />
+                    <AttendanceLineChart data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, empregador: Number(mData[ids.atend_empregador || ''] || 0), trabalhador: Number(mData[ids.atend_trabalhador || ''] || 0) } })} />
+                </div>
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
     }
-    const getHistorySine = (id: string) => monthNames.map((name, i) => ({
-        name,
-        value: Number(dataByMonth.get(i + 1)?.[id] || 0)
-    }))
 
-    const getTrendSine = (id: string) => {
-        const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
-        if (!currentMonthNum || currentMonthNum === 1) return 0
-        const currentVal = Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
-        const prevVal = Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
-        if (prevVal === 0) return currentVal > 0 ? 100 : 0
-        return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+    // --- Casa da Mulher Dashboard ---
+    if (isCasaDaMulher) {
+        let selectedMonthNum = 0
+        if (month && month !== 'all') {
+            selectedMonthNum = Number(month)
+        }
+
+        const dataByMonth = new Map<number, any>()
+        const monthsWithData = new Set<number>()
+
+        submissions.forEach(sub => {
+            const dataToUse = sub.data || {}
+            // In Casa da Mulher, we aggregate by sector across the month
+            const currentData = dataByMonth.get(sub.month) || {}
+
+            // Sum all numerical fields
+            Object.keys(dataToUse).forEach(k => {
+                if (k.startsWith('_')) return
+                const val = Number(dataToUse[k])
+                if (!isNaN(val)) {
+                    currentData[k] = (currentData[k] || 0) + val
+                }
+            })
+
+            dataByMonth.set(sub.month, currentData)
+            monthsWithData.add(sub.month)
+        })
+
+        const monthsWithDataGlobal = Array.from(monthsWithData).sort((a, b) => b - a)
+
+        // Se `month`='all', latestData é a soma de todos os meses, se for um mês específico, é só ele
+        let latestData: any = {}
+        if (selectedMonthNum > 0) {
+            latestData = dataByMonth.get(selectedMonthNum) || {}
+        } else {
+            // Aggregate all year if 'all'
+            dataByMonth.forEach((mData) => {
+                Object.keys(mData).forEach(k => {
+                    latestData[k] = (latestData[k] || 0) + mData[k]
+                })
+            })
+        }
+
+        const sumFields = (data: any, fields: string[]) => fields.reduce((acc, f) => acc + (Number(data[f]) || 0), 0)
+
+        const getTrend = (id: string) => {
+            const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
+            if (!currentMonthNum || currentMonthNum === 1) return 0
+            const currentVal = Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
+            const prevVal = Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
+            if (prevVal === 0) return currentVal > 0 ? 100 : 0
+            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
+        }
+
+        const getHistory = (id: string) => monthNames.map((name, i) => ({
+            name,
+            value: Number(dataByMonth.get(i + 1)?.[id] || 0)
+        }))
+
+        // Keys
+        const k_vio_domestica = "cm_atend_mulheres_atendidas"
+        const k_atend_diversos = "div_atend_mulheres_atendidas"
+        const k_nucleo_diversidade = "div_atend_nucleo_diversidade"
+
+        const cardsData = [
+            { label: "Violência Doméstica (Total)", value: Number(latestData[k_vio_domestica] || 0), color: "#0ea5e9", trend: getTrend(k_vio_domestica), history: getHistory(k_vio_domestica) },
+            { label: "Atend. Diversos (Total)", value: Number(latestData[k_atend_diversos] || 0), color: "#0ea5e9", trend: getTrend(k_atend_diversos), history: getHistory(k_atend_diversos) },
+            { label: "Núcleo Diversidade (Total)", value: Number(latestData[k_nucleo_diversidade] || 0), color: "#0ea5e9", trend: getTrend(k_nucleo_diversidade), history: getHistory(k_nucleo_diversidade) },
+        ]
+
+        // Faixa Etária (Rosca) - Combina cm e div
+        let ageFields = [
+            { name: "16 à 17 anos", keys: ["cm_faixa_16_17", "div_faixa_16_17"] },
+            { name: "18 à 30 anos", keys: ["cm_faixa_18_30", "div_faixa_18_30"] },
+            { name: "31 à 40 anos", keys: ["cm_faixa_31_40", "div_faixa_31_40"] },
+            { name: "41 à 50 anos", keys: ["cm_faixa_41_50", "div_faixa_41_50"] },
+            { name: "51 à 60 anos", keys: ["cm_faixa_51_60", "div_faixa_51_60"] },
+            { name: "Acima de 60", keys: ["cm_faixa_acima_60", "div_faixa_acima_60"] }
+        ]
+        const ageChartData = ageFields.map(field => ({
+            name: field.name,
+            value: sumFields(latestData, field.keys)
+        })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
+
+        // Cor/Raça (Rosca) - Combina cm e div
+        let raceFields = [
+            { name: "Branca", keys: ["cm_raca_branca", "div_raca_branca"] },
+            { name: "Preta", keys: ["cm_raca_preta", "div_raca_preta"] },
+            { name: "Parda", keys: ["cm_raca_parda", "div_raca_parda"] },
+            { name: "Amarela", keys: ["cm_raca_amarelo", "div_raca_amarela"] },
+            { name: "Indígena", keys: ["cm_raca_indigena", "div_raca_indigena"] },
+            { name: "Não Consta", keys: ["cm_raca_nao_consta", "div_raca_nao_consta"] }
+        ]
+        const raceChartData = raceFields.map(field => ({
+            name: field.name,
+            value: sumFields(latestData, field.keys)
+        })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
+
+        // Violência Bar Chart
+        let violFields = [
+            { name: "Física", key: "cm_violencia_fisica" },
+            { name: "Moral", key: "cm_violencia_moral" },
+            { name: "Psicológica", key: "cm_violencia_psicologica" },
+            { name: "Sexual", key: "cm_violencia_sexual" },
+            { name: "Patrimonial", key: "cm_violencia_patrimonial" },
+            { name: "Nenhuma", key: "cm_violencia_nenhuma" },
+            { name: "Outras", key: "cm_violencia_outras" },
+        ]
+        const violChartData = violFields.map(field => ({
+            name: field.name,
+            value: Number(latestData[field.key]) || 0
+        })).sort((a, b) => b.value - a.value).filter(d => d.value > 0)
+
+        const selectedMonthName = selectedMonthNum > 0 ? monthNames[selectedMonthNum - 1] : "Ano Todo"
+        const selectedMonthInput = selectedMonthNum > 0 ? String(selectedMonthNum) : "all"
+
+        return (
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
+                            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
+                                <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
+                                Dashboard Casa da Mulher <span className="text-blue-600 font-bold">{selectedYear}</span>
+                            </h1>
+                            <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
+                                {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
+                            <div className="flex items-center gap-2">
+                                <YearSelector currentYear={selectedYear} />
+                                <MonthSelector currentMonth={selectedMonthInput} />
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <MetricsCards data={cardsData} monthName={selectedMonthName} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <GenericPieChart title="Faixa Etária" data={ageChartData} colors={['#7dd3fc', '#0ea5e9', '#0284c7', '#fb923c', '#f87171', '#4ade80', '#9ca3af']} />
+                    <GenericPieChart title="Cor/Raça" data={raceChartData} colors={['#0ea5e9', '#0284c7', '#38bdf8', '#7dd3fc', '#fecaca', '#ef4444']} />
+                    <ServicesBarChart data={violChartData} title="Tipo de Violência" />
+                </div>
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
+            </div>
+        )
     }
 
-    const sineCardsData = [
-        { label: "Inseridos no Mercado", value: Number(latestData[ids.inseridos || ''] || 0), color: "#3b82f6", trend: getTrendSine(ids.inseridos || ''), history: getHistorySine(ids.inseridos || '') },
-        { label: "Entrevistas", value: Number(latestData[ids.entrevistas || ''] || 0), color: "#60a5fa", trend: getTrendSine(ids.entrevistas || ''), history: getHistorySine(ids.entrevistas || '') },
-        { label: "Vagas Captadas", value: Number(latestData[ids.vagas || ''] || 0), color: "#0ea5e9", trend: getTrendSine(ids.vagas || ''), history: getHistorySine(ids.vagas || '') },
-        { label: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0), color: "#f59e0b", trend: getTrendSine(ids.seguro || ''), history: getHistorySine(ids.seguro || '') },
-        { label: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0), color: "#10b981", trend: getTrendSine(ids.curriculos || ''), history: getHistorySine(ids.curriculos || '') },
-    ]
-
-    return (
-        <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
+    // --- Fallback / Generic Dashboard ---
+    if (!isCasaDaMulher && !isDiversidade) {
+        return (
+            <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12 flex flex-col items-center justify-center">
+                <header className="w-full flex justify-start mb-8">
                     <Link href={`/dashboard/diretoria/${directorate.id}`} className="transition-transform hover:scale-105">
                         <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white border-zinc-100 shadow-sm hover:bg-zinc-50">
                             <ArrowLeft className="h-5 w-5 text-zinc-600" />
                         </Button>
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-blue-50 flex items-center gap-2">
-                            Dashboard SINE <span className="text-blue-600 font-bold">{selectedYear}</span>
-                        </h1>
-                        <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
-                            {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                </header>
+                <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 max-w-2xl w-full mx-auto">
+                    <BarChart3 className="w-16 h-16 text-zinc-400 mx-auto mb-6 opacity-50" />
+                    <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 mb-4">Dashboard em Construção</h2>
+                    <p className="text-zinc-500">
+                        A visualização gráfica para <strong>{directorate.name}</strong> ({isDiversidade ? 'Diversidade' : isCasaDaMulher ? 'Casa da Mulher' : setor}) ainda não foi personalizada. Estamos trabajando nisso!
+                    </p>
+                    <div className="mt-8 flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
+                        <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                            Por enquanto, você pode acompanhar os indicadores através da aba de "Ver Dados".
                         </p>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-100 shadow-sm">
-                    <div className="flex flex-col">
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
-                        <div className="flex items-center gap-2">
-                            <YearSelector currentYear={selectedYear} />
-                            <MonthSelector currentMonth={selectedMonthInput} />
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <MetricsCards data={sineCardsData} monthName={selectedMonthName} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <ServicesBarChart data={[
-                    { name: "Orientação Profissional", value: Number(latestData[ids.orientacao || ''] || 0) },
-                    { name: "Carteira Digital", value: Number(latestData[ids.carteira || ''] || 0) },
-                    { name: "Processo Seletivo", value: Number(latestData[ids.processo || ''] || 0) },
-                    { name: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0) },
-                    { name: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0) }
-                ]} />
-                <AttendanceLineChart data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, empregador: Number(mData[ids.atend_empregador || ''] || 0), trabalhador: Number(mData[ids.atend_trabalhador || ''] || 0) } })} />
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-8 uppercase tracking-[0.2em] w-full">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
-            <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
-        </div>
-    )
+        )
+    }
 }

@@ -28,6 +28,7 @@ import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { SOCIOEDUCATIVO_FORM_DEFINITION, PROTETIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
+import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION } from "@/app/dashboard/casa-da-mulher-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 import { DeleteMonthButton } from "@/components/delete-month-button"
@@ -49,6 +50,8 @@ export default async function DataPage({
     let isNAICA = setor === 'naica'
     let isProtetivo = setor === 'creas_protetivo'
     let isSocioeducativo = setor === 'creas_socioeducativo'
+    let isCasaDaMulher = setor === 'casa_da_mulher'
+    let isDiversidade = setor === 'diversidade'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -162,6 +165,10 @@ export default async function DataPage({
             if (setor === 'creas_protetivo') isProtetivo = true
             else isSocioeducativo = true
         }
+        else if (norm.includes('casa da mulher') || norm.includes('mulher')) {
+            if (setor === 'diversidade') isDiversidade = true
+            else isCasaDaMulher = true
+        }
     }
 
     // Choose Form Definition based on setor
@@ -220,6 +227,18 @@ export default async function DataPage({
     if (isProtetivo) {
         formDefinition = PROTETIVO_FORM_DEFINITION
         titleContext = `Dados CREAS Protetivo ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (isCasaDaMulher) {
+        formDefinition = CASA_DA_MULHER_FORM_DEFINITION
+        titleContext = `Dados Casa da Mulher ${selectedYear}`
+        printTitle = titleContext
+    }
+
+    if (isDiversidade) {
+        formDefinition = DIVERSIDADE_FORM_DEFINITION
+        titleContext = `Dados Diversidade ${selectedYear}`
         printTitle = titleContext
     }
 

@@ -83,7 +83,7 @@ export default async function ReportListPage({
                     </Link>
                     <div className="space-y-1">
                         <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
-                            Histórico: {setor === 'sine' ? 'SINE' : setor === 'centros' ? 'Centro Profissionalizante' : 'Relatórios'}
+                            Histórico: {setor === 'sine' ? 'SINE' : setor === 'centros' ? 'Centro Profissionalizante' : setor === 'casa_da_mulher' ? 'Casa da Mulher' : setor === 'diversidade' ? 'Diversidade' : 'Relatórios'}
                         </h1>
                         <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
                             Acervo de registros e narrativas consolidadas de {selectedYear}.
@@ -116,7 +116,7 @@ export default async function ReportListPage({
                                             {monthName(sub.month)} <span className="text-zinc-400 font-medium">/ {sub.year}</span>
                                             {sub.data?._setor && (
                                                 <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/40 text-[10px] uppercase font-bold tracking-widest text-blue-600/70 border border-blue-100/50">
-                                                    {sub.data._setor === 'sine' ? 'SINE' : sub.data._setor === 'centros' ? 'CP' : sub.data._setor}
+                                                    {sub.data._setor === 'sine' ? 'SINE' : sub.data._setor === 'centros' ? 'CP' : sub.data._setor === 'casa_da_mulher' ? 'Casa da Mulher' : sub.data._setor === 'diversidade' ? 'Diversidade' : sub.data._setor}
                                                 </span>
                                             )}
                                         </CardTitle>
