@@ -60,6 +60,7 @@ export default async function DirectoratePage({
     const filteredNAICA = getFilteredUnits(NAICA_UNITS)
 
     const submissions = await getCachedSubmissionsForUser(user.id, directorate.id)
+    const isMonitoramento = isSubvencao || isOutros
 
     const getMonthName = (month: number) => {
         return new Date(0, month - 1).toLocaleString('pt-BR', { month: 'long' })
@@ -79,7 +80,7 @@ export default async function DirectoratePage({
                 </p>
             </header>
 
-            {canSeeDailyReport && (
+            {canSeeDailyReport && !isMonitoramento && (
                 <section className="space-y-8">
                     <div className="flex items-center gap-3">
                         <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>

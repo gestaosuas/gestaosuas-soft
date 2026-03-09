@@ -119,7 +119,7 @@ export const getSystemSettings = async () => {
         ['system-settings'],
         {
             tags: ['settings'],
-            revalidate: 3600
+            revalidate: 1
         }
     )()
 }

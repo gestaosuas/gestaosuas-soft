@@ -22,7 +22,7 @@ export async function login(formData: FormData) {
         }
 
         revalidatePath('/', 'layout')
-        redirect('/dashboard')
+        redirect('/dashboard/mapas/unidades')
     } catch (err: any) {
         // If it was already a redirect (Next.js uses errors for redirects), just throw it
         if (err.digest?.includes('NEXT_REDIRECT')) throw err;

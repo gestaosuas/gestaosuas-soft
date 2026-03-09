@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/admin"
 import { DailyDashboard } from "./daily-dashboard"
 import { getCachedProfile } from "./cached-data"
 import { LayoutDashboard, Building2, TrendingUp } from "lucide-react"
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { ActivityFeed } from "@/components/activity-feed"
+import { DashboardClient } from "@/components/dashboard-client"
 
 export default async function DashboardPage({
     searchParams
@@ -24,6 +26,17 @@ export default async function DashboardPage({
 
     const profile = await getCachedProfile(user.id)
     const isAdmin = profile?.role === 'admin'
+
+    // Fetch all directorates for the progress list using admin client to bypass RLS
+    const adminSupabase = createAdminClient()
+    const { data: allDirectorates, error: dirError } = await adminSupabase.from('directorates').select('id, name').order('name')
+
+    if (dirError) console.error("Error fetching directorates for progress:", dirError)
+
+    // Filter out monitoring directorates as requested
+    const directorates = allDirectorates?.filter(dir =>
+        !['Subvenção', 'Emendas e Fundos', 'Outros'].includes(dir.name)
+    ) || []
 
     if (!isAdmin) {
         return (
@@ -102,10 +115,7 @@ export default async function DashboardPage({
                 </section>
             ) : (
                 <div className="w-full">
-                    {/* Real-time Activity Feed - Full Width */}
-                    <div className="w-full">
-                        <ActivityFeed />
-                    </div>
+                    <DashboardClient directorates={directorates || []} />
                 </div>
             )}
         </div>

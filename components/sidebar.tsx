@@ -199,8 +199,8 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
-                                                isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
+                                                "w-full min-h-[2.75rem] h-auto py-2.5 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                                isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                                 isActive
                                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
                                                     : "text-white hover:text-cyan-400 hover:bg-white/5"
@@ -211,7 +211,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                                 const Icon = getDirectorateIcon(dir.name)
                                                 return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                             })()}
-                                            {!isCollapsed && <span className="truncate">{dir.name}</span>}
+                                            {!isCollapsed && <span className="whitespace-normal text-left leading-tight">{dir.name}</span>}
                                         </Button>
                                     </div>
                                 </Link>
@@ -239,8 +239,8 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
-                                                isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
+                                                "w-full min-h-[2.75rem] h-auto py-2.5 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                                isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                                 isActive
                                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
                                                     : "text-white hover:text-cyan-400 hover:bg-white/5"
@@ -251,7 +251,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                                 const Icon = getDirectorateIcon(dir.name)
                                                 return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                             })()}
-                                            {!isCollapsed && <span className="truncate">{dir.name}</span>}
+                                            {!isCollapsed && <span className="whitespace-normal text-left leading-tight">{dir.name}</span>}
                                         </Button>
                                     </div>
                                 </Link>

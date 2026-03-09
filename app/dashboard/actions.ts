@@ -902,7 +902,8 @@ export async function updateSystemSetting(key: string, value: string) {
     }
 
     // Upsert
-    const { error } = await supabase.from('settings').upsert({ key, value })
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase.from('settings').upsert({ key, value })
 
     if (error) {
         console.error("Update setting error:", error)
@@ -911,6 +912,8 @@ export async function updateSystemSetting(key: string, value: string) {
 
 
     revalidatePath('/', 'layout')
+    // @ts-ignore
+    revalidateTag('settings')
     return { success: true }
 }
 
@@ -1604,4 +1607,21 @@ export async function checkSubmissionExists(directorateId: string, month: number
 
     // Para outros (SINE, CP, Narrativos), a existência do registro já significa que foi enviado
     return true
+}
+
+export async function getMonthlyProgressData(month: number, year: number) {
+    const adminSupabase = createAdminClient()
+
+    const { data: submissions, error } = await adminSupabase
+        .from('submissions')
+        .select('directorate_id, data')
+        .eq('month', month)
+        .eq('year', year)
+
+    if (error) {
+        console.error("Error fetching progress data:", error)
+        return []
+    }
+
+    return submissions
 }

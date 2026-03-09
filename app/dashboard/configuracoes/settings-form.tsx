@@ -16,8 +16,14 @@ export default function SettingsForm({ initialSettings }: { initialSettings: any
     const handleSave = async () => {
         setSaving(true)
         try {
-            await updateSystemSetting('logo_url', logoUrl)
-            await updateSystemSetting('system_name', systemName)
+            const res1 = await updateSystemSetting('logo_url', logoUrl)
+            const res2 = await updateSystemSetting('system_name', systemName)
+
+            if (res1?.error || res2?.error) {
+                alert(res1?.error || res2?.error)
+                return
+            }
+
             alert("Configurações salvas com sucesso!")
             window.location.reload() // Reload to reflect changes in Sidebar
         } catch (e) {

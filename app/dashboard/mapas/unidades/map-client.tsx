@@ -72,7 +72,9 @@ const createCustomIcon = (color: string) => {
 }
 
 export function MapClient({ units, categories }: MapClientProps) {
-    const [selectedTypes, setSelectedTypes] = useState<string[]>([])
+    const [selectedTypes, setSelectedTypes] = useState<string[]>(
+        categories.map(c => c.name).filter(n => n !== 'OSCs SUBVENC')
+    )
     const [selectedRegions, setSelectedRegions] = useState<string[]>([])
     const [isTypeOpen, setIsTypeOpen] = useState(false)
     const [isRegionOpen, setIsRegionOpen] = useState(false)
@@ -108,7 +110,9 @@ export function MapClient({ units, categories }: MapClientProps) {
 
     // Filter units
     const filteredUnits = units.filter(unit => {
-        const typeMatch = selectedTypes.length === 0 || (unit.map_categories && selectedTypes.includes(unit.map_categories.name))
+        // Se nenhum tipo selecionado, não mostra nada (ou mostra tudo? O usuário pediu todas por default menos OSC)
+        // Com o estado inicial preenchido, se ele limpar tudo, não mostrará nada.
+        const typeMatch = selectedTypes.includes(unit.map_categories?.name || '')
         const unitRegion = unit.region || "Não informada"
         const regionMatch = selectedRegions.length === 0 || selectedRegions.includes(unitRegion)
 
@@ -143,7 +147,7 @@ export function MapClient({ units, categories }: MapClientProps) {
                         className="w-full h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 flex items-center justify-between text-left hover:border-blue-400 transition-colors"
                     >
                         <span className="truncate pr-2">
-                            {selectedTypes.length === 0 ? "Todos as Categorias" : `${selectedTypes.length} selecionada(s)`}
+                            {selectedTypes.length === 0 ? "Nenhuma selecionada" : (selectedTypes.length === categories.length ? "Todas as Categorias" : `${selectedTypes.length} selecionada(s)`)}
                         </span>
                         <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                     </button>

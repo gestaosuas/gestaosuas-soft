@@ -115,14 +115,14 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full justify-start h-11 px-4 text-sm font-medium transition-all duration-200 truncate",
+                                                "w-full justify-start min-h-[2.75rem] h-auto py-2.5 px-4 text-sm font-medium transition-all duration-200",
                                                 pathname === `/dashboard/diretoria/${dir.id}`
                                                     ? "bg-zinc-50 dark:bg-zinc-900 text-primary shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800"
                                                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                                             )}
                                         >
                                             <Building2 className={cn("mr-3 h-4 w-4 shrink-0", pathname === `/dashboard/diretoria/${dir.id}` ? "text-primary" : "text-zinc-400")} />
-                                            <span className="truncate">{dir.name}</span>
+                                            <span className="whitespace-normal text-left leading-tight">{dir.name}</span>
                                         </Button>
                                     </Link>
                                 ))}
@@ -139,14 +139,14 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full justify-start h-11 px-4 text-sm font-medium transition-all duration-200 truncate",
+                                                "w-full justify-start min-h-[2.75rem] h-auto py-2.5 px-4 text-sm font-medium transition-all duration-200",
                                                 pathname === `/dashboard/diretoria/${dir.id}`
                                                     ? "bg-zinc-50 dark:bg-zinc-900 text-primary shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800"
                                                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                                             )}
                                         >
                                             <Activity className={cn("mr-3 h-4 w-4 shrink-0", pathname === `/dashboard/diretoria/${dir.id}` ? "text-primary" : "text-zinc-400")} />
-                                            <span className="truncate">{dir.name}</span>
+                                            <span className="whitespace-normal text-left leading-tight">{dir.name}</span>
                                         </Button>
                                     </Link>
                                 ))}
