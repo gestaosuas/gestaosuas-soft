@@ -309,6 +309,8 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 if (isNarrative) {
                     // Namespace to avoid overwriting other sector's narrative in the same row
                     mergedData[`_report_content_${setor}`] = formData._report_content
+                    // Remove generic key to prevent cross-sector leaking
+                    delete mergedData._report_content
                 }
             } else {
                 mergedData = { ...existing.data, ...formData, _setor: setor }
@@ -338,6 +340,8 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 const namespacedData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
                 if (isNarrative) {
                     namespacedData[`_report_content_${setor}`] = formData._report_content
+                    // Remove generic key to prevent cross-sector leaking
+                    delete namespacedData._report_content
                 }
                 finalData = namespacedData
             } else {

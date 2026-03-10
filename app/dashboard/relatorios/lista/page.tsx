@@ -52,14 +52,24 @@ export default async function ReportListPage({
         }
     }
 
-    // Filter to show ONLY Narrative Reports (containing _report_content)
-    // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
+    // Shared sectors that can merge into the same DB row
+    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade']
+    const isSharedSector = setor && sharedSectors.includes(setor)
+
+    // Filter to show ONLY Narrative Reports for this specific sector
     const narrativeSubmissions = submissions?.filter((sub: any) => {
         const matchesYear = sub.year === selectedYear;
-        const hasNarrative = sub.data && (sub.data._report_content || sub.data?.[`_report_content_${setor}`]);
 
-        // If sector is provided in URL, filter by it. 
-        // Support merged sectors by checking the _has_{setor} marker
+        // For shared sectors, check ONLY the sector-specific namespaced key
+        // This prevents CP reports from showing in SINE's list and vice-versa
+        let hasNarrative: boolean
+        if (isSharedSector) {
+            hasNarrative = !!sub.data?.[`_report_content_${setor}`]
+        } else {
+            hasNarrative = !!sub.data?._report_content
+        }
+
+        // Sector matching: for shared sectors, check the _has_{setor} marker
         const matchesSector = !setor || (sub.data._setor === setor) || (sub.data?.[`_has_${setor}`]);
 
         // Visibility restriction: Only owner or admin
