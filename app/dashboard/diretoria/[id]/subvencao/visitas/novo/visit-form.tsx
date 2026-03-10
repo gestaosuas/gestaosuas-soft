@@ -56,13 +56,15 @@ export function VisitForm({
     directorateName,
     oscs,
     initialVisit,
-    logoUrl
+    logoUrl,
+    userId
 }: {
     directorateId: string,
     directorateName: string,
     oscs: any[],
     initialVisit?: any,
-    logoUrl?: string
+    logoUrl?: string,
+    userId: string
 }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
@@ -236,7 +238,7 @@ export function VisitForm({
         osc.name.toLowerCase().includes(oscSearch.toLowerCase())
     )
 
-    const DRAFT_KEY = `visit_draft_${directorateId}_${initialVisit?.id || 'new'}`
+    const DRAFT_KEY = `visit_draft_${userId}_${directorateId}_${initialVisit?.id || 'new'}`
 
     // Auto-save logic
     useEffect(() => {

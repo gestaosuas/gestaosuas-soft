@@ -1,7 +1,8 @@
 import { VisitForm } from "../novo/visit-form"
 import { getOSCs, getVisitById } from "@/app/dashboard/actions"
 import { getSystemSettings, getCachedDirectorate } from "@/app/dashboard/cached-data"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { createClient } from "@/utils/supabase/server"
 
 export default async function VisitaDetailPage({
     params
@@ -9,6 +10,14 @@ export default async function VisitaDetailPage({
     params: Promise<{ id: string, visitId: string }>
 }) {
     const { id, visitId } = await params
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect('/login')
+    }
+
     const [visit, oscs, settings, directorate] = await Promise.all([
         getVisitById(visitId),
         getOSCs(id),
@@ -30,6 +39,7 @@ export default async function VisitaDetailPage({
                 oscs={oscs}
                 initialVisit={visit}
                 logoUrl={settings?.logo_url}
+                userId={user.id}
             />
         </div>
     )
