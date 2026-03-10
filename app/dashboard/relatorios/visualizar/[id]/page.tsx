@@ -12,10 +12,13 @@ import { FormDefinition } from "@/components/form-engine"
 
 export default async function ViewReportPage({
     params,
+    searchParams
 }: {
-    params: Promise<{ id: string }>
+    params: Promise<{ id: string }>,
+    searchParams: Promise<{ setor?: string }>
 }) {
     const { id } = await params
+    const { setor } = await searchParams
 
     const supabase = await createClient()
     // Use Secure Cache Fetcher
@@ -35,7 +38,8 @@ export default async function ViewReportPage({
         isAdmin = profile?.role === 'admin' || isEmailAdmin
     }
 
-    const content = submission.data?._report_content || []
+    // Priority: Namespaced content (for shared sectors), then general content
+    const content = (setor && submission.data?.[`_report_content_${setor}`]) || submission.data?._report_content || []
     const isNarrative = content.length > 0
     const directorateName = submission.directorates?.name || 'Diretoria'
     const monthName = new Date(0, submission.month - 1).toLocaleString('pt-BR', { month: 'long' })

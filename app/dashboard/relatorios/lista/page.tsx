@@ -56,10 +56,11 @@ export default async function ReportListPage({
     // The user requested that "Formulários" (Indicators like SINE/CP) NOT appear here.
     const narrativeSubmissions = submissions?.filter((sub: any) => {
         const matchesYear = sub.year === selectedYear;
-        const hasNarrative = sub.data && sub.data._report_content;
+        const hasNarrative = sub.data && (sub.data._report_content || sub.data?.[`_report_content_${setor}`]);
 
         // If sector is provided in URL, filter by it. 
-        const matchesSector = !setor || !sub.data._setor || sub.data._setor === setor;
+        // Support merged sectors by checking the _has_{setor} marker
+        const matchesSector = !setor || (sub.data._setor === setor) || (sub.data?.[`_has_${setor}`]);
 
         // Visibility restriction: Only owner or admin
         const canSee = isAdmin || sub.user_id === user.id;
@@ -138,7 +139,7 @@ export default async function ReportListPage({
                                             year={sub.year}
                                         />
                                     )}
-                                    <Link href={`/dashboard/relatorios/visualizar/${sub.id}`}>
+                                    <Link href={`/dashboard/relatorios/visualizar/${sub.id}${setor ? `?setor=${setor}` : ''}`}>
                                         <Button variant="outline" className="h-10 px-6 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold text-[12px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                                             Visualizar
                                         </Button>

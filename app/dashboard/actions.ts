@@ -298,11 +298,17 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 }
             } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
                 // Shared Directorate Merge logic: Keep both datasets in the same row
+                const isNarrative = formData._report_content !== undefined
                 mergedData = {
                     ...existing.data,
                     ...formData,
                     _setor: `merged_${setor.split('_')[0]}`, // Mark as merged
                     [`_has_${setor}`]: true
+                }
+
+                if (isNarrative) {
+                    // Namespace to avoid overwriting other sector's narrative in the same row
+                    mergedData[`_report_content_${setor}`] = formData._report_content
                 }
             } else {
                 mergedData = { ...existing.data, ...formData, _setor: setor }
@@ -328,7 +334,12 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     }
                 }
             } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
-                finalData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
+                const isNarrative = formData._report_content !== undefined
+                const namespacedData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
+                if (isNarrative) {
+                    namespacedData[`_report_content_${setor}`] = formData._report_content
+                }
+                finalData = namespacedData
             } else {
                 finalData = { ...formData, _setor: setor }
             }
