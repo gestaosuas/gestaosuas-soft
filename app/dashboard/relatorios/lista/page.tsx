@@ -132,7 +132,7 @@ export default async function ReportListPage({
                                             )}
                                         </CardTitle>
                                         <CardDescription className="text-[12px] font-medium text-zinc-500">
-                                            Efetivado em {new Date(sub.created_at).toLocaleDateString('pt-BR')} • {sub.data._report_content.length} seções narrativas
+                                            Efetivado em {new Date(sub.created_at).toLocaleDateString('pt-BR')} • {(sub.data?.[`_report_content_${setor}`] || sub.data?._report_content || []).length} seções narrativas
                                             {isAdmin && sub.profiles?.full_name && (
                                                 <span className="block mt-1 text-blue-600/70 dark:text-blue-400/70 font-bold uppercase text-[10px]">
                                                     Enviado por: {sub.profiles.full_name}
