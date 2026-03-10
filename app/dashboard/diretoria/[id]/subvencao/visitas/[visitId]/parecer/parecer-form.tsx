@@ -266,10 +266,11 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                         {!isPreview && !isFinalized && (
                             <div className="no-print">
                                 <Textarea autoResize
+                                    readOnly={true}
                                     placeholder="Digite aqui o objeto do relatório..."
                                     value={report.objeto_relatorio}
                                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReport({ ...report, objeto_relatorio: e.target.value })}
-                                    className="min-h-[100px] bg-zinc-50 dark:bg-zinc-950/50 border-zinc-200 focus:ring-blue-900"
+                                    className="min-h-[100px] bg-zinc-100 dark:bg-zinc-900 border-zinc-200 focus:ring-blue-900 cursor-not-allowed opacity-80"
                                 />
                             </div>
                         )}
@@ -295,9 +296,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <Textarea autoResize
+                                            readOnly={true}
                                             value={report.item2_a_objetivos}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReport({ ...report, item2_a_objetivos: e.target.value })}
-                                            className="bg-zinc-50 dark:bg-zinc-950/50"
+                                            className="bg-zinc-100 dark:bg-zinc-900 cursor-not-allowed opacity-80"
                                         />
                                     </div>
                                 )}
@@ -316,9 +318,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <Textarea autoResize
+                                            readOnly={true}
                                             value={report.item2_b_metas}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReport({ ...report, item2_b_metas: e.target.value })}
-                                            className="bg-zinc-50 dark:bg-zinc-950/50"
+                                            className="bg-zinc-100 dark:bg-zinc-900 cursor-not-allowed opacity-80"
                                         />
                                     </div>
                                 )}
@@ -337,9 +340,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 {!isPreview && !isFinalized && (
                                     <div className="no-print">
                                         <Textarea autoResize
+                                            readOnly={true}
                                             value={report.item2_c_atividades}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReport({ ...report, item2_c_atividades: e.target.value })}
-                                            className="bg-zinc-50 dark:bg-zinc-950/50"
+                                            className="bg-zinc-100 dark:bg-zinc-900 cursor-not-allowed opacity-80"
                                         />
                                     </div>
                                 )}

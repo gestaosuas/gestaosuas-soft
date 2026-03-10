@@ -1,7 +1,9 @@
 import { getCachedDirectorate, getCachedSubmissionsForUser, getCachedProfile } from "@/app/dashboard/cached-data"
 import { notFound, redirect } from "next/navigation"
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList, CheckCircle2 } from "lucide-react"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList, CheckCircle2, FileCheck } from "lucide-react"
+import { getVisits } from "@/app/dashboard/actions"
 import Link from "next/link"
 import { CRAS_UNITS } from "@/app/dashboard/cras-config"
 import { CEAI_UNITS } from "@/app/dashboard/ceai-config"
@@ -427,7 +429,7 @@ export default async function DirectoratePage({
                         </div>
                     </section>
                 </div>
-            ) : isSubvencao ? (
+            ) : (isSubvencao || isOutros) ? (
                 <section className="space-y-12">
                     <div className="flex items-center gap-3">
                         <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
@@ -497,6 +499,18 @@ export default async function DirectoratePage({
                                 </Card>
                             </div>
                         )}
+
+                        <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/relatorio-final`} className="group">
+                            <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                <CardHeader className="p-8">
+                                    <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors mb-6 shadow-sm">
+                                        <FileCheck className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                    </div>
+                                    <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Relatório Final e Parecer Conclusivo</CardTitle>
+                                    <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Relatórios e pareceres de visitas finalizadas.</CardDescription>
+                                </CardHeader>
+                            </Card>
+                        </Link>
                     </div>
                 </section>
             ) : isCEAI ? (
