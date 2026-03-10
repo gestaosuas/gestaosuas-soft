@@ -125,7 +125,7 @@ export default async function ReportListPage({
                                     <div className="space-y-1">
                                         <CardTitle className="text-lg font-bold capitalize text-blue-900 dark:text-blue-50 flex items-center gap-2">
                                             {monthName(sub.month)} <span className="text-zinc-400 font-medium">/ {sub.year}</span>
-                                            {sub.data?._setor && (
+                                            {sub.data?._setor && !sub.data._setor.startsWith('merged_') && (
                                                 <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/40 text-[10px] uppercase font-bold tracking-widest text-blue-600/70 border border-blue-100/50">
                                                     {sub.data._setor === 'sine' ? 'SINE' : sub.data._setor === 'centros' ? 'CP' : sub.data._setor === 'casa_da_mulher' ? 'Casa da Mulher' : sub.data._setor === 'diversidade' ? 'Diversidade' : sub.data._setor}
                                                 </span>
