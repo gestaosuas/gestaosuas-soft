@@ -501,6 +501,7 @@ export default async function DataPage({
                                                                                     year={selectedYear}
                                                                                     monthName={m}
                                                                                     unitName={(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) ? unitName : undefined}
+                                                                                    setor={setor}
                                                                                 />
                                                                             )}
                                                                         </div>
@@ -590,6 +591,7 @@ export default async function DataPage({
                                                                                     year={selectedYear}
                                                                                     monthName={m}
                                                                                     unitName={unitName}
+                                                                                    setor={setor}
                                                                                 />
                                                                             )}
                                                                         </div>
@@ -663,6 +665,7 @@ export default async function DataPage({
                                                                                     year={selectedYear}
                                                                                     monthName={m}
                                                                                     unitName={unitName}
+                                                                                    setor={setor}
                                                                                 />
                                                                             )}
                                                                         </div>

@@ -19,6 +19,7 @@ import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID }
 import { NAICA_FORM_DEFINITION, NAICA_SHEET_BLOCKS, NAICA_SPREADSHEET_ID } from './naica-config'
 import { PROTETIVO_FORM_DEFINITION, PROTETIVO_SHEET_BLOCKS, PROTETIVO_SPREADSHEET_ID, SOCIOEDUCATIVO_FORM_DEFINITION, SOCIOEDUCATIVO_SHEET_BLOCKS, SOCIOEDUCATIVO_SPREADSHEET_ID } from './protecao-especial-config'
 import { SINE_FORM_DEFINITION, SINE_SHEET_NAME } from './sine-config'
+import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION } from './casa-da-mulher-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 import { uploadFileToDrive, getOrCreateFolder } from '@/lib/google-drive'
 import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
@@ -265,16 +266,14 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     if (existing.data?.units && existing.data?.units[unitName]) {
                         return { error: `Os dados da unidade ${unitName} para ${month}/${year} já foram enviados anteriormente e estão bloqueados para edição.` }
                     }
-                } else if (setor === 'casa_da_mulher') {
-                    if (existing.data?.cm_atend_mulheres_atendidas !== undefined) {
-                        return { error: `Os dados da Casa da Mulher para ${month}/${year} já foram enviados anteriormente e estão bloqueados para edição.` }
+                } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
+                    const alreadyHasThisSector = (existing.data?.[`_has_${setor}`]) || (existing.data?._setor === setor)
+                    if (alreadyHasThisSector) {
+                        return { error: `O relatório do ${setor.toUpperCase().replace(/_/g, ' ')} para ${month}/${year} já foi enviado e está bloqueado.` }
                     }
-                } else if (setor === 'diversidade') {
-                    if (existing.data?.div_atend_mulheres_atendidas !== undefined) {
-                        return { error: `Os dados da Diversidade para ${month}/${year} já foram enviados e estão bloqueados para edição.` }
-                    }
+                    // If doesn't have this sector, allow merge!
                 } else {
-                    // Para Indicadores de unidade única (SINE, CP sem multi-unit, etc)
+                    // Para Indicadores de unidade única (Narrativos, etc)
                     return { error: `Já existe um registro para ${month}/${year}. Edições não são permitidas após o envio.` }
                 }
             }
@@ -297,13 +296,12 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                         }
                     }
                 }
-            } else if (setor === 'sine' || setor === 'centros') {
-                // SINE/CP Merge logic: Keep both datasets in the same row
+            } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
+                // Shared Directorate Merge logic: Keep both datasets in the same row
                 mergedData = {
                     ...existing.data,
                     ...formData,
-                    // We can't have a single _setor anymore if we merge, 
-                    // but we can mark which sectors have data
+                    _setor: `merged_${setor.split('_')[0]}`, // Mark as merged
                     [`_has_${setor}`]: true
                 }
             } else {
@@ -321,12 +319,19 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             }
         } else {
             // New Submission
-            const finalData = (setor === 'cras' || setor === 'ceai' || setor === 'naica') ? {
-                _is_multi_unit: true,
-                units: {
-                    [formData._unit || 'Principal']: formData
+            let finalData;
+            if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
+                finalData = {
+                    _is_multi_unit: true,
+                    units: {
+                        [formData._unit || 'Principal']: formData
+                    }
                 }
-            } : { ...formData, _setor: setor }
+            } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
+                finalData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
+            } else {
+                finalData = { ...formData, _setor: setor }
+            }
 
             const submissionData = {
                 user_id: user.id,
@@ -625,6 +630,14 @@ async function syncSubmissionToSheets(formData: Record<string, any>, month: numb
         }
         await updateSheetColumn(sheetConfig, month, orderedValues)
     }
+
+    // Special Case: If we are in a merged SINE/CP scenario, ensure BOTH are updated if the data contains them
+    // This is useful for updateSubmissionCell
+    if (setor === 'centros' && formData._has_sine) {
+        await syncSubmissionToSheets(formData, month, year, directorate, 'sine')
+    } else if (setor === 'sine' && formData._has_centros) {
+        await syncSubmissionToSheets(formData, month, year, directorate, 'centros')
+    }
 }
 
 export async function updateSubmissionCell(id: string, fieldId: string, value: any, unitName?: string) {
@@ -678,8 +691,6 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
         const dirName = normName(directorate.name)
 
         if (dirName.includes('cras')) setor = 'cras'
-        else if (dirName.includes('formacao') || dirName.includes('profissional') || dirName.includes('centro')) setor = 'centros'
-        else if (dirName.includes('sine')) setor = 'sine'
         else if (dirName.includes('beneficios')) setor = 'beneficios'
         else if (dirName.includes('ceai')) setor = 'ceai'
         else if (dirName.includes('populacao') && dirName.includes('rua')) setor = 'pop_rua'
@@ -688,6 +699,31 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
             if (unitDataToSync._subcategory === 'socioeducativo') setor = 'creas_socioeducativo'
             else if (unitDataToSync._subcategory === 'protetivo') setor = 'creas_protetivo'
             else setor = 'creas'
+        }
+
+        // SINE and CP check - since they share directorate, we check the field itself
+        if (dirName.includes('sine') || dirName.includes('profissional') || dirName.includes('centro') || dirName.includes('qualificacao')) {
+            const allSineFields = SINE_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
+            const allCPFields = CP_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
+
+            if (allSineFields.includes(fieldId)) setor = 'sine'
+            else if (allCPFields.includes(fieldId)) setor = 'centros'
+            else {
+                if (unitDataToSync._has_sine) setor = 'sine'
+                else if (unitDataToSync._has_centros) setor = 'centros'
+                else setor = 'centros'
+            }
+        } else if (dirName.includes('mulher') || dirName.includes('casa da mulher')) {
+            const allCMFields = CASA_DA_MULHER_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
+            const allDivFields = DIVERSIDADE_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
+
+            if (allCMFields.includes(fieldId)) setor = 'casa_da_mulher'
+            else if (allDivFields.includes(fieldId)) setor = 'diversidade'
+            else {
+                if (unitDataToSync._has_casa_da_mulher) setor = 'casa_da_mulher'
+                else if (unitDataToSync._has_diversidade) setor = 'diversidade'
+                else setor = 'casa_da_mulher'
+            }
         }
 
         await syncSubmissionToSheets(unitDataToSync, submission.month, submission.year, directorate, setor)
@@ -857,7 +893,7 @@ export async function deleteReport(reportId: string) {
     }
 }
 
-export async function deleteMonthData(directorateId: string, month: number, year: number, unitName?: string) {
+export async function deleteMonthData(directorateId: string, month: number, year: number, unitName?: string, setor?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -887,7 +923,6 @@ export async function deleteMonthData(directorateId: string, month: number, year
         delete updatedUnits[unitName]
 
         // If no units left, we might as well delete the whole record? 
-        // Or just leave an empty units object. Better delete it if it's the last one.
         if (Object.keys(updatedUnits).length === 0) {
             await adminSupabase.from('submissions').delete().eq('id', existing.id)
         } else {
@@ -895,8 +930,38 @@ export async function deleteMonthData(directorateId: string, month: number, year
                 .update({ data: { ...existing.data, units: updatedUnits } })
                 .eq('id', existing.id)
         }
+    } else if (setor && (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade')) {
+        // Shared Directorate context
+        const newData = { ...existing.data }
+
+        // Remove sector markers
+        delete newData[`_has_${setor}`]
+        if (newData._setor === setor) delete newData._setor
+
+        // Remove sector fields
+        let formDef: FormDefinition | null = null
+        if (setor === 'sine') formDef = SINE_FORM_DEFINITION
+        else if (setor === 'centros') formDef = CP_FORM_DEFINITION
+        else if (setor === 'casa_da_mulher') formDef = CASA_DA_MULHER_FORM_DEFINITION
+        else if (setor === 'diversidade') formDef = DIVERSIDADE_FORM_DEFINITION
+
+        if (formDef) {
+            formDef.sections.flatMap((s: any) => s.fields).forEach((f: any) => {
+                delete newData[f.id]
+            })
+        }
+
+        // Check if anything else remains
+        const hasOther = newData._has_sine || newData._has_centros || newData._has_casa_da_mulher || newData._has_diversidade ||
+            (newData._setor && newData._setor !== setor && newData._setor !== 'merged_sine' && newData._setor !== 'merged_centros' && newData._setor !== 'merged_casa' && newData._setor !== 'merged_sine_cp')
+
+        if (!hasOther) {
+            await adminSupabase.from('submissions').delete().eq('id', existing.id)
+        } else {
+            await adminSupabase.from('submissions').update({ data: newData }).eq('id', existing.id)
+        }
     } else {
-        // Flat cleanup or no unit specified: Delete the whole record for the month
+        // Flat cleanup or no unit/sector specified: Delete the whole record for the month
         await adminSupabase.from('submissions').delete().eq('id', existing.id)
     }
 
@@ -1613,15 +1678,20 @@ export async function checkSubmissionExists(directorateId: string, month: number
         return !!(existing.data?.units && existing.data?.units[unitName])
     }
 
-    // Para Casa da Mulher e Diversidade, validamos as chaves próprias pois podem compartilhar o mesmo objeto
-    if (setor === 'casa_da_mulher') {
-        return existing.data?.cm_atend_mulheres_atendidas !== undefined
-    }
-    if (setor === 'diversidade') {
-        return existing.data?.div_atend_mulheres_atendidas !== undefined
+    if (setor === 'sine' || setor === 'centros') {
+        const marker = `_has_${setor}`
+        return !!(existing.data?.[marker] || existing.data?._setor === setor)
     }
 
-    // Para outros (SINE, CP, Narrativos), a existência do registro já significa que foi enviado
+    if (setor === 'casa_da_mulher') {
+        return !!(existing.data?._has_casa_da_mulher || existing.data?.cm_atend_mulheres_atendidas !== undefined)
+    }
+
+    if (setor === 'diversidade') {
+        return !!(existing.data?._has_diversidade || existing.data?.div_atend_mulheres_atendidas !== undefined)
+    }
+
+    // Para outros (Narrativos), a existência do registro já significa que foi enviado
     return true
 }
 

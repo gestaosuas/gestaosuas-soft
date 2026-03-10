@@ -21,15 +21,16 @@ interface DeleteMonthButtonProps {
     year: number
     monthName: string
     unitName?: string
+    setor?: string
 }
 
-export function DeleteMonthButton({ directorateId, month, year, monthName, unitName }: DeleteMonthButtonProps) {
+export function DeleteMonthButton({ directorateId, month, year, monthName, unitName, setor }: DeleteMonthButtonProps) {
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
 
     const handleDelete = () => {
         startTransition(async () => {
-            const res = await deleteMonthData(directorateId, month, year, unitName)
+            const res = await deleteMonthData(directorateId, month, year, unitName, setor)
             if (res.success) {
                 setOpen(false)
             } else {
