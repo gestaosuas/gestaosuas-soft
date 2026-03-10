@@ -264,10 +264,22 @@ export default async function DataPage({
     // The previous code fetched all directorate submissions anyway? No, filtering by year/directorate on DB.
     // Our cache fetches ALL submissions for the directorate. We will filter by year in loop.
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
-    const submissions = allSubmissions.filter((s: any) =>
-        s.year === selectedYear &&
-        (!setor || s.data._setor === setor || s.data[`_has_${setor}`])
-    )
+    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade']
+    const submissions = allSubmissions.filter((s: any) => {
+        if (s.year !== selectedYear) return false
+        if (!setor) return true
+
+        // Direct match
+        if (s.data._setor === setor) return true
+
+        // Marker match (most reliable for shared sectors)
+        if (s.data[`_has_${setor}`]) return true
+
+        // Merged record match: if _setor starts with 'merged_', it contains data for multiple sectors
+        if (s.data._setor?.startsWith('merged_') && sharedSectors.includes(setor)) return true
+
+        return false
+    })
 
     // Organizar dados em um mapa fácil: unit -> month -> { id, data, author }
     const dataByUnitAndMonth = new Map<string, Map<number, { id: string, data: Record<string, any>, author?: string }>>()

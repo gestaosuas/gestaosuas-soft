@@ -141,12 +141,17 @@ export default async function GraficosPage({
     }
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
+    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade']
     const rawSubmissions = allSubmissions.filter((s: any) => {
         if (s.year !== selectedYear) return false
         if (isCasaDaMulher) {
-            return !s.data._setor || s.data._setor === 'casa_da_mulher' || s.data._setor === 'diversidade'
+            return !s.data._setor || s.data._setor === 'casa_da_mulher' || s.data._setor === 'diversidade' || s.data._has_casa_da_mulher
         }
-        return !setor || !s.data._setor || s.data._setor === setor
+        if (!setor) return true
+        if (s.data._setor === setor) return true
+        if (s.data[`_has_${setor}`]) return true
+        if (s.data._setor?.startsWith('merged_') && sharedSectors.includes(setor)) return true
+        return false
     })
 
     // Filter unit data out of submissions if user doesn't have access
