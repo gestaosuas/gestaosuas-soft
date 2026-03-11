@@ -70,13 +70,19 @@ export default async function FinalReportsPage({
                                 </CardDescription>
                                 <div className="mt-8 flex flex-col gap-3">
                                     <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/visitas/${visit.id}/parecer`} className="w-full">
-                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all">
+                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all">
                                             <FileText className="h-4 w-4" />
+                                            Instrumental da Visita
+                                        </Button>
+                                    </Link>
+                                    <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/visitas/${visit.id}/relatorio-final`} className="w-full">
+                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 hover:text-white">
+                                            <FileCheck className="h-4 w-4" />
                                             Relatório Final
                                         </Button>
                                     </Link>
                                     <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/visitas/${visit.id}/parecer-conclusivo`} className="w-full">
-                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all">
+                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 hover:text-white">
                                             <CheckCircle2 className="h-4 w-4" />
                                             Parecer Conclusivo
                                         </Button>

@@ -164,13 +164,13 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
                                                 {isAdmin ? (
                                                     <>
                                                         <FileText className="h-3.5 w-3.5" />
-                                                        {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório Final' :
-                                                            visit.parecer_tecnico?.status === 'draft' ? 'Relatório (Rascunho)' : 'Relatório'}
+                                                        {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório de Visita' :
+                                                            visit.parecer_tecnico?.status === 'draft' ? 'Relatório de Visita (Rascunho)' : 'Relatório de Visita'}
                                                     </>
                                                 ) : (
                                                     <>
                                                         <FileText className="h-3.5 w-3.5" />
-                                                        Relatório Final (ADM)
+                                                        Relatório de Visita (ADM)
                                                     </>
                                                 )}
                                             </Button>
