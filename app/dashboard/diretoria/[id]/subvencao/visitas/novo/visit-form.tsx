@@ -913,13 +913,13 @@ export function VisitForm({
                                                 type="date"
                                                 value={formData.visit_date_1}
                                                 onChange={e => setFormData({ ...formData, visit_date_1: e.target.value, visit_date: e.target.value })}
-                                                disabled={isLocked || (!isEmendas && !!initialVisit?.id)}
+                                                disabled={isLocked}
                                                 className="h-12 bg-zinc-50/50 rounded-lg font-bold text-xs"
                                             />
                                             <Select
                                                 value={formData.visit_shift_1}
                                                 onValueChange={val => setFormData({ ...formData, visit_shift_1: val })}
-                                                disabled={isLocked || (!isEmendas && !!initialVisit?.id)}
+                                                disabled={isLocked}
                                             >
                                                 <SelectTrigger className="h-12 w-[120px] bg-zinc-50/50 text-xs font-bold">
                                                     <SelectValue placeholder="Turno" />
