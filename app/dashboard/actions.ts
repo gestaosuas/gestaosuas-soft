@@ -679,6 +679,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    const isAdmin = await isAdminCheck(user.id)
     const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
     const cachedProfile = await getCachedProfile(user.id)
     const isAdminUserLocal = cachedProfile?.role === 'admin' || isEmailAdmin
