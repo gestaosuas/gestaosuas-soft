@@ -26,7 +26,11 @@ interface FormData {
     conclusao: string
     local_data: string
     signature_tecnico: string | null
+    tecnico_nome: string
     signature_financeiro: string | null
+    financeiro_nome: string
+    signature_osc: string | null
+    osc_representante_nome: string
     status: 'draft' | 'finalized'
 }
 
@@ -39,6 +43,7 @@ export default function ParecerConclusivoForm() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [finalizing, setFinalizing] = useState(false)
+    const [savingSignature, setSavingSignature] = useState<string | null>(null)
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
     const [formData, setFormData] = useState<FormData>({
         osc_name: '',
@@ -53,7 +58,11 @@ export default function ParecerConclusivoForm() {
         conclusao: '',
         local_data: `Uberlândia, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`,
         signature_tecnico: null,
+        tecnico_nome: '',
         signature_financeiro: null,
+        financeiro_nome: '',
+        signature_osc: null,
+        osc_representante_nome: '',
         status: 'draft'
     })
 
@@ -104,6 +113,20 @@ export default function ParecerConclusivoForm() {
     }, [visitId])
 
     const handleSave = async (status: 'draft' | 'finalized' = 'draft') => {
+        if (status === 'finalized') {
+            if (!formData.tecnico_nome || !formData.signature_tecnico) {
+                alert("O nome e a assinatura do Técnico são obrigatórios para finalizar.")
+                return
+            }
+            if (!formData.financeiro_nome || !formData.signature_financeiro) {
+                alert("O nome e a assinatura do Financeiro são obrigatórios para finalizar.")
+                return
+            }
+            if (!confirm("Tem certeza que deseja finalizar este parecer conclusivo? Após a finalização, não será possível editar.")) {
+                return
+            }
+        }
+
         setSaving(status === 'draft')
         setFinalizing(status === 'finalized')
         
@@ -119,6 +142,27 @@ export default function ParecerConclusivoForm() {
         } finally {
             setSaving(false)
             setFinalizing(false)
+        }
+    }
+
+    const handleSaveIndividualSignature = async (type: 'tecnico' | 'financeiro' | 'osc') => {
+        const name = type === 'tecnico' ? formData.tecnico_nome : 
+                     type === 'financeiro' ? formData.financeiro_nome : 
+                     formData.osc_representante_nome;
+        
+        if (!name || name.trim() === '') {
+            alert(`Por favor, preencha o nome do ${type === 'tecnico' ? 'Técnico' : type === 'financeiro' ? 'Financeiro' : 'Representante OSC'} antes de salvar a assinatura.`);
+            return;
+        }
+
+        setSavingSignature(type)
+        try {
+            await saveParecerConclusivo(visitId, formData, 'draft')
+            alert("Assinatura e nome salvos com sucesso!")
+        } catch (error: any) {
+            alert("Erro ao salvar assinatura: " + error.message)
+        } finally {
+            setSavingSignature(null)
         }
     }
 
@@ -320,32 +364,100 @@ export default function ParecerConclusivoForm() {
                              />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-8">
                             <div className="flex flex-col items-center space-y-4">
-                                <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[100px] relative">
+                                <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
                                     <SignaturePad 
                                         defaultValue={formData.signature_tecnico || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_tecnico: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
-                                <div className="text-center">
-                                    <p className="font-black text-xs uppercase">Gestor da Parceria</p>
-                                    <p className="text-[10px] text-zinc-500 font-bold uppercase">Técnico</p>
+                                <div className="text-center w-full space-y-3">
+                                    <Input 
+                                        placeholder="NOME DO TÉCNICO"
+                                        value={formData.tecnico_nome}
+                                        onChange={e => setFormData({ ...formData, tecnico_nome: e.target.value.toUpperCase() })}
+                                        readOnly={isFinalized}
+                                        className="text-center font-bold text-xs border-none bg-zinc-50 h-8"
+                                    />
+                                    <p className="text-[10px] text-zinc-500 font-bold uppercase">Gestor da Parceria Técnico</p>
+                                    {!isFinalized && (
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => handleSaveIndividualSignature('tecnico')}
+                                            disabled={savingSignature === 'tecnico'}
+                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                        >
+                                            {savingSignature === 'tecnico' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                            Salvar Assinatura Técnico
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="flex flex-col items-center space-y-4">
-                                <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[100px] relative">
+                                <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
                                     <SignaturePad 
                                         defaultValue={formData.signature_financeiro || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_financeiro: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
-                                <div className="text-center">
-                                    <p className="font-black text-xs uppercase">Gestor da Parceria</p>
-                                    <p className="text-[10px] text-zinc-500 font-bold uppercase">Financeiro</p>
+                                <div className="text-center w-full space-y-3">
+                                    <Input 
+                                        placeholder="NOME DO FINANCEIRO"
+                                        value={formData.financeiro_nome}
+                                        onChange={e => setFormData({ ...formData, financeiro_nome: e.target.value.toUpperCase() })}
+                                        readOnly={isFinalized}
+                                        className="text-center font-bold text-xs border-none bg-zinc-50 h-8"
+                                    />
+                                    <p className="text-[10px] text-zinc-500 font-bold uppercase">Gestor da Parceria Financeiro</p>
+                                    {!isFinalized && (
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => handleSaveIndividualSignature('financeiro')}
+                                            disabled={savingSignature === 'financeiro'}
+                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                        >
+                                            {savingSignature === 'financeiro' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                            Salvar Assinatura Financeiro
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-center space-y-4">
+                                <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
+                                    <SignaturePad 
+                                        defaultValue={formData.signature_osc || undefined}
+                                        onSave={(sig: string) => setFormData({ ...formData, signature_osc: sig })}
+                                        readOnly={isFinalized}
+                                    />
+                                </div>
+                                <div className="text-center w-full space-y-3">
+                                    <Input 
+                                        placeholder="NOME DO RESPONSÁVEL OSC"
+                                        value={formData.osc_representante_nome}
+                                        onChange={e => setFormData({ ...formData, osc_representante_nome: e.target.value.toUpperCase() })}
+                                        readOnly={isFinalized}
+                                        className="text-center font-bold text-xs border-none bg-zinc-50 h-8"
+                                    />
+                                    <p className="text-[10px] text-zinc-500 font-bold uppercase italic">Responsável pela OSC (Opcional)</p>
+                                    {!isFinalized && (
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => handleSaveIndividualSignature('osc')}
+                                            disabled={savingSignature === 'osc'}
+                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                        >
+                                            {savingSignature === 'osc' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                            Salvar Assinatura Representante
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </div>

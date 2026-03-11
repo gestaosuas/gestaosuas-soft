@@ -500,17 +500,19 @@ export default async function DirectoratePage({
                             </div>
                         )}
 
-                        <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/relatorio-final`} className="group">
-                            <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-                                <CardHeader className="p-8">
-                                    <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors mb-6 shadow-sm">
-                                        <FileCheck className="w-6 h-6 text-zinc-500 group-hover:text-white" />
-                                    </div>
-                                    <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Relatório Final e Parecer Conclusivo</CardTitle>
-                                    <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Relatórios e pareceres de visitas finalizadas.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </Link>
+                        {isAdmin && (
+                            <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/relatorio-final`} className="group">
+                                <Card className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-2xl group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                                    <CardHeader className="p-8">
+                                        <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors mb-6 shadow-sm">
+                                            <FileCheck className="w-6 h-6 text-zinc-500 group-hover:text-white" />
+                                        </div>
+                                        <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100 transition-colors">Relatório Final e Parecer Conclusivo</CardTitle>
+                                        <CardDescription className="text-[13px] text-zinc-500 mt-2 font-medium">Relatórios e pareceres de visitas finalizadas.</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+                        )}
                     </div>
                 </section>
             ) : isCEAI ? (

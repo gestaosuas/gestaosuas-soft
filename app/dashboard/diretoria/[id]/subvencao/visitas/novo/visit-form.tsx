@@ -141,6 +141,7 @@ export function VisitForm({
         responsavel_nome: ""
     })
     const [documents, setDocuments] = useState(initialVisit?.documents || [])
+    const [savingSignature, setSavingSignature] = useState<'tecnico1' | 'tecnico2' | 'responsavel' | null>(null)
 
     // Selected OSC Data
     const selectedOSC = oscs.find(o => o.id === formData.osc_id)
@@ -265,12 +266,25 @@ export function VisitForm({
     useEffect(() => {
         if (mounted && !isLocked) {
             const savedDraft = localStorage.getItem(DRAFT_KEY)
+            
+            // Priority 1: If the visit is already in the database (has ID), 
+            // the database is the source of truth. Clear any local cache.
+            if (initialVisit?.id) {
+                if (savedDraft) localStorage.removeItem(DRAFT_KEY)
+                return
+            }
+
+            // Priority 2: For NEW visits, only restore if the user refreshed the page
             if (savedDraft) {
                 try {
                     const parsed = JSON.parse(savedDraft)
-                    // Check if draft is recent (e.g., last 24h) or just prompt
-                    const confirmRestore = window.confirm("Encontramos um rascunho salvo no seu navegador para esta visita. Deseja restaurar os dados?")
-                    if (confirmRestore) {
+                    
+                    // Check if it's a page reload
+                    const navEntries = typeof window !== 'undefined' && window.performance.getEntriesByType('navigation')
+                    const isReload = navEntries && navEntries.length > 0 && (navEntries[0] as any).type === 'reload'
+
+                    if (isReload) {
+                        // Silent restore for reloads (as requested: "preferência não aparecer")
                         if (parsed.formData) setFormData(parsed.formData)
                         if (parsed.atendimento) setAtendimento(parsed.atendimento)
                         if (parsed.formaAcesso) setFormaAcesso(parsed.formaAcesso)
@@ -280,10 +294,13 @@ export function VisitForm({
                         if (parsed.assinaturas) setAssinaturas(parsed.assinaturas)
                         if (parsed.documents) setDocuments(parsed.documents)
                     } else {
+                        // If opened through navigation (not reload), clear old abandoned draft 
+                        // to start a healthy new session
                         localStorage.removeItem(DRAFT_KEY)
                     }
                 } catch (e) {
-                    console.error("Error restoring draft:", e)
+                    console.error("Error handling draft:", e)
+                    localStorage.removeItem(DRAFT_KEY)
                 }
             }
         }
@@ -335,6 +352,49 @@ export function VisitForm({
             };
         });
     };
+
+    const handleSaveIndividualSignature = async (type: 'tecnico1' | 'tecnico2' | 'responsavel') => {
+        if (!formData.osc_id) {
+            alert("Por favor, selecione uma OSC antes de salvar a assinatura.");
+            return;
+        }
+
+        const name = type === 'tecnico1' ? assinaturas.tecnico1_nome :
+            type === 'tecnico2' ? assinaturas.tecnico2_nome :
+                assinaturas.responsavel_nome;
+
+        if (!name || name.trim() === '') {
+            alert(`Por favor, preencha o nome do ${type === 'tecnico1' ? 'Técnico 1' : type === 'tecnico2' ? 'Técnico 2' : 'Responsável'} antes de salvar a assinatura.`);
+            return;
+        }
+
+        setSavingSignature(type)
+        try {
+            // Re-using the draft save logic
+            const payload = {
+                id: initialVisit?.id,
+                osc_id: formData.osc_id,
+                directorate_id: directorateId,
+                visit_date: formData.visit_date_1,
+                identificacao: formData,
+                atendimento,
+                forma_acesso: formaAcesso,
+                rh_data: rhData,
+                observacoes,
+                recomendacoes,
+                assinaturas,
+                documents
+            }
+            await saveVisit(payload)
+            // Clear local draft since it's now in the DB
+            localStorage.removeItem(DRAFT_KEY)
+            alert("Assinatura e nome salvos com sucesso!")
+        } catch (error: any) {
+            alert("Erro ao salvar assinatura: " + error.message)
+        } finally {
+            setSavingSignature(null)
+        }
+    }
 
     const handleSave = async (finalize = false) => {
         if (!formData.osc_id) {
@@ -1401,7 +1461,7 @@ export function VisitForm({
                                 <TableHeader className={cn(isLocked ? "bg-zinc-50" : "bg-zinc-50/50")}>
                                     <TableRow className="hover:bg-transparent h-8">
                                         <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Cargo / Função</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Voluntário</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Outros</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Subvenção</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Quantidade</TableHead>
                                         <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Nomes / Observações</TableHead>
@@ -1826,15 +1886,29 @@ export function VisitForm({
                             readOnly={isLocked}
                         />
                         {!isLocked && (
-                            <Input
-                                placeholder="Nome do Técnico 1"
-                                value={assinaturas.tecnico1_nome}
-                                onChange={e => setAssinaturas({ ...assinaturas, tecnico1_nome: e.target.value })}
-                                className="h-8 text-xs text-center border-none bg-zinc-50 print:hidden"
-                            />
+                            <div className="space-y-2 no-print">
+                                <Input
+                                    placeholder="Nome do Técnico 1"
+                                    value={assinaturas.tecnico1_nome}
+                                    onChange={e => setAssinaturas({ ...assinaturas, tecnico1_nome: e.target.value.toUpperCase() })}
+                                    className="h-8 text-xs text-center border-none bg-zinc-50"
+                                />
+                                <div className="flex justify-center">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleSaveIndividualSignature('tecnico1')}
+                                        disabled={savingSignature === 'tecnico1'}
+                                        className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                    >
+                                        {savingSignature === 'tecnico1' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                        Salvar Assinatura Técnico 1
+                                    </Button>
+                                </div>
+                            </div>
                         )}
                         <div className="text-center">
-                            <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.tecnico1_nome || "Nome do Técnico 1"}</p>
+                            <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.tecnico1_nome || "_________________________"}</p>
                             <p className="text-[9px] font-black uppercase text-zinc-400">Técnico SMDS</p>
                         </div>
                     </div>
@@ -1848,15 +1922,29 @@ export function VisitForm({
                                 readOnly={isLocked}
                             />
                             {!isLocked && (
-                                <Input
-                                    placeholder="Nome do Técnico 2"
-                                    value={assinaturas.tecnico2_nome}
-                                    onChange={e => setAssinaturas({ ...assinaturas, tecnico2_nome: e.target.value })}
-                                    className="h-8 text-xs text-center border-none bg-zinc-50 print:hidden"
-                                />
+                                <div className="space-y-2 no-print">
+                                    <Input
+                                        placeholder="Nome do Técnico 2"
+                                        value={assinaturas.tecnico2_nome}
+                                        onChange={e => setAssinaturas({ ...assinaturas, tecnico2_nome: e.target.value.toUpperCase() })}
+                                        className="h-8 text-xs text-center border-none bg-zinc-50"
+                                    />
+                                    <div className="flex justify-center">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleSaveIndividualSignature('tecnico2')}
+                                            disabled={savingSignature === 'tecnico2'}
+                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                        >
+                                            {savingSignature === 'tecnico2' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                            Salvar Assinatura Técnico 2
+                                        </Button>
+                                    </div>
+                                </div>
                             )}
                             <div className="text-center">
-                                <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.tecnico2_nome || "Nome do Técnico 2"}</p>
+                                <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.tecnico2_nome || "_________________________"}</p>
                                 <p className="text-[9px] font-black uppercase text-zinc-400">Técnico SMDS</p>
                             </div>
                         </div>
@@ -1870,15 +1958,29 @@ export function VisitForm({
                             readOnly={isLocked}
                         />
                         {!isLocked && (
-                            <Input
-                                placeholder="Nome do Responsável"
-                                value={assinaturas.responsavel_nome}
-                                onChange={e => setAssinaturas({ ...assinaturas, responsavel_nome: e.target.value })}
-                                className="h-8 text-xs text-center border-none bg-zinc-50 print:hidden"
-                            />
+                            <div className="space-y-2 no-print">
+                                <Input
+                                    placeholder="Nome do Responsável"
+                                    value={assinaturas.responsavel_nome}
+                                    onChange={e => setAssinaturas({ ...assinaturas, responsavel_nome: e.target.value.toUpperCase() })}
+                                    className="h-8 text-xs text-center border-none bg-zinc-50"
+                                />
+                                <div className="flex justify-center">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleSaveIndividualSignature('responsavel')}
+                                        disabled={savingSignature === 'responsavel'}
+                                        className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                    >
+                                        {savingSignature === 'responsavel' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                        Salvar Assinatura Representante
+                                    </Button>
+                                </div>
+                            </div>
                         )}
                         <div className="text-center">
-                            <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.responsavel_nome || "Nome do Responsável"}</p>
+                            <p className="text-[11px] font-bold border-t border-zinc-300 pt-1">{assinaturas.responsavel_nome || "_________________________"}</p>
                             <p className="text-[9px] font-black uppercase text-zinc-400">Responsável pela OSC</p>
                         </div>
                     </div>

@@ -5,13 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, Building, FileText, Eye, Edit2, Trash2, Loader2, CheckCircle2 } from "lucide-react"
-import { deleteVisit } from "@/app/dashboard/actions"
+import { deleteVisit, revertVisitToDraft } from "@/app/dashboard/actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visits: any[], directorateId: string, isAdmin?: boolean, isEmendas?: boolean }) {
     const router = useRouter()
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [revertingId, setRevertingId] = useState<string | null>(null)
 
     const handleDelete = async (id: string, status: string) => {
         const message = status === 'finalized'
@@ -30,6 +31,22 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
             alert("Erro ao excluir: " + error.message)
         } finally {
             setDeletingId(null)
+        }
+    }
+
+    const handleRevert = async (id: string, oscName: string) => {
+        if (!window.confirm(`Deseja realmente reverter a visita da OSC "${oscName}" para status de Rascunho? Isso permitirá edições novamente.`)) return
+
+        setRevertingId(id)
+        try {
+            const result = await revertVisitToDraft(id)
+            if (result.success) {
+                router.refresh()
+            }
+        } catch (error: any) {
+            alert("Erro ao reverter status: " + error.message)
+        } finally {
+            setRevertingId(null)
         }
     }
 
@@ -151,7 +168,7 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                disabled={visit.status !== 'finalized' || !isAdmin}
+                                                disabled={visit.status !== 'finalized'}
                                                 onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`)}
                                                 className={cn(
                                                     "h-9 px-4 rounded-xl transition-all gap-2 font-bold text-[10px] uppercase tracking-widest border",
@@ -161,19 +178,26 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
                                                     "disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit"
                                                 )}
                                             >
-                                                {isAdmin ? (
-                                                    <>
-                                                        <FileText className="h-3.5 w-3.5" />
-                                                        {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório de Visita' :
-                                                            visit.parecer_tecnico?.status === 'draft' ? 'Relatório de Visita (Rascunho)' : 'Relatório de Visita'}
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <FileText className="h-3.5 w-3.5" />
-                                                        Relatório de Visita (ADM)
-                                                    </>
-                                                )}
+                                                <FileText className="h-3.5 w-3.5" />
+                                                {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório de Visita' :
+                                                    visit.parecer_tecnico?.status === 'draft' ? 'Relatório de Visita (Rascunho)' : 'Relatório de Visita'}
                                             </Button>
+                                            {isAdmin && visit.status === 'finalized' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleRevert(visit.id, visit.oscs?.name)}
+                                                    disabled={revertingId === visit.id}
+                                                    title="Reverter para Rascunho"
+                                                    className="h-9 w-9 rounded-xl text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-all border border-transparent hover:border-amber-100"
+                                                >
+                                                    {revertingId === visit.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Edit2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            )}
                                             {(visit.status === 'draft' || isAdmin) && (
                                                 <Button
                                                     variant="ghost"

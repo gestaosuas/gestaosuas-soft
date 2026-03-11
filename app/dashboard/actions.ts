@@ -1289,6 +1289,31 @@ export async function finalizeVisit(id: string) {
     return { success: true }
 }
 
+export async function revertVisitToDraft(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Usuário não autenticado")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) {
+        throw new Error("Apenas administradores podem reverter o status de uma visita.")
+    }
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({ 
+            status: 'draft', 
+            updated_at: new Date().toISOString() 
+        })
+        .eq('id', id)
+
+    if (error) throw new Error("Erro ao reverter status: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
 export async function getVisits(directorateId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
