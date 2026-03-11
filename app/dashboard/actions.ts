@@ -872,7 +872,11 @@ export async function deleteReport(reportId: string) {
         if (!user) throw new Error("Unauthorized")
 
         // Check admin
-        const isAdminUser = await isAdminCheck(user.id)
+        const isAdmin = await isAdminCheck(user.id)
+        const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+        const cachedProfile = await getCachedProfile(user.id)
+        const isAdminUserLocal = cachedProfile?.role === 'admin' || isEmailAdmin
+        const isOfficialAdmin = isAdmin || isAdminUserLocal
 
         // Check Admin or Owner
         // We need to fetch the submission first (securely via Admin Client) to check ownership
