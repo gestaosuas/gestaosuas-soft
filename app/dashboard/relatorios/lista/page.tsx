@@ -53,7 +53,7 @@ export default async function ReportListPage({
     }
 
     // Shared sectors that can merge into the same DB row
-    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade']
+    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade', 'ceai', 'cras', 'naica']
     const isSharedSector = setor && sharedSectors.includes(setor)
 
     // Filter to show ONLY Narrative Reports for this specific sector

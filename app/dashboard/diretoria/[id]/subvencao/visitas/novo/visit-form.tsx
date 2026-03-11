@@ -143,9 +143,22 @@ export function VisitForm({
     const [documents, setDocuments] = useState(initialVisit?.documents || [])
     const [savingSignature, setSavingSignature] = useState<'tecnico1' | 'tecnico2' | 'responsavel' | null>(null)
 
+    const hasNameChanged = (type: 'tecnico1' | 'tecnico2' | 'responsavel') => {
+        const currentName = assinaturas[`${type}_nome` as keyof typeof assinaturas] || ""
+        const initialName = initialVisit?.assinaturas?.[`${type}_nome` as keyof typeof assinaturas] || ""
+        return currentName.trim() !== initialName.trim() && currentName.trim() !== ""
+    }
+
+    const hasSignatureChanged = (type: 'tecnico1' | 'tecnico2' | 'responsavel') => {
+        const currentSig = assinaturas[type] || ""
+        const initialSig = initialVisit?.assinaturas?.[type] || ""
+        return currentSig !== initialSig && currentSig !== ""
+    }
+
     // Selected OSC Data
     const selectedOSC = oscs.find(o => o.id === formData.osc_id)
-    const isLocked = initialVisit?.status === 'finalized'
+    const isLocked = initialVisit?.finalized || false
+    const [currentVisitId, setCurrentVisitId] = useState<string | null>(initialVisit?.id || null);
 
     // Auto-fill subsidized count from selected OSC
     useEffect(() => {
@@ -402,6 +415,20 @@ export function VisitForm({
             return
         }
 
+        // Validação solicitada pelo usuário para Técnico 1 e 2
+        const checkTecnico1 = !assinaturas.tecnico1_nome?.trim() || !assinaturas.tecnico1
+        const checkTecnico2 = !isOutros && (!assinaturas.tecnico2_nome?.trim() || !assinaturas.tecnico2)
+
+        if (checkTecnico1) {
+            alert("O Técnico 1 deve preencher o nome e realizar a assinatura antes de salvar.")
+            return
+        }
+
+        if (checkTecnico2) {
+            alert("O Técnico 2 deve preencher o nome e realizar a assinatura antes de salvar.")
+            return
+        }
+
         // Offline Check
         if (!navigator.onLine) {
             alert("Você parece estar sem internet. O formulário está salvo localmente no seu dispositivo. Por favor, aguarde o sinal voltar para enviar ao sistema.")
@@ -427,11 +454,14 @@ export function VisitForm({
 
             const result = await saveVisit(payload)
             if (result.success) {
+                const effectiveId = result.id || currentVisitId || initialVisit?.id;
+                setCurrentVisitId(effectiveId);
+                
                 // Clear local draft on success
                 localStorage.removeItem(DRAFT_KEY)
 
                 if (finalize) {
-                    const finalResult = await finalizeVisit(result.id || initialVisit.id)
+                    const finalResult = await finalizeVisit(effectiveId)
                     if (finalResult.success) {
                         alert("Visita finalizada com sucesso! O relatório agora é imutável.")
                         router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas`)
@@ -1863,7 +1893,6 @@ export function VisitForm({
                 )}
             </div>
 
-
             {/* VIII. ASSINATURAS */}
             <div className={cn(
                 "print-section locked-report signatures-wrapper",
@@ -1893,18 +1922,20 @@ export function VisitForm({
                                     onChange={e => setAssinaturas({ ...assinaturas, tecnico1_nome: e.target.value.toUpperCase() })}
                                     className="h-8 text-xs text-center border-none bg-zinc-50"
                                 />
-                                <div className="flex justify-center">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleSaveIndividualSignature('tecnico1')}
-                                        disabled={savingSignature === 'tecnico1'}
-                                        className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
-                                    >
-                                        {savingSignature === 'tecnico1' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                                        Salvar Assinatura Técnico 1
-                                    </Button>
-                                </div>
+                                {(hasNameChanged('tecnico1') || hasSignatureChanged('tecnico1')) && (
+                                    <div className="flex justify-center">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleSaveIndividualSignature('tecnico1')}
+                                            disabled={savingSignature === 'tecnico1'}
+                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                        >
+                                            {savingSignature === 'tecnico1' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                            Salvar Assinatura Técnico 1
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         )}
                         <div className="text-center">
@@ -1929,18 +1960,20 @@ export function VisitForm({
                                         onChange={e => setAssinaturas({ ...assinaturas, tecnico2_nome: e.target.value.toUpperCase() })}
                                         className="h-8 text-xs text-center border-none bg-zinc-50"
                                     />
-                                    <div className="flex justify-center">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleSaveIndividualSignature('tecnico2')}
-                                            disabled={savingSignature === 'tecnico2'}
-                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
-                                        >
-                                            {savingSignature === 'tecnico2' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                                            Salvar Assinatura Técnico 2
-                                        </Button>
-                                    </div>
+                                    {(hasNameChanged('tecnico2') || hasSignatureChanged('tecnico2')) && (
+                                        <div className="flex justify-center">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleSaveIndividualSignature('tecnico2')}
+                                                disabled={savingSignature === 'tecnico2'}
+                                                className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                            >
+                                                {savingSignature === 'tecnico2' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                                Salvar Assinatura Técnico 2
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             <div className="text-center">
@@ -1965,18 +1998,20 @@ export function VisitForm({
                                     onChange={e => setAssinaturas({ ...assinaturas, responsavel_nome: e.target.value.toUpperCase() })}
                                     className="h-8 text-xs text-center border-none bg-zinc-50"
                                 />
-                                <div className="flex justify-center">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleSaveIndividualSignature('responsavel')}
-                                        disabled={savingSignature === 'responsavel'}
-                                        className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
-                                    >
-                                        {savingSignature === 'responsavel' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                                        Salvar Assinatura Representante
-                                    </Button>
-                                </div>
+                                {(hasNameChanged('responsavel') || hasSignatureChanged('responsavel')) && (
+                                    <div className="flex justify-center">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleSaveIndividualSignature('responsavel')}
+                                            disabled={savingSignature === 'responsavel'}
+                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
+                                        >
+                                            {savingSignature === 'responsavel' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                            Salvar Assinatura Representante
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         )}
                         <div className="text-center">
@@ -1987,39 +2022,37 @@ export function VisitForm({
                 </div>
             </div>
 
-            {
-                !isLocked && (
-                    <div className="flex justify-end gap-4 pt-10 border-t border-zinc-100">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => router.back()}
-                            className="h-12 px-6 rounded-xl font-bold uppercase text-[10px] text-zinc-400 hover:text-zinc-900"
-                        >
-                            Sair sem salvar
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={() => handleSave(false)}
-                            disabled={isSaving}
-                            className="h-12 px-8 rounded-xl border-2 border-blue-900 bg-transparent text-blue-900 hover:bg-blue-50 font-bold uppercase text-[10px]"
-                        >
-                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                if (window.confirm("Deseja finalizar a visita? Após a finalização, o relatório não poderá ser editado.")) {
-                                    handleSave(true)
-                                }
-                            }}
-                            disabled={isSaving}
-                            className="h-12 px-10 rounded-xl bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] shadow-lg shadow-blue-900/20"
-                        >
-                            Finalizar e Bloquear
-                        </Button>
-                    </div>
-                )
-            }
+            {!isLocked && (
+                <div className="flex justify-end gap-4 pt-10 border-t border-zinc-100">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => router.back()}
+                        className="h-12 px-6 rounded-xl font-bold uppercase text-[10px] text-zinc-400 hover:text-zinc-900"
+                    >
+                        Sair sem salvar
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={() => handleSave(false)}
+                        disabled={isSaving}
+                        className="h-12 px-8 rounded-xl border-2 border-blue-900 bg-transparent text-blue-900 hover:bg-blue-50 font-bold uppercase text-[10px]"
+                    >
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            if (window.confirm("Deseja finalizar a visita? Após a finalização, o relatório não poderá ser editado.")) {
+                                handleSave(true)
+                            }
+                        }}
+                        disabled={isSaving}
+                        className="h-12 px-10 rounded-xl bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] shadow-lg shadow-blue-900/20"
+                    >
+                        Finalizar e Bloquear
+                    </Button>
+                </div>
+            )}
 
             {/* Print Only Footer */}
             <div className="hidden print:block print-footer">

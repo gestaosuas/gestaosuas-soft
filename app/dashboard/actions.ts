@@ -221,9 +221,10 @@ export async function submitReport(input: Record<string, any> | FormData, month:
         // Verificação de Limites de Envio (Apenas para não-Admins)
         const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
         const cachedProfile = await getCachedProfile(user.id)
-        const isAdminUser = cachedProfile?.role === 'admin' || isEmailAdmin
+        const isAdminUserLocal = cachedProfile?.role === 'admin' || isEmailAdmin
+        const isOfficialAdmin = isAdmin || isAdminUserLocal
 
-        if (!isAdminUser) {
+        if (!isOfficialAdmin) {
             // 1. Restrição de Período (Apenas Mês Atual ou Anterior)
             const now = new Date()
             const currentMonth = now.getMonth() + 1
@@ -253,9 +254,9 @@ export async function submitReport(input: Record<string, any> | FormData, month:
 
         if (existing) {
             // Se já existe e não é admin, vamos verificar se podemos editar (sobrescrever)
-            if (!isAdminUser) {
+            if (!isOfficialAdmin) {
                 // Para Relatório Mensal (Narrativo), o bloqueio é total após o primeiro envio
-                const isNarrative = existing.data?._report_content !== undefined
+                const isNarrative = existing.data?._report_content !== undefined || !!setor && !!existing.data?.[`_report_content_${setor}`]
                 if (isNarrative) {
                     return { error: "Este relatório narrativo já foi enviado e não pode mais ser editado. Entre em contato com um administrador se precisar de correções." }
                 }
@@ -271,54 +272,54 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     if (alreadyHasThisSector) {
                         return { error: `O relatório do ${setor.toUpperCase().replace(/_/g, ' ')} para ${month}/${year} já foi enviado e está bloqueado.` }
                     }
-                    // If doesn't have this sector, allow merge!
                 } else {
-                    // Para Indicadores de unidade única (Narrativos, etc)
                     return { error: `Já existe um registro para ${month}/${year}. Edições não são permitidas após o envio.` }
                 }
             }
 
             let mergedData;
-            if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
-                // Multi-unit handling
-                const unitName = formData._unit || 'Principal'
-                console.log(`Updating ${setor.toUpperCase()} unit ${unitName} for ${month}/${year}`)
+            const isNarrative = formData._report_content !== undefined
+            const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
+            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade')
 
-                const currentUnits = existing.data.units || {}
-                mergedData = {
-                    ...existing.data,
-                    _is_multi_unit: true,
-                    units: {
-                        ...currentUnits,
-                        [unitName]: {
-                            ...currentUnits[unitName],
-                            ...formData
-                        }
+            mergedData = { ...existing.data }
+
+            if (isMultiUnit) {
+                const unitName = formData._unit || 'Principal'
+                const currentUnits = mergedData.units || {}
+                mergedData._is_multi_unit = true
+                mergedData.units = {
+                    ...currentUnits,
+                    [unitName]: {
+                        ...currentUnits[unitName],
+                        ...formData
                     }
                 }
-            } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
-                // Shared Directorate Merge logic: Keep both datasets in the same row
-                const isNarrative = formData._report_content !== undefined
+                mergedData._setor = mergedData._setor || setor
+                mergedData[`_has_${setor}`] = true
+            } else if (isShared) {
                 mergedData = {
-                    ...existing.data,
+                    ...mergedData,
                     ...formData,
-                    _setor: `merged_${setor.split('_')[0]}`, // Mark as merged
+                    _setor: `merged_${setor.split('_')[0]}`,
                     [`_has_${setor}`]: true
                 }
-
-                if (isNarrative) {
-                    // Namespace to avoid overwriting other sector's narrative in the same row
-                    mergedData[`_report_content_${setor}`] = formData._report_content
-                    // Remove generic key to prevent cross-sector leaking
-                    delete mergedData._report_content
-                }
             } else {
-                mergedData = { ...existing.data, ...formData, _setor: setor }
+                mergedData = { ...mergedData, ...formData, _setor: setor }
+            }
+
+            if (isNarrative) {
+                (mergedData as any)[`_report_content_${setor}`] = formData._report_content
+                if (isMultiUnit) {
+                    const unitName = formData._unit || 'Principal'
+                    delete (mergedData as any).units[unitName]._report_content
+                }
+                delete (mergedData as any)._report_content
             }
 
             const { error: updateError } = await adminSupabase
                 .from('submissions')
-                .update({ data: mergedData, created_at: new Date().toISOString() })
+                .update({ data: mergedData as any, created_at: new Date().toISOString() })
                 .eq('id', existing.id)
 
             if (updateError) {
@@ -327,25 +328,34 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             }
         } else {
             // New Submission
-            let finalData;
-            if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
+            let finalData: any;
+            const isNarrative = formData._report_content !== undefined
+            const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
+            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade')
+
+            if (isMultiUnit) {
+                const unitName = formData._unit || 'Principal'
                 finalData = {
                     _is_multi_unit: true,
                     units: {
-                        [formData._unit || 'Principal']: formData
-                    }
+                        [unitName]: formData
+                    },
+                    _setor: setor,
+                    [`_has_${setor}`]: true
                 }
-            } else if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
-                const isNarrative = formData._report_content !== undefined
-                const namespacedData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
-                if (isNarrative) {
-                    namespacedData[`_report_content_${setor}`] = formData._report_content
-                    // Remove generic key to prevent cross-sector leaking
-                    delete namespacedData._report_content
-                }
-                finalData = namespacedData
+            } else if (isShared) {
+                finalData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
             } else {
                 finalData = { ...formData, _setor: setor }
+            }
+
+            if (isNarrative) {
+                finalData[`_report_content_${setor}`] = formData._report_content
+                if (isMultiUnit) {
+                    const unitName = formData._unit || 'Principal'
+                    delete finalData.units[unitName]._report_content
+                }
+                delete finalData._report_content
             }
 
             const submissionData = {
@@ -393,6 +403,10 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 }
             })
             revalidatePath('/dashboard', 'layout')
+            // @ts-ignore
+            revalidateTag('submissions')
+            // @ts-ignore
+            revalidateTag(`submissions-${directorateId}`)
         } catch (logErr) {
             console.error("Non-critical Log Error:", logErr)
         }
@@ -419,6 +433,11 @@ export async function submitReport(input: Record<string, any> | FormData, month:
 }
 
 async function syncSubmissionToSheets(formData: Record<string, any>, month: number, year: number, directorate: any, setor?: string) {
+    // Skip sheets sync for narrative reports
+    if (formData._report_type === 'monthly_narrative' || formData._report_content !== undefined) {
+        return
+    }
+
     if (setor === 'centros') {
         const formDef = CP_FORM_DEFINITION
         const blocks = CP_SHEET_BLOCKS
@@ -660,8 +679,12 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
-    const isAdmin = await isAdminCheck(user.id)
-    if (!isAdmin) throw new Error("Apenas administradores podem editar dados históricos.")
+    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
+    const cachedProfile = await getCachedProfile(user.id)
+    const isAdminUserLocal = cachedProfile?.role === 'admin' || isEmailAdmin
+    const isOfficialAdmin = isAdmin || isAdminUserLocal
+
+    if (!isOfficialAdmin) throw new Error("Apenas administradores podem editar dados históricos.")
 
     const adminSupabase = createAdminClient()
     const { data: submission } = await adminSupabase
@@ -866,7 +889,7 @@ export async function deleteReport(reportId: string) {
 
         let canDelete = false
 
-        if (isAdminUser) {
+        if (isOfficialAdmin) {
             canDelete = true
         } else if (submission.user_id === user.id) {
             canDelete = true // Owner
@@ -1872,27 +1895,26 @@ export async function checkSubmissionExists(directorateId: string, month: number
 
     if (!existing) return false
 
-    // Para setores multi-unidade, verificamos se a unidade específica existe no JSON
+    const isNarrativeCheck = !unit
+    const hasSectorFlag = !!(existing.data?.[`_has_${setor}`] || existing.data?._setor === setor)
+    const hasNarrativeFlag = !!(setor && existing.data?.[`_report_content_${setor}`])
+
+    // For narrative report editor (no unit specified)
+    if (isNarrativeCheck && hasNarrativeFlag) return true
+
+    // Sector-specific logic
     if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
+        if (isNarrativeCheck) return hasNarrativeFlag
         const unitName = unit || 'Principal'
         return !!(existing.data?.units && existing.data?.units[unitName])
     }
 
-    if (setor === 'sine' || setor === 'centros') {
-        const marker = `_has_${setor}`
-        return !!(existing.data?.[marker] || existing.data?._setor === setor)
+    if (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade') {
+        return hasSectorFlag
     }
 
-    if (setor === 'casa_da_mulher') {
-        return !!(existing.data?._has_casa_da_mulher || existing.data?.cm_atend_mulheres_atendidas !== undefined)
-    }
-
-    if (setor === 'diversidade') {
-        return !!(existing.data?._has_diversidade || existing.data?.div_atend_mulheres_atendidas !== undefined)
-    }
-
-    // Para outros (Narrativos), a existência do registro já significa que foi enviado
-    return true
+    // Para outros, a existência do registro já significa que foi enviado (ou se tem o flag do setor)
+    return hasSectorFlag || true
 }
 
 export async function getMonthlyProgressData(month: number, year: number) {
