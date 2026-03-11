@@ -1626,6 +1626,166 @@ export async function finalizeOpinionReport(visitId: string) {
     return { success: true }
 }
 
+export async function saveParecerConclusivo(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch visit to check permissions
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    const hasAccess = await checkUserPermission(user.id, visit.directorate_id)
+
+    if (!isAdmin && !hasAccess) {
+        throw new Error("Você não tem permissão para salvar o parecer conclusivo desta visita.")
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            parecer_conclusivo: {
+                ...data,
+                status: status
+            },
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao salvar parecer conclusivo: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function finalizeParecerConclusivo(visitId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch current report to check its current status
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('parecer_conclusivo, user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin && visit.user_id !== user.id) {
+        throw new Error("Apenas o autor ou administradores podem finalizar este parecer conclusivo.")
+    }
+
+    const updatedData = {
+        ...(visit.parecer_conclusivo || {}),
+        status: 'finalized'
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            parecer_conclusivo: updatedData,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao finalizar parecer conclusivo: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function saveRelatorioFinal(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch visit to check permissions
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    const hasAccess = await checkUserPermission(user.id, visit.directorate_id)
+
+    if (!isAdmin && !hasAccess) {
+        throw new Error("Você não tem permissão para salvar o relatório final desta visita.")
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            relatorio_final: {
+                ...data,
+                status: status
+            },
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao salvar relatório final: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function finalizeRelatorioFinal(visitId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch current report to check its current status
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('relatorio_final, user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin && visit.user_id !== user.id) {
+        throw new Error("Apenas o autor ou administradores podem finalizar este relatório final.")
+    }
+
+    const updatedData = {
+        ...(visit.relatorio_final || {}),
+        status: 'finalized'
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            relatorio_final: updatedData,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao finalizar relatório final: " + error.message)
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
 export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: string, objetivos: string, metas: string, atividades: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, CheckCircle2, FileCheck } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/server"
 import { getVisits } from "@/app/dashboard/actions"
+import { isAdmin as checkAdmin } from "@/lib/auth-utils"
 
 export default async function FinalReportsPage({
     params,
@@ -22,6 +23,9 @@ export default async function FinalReportsPage({
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
+
+    const isAdmin = await checkAdmin(user.id)
+    if (!isAdmin) redirect(`/dashboard/diretoria/${id}`)
 
     const visits = await getVisits(directorate.id)
     const finalizedVisits = visits.filter((v: any) => v.status === 'finalized' && v.parecer_tecnico?.status === 'finalized')

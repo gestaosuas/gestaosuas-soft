@@ -151,7 +151,7 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                disabled={visit.status !== 'finalized'}
+                                                disabled={visit.status !== 'finalized' || !isAdmin}
                                                 onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`)}
                                                 className={cn(
                                                     "h-9 px-4 rounded-xl transition-all gap-2 font-bold text-[10px] uppercase tracking-widest border",
@@ -161,9 +161,18 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
                                                     "disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit"
                                                 )}
                                             >
-                                                <FileText className="h-3.5 w-3.5" />
-                                                {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório Final' :
-                                                    visit.parecer_tecnico?.status === 'draft' ? 'Relatório (Rascunho)' : 'Relatório'}
+                                                {isAdmin ? (
+                                                    <>
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                        {visit.parecer_tecnico?.status === 'finalized' ? 'Relatório Final' :
+                                                            visit.parecer_tecnico?.status === 'draft' ? 'Relatório (Rascunho)' : 'Relatório'}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                        Relatório Final (ADM)
+                                                    </>
+                                                )}
                                             </Button>
                                             {(visit.status === 'draft' || isAdmin) && (
                                                 <Button
