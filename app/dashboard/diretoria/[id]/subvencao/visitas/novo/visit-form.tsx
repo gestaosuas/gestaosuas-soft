@@ -403,7 +403,8 @@ export function VisitForm({
                 assinaturas,
                 documents
             }
-            await saveVisit(payload)
+            const logLabel = type === 'tecnico1' ? 'Técnico 1' : type === 'tecnico2' ? 'Técnico 2' : 'Responsável'
+            await saveVisit(payload, { logAction: 'SIGNATURE', logDetail: logLabel })
             // Clear local draft since it's now in the DB
             localStorage.removeItem(DRAFT_KEY)
             alert("Assinatura e nome salvos com sucesso!")
@@ -443,7 +444,7 @@ export function VisitForm({
                 documents
             }
 
-            const result = await saveVisit(payload)
+            const result = await saveVisit(payload, { logAction: finalize ? undefined : 'FORM_UPDATE' })
             if (result.success) {
                 const effectiveId = result.id || currentVisitId || initialVisit?.id;
                 setCurrentVisitId(effectiveId);

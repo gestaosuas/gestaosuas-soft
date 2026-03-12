@@ -127,7 +127,7 @@ export default function ParecerConclusivoForm() {
         setFinalizing(status === 'finalized')
         
         try {
-            await saveParecerConclusivo(visitId, formData, status)
+            await saveParecerConclusivo(visitId, formData, status, { logAction: status === 'draft' ? 'FORM_UPDATE' : undefined })
             setFormData(prev => ({ ...prev, status }))
             alert(status === 'finalized' ? "Parecer finalizado com sucesso!" : "Rascunho salvo com sucesso!")
             if (status === 'finalized') {
@@ -151,7 +151,8 @@ export default function ParecerConclusivoForm() {
 
         setSavingSignature(type)
         try {
-            await saveParecerConclusivo(visitId, formData, 'draft')
+            const logLabel = type === 'tecnico' ? 'Técnico' : 'Financeiro'
+            await saveParecerConclusivo(visitId, formData, 'draft', { logAction: 'SIGNATURE', logDetail: logLabel })
             alert("Assinatura e nome salvos com sucesso!")
         } catch (error: any) {
             alert("Erro ao salvar assinatura: " + error.message)

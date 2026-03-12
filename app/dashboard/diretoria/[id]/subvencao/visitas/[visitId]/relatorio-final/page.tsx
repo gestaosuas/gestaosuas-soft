@@ -126,7 +126,7 @@ export default function RelatorioFinalForm() {
         setFinalizing(status === 'finalized')
         
         try {
-            await saveRelatorioFinal(visitId, formData, status)
+            await saveRelatorioFinal(visitId, formData, status, { logAction: status === 'draft' ? 'FORM_UPDATE' : undefined })
             setFormData(prev => ({ ...prev, status }))
             alert(status === 'finalized' ? "Relatório finalizado com sucesso!" : "Rascunho salvo com sucesso!")
             if (status === 'finalized') {
@@ -150,7 +150,8 @@ export default function RelatorioFinalForm() {
 
         setSavingSignature(type)
         try {
-            await saveRelatorioFinal(visitId, formData, 'draft')
+            const logLabel = type === 'tecnico' ? 'Técnico' : 'Financeiro'
+            await saveRelatorioFinal(visitId, formData, 'draft', { logAction: 'SIGNATURE', logDetail: logLabel })
             alert("Assinatura e nome salvos com sucesso!")
         } catch (error: any) {
             alert("Erro ao salvar assinatura: " + error.message)

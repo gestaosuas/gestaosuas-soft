@@ -117,7 +117,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
     const handleSaveDraft = async () => {
         setIsSaving(true)
         try {
-            const result = await saveOpinionReport(visit.id, report, 'draft')
+            const result = await saveOpinionReport(visit.id, report, 'draft', { logAction: 'FORM_UPDATE' })
             if (result.success) {
                 alert("Rascunho do parecer salvo!")
                 router.refresh()
@@ -140,7 +140,8 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
         setSavingSignature(type)
         try {
-            await saveOpinionReport(visit.id, report, 'draft')
+            const logLabel = type === 'tecnico1' ? 'Técnico 1' : 'Técnico 2'
+            await saveOpinionReport(visit.id, report, 'draft', { logAction: 'SIGNATURE', logDetail: logLabel })
             alert("Assinatura e nome salvos com sucesso!")
         } catch (error: any) {
             alert("Erro ao salvar assinatura: " + error.message)
@@ -153,7 +154,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
         setIsFinalizing(true)
         try {
             // First save current state as draft
-            await saveOpinionReport(visit.id, report, 'draft')
+            await saveOpinionReport(visit.id, report, 'draft') // No specific label needed for finalize-prep save
             // Then finalize
             const result = await finalizeOpinionReport(visit.id)
             if (result.success) {

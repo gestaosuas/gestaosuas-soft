@@ -772,7 +772,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     // Log Activity for Edit
     try {
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
         const { data: directorate } = await adminSupabase.from('directorates').select('name').eq('id', submission.directorate_id).single()
 
         await logActivity({
@@ -839,7 +839,7 @@ export async function submitDailyReport(date: string, directorateId: string, for
             if (error) throw new Error("Erro ao salvar relatório diário: " + error.message)
         }
 
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
         const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorateId).single()
 
         await logActivity({
@@ -982,7 +982,7 @@ export async function deleteMonthData(directorateId: string, month: number, year
         if (newData._setor === setor) delete newData._setor
 
         // Remove sector fields
-        let formDef: FormDefinition | null = null
+        let formDef: any = null // Use any if FormDefinition type is not readily available
         if (setor === 'sine') formDef = SINE_FORM_DEFINITION
         else if (setor === 'centros') formDef = CP_FORM_DEFINITION
         else if (setor === 'casa_da_mulher') formDef = CASA_DA_MULHER_FORM_DEFINITION
@@ -1006,6 +1006,24 @@ export async function deleteMonthData(directorateId: string, month: number, year
     } else {
         // Flat cleanup or no unit/sector specified: Delete the whole record for the month
         await adminSupabase.from('submissions').delete().eq('id', existing.id)
+    }
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorateId).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: directorateId,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'DELETE',
+            resource_type: 'REPORT',
+            resource_name: `Dados Mensais ${month}/${year}${unitName ? ` - Unidade ${unitName}` : ''}${setor ? ` - Setor ${setor}` : ''}`
+        })
+    } catch (e) {
+        console.error("Log error in deleteMonthData:", e)
     }
 
     revalidatePath('/dashboard', 'layout')
@@ -1139,14 +1157,28 @@ export async function updateOSC(id: string, data: {
     }
 
     const adminSupabase = createAdminClient()
-    const { error } = await adminSupabase
+    const { error: updateError } = await adminSupabase
         .from('oscs')
         .update(data)
         .eq('id', id)
 
-    if (error) {
-        console.error("OSC Update Error:", error)
-        return { error: "Erro ao atualizar OSC: " + error.message }
+    if (updateError) {
+        console.error("OSC Update Error:", updateError)
+        return { error: "Erro ao atualizar OSC: " + updateError.message }
+    }
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            action_type: 'UPDATE',
+            resource_type: 'OSC',
+            resource_name: data.name
+        })
+    } catch (e) {
+        console.error("Log error in updateOSC:", e)
     }
 
     revalidatePath('/dashboard', 'page')
@@ -1164,6 +1196,7 @@ export async function deleteOSC(id: string) {
     }
 
     const adminSupabase = createAdminClient()
+    const { data: osc } = await adminSupabase.from('oscs').select('name').eq('id', id).single()
     const { error } = await adminSupabase
         .from('oscs')
         .delete()
@@ -1174,11 +1207,25 @@ export async function deleteOSC(id: string) {
         return { error: "Erro ao excluir OSC: " + error.message }
     }
 
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            action_type: 'DELETE',
+            resource_type: 'OSC',
+            resource_name: osc?.name || 'OSC'
+        })
+    } catch (e) {
+        console.error("Log error in deleteOSC:", e)
+    }
+
     revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
-export async function saveVisit(data: any) {
+export async function saveVisit(data: any, logOptions?: { logAction?: 'SIGNATURE' | 'FORM_UPDATE', logDetail?: string }) {
     // Validate inputs
     visitSchema.parse(data)
 
@@ -1233,8 +1280,13 @@ export async function saveVisit(data: any) {
 
         if (error) throw new Error("Erro ao criar visita: " + error.message)
 
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
         const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorate_id).single()
+
+        let resourceName = `Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+        if (logOptions?.logAction === 'SIGNATURE') {
+            resourceName = `Assinatura: ${logOptions.logDetail} - ${resourceName}`
+        }
 
         await logActivity({
             user_id: user.id,
@@ -1243,14 +1295,23 @@ export async function saveVisit(data: any) {
             directorate_name: dir?.name || 'Diretoria',
             action_type: 'DRAFT',
             resource_type: 'VISIT',
-            resource_name: `Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+            resource_name: resourceName
         })
 
         return { success: true, id: newVisit.id }
     }
 
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+
+
+    const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
     const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', directorate_id).single()
+
+    let resourceName = `Atualização de Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+    if (logOptions?.logAction === 'SIGNATURE') {
+        resourceName = `Assinatura: ${logOptions.logDetail} - ${resourceName}`
+    } else if (logOptions?.logAction === 'FORM_UPDATE') {
+        resourceName = `Alteração: ${resourceName}`
+    }
 
     await logActivity({
         user_id: user.id,
@@ -1259,7 +1320,7 @@ export async function saveVisit(data: any) {
         directorate_name: dir?.name || 'Diretoria',
         action_type: 'DRAFT',
         resource_type: 'VISIT',
-        resource_name: `Atualização de Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+        resource_name: resourceName
     })
 
     revalidatePath('/dashboard', 'page')
@@ -1296,7 +1357,7 @@ export async function finalizeVisit(id: string) {
 
     if (error) throw new Error("Erro ao finalizar visita: " + error.message)
 
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+    const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
     const { data: visitData } = await adminSupabase.from('visits').select('directorate_id, visit_date').eq('id', id).single()
 
     if (visitData) {
@@ -1337,6 +1398,26 @@ export async function revertVisitToDraft(id: string) {
         .eq('id', id)
 
     if (error) throw new Error("Erro ao reverter status: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('directorate_id, visit_date').eq('id', id).single()
+        if (visitData) {
+            const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visitData.directorate_id).single()
+            await logActivity({
+                user_id: user.id,
+                user_name: profile?.full_name || 'Usuário',
+                directorate_id: visitData.directorate_id,
+                directorate_name: dir?.name || 'Diretoria',
+                action_type: 'UPDATE',
+                resource_type: 'VISIT',
+                resource_name: `Reversão para Rascunho - Visita ${visitData.visit_date.split('-').reverse().join('/')}`
+            })
+        }
+    } catch (e) {
+        console.error("Log error in revertVisitToDraft:", e)
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -1443,9 +1524,29 @@ export async function deleteVisit(id: string) {
         query = query.eq('user_id', user.id).eq('status', 'draft')
     }
 
+    const { data: visitToDelete } = await adminSupabase.from('visits').select('directorate_id, visit_date').eq('id', id).single()
     const { error } = await query
 
     if (error) throw new Error("Erro ao excluir visita: " + error.message)
+
+    // Log Activity
+    if (visitToDelete) {
+        try {
+            const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+            const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visitToDelete.directorate_id).single()
+            await logActivity({
+                user_id: user.id,
+                user_name: profile?.full_name || 'Usuário',
+                directorate_id: visitToDelete.directorate_id,
+                directorate_name: dir?.name || 'Diretoria',
+                action_type: 'DELETE',
+                resource_type: 'VISIT',
+                resource_name: `Visita ${visitToDelete.visit_date.split('-').reverse().join('/')}`
+            })
+        } catch (e) {
+            console.error("Log error in deleteVisit:", e)
+        }
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -1500,7 +1601,7 @@ export async function saveWorkPlan(data: any) {
 
         if (error) throw new Error("Erro ao atualizar plano: " + error.message)
 
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
         await logActivity({
             user_id: user.id,
             user_name: profile?.full_name || 'Usuário',
@@ -1519,7 +1620,7 @@ export async function saveWorkPlan(data: any) {
 
         if (error) throw new Error("Erro ao criar plano: " + error.message)
 
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
         await logActivity({
             user_id: user.id,
             user_name: profile?.full_name || 'Usuário',
@@ -1599,7 +1700,7 @@ export async function getWorkPlansCount(directorateId: string) {
     return counts
 }
 
-export async function saveOpinionReport(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft') {
+export async function saveOpinionReport(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft', logOptions?: { logAction?: 'SIGNATURE' | 'FORM_UPDATE', logDetail?: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -1634,6 +1735,32 @@ export async function saveOpinionReport(visitId: string, data: any, status: 'dra
         .eq('id', visitId)
 
     if (error) throw new Error("Erro ao salvar parecer: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        let resourceName = `Parecer de Visita ${visitData?.visit_date.split('-').reverse().join('/')}`
+        if (logOptions?.logAction === 'SIGNATURE') {
+            resourceName = `Assinatura: ${logOptions.logDetail} - ${resourceName}`
+        } else if (logOptions?.logAction === 'FORM_UPDATE') {
+            resourceName = `Alteração: ${resourceName}`
+        }
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: status === 'finalized' ? 'UPDATE' : 'DRAFT',
+            resource_type: 'REPORT',
+            resource_name: resourceName
+        })
+    } catch (e) {
+        console.error("Log error in saveOpinionReport:", e)
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -1675,11 +1802,30 @@ export async function finalizeOpinionReport(visitId: string) {
 
     if (error) throw new Error("Erro ao finalizar parecer: " + error.message)
 
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'UPDATE', // It was previously a draft, now it's finalized
+            resource_type: 'REPORT',
+            resource_name: `Finalização de Parecer ${visitData?.visit_date.split('-').reverse().join('/')}`
+        })
+    } catch (e) {
+        console.error("Log error in finalizeOpinionReport:", e)
+    }
+
     revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
-export async function saveParecerConclusivo(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft') {
+export async function saveParecerConclusivo(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft', logOptions?: { logAction?: 'SIGNATURE' | 'FORM_UPDATE', logDetail?: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -1714,6 +1860,32 @@ export async function saveParecerConclusivo(visitId: string, data: any, status: 
         .eq('id', visitId)
 
     if (error) throw new Error("Erro ao salvar parecer conclusivo: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        let resourceName = `Parecer Conclusivo ${visitData?.visit_date.split('-').reverse().join('/')}`
+        if (logOptions?.logAction === 'SIGNATURE') {
+            resourceName = `Assinatura: ${logOptions.logDetail} - ${resourceName}`
+        } else if (logOptions?.logAction === 'FORM_UPDATE') {
+            resourceName = `Alteração: ${resourceName}`
+        }
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: status === 'finalized' ? 'UPDATE' : 'DRAFT',
+            resource_type: 'REPORT',
+            resource_name: resourceName
+        })
+    } catch (e) {
+        console.error("Log error in saveParecerConclusivo:", e)
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -1755,11 +1927,30 @@ export async function finalizeParecerConclusivo(visitId: string) {
 
     if (error) throw new Error("Erro ao finalizar parecer conclusivo: " + error.message)
 
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'UPDATE',
+            resource_type: 'REPORT',
+            resource_name: `Finalização de Parecer Conclusivo ${visitData?.visit_date.split('-').reverse().join('/')}`
+        })
+    } catch (e) {
+        console.error("Log error in finalizeParecerConclusivo:", e)
+    }
+
     revalidatePath('/dashboard', 'page')
     return { success: true }
 }
 
-export async function saveRelatorioFinal(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft') {
+export async function saveRelatorioFinal(visitId: string, data: any, status: 'draft' | 'finalized' = 'draft', logOptions?: { logAction?: 'SIGNATURE' | 'FORM_UPDATE', logDetail?: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -1794,6 +1985,32 @@ export async function saveRelatorioFinal(visitId: string, data: any, status: 'dr
         .eq('id', visitId)
 
     if (error) throw new Error("Erro ao salvar relatório final: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        let resourceName = `Relatório Final ${visitData?.visit_date.split('-').reverse().join('/')}`
+        if (logOptions?.logAction === 'SIGNATURE') {
+            resourceName = `Assinatura: ${logOptions.logDetail} - ${resourceName}`
+        } else if (logOptions?.logAction === 'FORM_UPDATE') {
+            resourceName = `Alteração: ${resourceName}`
+        }
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: status === 'finalized' ? 'UPDATE' : 'DRAFT',
+            resource_type: 'REPORT',
+            resource_name: resourceName
+        })
+    } catch (e) {
+        console.error("Log error in saveRelatorioFinal:", e)
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
@@ -1835,6 +2052,25 @@ export async function finalizeRelatorioFinal(visitId: string) {
 
     if (error) throw new Error("Erro ao finalizar relatório final: " + error.message)
 
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'UPDATE',
+            resource_type: 'REPORT',
+            resource_name: `Finalização de Relatório Final ${visitData?.visit_date.split('-').reverse().join('/')}`
+        })
+    } catch (e) {
+        console.error("Log error in finalizeRelatorioFinal:", e)
+    }
+
     revalidatePath('/dashboard', 'page')
     return { success: true }
 }
@@ -1854,6 +2090,22 @@ export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: s
         .eq('id', oscId)
 
     if (error) throw new Error("Erro ao salvar descrições: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: osc } = await adminSupabase.from('oscs').select('name').eq('id', oscId).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            action_type: 'UPDATE',
+            resource_type: 'OSC',
+            resource_name: `Plano de Trabalho - ${osc?.name || 'OSC'}`
+        })
+    } catch (e) {
+        console.error("Log error in saveOSCPartnershipDetails:", e)
+    }
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
