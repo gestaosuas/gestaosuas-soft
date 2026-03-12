@@ -20,6 +20,15 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
+} from "@/components/ui/dialog"
+import { AlertCircle } from "lucide-react"
 
 interface ParecerFormProps {
     visit: any
@@ -33,6 +42,10 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
     const [isFinalizing, setIsFinalizing] = useState(false)
     const [savingSignature, setSavingSignature] = useState<string | null>(null)
     const [isPreview, setIsPreview] = useState(false)
+    const [saveConfirmation, setSaveConfirmation] = useState<{ isOpen: boolean; finalize: boolean }>({
+        isOpen: false,
+        finalize: false
+    })
     const [report, setReport] = useState(() => {
         const defaultReport = {
             objeto_relatorio: visit.oscs?.objeto || "",
@@ -60,9 +73,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                 tecnico1: "",
                 tecnico1_nome: "",
                 tecnico2: "",
-                tecnico2_nome: "",
-                osc: "",
-                osc_nome: ""
+                tecnico2_nome: ""
             },
             date: new Date().toISOString().split('T')[0],
             status: 'draft'
@@ -118,13 +129,12 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
         }
     }
 
-    const handleSaveIndividualSignature = async (type: 'tecnico1' | 'tecnico2' | 'osc') => {
+    const handleSaveIndividualSignature = async (type: 'tecnico1' | 'tecnico2') => {
         const name = type === 'tecnico1' ? report.assinaturas.tecnico1_nome : 
-                     type === 'tecnico2' ? report.assinaturas.tecnico2_nome : 
-                     report.assinaturas.osc_nome;
+                     report.assinaturas.tecnico2_nome;
         
         if (!name || name.trim() === '') {
-            alert(`Por favor, preencha o nome do ${type === 'tecnico1' ? 'Técnico 1' : type === 'tecnico2' ? 'Técnico 2' : 'Responsável'} antes de salvar a assinatura.`);
+            alert(`Por favor, preencha o nome do ${type === 'tecnico1' ? 'Técnico 1' : 'Técnico 2'} antes de salvar a assinatura.`);
             return;
         }
 
@@ -140,18 +150,6 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
     }
 
     const handleFinalize = async () => {
-        // Validation for the 2 agents
-        if (!report.assinaturas.tecnico1_nome || !report.assinaturas.tecnico1) {
-            alert("O nome e a assinatura do Técnico 1 são obrigatórios para finalizar.")
-            return
-        }
-        if (!report.assinaturas.tecnico2_nome || !report.assinaturas.tecnico2) {
-            alert("O nome e a assinatura do Técnico 2 são obrigatórios para finalizar.")
-            return
-        }
-
-        if (!window.confirm("ATENÇÃO: Após finalizar e bloquear, o parecer não poderá mais ser editado. Deseja continuar?")) return
-
         setIsFinalizing(true)
         try {
             // First save current state as draft
@@ -237,7 +235,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                     )}
                     {!isFinalized && (
                         <>
-                            <Button onClick={handleSaveDraft} variant="outline" disabled={isSaving} className="gap-2 border-zinc-200 dark:border-zinc-800 text-zinc-600 hover:text-blue-900 font-bold uppercase text-[10px] px-6">
+                            <Button onClick={() => setSaveConfirmation({ isOpen: true, finalize: false })} variant="outline" disabled={isSaving} className="gap-2 border-zinc-200 dark:border-zinc-800 text-zinc-600 hover:text-blue-900 font-bold uppercase text-[10px] px-6">
                                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Salvar Rascunho
                             </Button>
@@ -248,7 +246,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 </div>
                             )}
                             {visit.parecer_tecnico && (
-                                <Button onClick={handleFinalize} disabled={isSaving || isFinalizing} className="gap-2 bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] px-8">
+                                <Button onClick={() => setSaveConfirmation({ isOpen: true, finalize: true })} disabled={isSaving || isFinalizing} className="gap-2 bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] px-8">
                                     {(isSaving || isFinalizing) ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
                                     Finalizar e Bloquear
                                 </Button>
@@ -712,7 +710,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
 
                     <section className="pt-20 break-inside-avoid print:break-inside-avoid">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
                             <div className="space-y-4 flex flex-col items-center">
                                 {!isPreview && !isFinalized && (
                                     <div className="no-print w-full space-y-2">
@@ -809,53 +807,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 </div>
                             </div>
 
-                            <div className="space-y-4 flex flex-col items-center">
-                                {!isPreview && !isFinalized && (
-                                    <div className="no-print w-full space-y-2">
-                                        <div className="border-b border-zinc-200 pb-2">
-                                            <SignaturePad
-                                                label=""
-                                                defaultValue={report.assinaturas.osc}
-                                                onSave={data => setReport({ ...report, assinaturas: { ...report.assinaturas, osc: data } })}
-                                            />
-                                        </div>
-                                        <Input
-                                            placeholder="Nome do Responsável OSC"
-                                            value={report.assinaturas.osc_nome}
-                                            onChange={e => setReport({ ...report, assinaturas: { ...report.assinaturas, osc_nome: e.target.value.toUpperCase() } })}
-                                            className="text-center font-bold text-xs border-none bg-zinc-50"
-                                        />
-                                        <div className="flex justify-center">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                onClick={() => handleSaveIndividualSignature('osc')}
-                                                disabled={savingSignature === 'osc'}
-                                                className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
-                                            >
-                                                {savingSignature === 'osc' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                                                Salvar Assinatura Representante
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
-                                    <div className={cn(
-                                        "space-y-2",
-                                        (isPreview || isFinalized) ? "block" : "hidden print:block"
-                                    )}>
-                                        {report.assinaturas.osc && (
-                                            <div className="flex justify-center border-b border-black w-full pb-1 mb-1">
-                                                <img src={report.assinaturas.osc} alt="Assinatura" className="h-16 object-contain" />
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                                <div className="text-center">
-                                    <p className="text-[11px] font-bold border-t border-black pt-1 md:border-none">{report.assinaturas.osc_nome || "_________________________"}</p>
-                                    <p className="text-[9px] font-black uppercase text-zinc-400">Responsável pela OSC</p>
-                                </div>
-                            </div>
+
                         </div>
                     </section>
                 </div>
@@ -865,6 +817,52 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                     Documento gerado eletronicamente em {today} • Sistema de Vigilância Socioassistencial
                 </div>
             </div>
+
+            <Dialog open={saveConfirmation.isOpen} onOpenChange={(open) => setSaveConfirmation(prev => ({ ...prev, isOpen: open }))}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-amber-500" />
+                            Confirmação do Parecer
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 text-sm text-zinc-600 space-y-3">
+                        <p className="font-bold text-zinc-900">
+                            {saveConfirmation.finalize 
+                                ? "Você está prestes a FINALIZAR e BLOQUEAR o relatório de visita." 
+                                : "Você está salvando um rascunho deste relatório."}
+                        </p>
+                        <p>
+                            Certifique-se de que preenchu todos os campos obrigatórios corretamente, inclusive as **assinaturas e nomes** dos técnicos, se disponíveis no momento.
+                        </p>
+                        <p className="text-xs italic bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800">
+                            Obs: Se faltar alguma assinatura, você poderá voltar depois para editar o rascunho. Porém, após <strong>Finalizar</strong>, o documento não poderá mais ser alterado.
+                        </p>
+                    </div>
+                    <div className="flex justify-between gap-3 pt-4 border-t">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setSaveConfirmation({ isOpen: false, finalize: false })}
+                            className="flex-1 font-bold uppercase text-[10px]"
+                        >
+                            Voltar e Revisar
+                        </Button>
+                        <Button 
+                            onClick={() => {
+                                if (saveConfirmation.finalize) {
+                                    handleFinalize()
+                                } else {
+                                    handleSaveDraft()
+                                }
+                                setSaveConfirmation({ isOpen: false, finalize: false })
+                            }}
+                            className="flex-1 bg-blue-900 hover:bg-blue-800 text-white font-bold uppercase text-[10px]"
+                        >
+                            {saveConfirmation.finalize ? "Sim, Finalizar Agora" : "Sim, Salvar Rascunho"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -32,16 +32,14 @@ export const CONDOMINIO_IDOSO_FORM_DEFINITION: FormDefinition = {
             title: "Laranjeiras",
             fields: [
                 { id: "lar_moradores_fem", label: "Moradores Fem", type: "number" },
-                { id: "lar_moradores_masc", label: "Moradores Masc", type: "number" },
-                { id: "lar_atendimentos", label: "Atendimentos", type: "number" },
+                { id: "lar_moradores_masc", label: "Moradores Masc", type: "number" }
             ]
         },
         {
             title: "Guarani",
             fields: [
                 { id: "gua_moradores_fem", label: "Moradores Fem", type: "number" },
-                { id: "gua_moradores_masc", label: "Moradores Masc", type: "number" },
-                { id: "gua_atendimentos", label: "Atendimentos", type: "number" },
+                { id: "gua_moradores_masc", label: "Moradores Masc", type: "number" }
             ]
         }
     ]

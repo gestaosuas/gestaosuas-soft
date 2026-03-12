@@ -157,7 +157,7 @@ export function VisitForm({
 
     // Selected OSC Data
     const selectedOSC = oscs.find(o => o.id === formData.osc_id)
-    const isLocked = initialVisit?.finalized || false
+    const isLocked = initialVisit?.status === 'finalized' || false
     const [currentVisitId, setCurrentVisitId] = useState<string | null>(initialVisit?.id || null);
 
     // Auto-fill subsidized count from selected OSC
@@ -180,6 +180,11 @@ export function VisitForm({
     const [lightbox, setLightbox] = useState<{ isOpen: boolean; index: number }>({
         isOpen: false,
         index: 0
+    })
+
+    const [saveConfirmation, setSaveConfirmation] = useState<{ isOpen: boolean; finalize: boolean }>({
+        isOpen: false,
+        finalize: false
     })
 
     // Photo Selection State (Mobile Tablet Optimization)
@@ -279,7 +284,7 @@ export function VisitForm({
     useEffect(() => {
         if (mounted && !isLocked) {
             const savedDraft = localStorage.getItem(DRAFT_KEY)
-            
+
             // Priority 1: If the visit is already in the database (has ID), 
             // the database is the source of truth. Clear any local cache.
             if (initialVisit?.id) {
@@ -291,7 +296,7 @@ export function VisitForm({
             if (savedDraft) {
                 try {
                     const parsed = JSON.parse(savedDraft)
-                    
+
                     // Check if it's a page reload
                     const navEntries = typeof window !== 'undefined' && window.performance.getEntriesByType('navigation')
                     const isReload = navEntries && navEntries.length > 0 && (navEntries[0] as any).type === 'reload'
@@ -415,20 +420,6 @@ export function VisitForm({
             return
         }
 
-        // Validação solicitada pelo usuário para Técnico 1 e 2
-        const checkTecnico1 = !assinaturas.tecnico1_nome?.trim() || !assinaturas.tecnico1
-        const checkTecnico2 = !isOutros && (!assinaturas.tecnico2_nome?.trim() || !assinaturas.tecnico2)
-
-        if (checkTecnico1) {
-            alert("O Técnico 1 deve preencher o nome e realizar a assinatura antes de salvar.")
-            return
-        }
-
-        if (checkTecnico2) {
-            alert("O Técnico 2 deve preencher o nome e realizar a assinatura antes de salvar.")
-            return
-        }
-
         // Offline Check
         if (!navigator.onLine) {
             alert("Você parece estar sem internet. O formulário está salvo localmente no seu dispositivo. Por favor, aguarde o sinal voltar para enviar ao sistema.")
@@ -456,7 +447,7 @@ export function VisitForm({
             if (result.success) {
                 const effectiveId = result.id || currentVisitId || initialVisit?.id;
                 setCurrentVisitId(effectiveId);
-                
+
                 // Clear local draft on success
                 localStorage.removeItem(DRAFT_KEY)
 
@@ -2034,18 +2025,14 @@ export function VisitForm({
                     </Button>
                     <Button
                         type="button"
-                        onClick={() => handleSave(false)}
+                        onClick={() => setSaveConfirmation({ isOpen: true, finalize: false })}
                         disabled={isSaving}
                         className="h-12 px-8 rounded-xl border-2 border-blue-900 bg-transparent text-blue-900 hover:bg-blue-50 font-bold uppercase text-[10px]"
                     >
                         {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
                     </Button>
                     <Button
-                        onClick={() => {
-                            if (window.confirm("Deseja finalizar a visita? Após a finalização, o relatório não poderá ser editado.")) {
-                                handleSave(true)
-                            }
-                        }}
+                        onClick={() => setSaveConfirmation({ isOpen: true, finalize: true })}
                         disabled={isSaving}
                         className="h-12 px-10 rounded-xl bg-blue-900 text-white hover:bg-black font-bold uppercase text-[10px] shadow-lg shadow-blue-900/20"
                     >
@@ -2053,6 +2040,48 @@ export function VisitForm({
                     </Button>
                 </div>
             )}
+
+            <Dialog open={saveConfirmation.isOpen} onOpenChange={(open) => setSaveConfirmation(prev => ({ ...prev, isOpen: open }))}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-amber-500" />
+                            Confirmação de Envio
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 text-sm text-zinc-600 space-y-3">
+                        <p className="font-bold text-zinc-900">
+                            {saveConfirmation.finalize
+                                ? "Você está prestes a FINALIZAR e BLOQUEAR o relatório de visita."
+                                : "Você está salvando um rascunho deste relatório."}
+                        </p>
+                        <p>
+                            Certifique-se de que preencheu todos os campos obrigatórios corretamente, inclusive as **assinaturas e nomes** dos técnicos e do responsável pela OSC, se disponíveis no momento.
+                        </p>
+                        <p className="text-xs italic bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800">
+                            Obs: Se faltar alguma assinatura, você poderá voltar depois para editar o rascunho. Porém, após <strong>Finalizar</strong>, o documento não poderá mais ser alterado.
+                        </p>
+                    </div>
+                    <div className="flex justify-between gap-3 pt-4 border-t">
+                        <Button
+                            variant="outline"
+                            onClick={() => setSaveConfirmation({ isOpen: false, finalize: false })}
+                            className="flex-1 font-bold uppercase text-[10px]"
+                        >
+                            Voltar e Revisar
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                handleSave(saveConfirmation.finalize)
+                                setSaveConfirmation({ isOpen: false, finalize: false })
+                            }}
+                            className="flex-1 bg-blue-900 hover:bg-blue-800 text-white font-bold uppercase text-[10px]"
+                        >
+                            {saveConfirmation.finalize ? "Sim, Finalizar Agora" : "Sim, Salvar Rascunho"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Print Only Footer */}
             <div className="hidden print:block print-footer">

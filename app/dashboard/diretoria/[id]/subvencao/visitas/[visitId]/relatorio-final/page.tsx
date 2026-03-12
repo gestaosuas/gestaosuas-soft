@@ -29,8 +29,6 @@ interface FormData {
     tecnico_nome: string
     signature_financeiro: string | null
     financeiro_nome: string
-    signature_osc: string | null
-    osc_representante_nome: string
     status: 'draft' | 'finalized'
 }
 
@@ -61,8 +59,6 @@ export default function RelatorioFinalForm() {
         tecnico_nome: '',
         signature_financeiro: null,
         financeiro_nome: '',
-        signature_osc: null,
-        osc_representante_nome: '',
         status: 'draft'
     })
 
@@ -144,13 +140,11 @@ export default function RelatorioFinalForm() {
         }
     }
 
-    const handleSaveIndividualSignature = async (type: 'tecnico' | 'financeiro' | 'osc') => {
-        const name = type === 'tecnico' ? formData.tecnico_nome : 
-                     type === 'financeiro' ? formData.financeiro_nome : 
-                     formData.osc_representante_nome;
+    const handleSaveIndividualSignature = async (type: 'tecnico' | 'financeiro') => {
+        const name = type === 'tecnico' ? formData.tecnico_nome : formData.financeiro_nome;
         
         if (!name || name.trim() === '') {
-            alert(`Por favor, preencha o nome do ${type === 'tecnico' ? 'Técnico' : type === 'financeiro' ? 'Financeiro' : 'Representante OSC'} antes de salvar a assinatura.`);
+            alert(`Por favor, preencha o nome do ${type === 'tecnico' ? 'Técnico' : 'Financeiro'} antes de salvar a assinatura.`);
             return;
         }
 
@@ -363,7 +357,7 @@ export default function RelatorioFinalForm() {
                              />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-3xl mx-auto">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
                                     <SignaturePad 
@@ -423,38 +417,6 @@ export default function RelatorioFinalForm() {
                                         >
                                             {savingSignature === 'financeiro' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                                             Salvar Assinatura Financeiro
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-center space-y-4">
-                                <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
-                                    <SignaturePad 
-                                        defaultValue={formData.signature_osc || undefined}
-                                        onSave={(sig: string) => setFormData({ ...formData, signature_osc: sig })}
-                                        readOnly={isFinalized}
-                                    />
-                                </div>
-                                <div className="text-center w-full space-y-3">
-                                    <Input 
-                                        placeholder="NOME DO RESPONSÁVEL OSC"
-                                        value={formData.osc_representante_nome}
-                                        onChange={e => setFormData({ ...formData, osc_representante_nome: e.target.value.toUpperCase() })}
-                                        readOnly={isFinalized}
-                                        className="text-center font-bold text-xs border-none bg-zinc-50 h-8"
-                                    />
-                                    <p className="text-[10px] text-zinc-500 font-bold uppercase italic">Responsável pela OSC (Opcional)</p>
-                                    {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            onClick={() => handleSaveIndividualSignature('osc')}
-                                            disabled={savingSignature === 'osc'}
-                                            className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
-                                        >
-                                            {savingSignature === 'osc' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                                            Salvar Assinatura Representante
                                         </Button>
                                     )}
                                 </div>
