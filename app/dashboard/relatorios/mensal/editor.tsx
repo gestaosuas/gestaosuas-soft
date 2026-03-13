@@ -11,7 +11,7 @@ import {
     Bold, Italic, Underline, Heading1, Plus, AlignLeft, AlignCenter, AlignRight, List
 } from "lucide-react"
 import Link from 'next/link'
-import { submitReport, checkSubmissionExists } from '@/app/dashboard/actions'
+import { submitReport, checkSubmissionExists, deleteMonthData } from '@/app/dashboard/actions'
 import { AlertTriangle, Lock } from 'lucide-react'
 
 // --- Types ---
@@ -200,6 +200,29 @@ export default function MonthlyReportEditor({
         updateBlockContent(blockId, { ...block.content, headers: newHeaders, rows: newRows })
     }
 
+    const handleUnlock = async () => {
+        if (!confirm("Isso irá remover o relatório atual deste mês para permitir um novo preenchimento pelo usuário. Confirmar?")) {
+            return
+        }
+
+        setLoading(true)
+        try {
+            const result = await deleteMonthData(directorateId, Number(month), Number(year), undefined, setor)
+            if (result.success) {
+                setAlreadySubmitted(false)
+                setBlocks([]) // Limpa o editor
+                alert("Preenchimento liberado com sucesso!")
+            } else {
+                alert("Erro ao liberar preenchimento.")
+            }
+        } catch (e) {
+            console.error(e)
+            alert("Erro ao liberar preenchimento.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleSubmit = async () => {
         if (blocks.length === 0) {
             alert("Adicione pelo menos um bloco de conteúdo.")
@@ -294,7 +317,7 @@ export default function MonthlyReportEditor({
                 </div>
 
                 {/* Lock Alerts */}
-                {isEditBlocked && (
+                {alreadySubmitted && !isAdmin && (
                     <div className="p-6 bg-amber-50 border border-amber-200 rounded-3xl flex items-start gap-5 text-amber-900 animate-in fade-in slide-in-from-top-4 duration-700">
                         <div className="p-3 bg-amber-100 rounded-2xl text-amber-600 shadow-sm">
                             <Lock className="w-6 h-6" />
@@ -308,6 +331,31 @@ export default function MonthlyReportEditor({
                                 <span className="font-bold mt-2 block">Dica: Utilize o Histórico para visualizar o documento final.</span>
                             </p>
                         </div>
+                    </div>
+                )}
+
+                {alreadySubmitted && isAdmin && (
+                    <div className="p-6 bg-blue-50 border border-blue-200 rounded-3xl flex items-center justify-between gap-5 text-blue-900 animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div className="flex items-start gap-5">
+                            <div className="p-3 bg-blue-100 rounded-2xl text-blue-600 shadow-sm">
+                                <FileText className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-lg mb-1">Relatório Existente (Modo Admin)</h4>
+                                <p className="text-sm leading-relaxed opacity-80">
+                                    Este relatório já foi enviado. Você pode editá-lo ou liberar para que o usuário envie um novo.
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={handleUnlock}
+                            disabled={loading}
+                            className="shrink-0 border-blue-200 hover:bg-blue-100 text-blue-700 font-bold uppercase tracking-widest text-[11px]"
+                        >
+                            <Lock className="w-4 h-4 mr-2" />
+                            Liberar Preenchimento
+                        </Button>
                     </div>
                 )}
 

@@ -979,6 +979,7 @@ export async function deleteMonthData(directorateId: string, month: number, year
 
         // Remove sector markers
         delete newData[`_has_${setor}`]
+        delete newData[`_report_content_${setor}`] // Remove narrative content if exists
         if (newData._setor === setor) delete newData._setor
 
         // Remove sector fields

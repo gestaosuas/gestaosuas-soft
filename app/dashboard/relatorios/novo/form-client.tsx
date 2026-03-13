@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
-import { submitReport, getPreviousMonthData, checkSubmissionExists } from "@/app/dashboard/actions"
+import { submitReport, getPreviousMonthData, checkSubmissionExists, deleteMonthData } from "@/app/dashboard/actions"
 import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { useState, useEffect, useCallback } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -406,6 +406,29 @@ export function SubmissionFormClient({
     }, [setor, subcategory])
 
 
+    const handleUnlock = async () => {
+        if (!confirm("Isso irá remover os dados atuais deste mês/unidade para permitir um novo preenchimento pelo usuário. Esta ação não pode ser desfeita. Confirmar?")) {
+            return
+        }
+
+        setLoading(true)
+        try {
+            const result = await deleteMonthData(directorateId, Number(month), Number(year), unit, setor)
+            if (result.success) {
+                setAlreadySubmitted(false)
+                setFetchedInitialData({}) // Limpa dados carregados para permitir nova entrada limpa
+                alert("Preenchimento liberado com sucesso!")
+            } else {
+                alert("Erro ao liberar preenchimento.")
+            }
+        } catch (e) {
+            console.error(e)
+            alert("Erro ao liberar preenchimento.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleSubmit = async (data: Record<string, any>) => {
         if (!confirm(`Confirma o envio do relatório de ${directorateName} referente a ${month}/${year}?`)) {
             return
@@ -577,6 +600,32 @@ export function SubmissionFormClient({
                                         <span className="font-semibold block mt-1 italic">Caso precise realizar alguma correção, entre em contato com a equipe de Gestão/Administração.</span>
                                     </p>
                                 </div>
+                            </div>
+                        )}
+
+                        {alreadySubmitted && isAdmin && (
+                            <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-blue-800 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-[15px] mb-1">Registro Existente (Modo Admin)</p>
+                                        <p className="text-[13px] leading-relaxed opacity-90">
+                                            Já existe um envio para este período. Você pode editar os dados ou liberar para um novo preenchimento.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleUnlock}
+                                    disabled={loading}
+                                    className="shrink-0 border-blue-200 hover:bg-blue-100 text-blue-700 font-bold text-[10px] uppercase tracking-wider h-10 px-4"
+                                >
+                                    <Lock className="w-3.5 h-3.5 mr-2" />
+                                    Liberar Novo Preenchimento
+                                </Button>
                             </div>
                         )}
 
