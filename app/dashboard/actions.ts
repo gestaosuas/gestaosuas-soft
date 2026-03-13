@@ -1390,12 +1390,32 @@ export async function revertVisitToDraft(id: string) {
     }
 
     const adminSupabase = createAdminClient()
+    
+    // Fetch current visit to get existing technical report data
+    const { data: visit, error: fetchError } = await adminSupabase
+        .from('visits')
+        .select('parecer_tecnico')
+        .eq('id', id)
+        .single()
+
+    if (fetchError || !visit) throw new Error("Visita não encontrada: " + (fetchError?.message || ""))
+
+    const updatePayload: any = { 
+        status: 'draft', 
+        updated_at: new Date().toISOString() 
+    }
+
+    // Reset technical report status if it exists
+    if (visit.parecer_tecnico) {
+        updatePayload.parecer_tecnico = {
+            ...visit.parecer_tecnico,
+            status: 'draft'
+        }
+    }
+
     const { error } = await adminSupabase
         .from('visits')
-        .update({ 
-            status: 'draft', 
-            updated_at: new Date().toISOString() 
-        })
+        .update(updatePayload)
         .eq('id', id)
 
     if (error) throw new Error("Erro ao reverter status: " + error.message)

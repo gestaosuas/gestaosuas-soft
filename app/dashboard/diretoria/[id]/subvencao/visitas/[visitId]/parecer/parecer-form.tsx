@@ -33,15 +33,21 @@ import { AlertCircle } from "lucide-react"
 interface ParecerFormProps {
     visit: any
     directorateId: string
+    directorateName?: string
     logoUrl?: string
 }
 
-export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerFormProps) {
+export function OpinionReportForm({ visit, directorateId, directorateName = "", logoUrl }: ParecerFormProps) {
     const router = useRouter()
     const [isSaving, setIsSaving] = useState(false)
     const [isFinalizing, setIsFinalizing] = useState(false)
     const [savingSignature, setSavingSignature] = useState<string | null>(null)
     const [isPreview, setIsPreview] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
     const [saveConfirmation, setSaveConfirmation] = useState<{ isOpen: boolean; finalize: boolean }>({
         isOpen: false,
         finalize: false
@@ -94,19 +100,27 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
     const finalLogoUrl = logoUrl || "https://ovfpxrepxlrspsjbtpnd.supabase.co/storage/v1/object/public/system/logo-pm-uberlandia.png"
     const oscName = visit.oscs?.name || "Entidade não identificada"
-    const today = new Date().toLocaleDateString('pt-BR')
+    const [today, setToday] = useState("")
 
-    const isEmendas = directorateId === '12b2a325-113f-4bc5-a74a-4f58a569be24' || directorateId === '63553b96-3771-4842-9f45-630c7558adac'
+    useEffect(() => {
+        setToday(new Date().toLocaleDateString('pt-BR'))
+    }, [])
+
+    const normalizedDirName = directorateName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    const isEmendas = normalizedDirName.includes('emendas') || normalizedDirName.includes('fundos')
+    const isSubvencao = normalizedDirName.includes('subvencao')
+
     const [termType, setTermType] = useState<"fomento" | "colaboracao">("colaboracao")
 
     const getOptionText = (type: string) => {
         const termText = termType === 'fomento' ? "Termo de Fomento" : "Termo de Colaboração"
+        const executionVerb = isEmendas ? "foi executada" : "está sendo executada"
 
         if (type === 'fully') {
-            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText}, desenvolvendo as atividades e atingindo tanto os objetivos quanto as metas qualitativas e quantitativas estabelecidas, logo, cumprindo o objeto pactuado.`
+            return `constatou-se que a parceria com a entidade ${oscName} ${executionVerb} de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText}, desenvolvendo as atividades e atingindo tanto os objetivos quanto as metas qualitativas e quantitativas estabelecidas, logo, cumprindo o objeto pactuado.`
         }
         if (type === 'partially') {
-            return `constatou-se que a parceria com a entidade ${oscName} está sendo executada de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText} no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado até a presente data.`
+            return `constatou-se que a parceria com a entidade ${oscName} ${executionVerb} de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText} no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado até a presente data.`
         }
         if (type === 'custom') {
             return `constatou-se que a parceria com a entidade ${oscName} ${report.item4_custom}`
@@ -130,9 +144,9 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
     }
 
     const handleSaveIndividualSignature = async (type: 'tecnico1' | 'tecnico2') => {
-        const name = type === 'tecnico1' ? report.assinaturas.tecnico1_nome : 
-                     report.assinaturas.tecnico2_nome;
-        
+        const name = type === 'tecnico1' ? report.assinaturas.tecnico1_nome :
+            report.assinaturas.tecnico2_nome;
+
         if (!name || name.trim() === '') {
             alert(`Por favor, preencha o nome do ${type === 'tecnico1' ? 'Técnico 1' : 'Técnico 2'} antes de salvar a assinatura.`);
             return;
@@ -288,7 +302,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                 {/* Identification Info (No header as per request) */}
                 <div className="grid grid-cols-1 gap-2 mb-8 text-sm">
                     <p><strong>OSC:</strong> {oscName}</p>
-                    <p><strong>DATA DE PREENCHIMENTO:</strong> {today}</p>
+                    <p><strong>DATA DE PREENCHIMENTO:</strong> {isMounted ? today : "---"}</p>
                 </div>
 
                 <div className="space-y-10 text-justify leading-relaxed text-sm">
@@ -311,7 +325,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 />
                             </div>
                         )}
-                        {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                        {(isPreview || isFinalized || isMounted) && (
                             <div className={cn(
                                 "whitespace-pre-wrap min-h-[60px] border-b border-dotted border-zinc-300",
                                 (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -340,7 +354,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || isMounted) && (
                                     <div className={cn(
                                         "whitespace-pre-wrap min-h-[40px] border-b border-dotted border-zinc-300",
                                         (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -362,7 +376,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || isMounted) && (
                                     <div className={cn(
                                         "whitespace-pre-wrap min-h-[40px] border-b border-dotted border-zinc-300",
                                         (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -384,7 +398,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         />
                                     </div>
                                 )}
-                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || isMounted) && (
                                     <div className={cn(
                                         "whitespace-pre-wrap min-h-[40px] border-b border-dotted border-zinc-300",
                                         (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -414,7 +428,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                 />
                             </div>
                         )}
-                        {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                        {(isPreview || isFinalized || isMounted) && (
                             <div className={cn(
                                 "whitespace-pre-wrap min-h-[100px] border-b border-dotted border-zinc-300",
                                 (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -633,7 +647,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                         <h2 className={cn(
                             "font-black border-b border-black pb-1 uppercase text-blue-900 print:text-black",
                             isPreview && "text-black"
-                        )}>5. CUMPRIMENTO DO OBJETO ATÉ A PRESENTE DATA</h2>
+                        )}>5. CUMPRIMENTO DO OBJETO{isEmendas ? "" : " ATÉ A PRESENTE DATA"}</h2>
 
                         {!isPreview && !isFinalized && (
                             <div className="no-print space-y-6 bg-zinc-50 dark:bg-zinc-950/30 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
@@ -729,9 +743,9 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                             className="text-center font-bold text-xs border-none bg-zinc-50"
                                         />
                                         <div className="flex justify-center">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={() => handleSaveIndividualSignature('tecnico1')}
                                                 disabled={savingSignature === 'tecnico1'}
                                                 className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
@@ -742,7 +756,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         </div>
                                     </div>
                                 )}
-                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || isMounted) && (
                                     <div className={cn(
                                         "space-y-2",
                                         (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -777,9 +791,9 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                             className="text-center font-bold text-xs border-none bg-zinc-50"
                                         />
                                         <div className="flex justify-center">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={() => handleSaveIndividualSignature('tecnico2')}
                                                 disabled={savingSignature === 'tecnico2'}
                                                 className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
@@ -790,7 +804,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                                         </div>
                                     </div>
                                 )}
-                                {(isPreview || isFinalized || typeof window !== 'undefined') && (
+                                {(isPreview || isFinalized || isMounted) && (
                                     <div className={cn(
                                         "space-y-2",
                                         (isPreview || isFinalized) ? "block" : "hidden print:block"
@@ -815,7 +829,7 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
 
                 {/* Print Footer */}
                 <div className="hidden print:block mt-8 text-[9px] text-center text-zinc-400 border-t pt-2 italic">
-                    Documento gerado eletronicamente em {today} • Sistema de Vigilância Socioassistencial
+                    Documento gerado eletronicamente em {isMounted ? today : "---"} • Sistema de Vigilância Socioassistencial
                 </div>
             </div>
 
@@ -829,8 +843,8 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                     </DialogHeader>
                     <div className="py-4 text-sm text-zinc-600 space-y-3">
                         <p className="font-bold text-zinc-900">
-                            {saveConfirmation.finalize 
-                                ? "Você está prestes a FINALIZAR e BLOQUEAR o relatório de visita." 
+                            {saveConfirmation.finalize
+                                ? "Você está prestes a FINALIZAR e BLOQUEAR o relatório de visita."
                                 : "Você está salvando um rascunho deste relatório."}
                         </p>
                         <p>
@@ -841,14 +855,14 @@ export function OpinionReportForm({ visit, directorateId, logoUrl }: ParecerForm
                         </p>
                     </div>
                     <div className="flex justify-between gap-3 pt-4 border-t">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setSaveConfirmation({ isOpen: false, finalize: false })}
                             className="flex-1 font-bold uppercase text-[10px]"
                         >
                             Voltar e Revisar
                         </Button>
-                        <Button 
+                        <Button
                             onClick={() => {
                                 if (saveConfirmation.finalize) {
                                     handleFinalize()

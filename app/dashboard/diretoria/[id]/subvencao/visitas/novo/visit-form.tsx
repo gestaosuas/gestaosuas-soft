@@ -119,15 +119,15 @@ export function VisitForm({
     })
 
     const [rhData, setRhData] = useState(initialVisit?.rh_data || [
-        { cargo: "Coordenador", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Assistente Social", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Psicólogo", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Instrutor", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Educador Físico", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Auxiliar Administrativo", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Monitor", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Serviço Geral", voluntario: false, subvencao: false, quantidade: "", outros: "" },
-        { cargo: "Cozinheiro", voluntario: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Coordenador", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Assistente Social", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Psicólogo", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Instrutor", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Educador Físico", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Auxiliar Administrativo", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Monitor", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Serviço Geral", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
+        { cargo: "Cozinheiro", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" },
     ])
 
     const [observacoes, setObservacoes] = useState(initialVisit?.observacoes || "")
@@ -567,7 +567,7 @@ export function VisitForm({
 
 
     const addRhRow = () => {
-        setRhData([...rhData, { cargo: "", voluntario: false, subvencao: false, quantidade: "", outros: "" }])
+        setRhData([...rhData, { cargo: "", voluntario: false, terceirizado: false, subvencao: false, quantidade: "", outros: "" }])
     }
 
     const removeRhRow = (index: number) => {
@@ -1483,6 +1483,7 @@ export function VisitForm({
                                 <TableHeader className={cn(isLocked ? "bg-zinc-50" : "bg-zinc-50/50")}>
                                     <TableRow className="hover:bg-transparent h-8">
                                         <TableHead className="px-4 text-[10px] font-black uppercase text-zinc-900 h-8">Cargo / Função</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Tercerizados</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Outros</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Subvenção</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-zinc-900 h-8 text-center w-[80px]">Quantidade</TableHead>
@@ -1517,12 +1518,30 @@ export function VisitForm({
                                                     onClick={() => {
                                                         if (!isLocked) {
                                                             const newData = [...rhData]
+                                                            newData[index].terceirizado = !newData[index].terceirizado
+                                                            setRhData(newData)
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
+                                                        !isLocked && "hover:border-blue-900",
+                                                        row.terceirizado && "bg-black print-checkbox-checked"
+                                                    )}
+                                                >
+                                                    {row.terceirizado && <Check className="h-2.5 w-2.5 text-white print:text-black" />}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="py-1 text-center h-8">
+                                                <div
+                                                    onClick={() => {
+                                                        if (!isLocked) {
+                                                            const newData = [...rhData]
                                                             newData[index].voluntario = !newData[index].voluntario
                                                             setRhData(newData)
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer",
+                                                        "w-6 h-6 rounded border border-black flex items-center justify-center print-checkbox transition-colors cursor-pointer mx-auto",
                                                         !isLocked && "hover:border-blue-900",
                                                         row.voluntario && "bg-black print-checkbox-checked"
                                                     )}

@@ -173,3 +173,79 @@ export async function updateUserAccess(userId: string, directorates: { id: strin
 
     revalidatePath('/dashboard/admin', 'page')
 }
+
+export async function updateUserAccount(userId: string, data: { password?: string, directorates?: { id: string, allowed_units: string[] | null }[] }) {
+    console.log(`[updateUserAccount] Iniciando atualização para o usuário: ${userId}`);
+    
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            console.error("[updateUserAccount] Usuário não autenticado");
+            throw new Error("Acesso não autorizado: Sessão expirada.");
+        }
+
+        const isAdmin = await isAdminCheck(user.id)
+        if (!isAdmin) {
+            console.error(`[updateUserAccount] Usuário ${user.id} tentou ação de admin sem permissão`);
+            throw new Error("Acesso negado: Apenas administradores podem gerenciar usuários.");
+        }
+
+        const supabaseAdmin = createAdminClient()
+
+        // 1. Update Password if provided
+        if (data.password && data.password.trim().length >= 6) {
+            console.log(`[updateUserAccount] Atualizando senha para o usuário: ${userId}`);
+            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+                password: data.password.trim()
+            })
+            if (authError) {
+                console.error("[updateUserAccount] Erro Auth Supabase:", authError);
+                throw new Error("Erro ao atualizar senha: " + authError.message);
+            }
+        } else if (data.password && data.password.trim().length > 0) {
+            throw new Error("A senha deve ter pelo menos 6 caracteres.");
+        }
+
+        // 2. Update Access if provided
+        if (data.directorates) {
+            console.log(`[updateUserAccount] Atualizando permissões para o usuário: ${userId}`);
+            // Remove existing assignments
+            const { error: deleteError } = await supabaseAdmin
+                .from('profile_directorates')
+                .delete()
+                .eq('profile_id', userId)
+
+            if (deleteError) {
+                console.error("[updateUserAccount] Erro ao deletar permissões:", deleteError);
+                throw new Error("Falha ao limpar permissões existentes.");
+            }
+
+            // Add new assignments
+            if (data.directorates.length > 0) {
+                const assignments = data.directorates.map(dir => ({
+                    profile_id: userId,
+                    directorate_id: dir.id,
+                    allowed_units: dir.allowed_units
+                }))
+
+                const { error: insertError } = await supabaseAdmin
+                    .from('profile_directorates')
+                    .insert(assignments)
+
+                if (insertError) {
+                    console.error("[updateUserAccount] Erro ao inserir permissões:", insertError);
+                    throw new Error("Falha ao atribuir novas permissões.");
+                }
+            }
+        }
+
+        revalidatePath('/dashboard/admin', 'page')
+        console.log(`[updateUserAccount] Atualização concluída com sucesso para o usuário: ${userId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("[updateUserAccount] Falha crítica:", error.message || error);
+        // Ensure we throw a simple string or a serializable error
+        throw new Error(error.message || "Erro inesperado no servidor");
+    }
+}

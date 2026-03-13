@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Trash2, Edit, Shield, Check, X, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { deleteUser, updateUserAccess } from './actions'
+import { deleteUser, updateUserAccount } from './actions'
 
 import {
     Dialog,
@@ -36,6 +36,7 @@ export function UserList({ users, directorates }: { users: UserData[], directora
     const [selectedDirs, setSelectedDirs] = useState<{ id: string, allowed_units: string[] | null }[]>([])
     const [isDeleting, setIsDeleting] = useState<string | null>(null)
     const [isSaving, setIsSaving] = useState(false)
+    const [newPassword, setNewPassword] = useState('')
 
     const handleDelete = async (userId: string) => {
         if (!confirm("Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.")) return
@@ -53,6 +54,7 @@ export function UserList({ users, directorates }: { users: UserData[], directora
 
     const handleEditClick = (user: UserData) => {
         setEditingUser(user)
+        setNewPassword('') // Reset password field
         setSelectedDirs(user.directorateAccess ? user.directorateAccess.map(da => ({
             ...da,
             allowed_units: da.allowed_units === null ? null : [...(da.allowed_units || [])]
@@ -63,10 +65,14 @@ export function UserList({ users, directorates }: { users: UserData[], directora
         if (!editingUser) return
         setIsSaving(true)
         try {
-            await updateUserAccess(editingUser.id, selectedDirs)
+            await updateUserAccount(editingUser.id, {
+                password: newPassword,
+                directorates: selectedDirs
+            })
             setEditingUser(null)
+            setNewPassword('')
         } catch (e: any) {
-            alert(e.message || "Erro ao atualizar permissões")
+            alert(e.message || "Erro ao atualizar usuário")
         } finally {
             setIsSaving(false)
         }
@@ -194,13 +200,38 @@ export function UserList({ users, directorates }: { users: UserData[], directora
             <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
                 <DialogContent className="sm:max-w-2xl bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-none p-0 overflow-hidden gap-0">
                     <DialogHeader className="pt-10 px-8 pb-6 border-b border-zinc-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 z-10">
-                        <DialogTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">Permissões de Acesso</DialogTitle>
+                        <DialogTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">Editar Conta de Usuário</DialogTitle>
                         <DialogDescription className="text-sm font-medium text-zinc-500">
-                            Monitoramento atribuído para <span className="text-blue-900 dark:text-blue-100 font-bold">{editingUser?.name}</span>
+                            Atualize os dados e acessos de <span className="text-blue-900 dark:text-blue-100 font-bold">{editingUser?.name}</span>
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-zinc-50/30 dark:bg-zinc-950/20">
+                        {/* New Password Section */}
+                        <div className="space-y-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Shield className="w-4 h-4 text-blue-900 dark:text-blue-400" />
+                                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">Segurança</h3>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black uppercase text-zinc-400">Redefinir Senha</label>
+                                <input
+                                    type="password"
+                                    placeholder="Digite a nova senha (deixe em branco para não alterar)"
+                                    className="w-full flex h-10 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-blue-400 font-mono"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                                <p className="text-[10px] text-zinc-500 italic">Mínimo de 6 caracteres. A nova senha substituirá a antiga imediatamente.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Shield className="w-4 h-4 text-blue-900 dark:text-blue-400" />
+                                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">Permissões de Diretoria</h3>
+                            </div>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {directorates.map(dir => {
                                 const isSelected = selectedDirs.some(d => d.id === dir.id)

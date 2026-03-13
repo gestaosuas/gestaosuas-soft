@@ -1,6 +1,6 @@
 import { OpinionReportForm } from "./parecer-form"
 import { getVisitById } from "@/app/dashboard/actions"
-import { getSystemSettings } from "@/app/dashboard/cached-data"
+import { getSystemSettings, getCachedDirectorate } from "@/app/dashboard/cached-data"
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
 
@@ -18,12 +18,13 @@ export default async function ParecerPage({
         redirect('/login')
     }
 
-    const [visit, settings] = await Promise.all([
+    const [visit, settings, directorate] = await Promise.all([
         getVisitById(visitId),
-        getSystemSettings()
+        getSystemSettings(),
+        getCachedDirectorate(id)
     ])
 
-    if (!visit) {
+    if (!visit || !directorate) {
         notFound()
     }
 
@@ -32,6 +33,7 @@ export default async function ParecerPage({
             <OpinionReportForm 
                 visit={visit} 
                 directorateId={id} 
+                directorateName={directorate.name}
                 logoUrl={settings?.logo_url} 
             />
         </div>
