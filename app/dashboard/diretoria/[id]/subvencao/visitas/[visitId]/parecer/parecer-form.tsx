@@ -82,7 +82,8 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                 tecnico2_nome: ""
             },
             date: new Date().toISOString().split('T')[0],
-            status: 'draft'
+            status: 'draft',
+            term_type: 'colaboracao'
         }
 
         if (!visit.parecer_tecnico) return defaultReport
@@ -92,7 +93,8 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
             ...visit.parecer_tecnico,
             item5_qualitativos: visit.parecer_tecnico.item5_qualitativos || defaultReport.item5_qualitativos,
             item5_quantitativos: visit.parecer_tecnico.item5_quantitativos || defaultReport.item5_quantitativos,
-            status: visit.parecer_tecnico.status || 'draft'
+            status: visit.parecer_tecnico.status || 'draft',
+            term_type: visit.parecer_tecnico.term_type || 'colaboracao'
         }
     })
 
@@ -110,10 +112,8 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
     const isEmendas = normalizedDirName.includes('emendas') || normalizedDirName.includes('fundos')
     const isSubvencao = normalizedDirName.includes('subvencao')
 
-    const [termType, setTermType] = useState<"fomento" | "colaboracao">("colaboracao")
-
     const getOptionText = (type: string) => {
-        const termText = termType === 'fomento' ? "Termo de Fomento" : "Termo de Colaboração"
+        const termText = report.term_type === 'fomento' ? "Termo de Fomento" : "Termo de Colaboração"
         const executionVerb = isEmendas ? "foi executada" : "está sendo executada"
 
         if (type === 'fully') {
@@ -656,22 +656,22 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                                         <span className="text-[10px] font-black uppercase text-zinc-500 mr-2">Tipo de Termo:</span>
                                         <Button
                                             size="sm"
-                                            variant={termType === 'fomento' ? 'default' : 'outline'}
-                                            onClick={() => setTermType('fomento')}
+                                            variant={report.term_type === 'fomento' ? 'default' : 'outline'}
+                                            onClick={() => setReport({ ...report, term_type: 'fomento' })}
                                             className={cn(
                                                 "text-[10px] font-bold uppercase",
-                                                termType === 'fomento' ? "bg-blue-900 text-white hover:bg-blue-800" : "text-zinc-500 bg-transparent border-zinc-300"
+                                                report.term_type === 'fomento' ? "bg-blue-900 text-white hover:bg-blue-800" : "text-zinc-500 bg-transparent border-zinc-300"
                                             )}
                                         >
                                             Termo de Fomento
                                         </Button>
                                         <Button
                                             size="sm"
-                                            variant={termType === 'colaboracao' ? 'default' : 'outline'}
-                                            onClick={() => setTermType('colaboracao')}
+                                            variant={report.term_type === 'colaboracao' ? 'default' : 'outline'}
+                                            onClick={() => setReport({ ...report, term_type: 'colaboracao' })}
                                             className={cn(
                                                 "text-[10px] font-bold uppercase",
-                                                termType === 'colaboracao' ? "bg-blue-900 text-white hover:bg-blue-800" : "text-zinc-500 bg-transparent border-zinc-300"
+                                                report.term_type === 'colaboracao' ? "bg-blue-900 text-white hover:bg-blue-800" : "text-zinc-500 bg-transparent border-zinc-300"
                                             )}
                                         >
                                             Termo de Colaboração

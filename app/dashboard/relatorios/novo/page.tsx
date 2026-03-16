@@ -313,7 +313,7 @@ export default async function NewReportPage({
     }
 
     return (
-        <div className="container mx-auto max-w-7xl py-8">
+        <div className="container mx-auto max-w-7xl py-4">
             <SubmissionFormClient
                 definition={formDefinition}
                 directorateName={titleContext}

@@ -68,8 +68,14 @@ export function DataProgress({ directorates }: { directorates: Directorate[] }) 
         units.forEach(unitName => {
             const hasSubmitted = dirSubmissions.some(s => {
                 if (dir.name === "Qualificação Profissional e SINE") {
-                    // Check if the data belongs to SINE or CP
-                    return s.data?._setor === unitName.toLowerCase() || (unitName === "SINE" && s.data?._setor === "sine") || (unitName === "Centro Profissionalizante" && s.data?._setor === "centros")
+                    // Check if the data belongs to SINE or CP (accounting for merged records)
+                    if (unitName === "SINE") {
+                        return !!(s.data?._has_sine || s.data?._setor === "sine" || s.data?._setor === "merged_sine")
+                    }
+                    if (unitName === "Centro Profissionalizante") {
+                        return !!(s.data?._has_centros || s.data?._setor === "centros" || s.data?._setor === "merged_centros")
+                    }
+                    return s.data?._setor === unitName.toLowerCase()
                 }
                 // CRAS, NAICA, CEAI use _unit key (or units object for multi-unit submission if implemented)
                 return s.data?._unit === unitName || (s.data?._is_multi_unit && s.data?.units && s.data?.units[unitName])
@@ -124,7 +130,11 @@ export function DataProgress({ directorates }: { directorates: Directorate[] }) 
                         {directorates.map((dir) => {
                             const prog = getDirectorateProgress(dir)
                             const dirSubmissions = progressData.filter(s => s.directorate_id === dir.id)
-                            const hasMonthlyReport = dirSubmissions.some(s => s.data?._report_content !== undefined || s.data?.report_content !== undefined)
+                            const hasMonthlyReport = dirSubmissions.some(s => 
+                                s.data?._report_content !== undefined || 
+                                s.data?.report_content !== undefined ||
+                                Object.keys(s.data || {}).some(k => k.startsWith('_report_content_'))
+                            )
 
                             return (
                                 <div key={dir.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/10 transition-colors">

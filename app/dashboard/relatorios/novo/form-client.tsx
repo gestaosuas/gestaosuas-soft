@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
+import { StepperForm } from "@/components/stepper-form"
 import { submitReport, getPreviousMonthData, checkSubmissionExists, deleteMonthData } from "@/app/dashboard/actions"
 import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { useState, useEffect, useCallback } from "react"
@@ -483,7 +484,7 @@ export function SubmissionFormClient({
     const monthName = new Date(0, Number(month) - 1).toLocaleString('pt-BR', { month: 'long' })
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-4">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                 <div className="flex items-start gap-6">
@@ -509,7 +510,7 @@ export function SubmissionFormClient({
                         </div>
 
                         {/* Top Reference Filters */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white dark:bg-zinc-900 p-2 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm">
                             <div className="flex items-center gap-3 pr-4 border-r border-zinc-100 dark:border-zinc-800/60">
                                 <Calendar className="w-4 h-4 text-blue-900 dark:text-blue-400" />
                                 <span className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Referência</span>
@@ -570,7 +571,7 @@ export function SubmissionFormClient({
             {/* Form Container */}
             <div className="w-full">
                 <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl w-full">
-                    <CardHeader className="pt-8 px-6 lg:px-10 pb-6 border-b border-zinc-100 dark:border-zinc-800/60">
+                    <CardHeader className="pt-4 px-6 lg:px-8 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
                                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 italic">
@@ -585,7 +586,7 @@ export function SubmissionFormClient({
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 lg:p-10 w-full overflow-x-hidden">
+                    <CardContent className="p-6 lg:p-8 w-full overflow-x-hidden">
                         {alreadySubmitted && !isAdmin && (
                             <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-4 text-amber-800 animate-in fade-in slide-in-from-top-2 duration-500">
                                 <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
@@ -629,14 +630,36 @@ export function SubmissionFormClient({
                             </div>
                         )}
 
-                        <FormEngine
-                            key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
-                            definition={dynamicDefinition}
-                            initialData={fetchedInitialData}
-                            onSubmit={handleSubmit}
-                            onDataChange={handleDataChange}
-                            disabled={loading || (alreadySubmitted && !isAdmin)}
-                        />
+                        {setor === 'casa_da_mulher' || setor === 'diversidade' ? (
+                            <StepperForm
+                                key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}-stepper`}
+                                definition={dynamicDefinition}
+                                initialData={fetchedInitialData}
+                                onSubmit={handleSubmit}
+                                onDataChange={handleDataChange}
+                                disabled={loading || (alreadySubmitted && !isAdmin)}
+                                stepsConfig={
+                                    setor === 'casa_da_mulher' ? [
+                                        { title: "Perfil de Atendimento", sectionIndexes: [0, 1] },
+                                        { title: "Caracterização Social", sectionIndexes: [2, 3] },
+                                        { title: "Encaminhamentos", sectionIndexes: [4] }
+                                    ] : [
+                                        { title: "Perfil de Atendimento", sectionIndexes: [0, 1] },
+                                        { title: "Caracterização Social", sectionIndexes: [2, 3] },
+                                        { title: "Encaminhamentos", sectionIndexes: [4] }
+                                    ]
+                                }
+                            />
+                        ) : (
+                            <FormEngine
+                                key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
+                                definition={dynamicDefinition}
+                                initialData={fetchedInitialData}
+                                onSubmit={handleSubmit}
+                                onDataChange={handleDataChange}
+                                disabled={loading || (alreadySubmitted && !isAdmin)}
+                            />
+                        )}
                     </CardContent>
                 </Card>
             </div>

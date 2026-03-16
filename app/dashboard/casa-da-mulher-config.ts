@@ -44,16 +44,6 @@ export const CASA_DA_MULHER_FORM_DEFINITION: FormDefinition = {
             ]
         },
         {
-            title: "PROCEDIMENTOS",
-            fields: [
-                { id: "cm_proced_entrevista_psicol_novos", label: "Entrevista Psicol. Novos", type: "number" },
-                { id: "cm_proced_entrevista_psicol_reentrada", label: "Entrevista Psicol. Reentrada", type: "number" },
-                { id: "cm_proced_entrevista_social_novos", label: "Entrevista Social Novos", type: "number" },
-                { id: "cm_proced_entrevista_social_reentrada", label: "Entrevista Social Reentrada", type: "number" },
-                { id: "cm_proced_atendimento_convocado", label: "Atendimento Convocado", type: "number" },
-            ]
-        },
-        {
             title: "ENCAMINHAMENTOS",
             fields: [
                 { id: "cm_encam_bo_ocorrencia", label: "Boletim de Ocorrência", type: "number" },
