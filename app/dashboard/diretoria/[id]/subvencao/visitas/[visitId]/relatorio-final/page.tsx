@@ -20,7 +20,7 @@ interface FormData {
     termo_fomento: string
     vigencia: string
     valor_autorizado: string
-    
+
     // New Fields
     objeto_relatorio: string
     referencias: string
@@ -30,22 +30,23 @@ interface FormData {
     resultados: string
     execucao_financeira: string
     cumprimento_objeto_final: string
+    texto_homologacao: string
     
     local_data: string
     homologacao_local_data: string
-    
+
     // Signatures
     signature_tecnico: string | null
     tecnico_nome: string
     signature_financeiro: string | null
     financeiro_nome: string
-    
+
     // Commission Signatures
     signature_comissao_tecnico: string | null
     comissao_tecnico_nome: string
     signature_comissao_financeiro: string | null
     comissao_financeiro_nome: string
-    
+
     status: 'draft' | 'finalized'
 }
 
@@ -67,7 +68,7 @@ export default function RelatorioFinalForm() {
         termo_fomento: '',
         vigencia: '',
         valor_autorizado: '',
-        
+
         objeto_relatorio: '',
         referencias: '',
         objetivos: '',
@@ -76,20 +77,21 @@ export default function RelatorioFinalForm() {
         resultados: '',
         execucao_financeira: '',
         cumprimento_objeto_final: '',
+        texto_homologacao: '',
         
         local_data: `Uberlândia, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`,
         homologacao_local_data: `Uberlândia, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`,
-        
+
         signature_tecnico: null,
         tecnico_nome: '',
         signature_financeiro: null,
         financeiro_nome: '',
-        
+
         signature_comissao_tecnico: null,
         comissao_tecnico_nome: '',
         signature_comissao_financeiro: null,
         comissao_financeiro_nome: '',
-        
+
         status: 'draft'
     })
 
@@ -123,7 +125,7 @@ export default function RelatorioFinalForm() {
                     .select('value')
                     .eq('key', 'logo_url')
                     .single()
-                
+
                 if (settings) setLogoUrl(settings.value)
 
             } catch (error: any) {
@@ -154,7 +156,7 @@ export default function RelatorioFinalForm() {
 
         setSaving(status === 'draft')
         setFinalizing(status === 'finalized')
-        
+
         try {
             await saveRelatorioFinal(visitId, formData, status, { logAction: status === 'draft' ? 'FORM_UPDATE' : undefined })
             setFormData(prev => ({ ...prev, status }))
@@ -173,14 +175,14 @@ export default function RelatorioFinalForm() {
     const handleSaveIndividualSignature = async (type: 'tecnico' | 'financeiro' | 'comissao_tecnico' | 'comissao_financeiro') => {
         let name = '';
         let label = '';
-        
-        switch(type) {
+
+        switch (type) {
             case 'tecnico': name = formData.tecnico_nome; label = 'Técnico'; break;
             case 'financeiro': name = formData.financeiro_nome; label = 'Técnico Financeiro'; break;
             case 'comissao_tecnico': name = formData.comissao_tecnico_nome; label = 'Comissão Técnico'; break;
             case 'comissao_financeiro': name = formData.comissao_financeiro_nome; label = 'Comissão Financeiro'; break;
         }
-        
+
         if (!name || name.trim() === '') {
             alert(`Por favor, preencha o nome do ${label} antes de salvar a assinatura.`);
             return;
@@ -228,17 +230,17 @@ export default function RelatorioFinalForm() {
                     )}
                     {!isFinalized && (
                         <>
-                            <Button 
-                                variant="outline" 
-                                onClick={() => handleSave('draft')} 
+                            <Button
+                                variant="outline"
+                                onClick={() => handleSave('draft')}
                                 disabled={saving || finalizing}
                                 className="gap-2 font-bold uppercase text-[10px]"
                             >
                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Salvar Rascunho
                             </Button>
-                            <Button 
-                                onClick={() => handleSave('finalized')} 
+                            <Button
+                                onClick={() => handleSave('finalized')}
                                 disabled={saving || finalizing}
                                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold uppercase text-[10px]"
                             >
@@ -271,15 +273,15 @@ export default function RelatorioFinalForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">OSC parceira</Label>
-                                <Input 
-                                    value={formData.osc_name} 
-                                    readOnly 
+                                <Input
+                                    value={formData.osc_name}
+                                    readOnly
                                     className="bg-zinc-50 border-zinc-200 font-bold"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">CNPJ</Label>
-                                <Input 
+                                <Input
                                     value={formData.cnpj}
                                     onChange={e => setFormData({ ...formData, cnpj: e.target.value })}
                                     readOnly={isFinalized}
@@ -287,8 +289,8 @@ export default function RelatorioFinalForm() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-zinc-500 uppercase text-[10px] font-black">Emenda Impositiva</Label>
-                                <Input 
+                                <Label className="text-zinc-500 uppercase text-[10px] font-black">Recurso</Label>
+                                <Input
                                     value={formData.emenda}
                                     onChange={e => setFormData({ ...formData, emenda: e.target.value })}
                                     readOnly={isFinalized}
@@ -297,7 +299,7 @@ export default function RelatorioFinalForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">Nº Termo</Label>
-                                <Input 
+                                <Input
                                     value={formData.termo_fomento}
                                     onChange={e => setFormData({ ...formData, termo_fomento: e.target.value })}
                                     readOnly={isFinalized}
@@ -306,7 +308,7 @@ export default function RelatorioFinalForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">Vigência</Label>
-                                <Input 
+                                <Input
                                     value={formData.vigencia}
                                     onChange={e => setFormData({ ...formData, vigencia: e.target.value })}
                                     readOnly={isFinalized}
@@ -315,7 +317,7 @@ export default function RelatorioFinalForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">Valor autorizado por lei e repassado</Label>
-                                <Input 
+                                <Input
                                     value={formData.valor_autorizado}
                                     onChange={e => setFormData({ ...formData, valor_autorizado: e.target.value })}
                                     readOnly={isFinalized}
@@ -331,7 +333,7 @@ export default function RelatorioFinalForm() {
                             <div className="h-6 w-1 bg-blue-600 rounded-full" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">2. OBJETO DO RELATÓRIO</h2>
                         </div>
-                        <Textarea 
+                        <Textarea
                             value={formData.objeto_relatorio}
                             onChange={e => setFormData({ ...formData, objeto_relatorio: e.target.value })}
                             readOnly={isFinalized}
@@ -345,7 +347,7 @@ export default function RelatorioFinalForm() {
                             <div className="h-6 w-1 bg-blue-600 rounded-full" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">3. REFERÊNCIAS</h2>
                         </div>
-                        <Textarea 
+                        <Textarea
                             value={formData.referencias}
                             onChange={e => setFormData({ ...formData, referencias: e.target.value })}
                             readOnly={isFinalized}
@@ -359,11 +361,11 @@ export default function RelatorioFinalForm() {
                             <div className="h-6 w-1 bg-blue-600 rounded-full" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">4. DESCRIÇÃO DOS OBJETIVOS, METAS PREVISTAS E EXECUÇÃO FINANCEIRA</h2>
                         </div>
-                        
+
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs underline underline-offset-4 decoration-zinc-200">a) Dos objetivos:</Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.objetivos}
                                     onChange={e => setFormData({ ...formData, objetivos: e.target.value })}
                                     readOnly={isFinalized}
@@ -373,7 +375,7 @@ export default function RelatorioFinalForm() {
 
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs underline underline-offset-4 decoration-zinc-200">b) Das metas estabelecidas:</Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.metas}
                                     onChange={e => setFormData({ ...formData, metas: e.target.value })}
                                     readOnly={isFinalized}
@@ -383,7 +385,7 @@ export default function RelatorioFinalForm() {
 
                             <div className="space-y-2 ml-4">
                                 <Label className="text-zinc-600 font-bold uppercase text-[11px] italic">Quantitativas:</Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.metas_quantitativas}
                                     onChange={e => setFormData({ ...formData, metas_quantitativas: e.target.value })}
                                     readOnly={isFinalized}
@@ -393,7 +395,7 @@ export default function RelatorioFinalForm() {
 
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs underline underline-offset-4 decoration-zinc-200">c) Dos resultados:</Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.resultados}
                                     onChange={e => setFormData({ ...formData, resultados: e.target.value })}
                                     readOnly={isFinalized}
@@ -405,7 +407,7 @@ export default function RelatorioFinalForm() {
                                 <Label className="text-zinc-700 font-black uppercase text-xs underline underline-offset-4 decoration-zinc-200 text-wrap">
                                     e) Da execução financeira e análise dos documentos comprobatórios das despesas:
                                 </Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.execucao_financeira}
                                     onChange={e => setFormData({ ...formData, execucao_financeira: e.target.value })}
                                     readOnly={isFinalized}
@@ -421,7 +423,7 @@ export default function RelatorioFinalForm() {
                             <div className="h-6 w-1 bg-blue-600 rounded-full" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">5. CUMPRIMENTO DO OBJETO</h2>
                         </div>
-                        <Textarea 
+                        <Textarea
                             value={formData.cumprimento_objeto_final}
                             onChange={e => setFormData({ ...formData, cumprimento_objeto_final: e.target.value })}
                             readOnly={isFinalized}
@@ -432,25 +434,25 @@ export default function RelatorioFinalForm() {
                     {/* Footer - Date and Main Signatures */}
                     <div className="pt-8 space-y-12">
                         <div className="text-right">
-                             <input 
+                            <input
                                 value={formData.local_data}
                                 onChange={e => setFormData({ ...formData, local_data: e.target.value })}
                                 readOnly={isFinalized}
                                 className="text-right border-none focus:ring-0 bg-transparent font-bold w-full italic text-zinc-600"
-                             />
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-4xl mx-auto">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b-2 border-zinc-300 print:border-zinc-800 min-h-[120px] relative">
-                                    <SignaturePad 
+                                    <SignaturePad
                                         defaultValue={formData.signature_tecnico || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_tecnico: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
                                 <div className="text-center w-full space-y-3">
-                                    <Input 
+                                    <Input
                                         value={formData.tecnico_nome}
                                         onChange={e => setFormData({ ...formData, tecnico_nome: e.target.value.toUpperCase() })}
                                         readOnly={isFinalized}
@@ -458,9 +460,9 @@ export default function RelatorioFinalForm() {
                                     />
                                     <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">Assinatura do Técnico</p>
                                     {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleSaveIndividualSignature('tecnico')}
                                             disabled={savingSignature === 'tecnico'}
                                             className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
@@ -474,14 +476,14 @@ export default function RelatorioFinalForm() {
 
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b-2 border-zinc-300 print:border-zinc-800 min-h-[120px] relative">
-                                    <SignaturePad 
+                                    <SignaturePad
                                         defaultValue={formData.signature_financeiro || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_financeiro: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
                                 <div className="text-center w-full space-y-3">
-                                    <Input 
+                                    <Input
                                         value={formData.financeiro_nome}
                                         onChange={e => setFormData({ ...formData, financeiro_nome: e.target.value.toUpperCase() })}
                                         readOnly={isFinalized}
@@ -489,9 +491,9 @@ export default function RelatorioFinalForm() {
                                     />
                                     <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">Assinatura do Técnico Financeiro</p>
                                     {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleSaveIndividualSignature('financeiro')}
                                             disabled={savingSignature === 'financeiro'}
                                             className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
@@ -509,31 +511,34 @@ export default function RelatorioFinalForm() {
                     <section className="pt-16 space-y-12 border-t-4 border-double border-zinc-100 mt-20 break-before-page">
                         <div className="space-y-6 text-center max-w-3xl mx-auto">
                             <h2 className="text-lg font-black text-blue-900 uppercase underline underline-offset-8">Homologação da Comissão de Monitoramento e Avaliação</h2>
-                            <p className="text-xs text-zinc-600 font-medium leading-relaxed italic">
-                                A comissão de Monitoramento e Avaliação instituída pela Portaria Municipal n.º 002, de 17 de fevereiro de 2025, responsável por monitorar e avaliar o cumprimento do objeto da presente parceria, aprova e homologa este Relatório de Monitoramento e Avaliação.
-                            </p>
+                            <Textarea 
+                                value={formData.texto_homologacao}
+                                onChange={e => setFormData({ ...formData, texto_homologacao: e.target.value })}
+                                readOnly={isFinalized}
+                                className="min-h-[100px] border-zinc-200 text-center italic text-zinc-600 bg-transparent"
+                            />
                         </div>
 
                         <div className="text-right">
-                             <input 
+                            <input
                                 value={formData.homologacao_local_data}
                                 onChange={e => setFormData({ ...formData, homologacao_local_data: e.target.value })}
                                 readOnly={isFinalized}
                                 className="text-right border-none focus:ring-0 bg-transparent font-bold w-full italic text-zinc-600"
-                             />
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-4xl mx-auto">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b-2 border-zinc-300 print:border-zinc-800 min-h-[120px] relative">
-                                    <SignaturePad 
+                                    <SignaturePad
                                         defaultValue={formData.signature_comissao_tecnico || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_comissao_tecnico: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
                                 <div className="text-center w-full space-y-3">
-                                    <Input 
+                                    <Input
                                         value={formData.comissao_tecnico_nome}
                                         onChange={e => setFormData({ ...formData, comissao_tecnico_nome: e.target.value.toUpperCase() })}
                                         readOnly={isFinalized}
@@ -544,9 +549,9 @@ export default function RelatorioFinalForm() {
                                         <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic">Técnico</p>
                                     </div>
                                     {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleSaveIndividualSignature('comissao_tecnico')}
                                             disabled={savingSignature === 'comissao_tecnico'}
                                             className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
@@ -560,14 +565,14 @@ export default function RelatorioFinalForm() {
 
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b-2 border-zinc-300 print:border-zinc-800 min-h-[120px] relative">
-                                    <SignaturePad 
+                                    <SignaturePad
                                         defaultValue={formData.signature_comissao_financeiro || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_comissao_financeiro: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
                                 <div className="text-center w-full space-y-3">
-                                    <Input 
+                                    <Input
                                         value={formData.comissao_financeiro_nome}
                                         onChange={e => setFormData({ ...formData, comissao_financeiro_nome: e.target.value.toUpperCase() })}
                                         readOnly={isFinalized}
@@ -578,9 +583,9 @@ export default function RelatorioFinalForm() {
                                         <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic">Financeiro</p>
                                     </div>
                                     {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleSaveIndividualSignature('comissao_financeiro')}
                                             disabled={savingSignature === 'comissao_financeiro'}
                                             className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
