@@ -70,6 +70,7 @@ export function VisitForm({
     const [loading, setLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const [isDraftSaved, setIsDraftSaved] = useState(false)
 
     useEffect(() => {
         setMounted(true)
@@ -261,7 +262,7 @@ export function VisitForm({
 
     // Auto-save logic
     useEffect(() => {
-        if (!isLocked && mounted) {
+        if (!isLocked && mounted && !isDraftSaved) {
             const interval = setInterval(() => {
                 const draftData = {
                     formData,
@@ -278,7 +279,7 @@ export function VisitForm({
             }, 5000) // Increased to 5s to avoid excessive writes
             return () => clearInterval(interval)
         }
-    }, [formData, atendimento, formaAcesso, rhData, observacoes, recomendacoes, assinaturas, documents, isLocked, mounted, DRAFT_KEY])
+    }, [formData, atendimento, formaAcesso, rhData, observacoes, recomendacoes, assinaturas, documents, isLocked, mounted, isDraftSaved, DRAFT_KEY])
 
     // Restore draft logic
     useEffect(() => {
@@ -406,6 +407,7 @@ export function VisitForm({
             const logLabel = type === 'tecnico1' ? 'Técnico 1' : type === 'tecnico2' ? 'Técnico 2' : 'Responsável'
             await saveVisit(payload, { logAction: 'SIGNATURE', logDetail: logLabel })
             // Clear local draft since it's now in the DB
+            setIsDraftSaved(true)
             localStorage.removeItem(DRAFT_KEY)
             alert("Assinatura e nome salvos com sucesso!")
         } catch (error: any) {
@@ -449,7 +451,8 @@ export function VisitForm({
                 const effectiveId = result.id || currentVisitId || initialVisit?.id;
                 setCurrentVisitId(effectiveId);
 
-                // Clear local draft on success
+                // Disable auto-save and clear local draft immediately on success
+                setIsDraftSaved(true)
                 localStorage.removeItem(DRAFT_KEY)
 
                 if (finalize) {
