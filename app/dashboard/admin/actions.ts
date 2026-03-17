@@ -174,7 +174,12 @@ export async function updateUserAccess(userId: string, directorates: { id: strin
     revalidatePath('/dashboard/admin', 'page')
 }
 
-export async function updateUserAccount(userId: string, data: { password?: string, directorates?: { id: string, allowed_units: string[] | null }[] }) {
+export async function updateUserAccount(userId: string, data: { 
+    password?: string, 
+    role?: string,
+    primaryDirectorateId?: string | null,
+    directorates?: { id: string, allowed_units: string[] | null }[] 
+}) {
     console.log(`[updateUserAccount] Iniciando atualização para o usuário: ${userId}`);
     
     try {
@@ -207,7 +212,24 @@ export async function updateUserAccount(userId: string, data: { password?: strin
             throw new Error("A senha deve ter pelo menos 6 caracteres.");
         }
 
-        // 2. Update Access if provided
+        // 2. Update Role and Primary Directorate in Profiles
+        if (data.role || data.primaryDirectorateId !== undefined) {
+            const updateData: any = {}
+            if (data.role) updateData.role = data.role
+            if (data.primaryDirectorateId !== undefined) updateData.directorate_id = data.primaryDirectorateId
+            console.log(`[updateUserAccount] Enviando updateData para profiles:`, JSON.stringify(updateData, null, 2));
+            const { error: profileError } = await supabaseAdmin
+                .from('profiles')
+                .update(updateData)
+                .eq('id', userId)
+
+            if (profileError) {
+                console.error("[updateUserAccount] Erro ao atualizar perfil:", profileError);
+                throw new Error(`Falha ao atualizar papel ou diretoria primária: ${profileError.message} (${profileError.code})`);
+            }
+        }
+
+        // 3. Update Access (Many-to-Many permissions) if provided
         if (data.directorates) {
             console.log(`[updateUserAccount] Atualizando permissões para o usuário: ${userId}`);
             // Remove existing assignments
@@ -245,7 +267,6 @@ export async function updateUserAccount(userId: string, data: { password?: strin
         return { success: true };
     } catch (error: any) {
         console.error("[updateUserAccount] Falha crítica:", error.message || error);
-        // Ensure we throw a simple string or a serializable error
         throw new Error(error.message || "Erro inesperado no servidor");
     }
 }

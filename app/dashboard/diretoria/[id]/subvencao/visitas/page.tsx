@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { getCachedDirectorate } from "@/app/dashboard/cached-data"
+import { getCachedProfile, getCachedDirectorate } from "@/app/dashboard/cached-data"
 import { VisitList } from "./visit-list"
 import { getVisits } from "@/app/dashboard/actions"
 import { Plus, ArrowLeft, FileText } from "lucide-react"
@@ -8,6 +8,8 @@ import { isAdmin as checkAdmin } from "@/lib/auth-utils"
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 
+import { createAdminClient } from "@/utils/supabase/admin"
+
 export default async function VisitasPage({
     params
 }: {
@@ -15,17 +17,31 @@ export default async function VisitasPage({
 }) {
     const { id } = await params
     const supabase = await createClient()
+    const adminSupabase = createAdminClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
         redirect('/login')
     }
 
-    const [visits, isAdmin, directorate] = await Promise.all([
+    const [visits, profile, directorate, usersResponse] = await Promise.all([
         getVisits(id),
-        checkAdmin(user.id),
-        getCachedDirectorate(id)
+        getCachedProfile(user.id),
+        getCachedDirectorate(id),
+        adminSupabase.from('profiles')
+            .select(`
+                id,
+                full_name
+            `)
+            .order('full_name')
     ])
+
+    const isAdmin = profile?.role === 'admin'
+    const role = profile?.role
+    
+    console.log(`[VisitasPage] User: ${user.email}, Role: ${role}, isAdmin: ${isAdmin}`)
+
+    const availableUsers = (usersResponse.data || [])
 
     const dirName = directorate?.name?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""
     const isEmendas = dirName.includes('emenda') || dirName.includes('fundo') || id === '63553b96-3771-4842-9f45-630c7558adac' || id === '12b2a325-113f-4bc5-a74a-4f58a569be24'
@@ -77,6 +93,9 @@ export default async function VisitasPage({
                 directorateId={id}
                 isAdmin={isAdmin}
                 isEmendas={isEmendas}
+                role={role}
+                currentUserId={user.id}
+                availableUsers={availableUsers}
             />
         </div>
     )

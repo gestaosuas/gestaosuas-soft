@@ -68,7 +68,7 @@ export default function ParecerConclusivoForm() {
         async function fetchData() {
             try {
                 const supabase = createClient()
-                
+
                 // Fetch visit using server action for robustness
                 const visit = await getVisitById(visitId)
 
@@ -94,7 +94,7 @@ export default function ParecerConclusivoForm() {
                     .select('value')
                     .eq('key', 'logo_url')
                     .single()
-                
+
                 if (settings) setLogoUrl(settings.value)
 
             } catch (error: any) {
@@ -125,7 +125,7 @@ export default function ParecerConclusivoForm() {
 
         setSaving(status === 'draft')
         setFinalizing(status === 'finalized')
-        
+
         try {
             await saveParecerConclusivo(visitId, formData, status, { logAction: status === 'draft' ? 'FORM_UPDATE' : undefined })
             setFormData(prev => ({ ...prev, status }))
@@ -143,7 +143,7 @@ export default function ParecerConclusivoForm() {
 
     const handleSaveIndividualSignature = async (type: 'tecnico' | 'financeiro') => {
         const name = type === 'tecnico' ? formData.tecnico_nome : formData.financeiro_nome;
-        
+
         if (!name || name.trim() === '') {
             alert(`Por favor, preencha o nome do ${type === 'tecnico' ? 'Técnico' : 'Financeiro'} antes de salvar a assinatura.`);
             return;
@@ -192,17 +192,17 @@ export default function ParecerConclusivoForm() {
                     )}
                     {!isFinalized && (
                         <>
-                            <Button 
-                                variant="outline" 
-                                onClick={() => handleSave('draft')} 
+                            <Button
+                                variant="outline"
+                                onClick={() => handleSave('draft')}
                                 disabled={saving || finalizing}
                                 className="gap-2 font-bold uppercase text-[10px]"
                             >
                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Salvar Rascunho
                             </Button>
-                            <Button 
-                                onClick={() => handleSave('finalized')} 
+                            <Button
+                                onClick={() => handleSave('finalized')}
                                 disabled={saving || finalizing}
                                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold uppercase text-[10px]"
                             >
@@ -235,15 +235,15 @@ export default function ParecerConclusivoForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">OSC parceira</Label>
-                                <Input 
-                                    value={formData.osc_name} 
-                                    readOnly 
+                                <Input
+                                    value={formData.osc_name}
+                                    readOnly
                                     className="bg-zinc-50 border-zinc-200 font-bold"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">CNPJ</Label>
-                                <Input 
+                                <Input
                                     value={formData.cnpj}
                                     onChange={e => setFormData({ ...formData, cnpj: e.target.value })}
                                     readOnly={isFinalized}
@@ -252,8 +252,8 @@ export default function ParecerConclusivoForm() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-zinc-500 uppercase text-[10px] font-black">Emenda Impositiva</Label>
-                                <Input 
+                                <Label className="text-zinc-500 uppercase text-[10px] font-black">Recurso</Label>
+                                <Input
                                     value={formData.emenda}
                                     onChange={e => setFormData({ ...formData, emenda: e.target.value })}
                                     readOnly={isFinalized}
@@ -262,8 +262,8 @@ export default function ParecerConclusivoForm() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-zinc-500 uppercase text-[10px] font-black">Nº Termo de Fomento</Label>
-                                <Input 
+                                <Label className="text-zinc-500 uppercase text-[10px] font-black">Nº Termo</Label>
+                                <Input
                                     value={formData.termo_fomento}
                                     onChange={e => setFormData({ ...formData, termo_fomento: e.target.value })}
                                     readOnly={isFinalized}
@@ -273,7 +273,7 @@ export default function ParecerConclusivoForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">Vigência</Label>
-                                <Input 
+                                <Input
                                     value={formData.vigencia}
                                     onChange={e => setFormData({ ...formData, vigencia: e.target.value })}
                                     readOnly={isFinalized}
@@ -283,7 +283,7 @@ export default function ParecerConclusivoForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-500 uppercase text-[10px] font-black">Valor autorizado por lei e repassado</Label>
-                                <Input 
+                                <Input
                                     value={formData.valor_autorizado}
                                     onChange={e => setFormData({ ...formData, valor_autorizado: e.target.value })}
                                     readOnly={isFinalized}
@@ -301,17 +301,17 @@ export default function ParecerConclusivoForm() {
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">2. FUNDAMENTAÇÃO</h2>
                         </div>
                         <div className="space-y-4">
-                            <Textarea 
+                            <Textarea
                                 value={formData.fundamentacao}
                                 onChange={e => setFormData({ ...formData, fundamentacao: e.target.value })}
                                 readOnly={isFinalized}
                                 placeholder="Digite a fundamentação técnica..."
                                 className="min-h-[150px] border-zinc-200"
                             />
-                            
+
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs">a) Quanto ao cumprimento do objeto:</Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.cumprimento_objeto}
                                     onChange={e => setFormData({ ...formData, cumprimento_objeto: e.target.value })}
                                     readOnly={isFinalized}
@@ -322,7 +322,7 @@ export default function ParecerConclusivoForm() {
 
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs">b) Quanto aos benefícios e impactos da parceria:</Label>
-                                <Textarea 
+                                <Textarea
                                     value={formData.beneficios_impactos}
                                     onChange={e => setFormData({ ...formData, beneficios_impactos: e.target.value })}
                                     readOnly={isFinalized}
@@ -339,7 +339,7 @@ export default function ParecerConclusivoForm() {
                             <div className="h-6 w-1 bg-blue-600 rounded-full" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">3. CONCLUSÃO</h2>
                         </div>
-                        <Textarea 
+                        <Textarea
                             value={formData.conclusao}
                             onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
                             readOnly={isFinalized}
@@ -351,25 +351,25 @@ export default function ParecerConclusivoForm() {
                     {/* Footer - Date and Signatures */}
                     <div className="pt-8 space-y-12">
                         <div className="text-right">
-                             <input 
+                            <input
                                 value={formData.local_data}
                                 onChange={e => setFormData({ ...formData, local_data: e.target.value })}
                                 readOnly={isFinalized}
                                 className="text-right border-none focus:ring-0 bg-transparent font-bold w-full"
-                             />
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-3xl mx-auto">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
-                                    <SignaturePad 
+                                    <SignaturePad
                                         defaultValue={formData.signature_tecnico || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_tecnico: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
                                 <div className="text-center w-full space-y-3">
-                                    <Input 
+                                    <Input
                                         placeholder="NOME DO TÉCNICO"
                                         value={formData.tecnico_nome}
                                         onChange={e => setFormData({ ...formData, tecnico_nome: e.target.value.toUpperCase() })}
@@ -378,9 +378,9 @@ export default function ParecerConclusivoForm() {
                                     />
                                     <p className="text-[10px] text-zinc-500 font-bold uppercase">Gestor da Parceria Técnico</p>
                                     {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleSaveIndividualSignature('tecnico')}
                                             disabled={savingSignature === 'tecnico'}
                                             className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"
@@ -394,14 +394,14 @@ export default function ParecerConclusivoForm() {
 
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b border-zinc-300 print:border-zinc-400 min-h-[120px] relative">
-                                    <SignaturePad 
+                                    <SignaturePad
                                         defaultValue={formData.signature_financeiro || undefined}
                                         onSave={(sig: string) => setFormData({ ...formData, signature_financeiro: sig })}
                                         readOnly={isFinalized}
                                     />
                                 </div>
                                 <div className="text-center w-full space-y-3">
-                                    <Input 
+                                    <Input
                                         placeholder="NOME DO FINANCEIRO"
                                         value={formData.financeiro_nome}
                                         onChange={e => setFormData({ ...formData, financeiro_nome: e.target.value.toUpperCase() })}
@@ -410,9 +410,9 @@ export default function ParecerConclusivoForm() {
                                     />
                                     <p className="text-[10px] text-zinc-500 font-bold uppercase">Gestor da Parceria Financeiro</p>
                                     {!isFinalized && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => handleSaveIndividualSignature('financeiro')}
                                             disabled={savingSignature === 'financeiro'}
                                             className="text-[9px] h-7 gap-1 font-bold border-blue-200 text-blue-600 hover:text-white hover:bg-blue-600 px-3 uppercase transition-colors"

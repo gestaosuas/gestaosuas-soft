@@ -138,6 +138,7 @@ async function fetchAllUsers() {
             id, 
             role, 
             full_name,
+            directorate_id,
             profile_directorates (
                 directorate_id,
                 allowed_units
@@ -164,6 +165,7 @@ async function fetchAllUsers() {
             email: u.email || 'No email',
             name: profile?.full_name || u.user_metadata?.full_name || 'Desconhecido',
             role: profile?.role || 'user',
+            primaryDirectorateId: profile?.directorate_id,
             directorateAccess
         }
     })

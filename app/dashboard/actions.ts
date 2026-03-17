@@ -6,7 +6,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
 import { redirect } from 'next/navigation'
 import { FormDefinition } from '@/components/form-engine'
-import { checkUserPermission, isAdmin as isAdminCheck, getUserAllowedUnits } from '@/lib/auth-utils'
+import { checkUserPermission, isAdmin as isAdminCheck, getUserAllowedUnits, canAccessVisit } from '@/lib/auth-utils'
 import { getCachedProfile } from '@/app/dashboard/cached-data'
 
 
@@ -1245,15 +1245,8 @@ export async function saveVisit(data: any, logOptions?: { logAction?: 'SIGNATURE
 
     if (id) {
         // Update existing draft
-        // Security Check: Ensure owner or admin
-        const { data: existingVisit } = await adminSupabase
-            .from('visits')
-            .select('user_id')
-            .eq('id', id)
-            .single()
-
-        const isAdmin = await isAdminCheck(user.id)
-        if (!isAdmin && existingVisit?.user_id !== user.id) {
+        const canAccess = await canAccessVisit(user.id, id)
+        if (!canAccess) {
             throw new Error("Você não tem permissão para alterar este rascunho.")
         }
 
@@ -1335,19 +1328,9 @@ export async function finalizeVisit(id: string) {
 
     const adminSupabase = createAdminClient()
 
-    // Fetch visit to check ownership
-    const { data: visit } = await adminSupabase
-        .from('visits')
-        .select('user_id, status')
-        .eq('id', id)
-        .single()
+    const canAccess = await canAccessVisit(user.id, id)
 
-    if (!visit) throw new Error("Visita não encontrada")
-
-    const isAdmin = await isAdminCheck(user.id)
-    const isOwner = visit.user_id === user.id
-
-    if (!isAdmin && !isOwner) {
+    if (!canAccess) {
         throw new Error("Você não tem permissão para finalizar esta visita.")
     }
 
@@ -1451,14 +1434,16 @@ export async function getVisits(directorateId: string) {
 
     const adminSupabase = createAdminClient()
 
-    // Check if user is admin
+    // 1. Check user role and directorate link
     const { data: profile } = await adminSupabase
         .from('profiles')
-        .select('role')
+        .select('role, directorate_id')
         .eq('id', user.id)
         .single()
 
     const isAdmin = profile?.role === 'admin'
+    const isDiretor = profile?.role === 'diretor'
+    const userDirectorateId = profile?.directorate_id
 
     let query = adminSupabase
         .from('visits')
@@ -1468,13 +1453,47 @@ export async function getVisits(directorateId: string) {
         `)
         .eq('directorate_id', directorateId)
 
-    // If not admin, only show their own visits
+    // 2. Filter based on logic:
+    // - Admin sees EVERYTHING.
+    // - Diretor sees EVERYTHING if it's their primary directorate, OR see OWN + DELEGATED + AGENTS_IN_SAME_DIR if it's another (shared) directorate.
+    // - Others (Agente/User) see OWN + DELEGATED.
     if (!isAdmin) {
-        query = query.eq('user_id', user.id)
+        // Fetch delegated visits first
+        const { data: delegations } = await adminSupabase
+            .from('form_delegations')
+            .select('visit_id')
+            .eq('user_id', user.id)
+        
+        const delegatedVisitIds = (delegations || []).map(d => d.visit_id)
+
+        if (isDiretor && userDirectorateId) {
+            // If they are in their own directorate, they see all (no extra filter needed besides directorateId)
+            if (userDirectorateId !== directorateId) {
+                // In other (shared) directorates, they see their agents' work
+                const { data: agents } = await adminSupabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('directorate_id', userDirectorateId)
+                
+                const agentIds = (agents || []).map(a => a.id)
+                
+                const orConditions = [
+                    `user_id.eq.${user.id}`,
+                    ...(agentIds.length > 0 ? [`user_id.in.(${agentIds.join(',')})`] : []),
+                    ...(delegatedVisitIds.length > 0 ? [`id.in.(${delegatedVisitIds.join(',')})`] : [])
+                ]
+                query = query.or(orConditions.join(','))
+            }
+        } else {
+            // Regular user/agent: OWN + DELEGATED
+            if (delegatedVisitIds.length > 0) {
+                query = query.or(`user_id.eq.${user.id},id.in.(${delegatedVisitIds.join(',')})`)
+            } else {
+                query = query.eq('user_id', user.id)
+            }
+        }
     }
 
-    // If default join fails, we fallback or try with explicit relation if schemas are complex
-    // Note: If you receive an error here, check if visits.user_id has a foreign key to profiles.id
     const { data, error } = await query.order('visit_date', { ascending: false })
 
     if (error) {
@@ -1484,9 +1503,16 @@ export async function getVisits(directorateId: string) {
 
     const visits = data || []
 
-    // Since direct join to profiles is missing FK in DB, fetch manually
+    // 3. Enrich with profile names (since direct join is missing FK)
     if (visits.length > 0) {
         const userIds = Array.from(new Set(visits.map((v: any) => v.user_id).filter(Boolean)))
+        
+        // Fetch delegations for these visits to mark them in UI
+        const { data: allDelegations } = await adminSupabase
+            .from('form_delegations')
+            .select('visit_id, user_id')
+            .in('visit_id', visits.map(v => v.id))
+
         const { data: profiles } = await adminSupabase
             .from('profiles')
             .select('id, full_name')
@@ -1494,14 +1520,83 @@ export async function getVisits(directorateId: string) {
 
         if (profiles) {
             const profileMap = new Map(profiles.map(p => [p.id, p.full_name]))
+            const delegationMap = new Map()
+            allDelegations?.forEach(d => {
+                if (!delegationMap.has(d.visit_id)) delegationMap.set(d.visit_id, [])
+                delegationMap.get(d.visit_id).push(d.user_id)
+            })
+
             return visits.map((v: any) => ({
                 ...v,
-                profiles: { full_name: profileMap.get(v.user_id) || "Desconhecido" }
+                profiles: { full_name: profileMap.get(v.user_id) || "Desconhecido" },
+                delegated_to: delegationMap.get(v.id) || [],
+                is_delegated: delegationMap.get(v.id)?.includes(user.id) || false
             }))
         }
     }
 
     return visits || []
+}
+
+export async function delegateVisit(visitId: string, targetUserIds: string[]) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+    
+    // Security: Only Admin or Diretor of the visit's directorate can delegate
+    const [{ data: profile }, { data: visit }] = await Promise.all([
+        adminSupabase.from('profiles').select('role, directorate_id').eq('id', user.id).single(),
+        adminSupabase.from('visits').select('directorate_id').eq('id', visitId).single()
+    ])
+
+    const isAdmin = profile?.role === 'admin'
+    const isDiretor = profile?.role === 'diretor' && profile?.directorate_id === visit?.directorate_id
+
+    if (!isAdmin && !isDiretor) {
+        throw new Error("Apenas administradores ou diretores podem delegar formulários.")
+    }
+
+    // Synchronize delegations:
+    // 1. Remove all existing delegations for this visit
+    const { error: deleteError } = await adminSupabase
+        .from('form_delegations')
+        .delete()
+        .eq('visit_id', visitId)
+
+    if (deleteError) throw new Error("Erro ao limpar delegações: " + deleteError.message)
+
+    // 2. Add new delegations
+    if (targetUserIds.length > 0) {
+        const { error: insertError } = await adminSupabase
+            .from('form_delegations')
+            .insert(targetUserIds.map(targetId => ({
+                visit_id: visitId,
+                user_id: targetId,
+                delegated_by: user.id
+            })))
+        
+        if (insertError) throw new Error("Erro ao inserir delegações: " + insertError.message)
+    }
+
+    try {
+        const { data: myProfile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: myProfile?.full_name || 'Usuário',
+            directorate_id: visit?.directorate_id,
+            action_type: 'UPDATE',
+            resource_type: 'VISIT',
+            resource_name: `Sincronização de delegação para ${targetUserIds.length} técnicos`
+        })
+    } catch (e) {
+        console.error("Log error in delegateVisit:", e)
+    }
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
 }
 
 export async function getVisitById(id: string) {
@@ -1510,6 +1605,8 @@ export async function getVisitById(id: string) {
     if (!user) throw new Error("Unauthorized")
 
     const adminSupabase = createAdminClient()
+    
+    // 1. Fetch visit first
     const { data, error } = await adminSupabase
         .from('visits')
         .select(`
@@ -1519,8 +1616,12 @@ export async function getVisitById(id: string) {
         .eq('id', id)
         .single()
 
-    if (error) {
-        console.error("Fetch Visita Detail Error:", error)
+    if (error || !data) return null
+
+    // 2. Security: Check if user has permission
+    const hasAccess = await canAccessVisit(user.id, id)
+    if (!hasAccess) {
+        console.warn(`[getVisitById] Unauthorized access attempt by ${user.email} to visit ${id}`)
         return null
     }
 
@@ -1556,7 +1657,7 @@ export async function deleteVisit(id: string) {
             const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visitToDelete.directorate_id).single()
             await logActivity({
                 user_id: user.id,
-                user_name: profile?.full_name || 'Usuário',
+                user_name: profile?.full_name || user.email || 'Admin',
                 directorate_id: visitToDelete.directorate_id,
                 directorate_name: dir?.name || 'Diretoria',
                 action_type: 'DELETE',
@@ -1736,10 +1837,7 @@ export async function saveOpinionReport(visitId: string, data: any, status: 'dra
 
     if (!visit) throw new Error("Visita não encontrada")
 
-    const isAdmin = await isAdminCheck(user.id)
-    const hasAccess = await checkUserPermission(user.id, visit.directorate_id)
-
-    if (!isAdmin && !hasAccess) {
+    if (!await canAccessVisit(user.id, visitId)) {
         throw new Error("Você não tem permissão para salvar o parecer desta visita.")
     }
 
@@ -1802,9 +1900,8 @@ export async function finalizeOpinionReport(visitId: string) {
 
     if (!visit) throw new Error("Visita não encontrada")
 
-    const isAdmin = await isAdminCheck(user.id)
-    if (!isAdmin && visit.user_id !== user.id) {
-        throw new Error("Apenas o autor ou administradores podem finalizar este parecer.")
+    if (!await canAccessVisit(user.id, visitId)) {
+        throw new Error("Apenas o autor, administradores ou usuários delegados podem finalizar este parecer.")
     }
 
     const updatedData = {
@@ -1861,10 +1958,7 @@ export async function saveParecerConclusivo(visitId: string, data: any, status: 
 
     if (!visit) throw new Error("Visita não encontrada")
 
-    const isAdmin = await isAdminCheck(user.id)
-    const hasAccess = await checkUserPermission(user.id, visit.directorate_id)
-
-    if (!isAdmin && !hasAccess) {
+    if (!await canAccessVisit(user.id, visitId)) {
         throw new Error("Você não tem permissão para salvar o parecer conclusivo desta visita.")
     }
 
@@ -1927,9 +2021,8 @@ export async function finalizeParecerConclusivo(visitId: string) {
 
     if (!visit) throw new Error("Visita não encontrada")
 
-    const isAdmin = await isAdminCheck(user.id)
-    if (!isAdmin && visit.user_id !== user.id) {
-        throw new Error("Apenas o autor ou administradores podem finalizar este parecer conclusivo.")
+    if (!await canAccessVisit(user.id, visitId)) {
+        throw new Error("Apenas o autor, administradores ou usuários delegados podem finalizar este parecer conclusivo.")
     }
 
     const updatedData = {
@@ -1986,10 +2079,7 @@ export async function saveRelatorioFinal(visitId: string, data: any, status: 'dr
 
     if (!visit) throw new Error("Visita não encontrada")
 
-    const isAdmin = await isAdminCheck(user.id)
-    const hasAccess = await checkUserPermission(user.id, visit.directorate_id)
-
-    if (!isAdmin && !hasAccess) {
+    if (!await canAccessVisit(user.id, visitId)) {
         throw new Error("Você não tem permissão para salvar o relatório final desta visita.")
     }
 
@@ -2052,9 +2142,8 @@ export async function finalizeRelatorioFinal(visitId: string) {
 
     if (!visit) throw new Error("Visita não encontrada")
 
-    const isAdmin = await isAdminCheck(user.id)
-    if (!isAdmin && visit.user_id !== user.id) {
-        throw new Error("Apenas o autor ou administradores podem finalizar este relatório final.")
+    if (!await canAccessVisit(user.id, visitId)) {
+        throw new Error("Apenas o autor, administradores ou usuários delegados podem finalizar este relatório final.")
     }
 
     const updatedData = {

@@ -39,7 +39,7 @@ export const getCachedProfile = async (userId: string) => {
         [`user-profile-${userId}`],
         {
             tags: [`user-profile-${userId}`, 'profiles'],
-            revalidate: 3600 // Cache for 1 hour
+            revalidate: 5 // Cache for 5 seconds
         }
     )()
 }

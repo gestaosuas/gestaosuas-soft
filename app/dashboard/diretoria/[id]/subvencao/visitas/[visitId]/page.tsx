@@ -3,6 +3,7 @@ import { getOSCs, getVisitById } from "@/app/dashboard/actions"
 import { getSystemSettings, getCachedDirectorate } from "@/app/dashboard/cached-data"
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
+import { canAccessVisit } from "@/lib/auth-utils"
 
 export default async function VisitaDetailPage({
     params
@@ -29,6 +30,11 @@ export default async function VisitaDetailPage({
 
     if (!visit) {
         notFound()
+    }
+
+    // Check permissions
+    if (!await canAccessVisit(user.id, visitId)) {
+        redirect(`/dashboard/diretoria/${id}/subvencao/visitas`)
     }
 
     return (

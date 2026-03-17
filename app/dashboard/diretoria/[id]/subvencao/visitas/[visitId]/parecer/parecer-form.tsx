@@ -115,12 +115,16 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
     const getOptionText = (type: string) => {
         const termText = report.term_type === 'fomento' ? "Termo de Fomento" : "Termo de Colaboração"
         const executionVerb = isEmendas ? "foi executada" : "está sendo executada"
+        const dateSuffix = (isSubvencao || isEmendas) ? "" : " até a presente data"
 
         if (type === 'fully') {
             return `constatou-se que a parceria com a entidade ${oscName} ${executionVerb} de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText}, desenvolvendo as atividades e atingindo tanto os objetivos quanto as metas qualitativas e quantitativas estabelecidas, logo, cumprindo o objeto pactuado.`
         }
-        if (type === 'partially') {
-            return `constatou-se que a parceria com a entidade ${oscName} ${executionVerb} de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText} no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado até a presente data.`
+        if (type === 'partially' || type === 'partially_quant') {
+            return `constatou-se que a parceria com a entidade ${oscName} ${executionVerb} de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText} no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas qualitativas. Entretanto, a meta quantitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado${dateSuffix}.`
+        }
+        if (type === 'partially_qual') {
+            return `constatou-se que a parceria com a entidade ${oscName} ${executionVerb} de maneira coerente com o Plano de Trabalho – Anexo I parte integrante do ${termText} no que se refere ao desenvolvimento das atividades, alcance dos objetivos e metas quantitativas. Entretanto, a meta qualitativa não foi alcançada plenamente, logo, cumprindo parcialmente o objeto pactuado${dateSuffix}.`
         }
         if (type === 'custom') {
             return `constatou-se que a parceria com a entidade ${oscName} ${report.item4_custom}`
@@ -687,13 +691,34 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                                             <span className="text-[11px] text-zinc-500">Conforme Plano de Trabalho, atividades coerentes e metas atingidas.</span>
                                         </Label>
                                     </div>
-                                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
-                                        <RadioGroupItem value="partially" id="partially" className="mt-1" />
-                                        <Label htmlFor="partially" className="cursor-pointer leading-normal">
-                                            <span className="font-bold text-amber-600 block mb-1 uppercase text-xs">Cumprimento Parcial</span>
-                                            <span className="text-[11px] text-zinc-500">Coerente nas atividades, mas meta quantitativa não alcançada.</span>
-                                        </Label>
-                                    </div>
+                                    
+                                    {(isSubvencao || isEmendas) ? (
+                                        <>
+                                            <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
+                                                <RadioGroupItem value="partially" id="partially" className="mt-1" />
+                                                <Label htmlFor="partially" className="cursor-pointer leading-normal">
+                                                    <span className="font-bold text-amber-600 block mb-1 uppercase text-xs">Cumprimento Parcial – meta quantitativa</span>
+                                                    <span className="text-[11px] text-zinc-500">Coerente nas atividades, mas meta quantitativa não alcançada.</span>
+                                                </Label>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
+                                                <RadioGroupItem value="partially_qual" id="partially_qual" className="mt-1" />
+                                                <Label htmlFor="partially_qual" className="cursor-pointer leading-normal">
+                                                    <span className="font-bold text-amber-600 block mb-1 uppercase text-xs">Cumprimento Parcial – meta qualitativa</span>
+                                                    <span className="text-[11px] text-zinc-500">Coerente nas atividades, mas meta qualitativa não alcançada.</span>
+                                                </Label>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
+                                            <RadioGroupItem value="partially" id="partially" className="mt-1" />
+                                            <Label htmlFor="partially" className="cursor-pointer leading-normal">
+                                                <span className="font-bold text-amber-600 block mb-1 uppercase text-xs">Cumprimento Parcial</span>
+                                                <span className="text-[11px] text-zinc-500">Coerente nas atividades, mas meta quantitativa não alcançada.</span>
+                                            </Label>
+                                        </div>
+                                    )}
+
                                     <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
                                         <RadioGroupItem value="custom" id="custom" className="mt-1" />
                                         <Label htmlFor="custom" className="cursor-pointer leading-normal">
