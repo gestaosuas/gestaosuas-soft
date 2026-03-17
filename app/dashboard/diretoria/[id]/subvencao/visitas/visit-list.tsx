@@ -198,7 +198,7 @@ export function VisitList({ visits, directorateId, isAdmin, isEmendas }: { visit
                                                     )}
                                                 </Button>
                                             )}
-                                            {(visit.status === 'draft' || isAdmin) && (
+                                            {isAdmin && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

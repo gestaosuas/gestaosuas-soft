@@ -1540,9 +1540,8 @@ export async function deleteVisit(id: string) {
         .delete()
         .eq('id', id)
 
-    // Only allow deletion if admin OR (owner AND draft)
     if (!isAdmin) {
-        query = query.eq('user_id', user.id).eq('status', 'draft')
+        return { error: "Apenas administradores podem excluir visitas." }
     }
 
     const { data: visitToDelete } = await adminSupabase.from('visits').select('directorate_id, visit_date').eq('id', id).single()
