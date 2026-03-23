@@ -1,13 +1,37 @@
 'use client'
 
+import * as React from "react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { 
+    Calendar, 
+    Building, 
+    FileText, 
+    Eye, 
+    Edit2, 
+    Trash2, 
+    Loader2, 
+    CheckCircle2, 
+    UserCheck, 
+    Search, 
+    Filter, 
+    FilterX, 
+    X 
+} from "lucide-react"
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, Building, FileText, Eye, Edit2, Trash2, Loader2, CheckCircle2, UserCheck } from "lucide-react"
-import { deleteVisit, revertVisitToDraft, delegateVisit } from "@/app/dashboard/actions"
-import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select"
 import {
     Dialog,
     DialogContent,
@@ -16,8 +40,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
+
+import { deleteVisit, revertVisitToDraft, delegateVisit } from "@/app/dashboard/actions"
+import { cn } from "@/lib/utils"
 
 export function VisitList({ 
     visits, 
@@ -42,6 +67,31 @@ export function VisitList({
     const [delegatingVisit, setDelegatingVisit] = useState<any | null>(null)
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
     const [isDelegating, setIsDelegating] = useState(false)
+    
+    // Filter states
+    const [oscSearch, setOscSearch] = useState("")
+    const [userSearch, setUserSearch] = useState("all")
+    const [dateStart, setDateStart] = useState("")
+    const [dateEnd, setDateEnd] = useState("")
+
+    const clearFilters = () => {
+        setOscSearch("")
+        setUserSearch("all")
+        setDateStart("")
+        setDateEnd("")
+    }
+
+    const filteredVisits = (visits || []).filter(visit => {
+        const matchesOsc = (!oscSearch || visit.oscs?.name?.toLowerCase().includes(oscSearch.toLowerCase()))
+        const matchesUser = (userSearch === "all" || visit.user_id === userSearch)
+        
+        // Date handling: normalize to YYYY-MM-DD for simple comparison
+        const visitDateStr = visit.visit_date?.split('T')[0]
+        const matchesStart = !dateStart || (visitDateStr && visitDateStr >= dateStart)
+        const matchesEnd = !dateEnd || (visitDateStr && visitDateStr <= dateEnd)
+        
+        return matchesOsc && matchesUser && matchesStart && matchesEnd
+    })
 
     const toggleUser = (userId: string) => {
         setSelectedUserIds(prev => 
@@ -99,18 +149,86 @@ export function VisitList({
 
     return (
         <Card className="border-none shadow-2xl shadow-blue-900/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2rem] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            <CardHeader className="p-8 pb-6">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400 rounded-2xl">
-                        <FileText className="h-6 w-6" />
+            <CardHeader className="p-8 pb-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400 rounded-2xl">
+                            <FileText className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-50 tracking-tight">
+                                Últimas Visitas Realizadas
+                            </CardTitle>
+                            <p className="text-sm font-medium text-zinc-500">
+                                Registro de monitoramento e avaliação
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-50 tracking-tight">
-                            Últimas Visitas Realizadas
-                        </CardTitle>
-                        <p className="text-sm font-medium text-zinc-500">
-                            Registro de monitoramento e avaliação
-                        </p>
+
+                    <div className="flex flex-wrap items-center gap-3 bg-zinc-50 dark:bg-zinc-950 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                        {/* OSC Filter */}
+                        <div className="relative min-w-[200px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                            <Input 
+                                placeholder="Filtrar por OSC..." 
+                                value={oscSearch}
+                                onChange={(e) => setOscSearch(e.target.value)}
+                                className="h-9 pl-9 pr-8 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-bold rounded-xl w-full"
+                            />
+                            {oscSearch && (
+                                <button 
+                                    onClick={() => setOscSearch("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* User Filter */}
+                        <div className="min-w-[150px]">
+                            <Select value={userSearch} onValueChange={setUserSearch}>
+                                <SelectTrigger className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-bold rounded-xl">
+                                    <SelectValue placeholder="Por Usuário" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                    <SelectItem value="all" className="text-[11px] font-bold">Todos Usuários</SelectItem>
+                                    {availableUsers?.map(u => (
+                                        <SelectItem key={u.id} value={u.id} className="text-[11px] font-bold">{u.full_name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Date Period Filter */}
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                type="date"
+                                title="Data Inicial"
+                                value={dateStart}
+                                onChange={(e) => setDateStart(e.target.value)}
+                                className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[10px] font-bold rounded-xl uppercase"
+                            />
+                            <span className="text-zinc-400 text-xs text font-bold">até</span>
+                            <Input 
+                                type="date"
+                                title="Data Final"
+                                value={dateEnd}
+                                onChange={(e) => setDateEnd(e.target.value)}
+                                className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[10px] font-bold rounded-xl uppercase"
+                            />
+                        </div>
+
+                        {(oscSearch || userSearch !== "all" || dateStart || dateEnd) && (
+                            <Button 
+                                variant="ghost" 
+                                onClick={clearFilters}
+                                className="h-9 px-3 text-[10px] font-black uppercase text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                            >
+                                <FilterX className="h-3.5 w-3.5 mr-2" />
+                                Limpar
+                            </Button>
+                        )}
                     </div>
                 </div>
             </CardHeader>
@@ -118,19 +236,25 @@ export function VisitList({
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="border-zinc-100 dark:border-zinc-800 hover:bg-transparent">
-                                <TableHead className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Data e OSC</TableHead>
+                            <TableRow className="border-zinc-100 dark:border-zinc-800 hover:bg-transparent text-[11px] font-black uppercase tracking-widest text-zinc-400/80">
+                                <TableHead className="px-8 py-4">Data e OSC</TableHead>
                                 {isEmendas && (
-                                    <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Identificador</TableHead>
+                                    <TableHead className="py-4 font-black">Identificador</TableHead>
                                 )}
-                                <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Técnicos Responsáveis</TableHead>
-                                <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Status</TableHead>
-                                <TableHead className="py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400">Registrado por</TableHead>
-                                <TableHead className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-zinc-400 text-right">Ações</TableHead>
+                                <TableHead className="py-4 font-black">Técnicos</TableHead>
+                                <TableHead className="py-4 font-black">Status</TableHead>
+                                <TableHead className="py-4 font-black">Registrado por</TableHead>
+                                <TableHead className="px-8 py-4 text-right font-black">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {visits.map((visit) => (
+                            {filteredVisits.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-32 text-center text-zinc-500 font-medium">
+                                        Nenhuma visita encontrada para os filtros aplicados.
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredVisits.map((visit) => (
                                 <TableRow key={visit.id} className="border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors group">
                                     <TableCell className="px-8 py-6">
                                         <div className="flex flex-col gap-1">

@@ -580,13 +580,26 @@ export function VisitForm({
     const totalPresentes = (Number(atendimento.presentes.manha) || 0) + (Number(atendimento.presentes.tarde) || 0)
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700 print:max-w-full print:p-0 print:m-0 print:space-y-4 print:min-h-screen print:flex print:flex-col">
+        <div className="max-w-5xl mx-auto space-y-6 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700 print:max-w-full print:p-0 print:m-0 print:space-y-4 print:min-h-screen print:flex print:flex-col print:animate-none print:opacity-100">
 
             <style jsx global>{`
                 @media print {
+                    @page {
+                        margin: 15mm;
+                        size: A4;
+                    }
                     .no-print { display: none !important; }
-                    body { background: white !important; padding: 0 !important; margin: 0 !important; font-family: 'Inter', sans-serif !important; }
+                    body { 
+                        background: white !important; 
+                        padding: 0 !important; 
+                        margin: 0 !important; 
+                        font-family: 'Inter', sans-serif !important; 
+                        overflow: visible !important;
+                    }
                     .print-section { 
+                        display: block !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
                         break-inside: avoid !important; 
                         page-break-inside: avoid !important;
                         margin-bottom: 20px !important;
@@ -594,10 +607,21 @@ export function VisitForm({
                         border: none !important;
                         box-shadow: none !important;
                     }
+                    /* Ensure hidden print:block elements actually show */
+                    .hidden.print\:block, 
+                    .hidden.print\:flex { 
+                        display: block !important; 
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    }
+                    .hidden.print\:flex {
+                        display: flex !important;
+                    }
                     .report-container {
                         max-width: 100% !important;
                         padding: 0 !important;
                         margin: 0 !important;
+                        display: block !important;
                     }
                     .report-field {
                         display: flex;
@@ -635,19 +659,27 @@ export function VisitForm({
                     }
                     .report-container {
                         color: #000 !important;
+                        display: block !important;
                     }
                     table { 
                         width: 100% !important;
                         border-collapse: collapse !important;
+                        table-layout: auto !important;
                     }
                     th, td { 
                         border: 0.5px solid #000 !important;
                         padding: 4px 8px !important;
                         font-size: 10px !important;
+                        color: black !important;
                     }
                     thead th {
                         background-color: #f9f9f9 !important;
                         -webkit-print-color-adjust: exact !important;
+                    }
+                    .animate-in {
+                        animation: none !important;
+                        opacity: 1 !important;
+                        transform: none !important;
                     }
                 }
                 .locked-report h2, .locked-report h3 {
@@ -679,6 +711,12 @@ export function VisitForm({
                         margin-top: auto !important;
                         padding-top: 20px !important;
                         padding-bottom: 40px !important;
+                        break-inside: avoid !important;
+                    }
+                    /* Force background colors to print */
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        color-adjust: exact !important;
                     }
                 }
             `}</style>
@@ -1918,7 +1956,7 @@ export function VisitForm({
                 )}>ASSINATURAS</h2>
 
                 <div className={cn(
-                    "grid grid-cols-1 md:grid-cols-3 gap-8",
+                    "grid grid-cols-2 gap-8",
                     isLocked && "pt-4"
                 )}>
                     <div className="space-y-2">

@@ -222,19 +222,18 @@ export default function RelatorioFinalForm() {
                     Voltar para Listagem
                 </Link>
 
-                <div className="flex gap-3">
-                    {isFinalized && (
-                        <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px]">
-                            <Printer className="h-4 w-4" /> Imprimir
-                        </Button>
-                    )}
+                <div className="flex gap-5 items-center">
+                    <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px] border-zinc-200 hover:bg-zinc-50 transition-colors">
+                        <Printer className="h-4 w-4" /> Imprimir
+                    </Button>
+                    
                     {!isFinalized && (
-                        <>
+                        <div className="flex gap-3 border-l pl-5 border-zinc-100">
                             <Button
                                 variant="outline"
                                 onClick={() => handleSave('draft')}
                                 disabled={saving || finalizing}
-                                className="gap-2 font-bold uppercase text-[10px]"
+                                className="gap-2 font-bold uppercase text-[10px] border-zinc-200"
                             >
                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Salvar Rascunho
@@ -242,15 +241,61 @@ export default function RelatorioFinalForm() {
                             <Button
                                 onClick={() => handleSave('finalized')}
                                 disabled={saving || finalizing}
-                                className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold uppercase text-[10px]"
+                                className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold uppercase text-[10px] px-6"
                             >
                                 {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                                 Finalizar Relatório
                             </Button>
-                        </>
+                        </div>
+                    )}
+                    {isFinalized && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-xl border border-green-100">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Relatório Finalizado e Bloqueado</span>
+                        </div>
                     )}
                 </div>
             </div>
+
+            <style jsx global>{`
+                @media print {
+                    @page {
+                        margin: 1.5cm;
+                        size: A4;
+                    }
+                    .no-print, .print\\:hidden { display: none !important; }
+                    body { 
+                        background: white !important; 
+                        padding: 0 !important; 
+                        margin: 0 !important; 
+                        overflow: visible !important;
+                    }
+                    main {
+                        overflow: visible !important;
+                        height: auto !important;
+                    }
+                    .container {
+                        max-width: none !important;
+                        width: 100% !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .shadow-xl, .shadow-none {
+                        box-shadow: none !important;
+                    }
+                    .border {
+                        border-color: #eee !important;
+                    }
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        animation: none !important;
+                    }
+                    .break-before-page {
+                        break-before: page !important;
+                    }
+                }
+            `}</style>
 
             <Card className="border-none shadow-xl print:shadow-none bg-white rounded-2xl overflow-hidden">
                 <CardContent className="p-12 space-y-12 print:p-8">
@@ -442,7 +487,7 @@ export default function RelatorioFinalForm() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-4xl mx-auto">
+                        <div className="grid grid-cols-2 gap-12 pt-8 max-w-4xl mx-auto">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b-2 border-zinc-300 print:border-zinc-800 min-h-[120px] relative">
                                     <SignaturePad
@@ -508,7 +553,7 @@ export default function RelatorioFinalForm() {
                     </div>
 
                     {/* Section: HOMOLOGAÇÃO */}
-                    <section className="pt-16 space-y-12 border-t-4 border-double border-zinc-100 mt-20 break-before-page">
+                    <section className="pt-8 space-y-12 border-t-4 border-double border-zinc-100 mt-20 break-before-page">
                         <div className="space-y-6 text-center max-w-3xl mx-auto">
                             <h2 className="text-lg font-black text-blue-900 uppercase underline underline-offset-8">Homologação da Comissão de Monitoramento e Avaliação</h2>
                             <Textarea 
@@ -528,7 +573,7 @@ export default function RelatorioFinalForm() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-4xl mx-auto">
+                        <div className="grid grid-cols-2 gap-12 pt-8 max-w-4xl mx-auto">
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="w-full border-b-2 border-zinc-300 print:border-zinc-800 min-h-[120px] relative">
                                     <SignaturePad

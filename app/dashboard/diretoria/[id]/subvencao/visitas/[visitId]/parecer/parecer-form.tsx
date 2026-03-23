@@ -195,21 +195,20 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
             <style>{`
                 @media print {
                     @page { 
-                        margin: 2cm;
-                        size: auto;
+                        margin: 1.5cm;
+                        size: A4;
                     }
                     
-                    /* Aggressive reset for all parent containers */
-                    html, body, #__next, main, [role="main"], .report-print-root-wrapper {
+                    .no-print { display: none !important; }
+
+                    /* Reset for all parent containers to ensure visibility */
+                    html, body, main, .report-print-root-wrapper {
                         height: auto !important;
                         overflow: visible !important;
                         display: block !important;
                         background: white !important;
-                    }
-
-                    /* Hide everything else */
-                    body > *:not(.report-print-root-wrapper) {
-                        display: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
                     }
 
                     .report-container-flat {
@@ -220,12 +219,15 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                         padding: 0 !important;
                         box-shadow: none !important;
                         border: none !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
                     }
 
                     /* Fix for potential blank page issue */
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
+                        animation: none !important;
                     }
                 }
             `}</style>
@@ -237,17 +239,22 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                 <Button variant="ghost" onClick={() => isPreview ? setIsPreview(false) : router.back()} className="gap-2 font-bold uppercase text-[10px] text-zinc-500">
                     <ArrowLeft className="h-4 w-4" /> {isPreview ? "Voltar para Edição" : "Voltar"}
                 </Button>
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
                     {!isPreview ? (
-                        <Button variant="outline" onClick={() => setIsPreview(true)} className="gap-2 font-bold uppercase text-[10px] border-zinc-200">
-                            <Printer className="h-4 w-4" /> Visualizar
-                        </Button>
+                        <>
+                            <Button variant="outline" onClick={() => setIsPreview(true)} className="gap-2 font-bold uppercase text-[10px] border-blue-100 text-blue-700 bg-blue-50/50 hover:bg-blue-100">
+                                <Printer className="h-4 w-4" /> Visualizar
+                            </Button>
+                            <Button variant="outline" onClick={() => window.print()} className="gap-2 font-bold uppercase text-[10px] border-zinc-200">
+                                <Printer className="h-4 w-4" /> Imprimir
+                            </Button>
+                        </>
                     ) : (
                         <>
                             <Button variant="outline" onClick={() => setIsPreview(false)} className="gap-2 font-bold uppercase text-[10px] border-zinc-200">
                                 <ArrowLeft className="h-4 w-4" /> Editar
                             </Button>
-                            <Button variant="outline" onClick={() => window.print()} className="gap-2 font-bold uppercase text-[10px] border-zinc-200">
+                            <Button variant="outline" onClick={() => window.print()} className="gap-2 font-bold uppercase text-[10px] border-green-200 text-green-700 bg-green-50/50 hover:bg-green-100">
                                 <Printer className="h-4 w-4" /> Imprimir
                             </Button>
                         </>
@@ -749,8 +756,8 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                     </section>
 
 
-                    <section className="pt-20 break-inside-avoid print:break-inside-avoid">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
+                    <section className="pt-8 break-inside-avoid print:break-inside-avoid">
+                        <div className="grid grid-cols-2 gap-12 max-w-4xl mx-auto">
                             <div className="space-y-4 flex flex-col items-center">
                                 {!isPreview && !isFinalized && (
                                     <div className="no-print w-full space-y-2">

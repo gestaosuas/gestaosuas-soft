@@ -187,6 +187,7 @@
   header,
   button,
   .print-hidden,
+  .no-print,
   form,
   .fixed:not(.print-only-container),
   .absolute:not(.print-only-container) {
@@ -256,5 +257,15 @@
     page-break-inside: avoid;
     break-inside: avoid;
     margin-bottom: 20px;
+  }
+
+  /* Reset animations for print */
+  .animate-in,
+  [data-state="open"],
+  [data-state="closed"] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }

@@ -1528,7 +1528,10 @@ export async function getVisits(directorateId: string) {
 
             return visits.map((v: any) => ({
                 ...v,
-                profiles: { full_name: profileMap.get(v.user_id) || "Desconhecido" },
+                profiles: { 
+                    id: v.user_id,
+                    full_name: profileMap.get(v.user_id) || "Desconhecido" 
+                },
                 delegated_to: delegationMap.get(v.id) || [],
                 is_delegated: delegationMap.get(v.id)?.includes(user.id) || false
             }))

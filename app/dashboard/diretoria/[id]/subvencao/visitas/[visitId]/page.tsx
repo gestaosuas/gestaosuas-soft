@@ -38,7 +38,7 @@ export default async function VisitaDetailPage({
     }
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="container mx-auto py-8 print:max-w-full print:p-0 print:m-0">
             <VisitForm
                 directorateId={id}
                 directorateName={directorateName}
