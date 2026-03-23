@@ -108,6 +108,20 @@ export default function ParecerConclusivoForm() {
         fetchData()
     }, [visitId])
 
+    useEffect(() => {
+        if (!loading && typeof window !== 'undefined') {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('print') === 'true') {
+                setTimeout(() => {
+                    window.print();
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('print');
+                    window.history.replaceState({}, '', url.toString());
+                }, 1000);
+            }
+        }
+    }, [loading])
+
     const handleSave = async (status: 'draft' | 'finalized' = 'draft') => {
         if (status === 'finalized') {
             if (!formData.tecnico_nome || !formData.signature_tecnico) {
@@ -174,8 +188,18 @@ export default function ParecerConclusivoForm() {
     }
 
     return (
-        <div className="container mx-auto py-8 space-y-8 max-w-5xl print:p-0 print:max-w-none">
-            <div className="flex items-center justify-between print:hidden">
+        <div className="container mx-auto py-8 space-y-8 max-w-5xl print:p-0 print:max-w-none print:m-0">
+            <style>{`
+                @media print {
+                    @page { margin: 1.5cm; size: A4; }
+                    .no-print, .print\\:hidden { display: none !important; }
+                    .Card { border: none !important; shadow: none !important; background: transparent !important; }
+                    .CardContent { padding: 0 !important; }
+                    .container { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                }
+            `}</style>
+            <div className="flex items-center justify-between no-print">
                 <Link
                     href={`/dashboard/diretoria/${id}/subvencao/relatorio-final`}
                     className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors w-fit"
@@ -184,12 +208,10 @@ export default function ParecerConclusivoForm() {
                     Voltar para Listagem
                 </Link>
 
-                <div className="flex gap-3">
-                    {isFinalized && (
-                        <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px]">
-                            <Printer className="h-4 w-4" /> Imprimir
-                        </Button>
-                    )}
+                <div className="flex gap-3 no-print">
+                    <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px] border-zinc-200">
+                        <Printer className="h-4 w-4" /> Imprimir
+                    </Button>
                     {!isFinalized && (
                         <>
                             <Button
@@ -301,34 +323,49 @@ export default function ParecerConclusivoForm() {
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">2. FUNDAMENTAÇÃO</h2>
                         </div>
                         <div className="space-y-4">
-                            <Textarea
-                                value={formData.fundamentacao}
-                                onChange={e => setFormData({ ...formData, fundamentacao: e.target.value })}
-                                readOnly={isFinalized}
-                                placeholder="Digite a fundamentação técnica..."
-                                className="min-h-[150px] border-zinc-200"
-                            />
+                            <div className="print:hidden">
+                                <Textarea
+                                    value={formData.fundamentacao}
+                                    onChange={e => setFormData({ ...formData, fundamentacao: e.target.value })}
+                                    readOnly={isFinalized}
+                                    placeholder="Digite a fundamentação técnica..."
+                                    className="min-h-[150px] border-zinc-200"
+                                />
+                            </div>
+                            <div className="hidden print:block whitespace-pre-wrap font-bold border-b border-dotted border-black pb-2 min-h-[80px]">
+                                {formData.fundamentacao || "________________________________________________________________________________________________________________________________________________________________"}
+                            </div>
 
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs">a) Quanto ao cumprimento do objeto:</Label>
-                                <Textarea
-                                    value={formData.cumprimento_objeto}
-                                    onChange={e => setFormData({ ...formData, cumprimento_objeto: e.target.value })}
-                                    readOnly={isFinalized}
-                                    placeholder="Descreva o cumprimento do objeto..."
-                                    className="min-h-[100px] border-zinc-200"
-                                />
+                                <div className="print:hidden">
+                                    <Textarea
+                                        value={formData.cumprimento_objeto}
+                                        onChange={e => setFormData({ ...formData, cumprimento_objeto: e.target.value })}
+                                        readOnly={isFinalized}
+                                        placeholder="Descreva o cumprimento do objeto..."
+                                        className="min-h-[100px] border-zinc-200"
+                                    />
+                                </div>
+                                <div className="hidden print:block whitespace-pre-wrap font-bold border-b border-dotted border-black pb-2 min-h-[50px]">
+                                    {formData.cumprimento_objeto || "________________________________________________________________________________________________________________________________________________________________"}
+                                </div>
                             </div>
 
                             <div className="space-y-2">
                                 <Label className="text-zinc-700 font-black uppercase text-xs">b) Quanto aos benefícios e impactos da parceria:</Label>
-                                <Textarea
-                                    value={formData.beneficios_impactos}
-                                    onChange={e => setFormData({ ...formData, beneficios_impactos: e.target.value })}
-                                    readOnly={isFinalized}
-                                    placeholder="Descreva os benefícios e impactos..."
-                                    className="min-h-[100px] border-zinc-200"
-                                />
+                                <div className="print:hidden">
+                                    <Textarea
+                                        value={formData.beneficios_impactos}
+                                        onChange={e => setFormData({ ...formData, beneficios_impactos: e.target.value })}
+                                        readOnly={isFinalized}
+                                        placeholder="Descreva os benefícios e impactos..."
+                                        className="min-h-[100px] border-zinc-200"
+                                    />
+                                </div>
+                                <div className="hidden print:block whitespace-pre-wrap font-bold border-b border-dotted border-black pb-2 min-h-[50px]">
+                                    {formData.beneficios_impactos || "________________________________________________________________________________________________________________________________________________________________"}
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -339,13 +376,18 @@ export default function ParecerConclusivoForm() {
                             <div className="h-6 w-1 bg-blue-600 rounded-full" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">3. CONCLUSÃO</h2>
                         </div>
-                        <Textarea
-                            value={formData.conclusao}
-                            onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
-                            readOnly={isFinalized}
-                            placeholder="Digite a conclusão final..."
-                            className="min-h-[150px] border-zinc-200"
-                        />
+                        <div className="print:hidden">
+                            <Textarea
+                                value={formData.conclusao}
+                                onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
+                                readOnly={isFinalized}
+                                placeholder="Digite a conclusão final..."
+                                className="min-h-[150px] border-zinc-200"
+                            />
+                        </div>
+                        <div className="hidden print:block whitespace-pre-wrap font-bold border-b border-dotted border-black pb-2 min-h-[80px]">
+                            {formData.conclusao || "________________________________________________________________________________________________________________________________________________________________"}
+                        </div>
                     </section>
 
                     {/* Footer - Date and Signatures */}

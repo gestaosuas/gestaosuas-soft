@@ -48,6 +48,20 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
     useEffect(() => {
         setIsMounted(true)
     }, [])
+
+    useEffect(() => {
+        if (isMounted && typeof window !== 'undefined') {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('print') === 'true') {
+                setTimeout(() => {
+                    window.print();
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('print');
+                    window.history.replaceState({}, '', url.toString());
+                }, 1000);
+            }
+        }
+    }, [isMounted])
     const [saveConfirmation, setSaveConfirmation] = useState<{ isOpen: boolean; finalize: boolean }>({
         isOpen: false,
         finalize: false
@@ -310,10 +324,40 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                     </div>
                 </div>
 
-                {/* Identification Info (No header as per request) */}
-                <div className="grid grid-cols-1 gap-2 mb-8 text-sm">
-                    <p><strong>OSC:</strong> {oscName}</p>
-                    <p><strong>DATA DE PREENCHIMENTO:</strong> {isMounted ? today : "---"}</p>
+                {/* Identification Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 mb-8 text-[12px] border-zinc-100 pb-6 print:border-none">
+                    <div className="space-y-3">
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">OSC:</strong> 
+                            <span className="text-right flex-1 ml-2 truncate font-bold">{oscName}</span>
+                        </p>
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">CNPJ:</strong> 
+                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.cnpj || "---"}</span>
+                        </p>
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">Recurso:</strong> 
+                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.emenda || "---"}</span>
+                        </p>
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">Nº Termo:</strong> 
+                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.termo_fomento || "---"}</span>
+                        </p>
+                    </div>
+                    <div className="space-y-3">
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">Vigência:</strong> 
+                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.vigencia || "---"}</span>
+                        </p>
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">Valor por lei e repassado:</strong> 
+                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.valor_autorizado || "---"}</span>
+                        </p>
+                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
+                            <strong className="uppercase">Data Preenchimento:</strong> 
+                            <span className="text-right flex-1 ml-2 font-bold">{isMounted ? today : "---"}</span>
+                        </p>
+                    </div>
                 </div>
 
                 <div className="space-y-10 text-justify leading-relaxed text-sm">
@@ -325,7 +369,7 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                             )}>1. Objeto do relatório</h2>
                             <p className="text-[10px] text-zinc-500 italic">Colocar o mesmo objeto do Plano de Trabalho (Objetivo e especificação do nome do projeto)</p>
                         </div>
-                        {!isPreview && !isFinalized && (
+                        {!isFinalized && !isPreview && (
                             <div className="no-print">
                                 <Textarea autoResize
                                     readOnly={true}
@@ -338,7 +382,7 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                         )}
                         {(isPreview || isFinalized || isMounted) && (
                             <div className={cn(
-                                "whitespace-pre-wrap min-h-[60px] border-b border-dotted border-zinc-300",
+                                "whitespace-pre-wrap min-h-[60px] border-b border-dotted border-zinc-300 font-bold",
                                 (isPreview || isFinalized) ? "block" : "hidden print:block"
                             )}>
                                 {report.objeto_relatorio || "________________________________________________________________________________________________________________________________________________________________"}
@@ -441,7 +485,7 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                         )}
                         {(isPreview || isFinalized || isMounted) && (
                             <div className={cn(
-                                "whitespace-pre-wrap min-h-[100px] border-b border-dotted border-zinc-300",
+                                "whitespace-pre-wrap min-h-[100px] border-b border-dotted border-zinc-300 font-bold",
                                 (isPreview || isFinalized) ? "block" : "hidden print:block"
                             )}>
                                 {report.item3_resultados || "____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________"}
@@ -505,67 +549,87 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                                                 {report.item5_qualitativos.map((row: any, idx: number) => (
                                                     <TableRow key={idx} className="border-b border-black hover:bg-transparent h-10">
                                                         <TableCell className="p-0 border-r border-black w-24">
-                                                            {!isPreview && !isFinalized ? (
-                                                                <Input
-                                                                    className="border-none text-center text-xs h-10 w-full rounded-none focus-visible:ring-0"
-                                                                    value={row.data}
-                                                                    onChange={e => {
-                                                                        const newQ = [...report.item5_qualitativos]
-                                                                        newQ[idx].data = e.target.value
-                                                                        setReport({ ...report, item5_qualitativos: newQ })
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <div className="text-center text-xs px-1 font-bold">{row.data}</div>
-                                                            )}
+                                                            <div className="print:hidden">
+                                                                {!isPreview && !isFinalized ? (
+                                                                    <Input
+                                                                        className="border-none text-center text-xs h-10 w-full rounded-none focus-visible:ring-0"
+                                                                        value={row.data}
+                                                                        onChange={e => {
+                                                                            const newQ = [...report.item5_qualitativos]
+                                                                            newQ[idx].data = e.target.value
+                                                                            setReport({ ...report, item5_qualitativos: newQ })
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="text-center text-xs px-1 font-bold">{row.data}</div>
+                                                                )}
+                                                            </div>
+                                                            <div className="hidden print:block text-center text-xs px-1 font-bold">
+                                                                {row.data || "---"}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="p-0 border-r border-black">
-                                                            {!isPreview && !isFinalized ? (
-                                                                <Textarea
-                                                                    autoResize
-                                                                    className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
-                                                                    value={row.situacao}
-                                                                    onChange={e => {
-                                                                        const newQ = [...report.item5_qualitativos]
-                                                                        newQ[idx].situacao = e.target.value
-                                                                        setReport({ ...report, item5_qualitativos: newQ })
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.situacao}</div>
-                                                            )}
+                                                            <div className="print:hidden">
+                                                                {!isPreview && !isFinalized ? (
+                                                                    <Textarea
+                                                                        autoResize
+                                                                        className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
+                                                                        value={row.situacao}
+                                                                        onChange={e => {
+                                                                            const newQ = [...report.item5_qualitativos]
+                                                                            newQ[idx].situacao = e.target.value
+                                                                            setReport({ ...report, item5_qualitativos: newQ })
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.situacao}</div>
+                                                                )}
+                                                            </div>
+                                                            <div className="hidden print:block text-xs py-2 px-1 whitespace-pre-wrap font-bold">
+                                                                {row.situacao || "---"}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="p-0 border-r border-black">
-                                                            {!isPreview && !isFinalized ? (
-                                                                <Textarea
-                                                                    autoResize
-                                                                    className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
-                                                                    value={row.recomendacoes}
-                                                                    onChange={e => {
-                                                                        const newQ = [...report.item5_qualitativos]
-                                                                        newQ[idx].recomendacoes = e.target.value
-                                                                        setReport({ ...report, item5_qualitativos: newQ })
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.recomendacoes}</div>
-                                                            )}
+                                                            <div className="print:hidden">
+                                                                {!isPreview && !isFinalized ? (
+                                                                    <Textarea
+                                                                        autoResize
+                                                                        className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
+                                                                        value={row.recomendacoes}
+                                                                        onChange={e => {
+                                                                            const newQ = [...report.item5_qualitativos]
+                                                                            newQ[idx].recomendacoes = e.target.value
+                                                                            setReport({ ...report, item5_qualitativos: newQ })
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.recomendacoes}</div>
+                                                                )}
+                                                            </div>
+                                                            <div className="hidden print:block text-xs py-2 px-1 whitespace-pre-wrap font-bold">
+                                                                {row.recomendacoes || "---"}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="p-0">
-                                                            {!isPreview && !isFinalized ? (
-                                                                <Textarea
-                                                                    autoResize
-                                                                    className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
-                                                                    value={row.observacao}
-                                                                    onChange={e => {
-                                                                        const newQ = [...report.item5_qualitativos]
-                                                                        newQ[idx].observacao = e.target.value
-                                                                        setReport({ ...report, item5_qualitativos: newQ })
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.observacao}</div>
-                                                            )}
+                                                            <div className="print:hidden">
+                                                                {!isPreview && !isFinalized ? (
+                                                                    <Textarea
+                                                                        autoResize
+                                                                        className="border-none text-xs min-h-[40px] w-full rounded-none focus-visible:ring-0 resize-none py-2 px-1"
+                                                                        value={row.observacao}
+                                                                        onChange={e => {
+                                                                            const newQ = [...report.item5_qualitativos]
+                                                                            newQ[idx].observacao = e.target.value
+                                                                            setReport({ ...report, item5_qualitativos: newQ })
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="text-xs py-2 px-1 whitespace-pre-wrap font-bold">{row.observacao}</div>
+                                                                )}
+                                                            </div>
+                                                            <div className="hidden print:block text-xs py-2 px-1 whitespace-pre-wrap font-bold">
+                                                                {row.observacao || "---"}
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}

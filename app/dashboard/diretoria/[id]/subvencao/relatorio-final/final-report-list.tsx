@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { delegateVisit } from "@/app/dashboard/actions"
@@ -44,10 +45,51 @@ export function FinalReportList({
         )
     }
 
+    const [oscSearch, setOscSearch] = useState("")
+    
+    const filteredVisits = visits.filter(visit => 
+        !oscSearch || visit.oscs?.name?.toLowerCase().includes(oscSearch.toLowerCase())
+    )
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visits.length > 0 ? (
-                visits.map((visit: any) => (
+        <div className="space-y-6">
+            <div className="no-print bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center gap-4">
+                <div className="relative flex-1 min-w-[300px]">
+                    <Input
+                        placeholder="Filtrar por nome da OSC..."
+                        value={oscSearch}
+                        onChange={(e) => setOscSearch(e.target.value)}
+                        className="pl-10 h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
+                    />
+                    <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                </div>
+                {oscSearch && (
+                    <Button 
+                        variant="ghost" 
+                        onClick={() => setOscSearch("")}
+                        className="h-11 px-6 text-xs font-bold uppercase text-zinc-500 hover:text-red-600"
+                    >
+                        Limpar Filtro
+                    </Button>
+                )}
+            </div>
+
+            <style>{`
+                @media print {
+                    .no-print { display: none !important; }
+                    .grid { display: block !important; }
+                    .Card { 
+                        break-inside: avoid !important; 
+                        margin-bottom: 2rem !important;
+                        border: 1px solid #eee !important;
+                        box-shadow: none !important;
+                    }
+                }
+            `}</style>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredVisits.length > 0 ? (
+                    filteredVisits.map((visit: any) => (
                     <Card key={visit.id} className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-3xl group hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                         <CardHeader className="p-8 pb-4">
                             <div className="flex justify-between items-start mb-6">
@@ -90,24 +132,47 @@ export function FinalReportList({
                         </CardHeader>
                         <CardContent className="p-8 pt-4">
                             <div className="flex flex-col gap-3">
-                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`} className="w-full">
-                                    <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all">
-                                        <FileText className="h-4 w-4" />
-                                        Instrumental da Visita
-                                    </Button>
-                                </Link>
-                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`} className="w-full">
-                                    <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 hover:text-white">
-                                        <FileCheck className="h-4 w-4" />
-                                        Relatório Final
-                                    </Button>
-                                </Link>
-                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`} className="w-full">
-                                    <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 hover:text-white">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        Parecer Conclusivo
-                                    </Button>
-                                </Link>
+                                <div className="flex gap-2 w-full">
+                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`} className="flex-1">
+                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all">
+                                            <FileText className="h-4 w-4" />
+                                            Instrumental
+                                        </Button>
+                                    </Link>
+                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer?print=true`} className="shrink-0">
+                                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-zinc-200 hover:bg-zinc-100 text-zinc-500">
+                                            <Printer className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                </div>
+
+                                <div className="flex gap-2 w-full">
+                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`} className="flex-1">
+                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 hover:text-white">
+                                            <FileCheck className="h-4 w-4" />
+                                            Relatório Final
+                                        </Button>
+                                    </Link>
+                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final?print=true`} className="shrink-0">
+                                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-zinc-200 hover:bg-green-50 text-green-600">
+                                            <Printer className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                </div>
+
+                                <div className="flex gap-2 w-full">
+                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`} className="flex-1">
+                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 hover:text-white">
+                                            <CheckCircle2 className="h-4 w-4" />
+                                            Parecer Conclusivo
+                                        </Button>
+                                    </Link>
+                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo?print=true`} className="shrink-0">
+                                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-zinc-200 hover:bg-blue-50 text-blue-900">
+                                            <Printer className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -119,6 +184,7 @@ export function FinalReportList({
                     </CardContent>
                 </Card>
             )}
+            </div>
 
             {/* Delegation Dialog */}
             <Dialog open={!!delegatingVisit} onOpenChange={(open) => !open && setDelegatingVisit(null)}>
