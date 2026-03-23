@@ -814,3 +814,7 @@ Para dúvidas, problemas ou sugestões:
 ---
 
 **Desenvolvido com ❤️ para a Assistência Social**
+
+---
+
+<!-- Deploy trigger: 2026-03-23 13:51 -->
