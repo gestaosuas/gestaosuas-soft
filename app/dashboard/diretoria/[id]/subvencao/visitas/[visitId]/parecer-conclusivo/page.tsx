@@ -34,21 +34,23 @@ interface FormData {
 }
 
 // Helper components for professional print display
-const PrintField = ({ label, value, className }: { label: string, value: string, className?: string }) => (
+const PrintField = ({ label, value, children, className }: { label: string, value: string, children?: React.ReactNode, className?: string }) => (
     <div className={cn("space-y-1 print:space-y-0 print:border-b print:border-zinc-100 print:pb-1", className)}>
         <Label className="text-zinc-500 uppercase text-[10px] font-black print:text-zinc-400 print:text-[8px]">{label}</Label>
         <div className="hidden print:block text-sm font-semibold text-zinc-900 leading-tight">
             {value || "---"}
         </div>
+        {children}
     </div>
 )
 
-const PrintTextArea = ({ label, value, className }: { label: string, value: string, className?: string }) => (
+const PrintTextArea = ({ label, value, children, className }: { label: string, value: string, children?: React.ReactNode, className?: string }) => (
     <div className={cn("space-y-2", className)}>
         {label && <Label className="text-zinc-700 font-black uppercase text-xs print:text-[10px] print:text-zinc-800">{label}</Label>}
         <div className="hidden print:block text-sm text-zinc-800 leading-relaxed text-justify whitespace-pre-wrap">
             {value || "---"}
         </div>
+        {children}
     </div>
 )
 
