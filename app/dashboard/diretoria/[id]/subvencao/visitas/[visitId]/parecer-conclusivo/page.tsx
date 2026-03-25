@@ -185,11 +185,9 @@ export default function ParecerConclusivoForm() {
                 </Link>
 
                 <div className="flex gap-3">
-                    {isFinalized && (
-                        <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px]">
-                            <Printer className="h-4 w-4" /> Imprimir
-                        </Button>
-                    )}
+                    <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px]">
+                        <Printer className="h-4 w-4" /> Imprimir
+                    </Button>
                     {!isFinalized && (
                         <>
                             <Button
