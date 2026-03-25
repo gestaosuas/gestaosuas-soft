@@ -269,7 +269,7 @@ export default function ParecerConclusivoForm() {
                     </div>
 
                     {/* Section 1: DADOS DA PARCERIA */}
-                    <section className="space-y-6 print:space-y-4">
+                    <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
                         <div className="flex items-center gap-3 print:gap-2">
                             <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">1. DADOS DA PARCERIA</h2>
@@ -370,7 +370,7 @@ export default function ParecerConclusivoForm() {
                     </section>
 
                     {/* Section 3: CONCLUSÃO */}
-                    <section className="space-y-6 print:space-y-4">
+                    <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
                         <div className="flex items-center gap-3 print:gap-2">
                             <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
                             <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">3. CONCLUSÃO</h2>
@@ -397,8 +397,8 @@ export default function ParecerConclusivoForm() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-3xl mx-auto print:grid-cols-2 print:gap-8 print:max-w-none">
-                            <div className="flex flex-col items-center space-y-4 print:space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 max-w-3xl mx-auto print:grid-cols-2 print:gap-8 print:max-w-none print:break-inside-avoid">
+                            <div className="flex flex-col items-center space-y-4 print:space-y-2 print:break-inside-avoid">
                                 <div className={cn(
                                     "w-full border-b border-zinc-300 print:border-black min-h-[120px] relative",
                                     !formData.signature_tecnico && "print:border-dashed"
@@ -441,7 +441,7 @@ export default function ParecerConclusivoForm() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col items-center space-y-4 print:space-y-2">
+                            <div className="flex flex-col items-center space-y-4 print:space-y-2 print:break-inside-avoid">
                                 <div className={cn(
                                     "w-full border-b border-zinc-300 print:border-black min-h-[120px] relative",
                                     !formData.signature_financeiro && "print:border-dashed"
