@@ -1515,7 +1515,7 @@ export function VisitForm({
                             <h2 className={cn(
                                 "text-lg font-black tracking-tight",
                                 !isLocked ? "text-blue-900 print:text-black" : "text-black"
-                            )}>RECURSOS HUMANOS</h2>
+                            )}>COLABORADORES</h2>
                             {!isLocked && (
                                 <Button
                                     type="button"
