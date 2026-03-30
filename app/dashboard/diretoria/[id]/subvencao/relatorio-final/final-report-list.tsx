@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer } from "lucide-react"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { delegateVisit } from "@/app/dashboard/actions"
@@ -36,6 +36,8 @@ export function FinalReportList({
     const [delegatingVisit, setDelegatingVisit] = useState<any | null>(null)
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
     const [isDelegating, setIsDelegating] = useState(false)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [previewTitle, setPreviewTitle] = useState<string>("")
 
     const toggleUser = (userId: string) => {
         setSelectedUserIds(prev => 
@@ -132,47 +134,26 @@ export function FinalReportList({
                         </CardHeader>
                         <CardContent className="p-8 pt-4">
                             <div className="flex flex-col gap-3">
-                                <div className="flex gap-2 w-full">
-                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`} className="flex-1">
-                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all">
-                                            <FileText className="h-4 w-4" />
-                                            Instrumental
-                                        </Button>
-                                    </Link>
-                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer?print=true`} className="shrink-0">
-                                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-zinc-200 hover:bg-zinc-100 text-zinc-500">
-                                            <Printer className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                </div>
+                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`}>
+                                    <Button variant="outline" className="w-full h-12 gap-3 font-bold uppercase text-[11px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 shadow-sm">
+                                        <FileCheck className="h-4 w-4" />
+                                        Relatório Final
+                                    </Button>
+                                </Link>
 
-                                <div className="flex gap-2 w-full">
-                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`} className="flex-1">
-                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 hover:text-white">
-                                            <FileCheck className="h-4 w-4" />
-                                            Relatório Final
-                                        </Button>
-                                    </Link>
-                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final?print=true`} className="shrink-0">
-                                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-zinc-200 hover:bg-green-50 text-green-600">
-                                            <Printer className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                </div>
+                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`}>
+                                    <Button variant="outline" className="w-full h-12 gap-3 font-bold uppercase text-[11px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 shadow-sm">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        Parecer Conclusivo
+                                    </Button>
+                                </Link>
 
-                                <div className="flex gap-2 w-full">
-                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`} className="flex-1">
-                                        <Button variant="outline" className="w-full h-10 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 hover:text-white">
-                                            <CheckCircle2 className="h-4 w-4" />
-                                            Parecer Conclusivo
-                                        </Button>
-                                    </Link>
-                                    <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo?print=true`} className="shrink-0">
-                                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-zinc-200 hover:bg-blue-50 text-blue-900">
-                                            <Printer className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                </div>
+                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`}>
+                                    <Button variant="outline" className="w-full h-12 gap-3 font-bold uppercase text-[11px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm">
+                                        <FileText className="h-4 w-4" />
+                                        Instrumental
+                                    </Button>
+                                </Link>
                             </div>
                         </CardContent>
                     </Card>
@@ -266,7 +247,7 @@ export function FinalReportList({
                             disabled={isDelegating}
                             className="bg-blue-900 dark:bg-blue-600 text-white font-bold px-8 rounded-2xl text-[11px] uppercase tracking-widest h-12 transition-all shadow-xl shadow-blue-900/10 hover:bg-blue-800 active:scale-95"
                         >
-                            {isDelegating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando</> : `Confirmar (${selectedUserIds.length})`}
+                            {isDelegating ? <>{<Loader2 className="h-4 w-4 animate-spin mr-2" />} Processando</> : `Confirmar (${selectedUserIds.length})`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

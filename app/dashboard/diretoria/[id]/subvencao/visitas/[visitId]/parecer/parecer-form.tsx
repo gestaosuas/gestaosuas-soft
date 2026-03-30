@@ -47,12 +47,18 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
 
     useEffect(() => {
         setIsMounted(true)
+        if (typeof window !== 'undefined') {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('preview') === 'true' || searchParams.get('print') === 'true') {
+                setIsPreview(true)
+            }
+        }
     }, [])
 
     useEffect(() => {
         if (isMounted && typeof window !== 'undefined') {
             const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.get('print') === 'true') {
+            if (searchParams.get('print') === 'true' && searchParams.get('preview') !== 'true') {
                 setTimeout(() => {
                     window.print();
                     const url = new URL(window.location.href);
@@ -246,11 +252,12 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                 }
             `}</style>
             {/* Toolbar */}
-            <div className={cn(
+            {!isMounted || new URLSearchParams(window.location.search).get('preview') !== 'true' && (
+                <div className={cn(
                 "flex items-center justify-between no-print sticky top-4 z-[101] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-lg",
                 isPreview && "max-w-4xl mx-auto mb-8"
             )}>
-                <Button variant="ghost" onClick={() => isPreview ? setIsPreview(false) : router.back()} className="gap-2 font-bold uppercase text-[10px] text-zinc-500">
+                <Button variant="ghost" onClick={() => isPreview ? setIsPreview(false) : router.push(`/dashboard/diretoria/${directorateId}/subvencao/relatorio-final`)} className="gap-2 font-bold uppercase text-[10px] text-zinc-500 hover:text-blue-900 transition-colors">
                     <ArrowLeft className="h-4 w-4" /> {isPreview ? "Voltar para Edição" : "Voltar"}
                 </Button>
                 <div className="flex gap-3 items-center">
@@ -301,6 +308,7 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                     )}
                 </div>
             </div>
+            )}
 
             {/* Document Content */}
             <div className={cn(
@@ -324,39 +332,15 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                     </div>
                 </div>
 
-                {/* Identification Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 mb-8 text-[12px] border-zinc-100 pb-6 print:border-none">
-                    <div className="space-y-3">
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">OSC:</strong> 
-                            <span className="text-right flex-1 ml-2 truncate font-bold">{oscName}</span>
-                        </p>
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">CNPJ:</strong> 
-                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.cnpj || "---"}</span>
-                        </p>
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">Recurso:</strong> 
-                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.emenda || "---"}</span>
-                        </p>
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">Nº Termo:</strong> 
-                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.termo_fomento || "---"}</span>
-                        </p>
+                {/* Identification Info - Simplificado conforme solicitação (Restaurando padrão de produção) */}
+                <div className="space-y-4 mb-10 text-[13px] print:text-[11px] no-print:max-w-xl">
+                    <div className="flex flex-col md:flex-row md:items-baseline gap-2">
+                        <strong className="uppercase shrink-0 text-blue-900 print:text-black">OSC:</strong> 
+                        <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">{oscName}</span>
                     </div>
-                    <div className="space-y-3">
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">Vigência:</strong> 
-                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.vigencia || "---"}</span>
-                        </p>
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">Valor por lei e repassado:</strong> 
-                            <span className="text-right flex-1 ml-2 font-bold">{visit.relatorio_final?.valor_autorizado || "---"}</span>
-                        </p>
-                        <p className="flex justify-between items-end border-b border-dotted border-zinc-300 pb-1">
-                            <strong className="uppercase">Data Preenchimento:</strong> 
-                            <span className="text-right flex-1 ml-2 font-bold">{isMounted ? today : "---"}</span>
-                        </p>
+                    <div className="flex flex-col md:flex-row md:items-baseline gap-2">
+                        <strong className="uppercase shrink-0 text-blue-900 print:text-black">Data de Preenchimento:</strong> 
+                        <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">{isMounted ? today : "---"}</span>
                     </div>
                 </div>
 
