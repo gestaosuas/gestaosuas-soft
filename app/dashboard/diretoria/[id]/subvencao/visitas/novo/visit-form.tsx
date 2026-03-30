@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -69,6 +69,7 @@ export function VisitForm({
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const isSavingRef = useRef(false)
     const [mounted, setMounted] = useState(false)
     const [isDraftSaved, setIsDraftSaved] = useState(false)
 
@@ -373,6 +374,7 @@ export function VisitForm({
     };
 
     const handleSaveIndividualSignature = async (type: 'tecnico1' | 'tecnico2' | 'responsavel') => {
+        if (isSavingRef.current) return;
         if (!formData.osc_id) {
             alert("Por favor, selecione uma OSC antes de salvar a assinatura.");
             return;
@@ -387,11 +389,12 @@ export function VisitForm({
             return;
         }
 
+        isSavingRef.current = true;
         setSavingSignature(type)
         try {
             // Re-using the draft save logic
             const payload = {
-                id: initialVisit?.id,
+                id: currentVisitId,
                 osc_id: formData.osc_id,
                 directorate_id: directorateId,
                 visit_date: formData.visit_date_1,
@@ -405,7 +408,10 @@ export function VisitForm({
                 documents
             }
             const logLabel = type === 'tecnico1' ? 'Técnico 1' : type === 'tecnico2' ? 'Técnico 2' : 'Responsável'
-            await saveVisit(payload, { logAction: 'SIGNATURE', logDetail: logLabel })
+            const result = await saveVisit(payload, { logAction: 'SIGNATURE', logDetail: logLabel })
+            if (result && result.id) {
+                setCurrentVisitId(result.id);
+            }
             // Clear local draft since it's now in the DB
             setIsDraftSaved(true)
             localStorage.removeItem(DRAFT_KEY)
@@ -414,10 +420,12 @@ export function VisitForm({
             alert("Erro ao salvar assinatura: " + error.message)
         } finally {
             setSavingSignature(null)
+            isSavingRef.current = false;
         }
     }
 
     const handleSave = async (finalize = false) => {
+        if (isSavingRef.current) return;
         if (!formData.osc_id) {
             alert("Por favor, selecione uma OSC.")
             return
@@ -429,10 +437,11 @@ export function VisitForm({
             return
         }
 
+        isSavingRef.current = true;
         setIsSaving(true)
         try {
             const payload = {
-                id: initialVisit?.id,
+                id: currentVisitId,
                 osc_id: formData.osc_id,
                 directorate_id: directorateId,
                 visit_date: formData.visit_date_1,
@@ -471,6 +480,7 @@ export function VisitForm({
             alert("Erro ao salvar: Talvez você esteja com conexão instável. Seus dados continuam seguros neste dispositivo. Tente novamente em instantes.")
         } finally {
             setIsSaving(false)
+            isSavingRef.current = false;
         }
     }
 
