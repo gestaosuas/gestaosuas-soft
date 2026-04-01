@@ -12,11 +12,10 @@ export const BENEFICIOS_SPREADSHEET_ID = "1Jbv5i3PBKXU4nDbqCH1RhqW5Cj1QH4uRlibM5
 // Block 5: PBF E CAD ÚNICO (A44:M46 -> Data A45:A46)
 
 export const BENEFICIOS_SHEET_BLOCKS = [
-    { startRow: 2, endRow: 17 },   // Block 1
-    { startRow: 21, endRow: 27 },  // Block 2
-    { startRow: 31, endRow: 36 },  // Block 3
-    { startRow: 40, endRow: 41 },  // Block 4
-    { startRow: 45, endRow: 46 }   // Block 5
+    { startRow: 2, endRow: 17 },   // Block 1: SERVIÇOS E BENEFÍCIOS
+    { startRow: 21, endRow: 27 },  // Block 2: VISITAS DOMICILIARES
+    { startRow: 40, endRow: 42 },  // Block 3: ATENDIMENTOS (formerly Busão Social area)
+    { startRow: 45, endRow: 46 }   // Block 4: Acompanhamento CadÚnico/PBF
 ]
 
 export const BENEFICIOS_FORM_DEFINITION: FormDefinition = {
@@ -28,15 +27,14 @@ export const BENEFICIOS_FORM_DEFINITION: FormDefinition = {
                 { id: "encaminhadas_atualizacao_cadunico", label: "Famílias encaminhadas para atualização cadastral no CadUnico", type: "number" },
                 { id: "consulta_cadunico", label: "Consulta CadÚnico", type: "number" },
                 { id: "numero_nis", label: "Numero NIS", type: "number" },
-                { id: "dmae", label: "DMAE", type: "number" },
-                { id: "pro_pao", label: "Pró - pão", type: "number" },
+                { id: "dmae", label: "DMAE (Deferidos)", type: "number" },
+                { id: "pro_pao", label: "Pró - pão (Cestas Entregues)", type: "number" },
                 { id: "auxilio_documento", label: "Auxílio Documento", type: "number", tooltip: "Soma de Cert. Nasc, Cert. Cas. e Cert. Óbito." },
-                { id: "guia_foto", label: "Guia de foto", type: "number" },
                 { id: "carteirinha_idoso", label: "Carteirinha do Idoso", type: "number" },
                 { id: "bpc_presencial", label: "BPC/ Presencial", type: "number" },
                 { id: "bpc_online", label: "BPC/Online", type: "number" },
                 { id: "solicitacao_colchoes", label: "Solicitação de Colchões", type: "number" },
-                { id: "cesta_basica", label: "Cesta básica", type: "number" },
+                { id: "cesta_basica", label: "Cesta Básica (Entregues)", type: "number" },
                 { id: "solicitacao_fraldas", label: "Solicitação de fraldas", type: "number" },
                 { id: "absorvente", label: "Absorvente", type: "number" },
                 { id: "agasalho_cobertor", label: "Agasalho/cobertor", type: "number" },
@@ -45,38 +43,27 @@ export const BENEFICIOS_FORM_DEFINITION: FormDefinition = {
         {
             title: "VISITAS DOMICILIARES",
             fields: [
-                { id: "visitas_cadunico", label: "Visitas D. CadÚnico", type: "number" },
-                { id: "visitas_convocacoes", label: "Visitas Convocações", type: "number" },
+                { id: "visitas_cadunico", label: "Visitas Cadúnico", type: "number" },
                 { id: "visita_nucleo_habitacao", label: "Visita Nucleo S. Habitaç.", type: "number" },
-                { id: "visita_cesta_fraldas_colchoes", label: "Visita D. Cesta Básica/ fraldas / colchões", type: "number" },
+                { id: "visita_cesta_fraldas_colchoes", label: "Visita Cesta Básica/ Fraldas/ Colchões", type: "number" },
                 { id: "visita_dmae", label: "Visita DMAE", type: "number" },
                 { id: "visitas_pro_pao", label: "Visitas Pró-pão", type: "number" },
                 { id: "total_visitas", label: "Total de Visita", type: "number" },
             ]
         },
         {
-            title: "CESTA BÁSICA (INDEFERIDAS)",
+            title: "ATENDIMENTOS",
             fields: [
-                { id: "cesta_indeferida_renda_superior", label: "Cesta básica indeferida – renda superior", type: "number" },
-                { id: "cesta_indeferida_kit_escolar", label: "Cesta básica indeferida – kit escolar", type: "number" },
-                { id: "cesta_indeferida_renda_pro_pao", label: "Cesta básica indeferida – renda pró-pão", type: "number" },
-                { id: "cesta_indeferida_ninguem_local", label: "Cesta básica indeferida – 02 visitas ninguém no local", type: "number" },
-                { id: "cesta_indeferida_nao_localizado", label: "Cesta básica indeferida – endereço não localizado", type: "number" },
-                { id: "cesta_indeferida_nao_reside", label: "Cesta básica indeferida – não reside no endereço/mudou", type: "number" },
+                { id: "busao_social_1", label: "Busão Social 1", type: "number" },
+                { id: "busao_social_2", label: "Busão Social 2", type: "number" },
+                { id: "dibs", label: "Dibs", type: "number" },
             ]
         },
         {
-            title: "BUSÃO SOCIAL",
-            fields: [
-                { id: "busao_atendimentos", label: "Atendimentos", type: "number" },
-                { id: "busao_procedimentos", label: "Procedimentos", type: "number" },
-            ]
-        },
-        {
-            title: "FAMÍLIAS BENEFICIADAS E CADASTROS",
+            title: "Acompanhamento CadÚnico/PBF",
             fields: [
                 { id: "familias_pbf", label: "Famílias beneficiadas no PBF", type: "number" },
-                { id: "pessoas_cadunico", label: "Pessoas cadastradas no CadUnico", type: "number" },
+                { id: "pessoas_cadunico", label: "Famílias cadastradas no CadUnico", type: "number" },
             ]
         }
     ]
