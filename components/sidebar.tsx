@@ -345,6 +345,13 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                         {!isCollapsed && <span className="text-[13px] font-semibold text-zinc-300">Sair</span>}
                     </Button>
                 </form>
+                {!isCollapsed && (
+                    <div className="mt-4 px-3 opacity-40 hover:opacity-100 transition-opacity">
+                        <p className="text-[9px] font-bold text-white/50 uppercase tracking-[0.1em] text-center">
+                            Desenvolvido por Klisman rDs
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     )

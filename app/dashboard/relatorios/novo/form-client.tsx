@@ -45,6 +45,9 @@ export function SubmissionFormClient({
     const [fetchedInitialData, setFetchedInitialData] = useState<Record<string, any>>({})
     const [dataLoaded, setDataLoaded] = useState(false)
     const [dynamicDefinition, setDynamicDefinition] = useState<FormDefinition>(definition)
+    const [dynamicSteps, setDynamicSteps] = useState<any[]>(
+        setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : []
+    )
     const [alreadySubmitted, setAlreadySubmitted] = useState(false)
     const [showWarning, setShowWarning] = useState(true)
 
@@ -199,46 +202,74 @@ export function SubmissionFormClient({
                         // Create a new definition based on the original one
                         const baseDefinition = { ...definition, sections: [...definition.sections] }
 
-                        // Map the oficinas to form fields
-                        const oficinaFields = oficinas.flatMap((oficina: any) => ([
-                            {
-                                id: `oficina_${oficina.id}_vagas_totais`,
-                                label: `${oficina.activity_name} - Qtd. de Vagas`,
-                                type: "number" as const,
-                                badgeNode: (
-                                    <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border", getCategoryBadgeColor(oficina.category_name))}>
-                                        {oficina.category_name}
-                                    </span>
-                                )
-                            },
-                            {
-                                id: `oficina_${oficina.id}_vagas_ocupadas`,
-                                label: `${oficina.activity_name} - Vagas Ocupadas`,
-                                type: "number" as const,
-                                badgeNode: (
-                                    <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border", getCategoryBadgeColor(oficina.category_name))}>
-                                        {oficina.category_name}
-                                    </span>
-                                )
-                            }
-                        ]))
+                        // We will paginate the oficinas 12 per section
+                        const OFICINAS_PER_CHUNK = 12;
+                        const chunks = [];
+                        for (let i = 0; i < oficinas.length; i += OFICINAS_PER_CHUNK) {
+                            chunks.push(oficinas.slice(i, i + OFICINAS_PER_CHUNK));
+                        }
 
-                        // Add the new section
-                        baseDefinition.sections.push({
-                            title: "Ocupação de Oficinas",
-                            fields: oficinaFields
-                        })
+                        // Set the first step (base definition section 0 is Atendimentos)
+                        const baseSteps = [{ title: "Atendimentos", sectionIndexes: [0] }];
+
+                        // Create a section for each chunk of 12 oficinas
+                        chunks.forEach((chunk, index) => {
+                            const chunkFields = chunk.flatMap((oficina: any) => ([
+                                {
+                                    id: `oficina_${oficina.id}_vagas_totais`,
+                                    label: `${oficina.activity_name} - Qtd. de Vagas`,
+                                    type: "number" as const,
+                                    badgeNode: (
+                                        <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border", getCategoryBadgeColor(oficina.category_name))}>
+                                            {oficina.category_name}
+                                        </span>
+                                    )
+                                },
+                                {
+                                    id: `oficina_${oficina.id}_vagas_ocupadas`,
+                                    label: `${oficina.activity_name} - Vagas Ocupadas`,
+                                    type: "number" as const,
+                                    badgeNode: (
+                                        <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border", getCategoryBadgeColor(oficina.category_name))}>
+                                            {oficina.category_name}
+                                        </span>
+                                    )
+                                }
+                            ]));
+
+                            // Title for the section
+                            const sectionTitle = chunks.length > 1 ? `Oficinas (Parte ${index + 1})` : "Ocupação de Oficinas";
+                            baseDefinition.sections.push({
+                                title: sectionTitle,
+                                fields: chunkFields
+                            });
+
+                            // Add this step to the wizard
+                            // index + 1 because section 0 is "Atendimentos"
+                            baseSteps.push({ 
+                                title: chunks.length > 1 ? `Oficinas ${index + 1}` : "Oficinas", 
+                                sectionIndexes: [index + 1] 
+                            });
+                        });
 
                         setDynamicDefinition(baseDefinition)
+                        setDynamicSteps(baseSteps)
                     } else if (isMounted) {
                         setDynamicDefinition(definition)
+                        setDynamicSteps(setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
                     }
                 } catch (error) {
                     console.error("Erro ao buscar oficinas:", error)
-                    if (isMounted) setDynamicDefinition(definition)
+                    if (isMounted) {
+                        setDynamicDefinition(definition)
+                        setDynamicSteps(setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
+                    }
                 }
             } else {
-                if (isMounted) setDynamicDefinition(definition)
+                if (isMounted) {
+                    setDynamicDefinition(definition)
+                    setDynamicSteps(setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
+                }
             }
         }
 
@@ -465,7 +496,7 @@ export function SubmissionFormClient({
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
                 } else if (setor === 'centros' || setor === 'sine') {
                     window.location.href = `/dashboard/relatorios/lista?setor=${setor}&directorate_id=${directorateId}`
-                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'casa_da_mulher' || setor === 'diversidade') {
+                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {
                     window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`
@@ -499,7 +530,9 @@ export function SubmissionFormClient({
                                 Entrada de Dados
                             </h1>
                             <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{directorateName}</span>
+                                <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                                    {setor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName}
+                                </span>
                                 {unit && (
                                     <>
                                         <span className="text-zinc-300 dark:text-zinc-700">•</span>
@@ -575,7 +608,7 @@ export function SubmissionFormClient({
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
                                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 italic">
-                                    {unit ? `Unidade: ${unit}` : directorateName}
+                                    {unit ? `Unidade: ${unit}` : (setor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName)}
                                 </h3>
                                 <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
                             </div>
@@ -630,7 +663,7 @@ export function SubmissionFormClient({
                             </div>
                         )}
 
-                        {setor === 'casa_da_mulher' || setor === 'diversidade' ? (
+                        {setor === 'casa_da_mulher' || setor === 'diversidade' || (setor === 'ceai' && subcategory !== 'condominio') ? (
                             <StepperForm
                                 key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}-stepper`}
                                 definition={dynamicDefinition}
@@ -639,6 +672,7 @@ export function SubmissionFormClient({
                                 onDataChange={handleDataChange}
                                 disabled={loading || (alreadySubmitted && !isAdmin)}
                                 stepsConfig={
+                                    setor === 'ceai' ? dynamicSteps :
                                     setor === 'casa_da_mulher' ? [
                                         { title: "Perfil de Atendimento", sectionIndexes: [0, 1] },
                                         { title: "Caracterização Social", sectionIndexes: [2, 3] },

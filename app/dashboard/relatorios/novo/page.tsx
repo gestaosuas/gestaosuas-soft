@@ -13,7 +13,7 @@ import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { NAICA_FORM_DEFINITION } from "@/app/dashboard/naica-config"
 import { PROTETIVO_FORM_DEFINITION, SOCIOEDUCATIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
-import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION } from "@/app/dashboard/casa-da-mulher-config"
+import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION, NUCLEO_DIVERSIDADE_FORM_DEFINITION } from "@/app/dashboard/casa-da-mulher-config"
 import { getUserAllowedUnits } from "@/lib/auth-utils"
 
 export default async function NewReportPage({
@@ -33,6 +33,7 @@ export default async function NewReportPage({
     const isSocioeducativo = setor === 'creas_socioeducativo'
     const isCasaDaMulher = setor === 'casa_da_mulher'
     const isDiversidade = setor === 'diversidade'
+    const isNucleoDiversidade = setor === 'nucleo_diversidade'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -104,7 +105,7 @@ export default async function NewReportPage({
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('populacao') && d.name.toLowerCase().includes('rua'))
         } else if (isNAICA) {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('naica'))
-        } else if (isCasaDaMulher || isDiversidade) {
+        } else if (isCasaDaMulher || isDiversidade || isNucleoDiversidade) {
             directorate = userDirectorates.find((d: any) => d.name.toLowerCase().includes('casa da mulher') || d.name.toLowerCase().includes('mulher'))
         }
 
@@ -127,7 +128,7 @@ export default async function NewReportPage({
                 directorate = allDirs?.find(d => normalize(d.name).includes('populacao') && normalize(d.name).includes('rua'))
             } else if (isNAICA) {
                 directorate = allDirs?.find(d => normalize(d.name).includes('naica'))
-            } else if (isCasaDaMulher || isDiversidade) {
+            } else if (isCasaDaMulher || isDiversidade || isNucleoDiversidade) {
                 directorate = allDirs?.find(d => normalize(d.name).includes('casa da mulher') || normalize(d.name).includes('mulher'))
             }
         }
@@ -243,6 +244,11 @@ export default async function NewReportPage({
     if (isDiversidade) {
         formDefinition = DIVERSIDADE_FORM_DEFINITION
         titleContext = "Diversidade"
+    }
+
+    if (isNucleoDiversidade) {
+        formDefinition = NUCLEO_DIVERSIDADE_FORM_DEFINITION
+        titleContext = "Núcleo de Diversidade"
     }
 
     if (isCREAS) {

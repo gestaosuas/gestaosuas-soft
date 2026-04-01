@@ -123,3 +123,14 @@ export const DIVERSIDADE_FORM_DEFINITION: FormDefinition = {
         }
     ]
 }
+
+export const NUCLEO_DIVERSIDADE_FORM_DEFINITION: FormDefinition = {
+    sections: [
+        {
+            title: "ATENDIMENTOS",
+            fields: [
+                { id: "nd_pessoas_atendidas", label: "Pessoas Atendidas", type: "number" },
+            ]
+        }
+    ]
+}

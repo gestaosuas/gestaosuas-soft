@@ -179,6 +179,9 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
                                 Sair do Sistema
                             </Button>
                         </form>
+                        <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest text-center mt-3">
+                            Desenvolvido por Klisman rDs
+                        </p>
                     </div>
                 </div>
             </div>

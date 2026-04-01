@@ -179,9 +179,9 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
         <div className="flex flex-col gap-2 w-full">
             <Dialog open={isOficinaOpen} onOpenChange={setIsOficinaOpen}>
                 <DialogTrigger asChild>
-                    <button onClick={handleOpenOficina} className="flex items-center justify-start w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-md font-medium text-zinc-700 dark:text-zinc-300 transition-colors">
-                        <Users className="w-3.5 h-3.5 mr-2" />
-                        Cadastrar Oficina
+                    <button onClick={handleOpenOficina} className="flex items-center justify-center w-full px-2 py-1.5 text-[10px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-md font-bold text-zinc-600 dark:text-zinc-400 transition-colors uppercase tracking-wider">
+                        <Users className="w-3 h-3 mr-1.5 opacity-60" />
+                        Oficinas
                     </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
@@ -309,9 +309,9 @@ export function CEAIOficinasModals({ unit, directorateId }: { unit: string, dire
 
             <Dialog open={isCategoryOpen} onOpenChange={handleOpenCategory}>
                 <DialogTrigger asChild>
-                    <button className="flex items-center justify-start w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-md font-medium text-zinc-700 dark:text-zinc-300 transition-colors">
-                        <Tags className="w-3.5 h-3.5 mr-2" />
-                        Categorias (Tags)
+                    <button className="flex items-center justify-center w-full px-2 py-1.5 text-[10px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-md font-bold text-zinc-600 dark:text-zinc-400 transition-colors uppercase tracking-wider">
+                        <Tags className="w-3 h-3 mr-1.5 opacity-60" />
+                        Categorias
                     </button>
                 </DialogTrigger>
                 <DialogContent>

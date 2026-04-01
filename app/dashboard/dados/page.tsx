@@ -28,7 +28,7 @@ import { CREAS_IDOSO_FORM_DEFINITION, CREAS_DEFICIENTE_FORM_DEFINITION } from "@
 import { POP_RUA_FORM_DEFINITION } from "@/app/dashboard/pop-rua-config"
 import { SOCIOEDUCATIVO_FORM_DEFINITION, PROTETIVO_FORM_DEFINITION } from "@/app/dashboard/protecao-especial-config"
 import { SINE_FORM_DEFINITION } from "@/app/dashboard/sine-config"
-import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION } from "@/app/dashboard/casa-da-mulher-config"
+import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION, NUCLEO_DIVERSIDADE_FORM_DEFINITION } from "@/app/dashboard/casa-da-mulher-config"
 import { PrintExportControls } from "@/components/print-export-controls"
 import { YearSelector } from "@/components/year-selector"
 import { DeleteMonthButton } from "@/components/delete-month-button"
@@ -52,6 +52,7 @@ export default async function DataPage({
     let isSocioeducativo = setor === 'creas_socioeducativo'
     let isCasaDaMulher = setor === 'casa_da_mulher'
     let isDiversidade = setor === 'diversidade'
+    let isNucleoDiversidade = setor === 'nucleo_diversidade'
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -167,6 +168,7 @@ export default async function DataPage({
         }
         else if (norm.includes('casa da mulher') || norm.includes('mulher')) {
             if (setor === 'diversidade') isDiversidade = true
+            else if (setor === 'nucleo_diversidade') isNucleoDiversidade = true
             else isCasaDaMulher = true
         }
     }
@@ -242,6 +244,12 @@ export default async function DataPage({
         printTitle = titleContext
     }
 
+    if (isNucleoDiversidade) {
+        formDefinition = NUCLEO_DIVERSIDADE_FORM_DEFINITION
+        titleContext = `Dados Núcleo de Diversidade ${selectedYear}`
+        printTitle = titleContext
+    }
+
     if (isCREAS) {
         formDefinition = {
             sections: [
@@ -264,7 +272,7 @@ export default async function DataPage({
     // The previous code fetched all directorate submissions anyway? No, filtering by year/directorate on DB.
     // Our cache fetches ALL submissions for the directorate. We will filter by year in loop.
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
-    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade']
+    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade', 'nucleo_diversidade']
     const submissions = allSubmissions.filter((s: any) => {
         if (s.year !== selectedYear) return false
         if (!setor) return true
@@ -287,12 +295,16 @@ export default async function DataPage({
     submissions?.forEach(sub => {
         if (sub.data._is_multi_unit && sub.data.units) {
             // New format: multiple units in one row
-            Object.entries(sub.data.units).forEach(([unitName, unitData]: [string, any]) => {
-                if (!dataByUnitAndMonth.has(unitName)) {
-                    dataByUnitAndMonth.set(unitName, new Map())
-                }
-                dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: unitData, author: sub.profiles?.full_name })
-            })
+                Object.entries(sub.data.units).forEach(([unitName, unitData]: [string, any]) => {
+                    if (!dataByUnitAndMonth.has(unitName)) {
+                        dataByUnitAndMonth.set(unitName, new Map())
+                    }
+                    dataByUnitAndMonth.get(unitName)!.set(sub.month, { 
+                        id: sub.id, 
+                        data: unitData, 
+                        author: unitData._author_name || sub.profiles?.full_name 
+                    })
+                })
         } else {
             // Old flat format or single-unit directorates
             const unitName = sub.data._unit || 'Principal'

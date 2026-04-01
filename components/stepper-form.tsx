@@ -72,8 +72,8 @@ export function StepperForm({
         }
     }
 
-    if (!definition || !definition.sections || !stepsConfig) {
-        return <div>Formulário não configurado corretamente para o modo Stepper.</div>
+    if (!definition || !definition.sections || !stepsConfig || stepsConfig.length === 0) {
+        return <div className="p-8 text-center text-red-500 font-bold bg-red-50 rounded-2xl border border-red-100">Formulário não configurado corretamente para o modo Stepper (Sem passos definidos).</div>
     }
 
     const progress = ((currentStep + 1) / stepsConfig.length) * 100

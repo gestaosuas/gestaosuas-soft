@@ -96,6 +96,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             else if (setor === 'naica' && dirName.includes('naica')) isAuthorized = true
             else if (setor === 'creas_protetivo' && (dirName.includes('protecao') || dirName.includes('especial'))) isAuthorized = true
             else if (setor === 'creas_socioeducativo' && (dirName.includes('protecao') || dirName.includes('especial'))) isAuthorized = true
+            else if ((setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade') && (dirName.includes('mulher') || dirName.includes('casa da mulher'))) isAuthorized = true
 
             if (!isAdmin && !isAuthorized) {
                 throw new Error(`O setor '${setor}' não corresponde à diretoria '${directorate.name}'.`)
@@ -218,6 +219,12 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             }
         }
 
+        // Fetch Author Name for per-unit attribution
+        const { data: creatorProfile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        if (creatorProfile) {
+            formData._author_name = creatorProfile.full_name
+        }
+
         // Verificação de Limites de Envio (Apenas para não-Admins)
         const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
         const cachedProfile = await getCachedProfile(user.id)
@@ -280,7 +287,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             let mergedData;
             const isNarrative = formData._report_content !== undefined
             const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
-            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade')
+            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade')
 
             mergedData = { ...existing.data }
 
@@ -331,7 +338,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             let finalData: any;
             const isNarrative = formData._report_content !== undefined
             const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
-            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade')
+            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade')
 
             if (isMultiUnit) {
                 const unitName = formData._unit || 'Principal'
