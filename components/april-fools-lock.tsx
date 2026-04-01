@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { AlertCircle, HardDrive, ShieldAlert, Cpu, Terminal } from 'lucide-react'
 
 export function AprilFoolsLock() {
-    const [timeLeft, setTimeLeft] = useState(30)
+    const [timeLeft, setTimeLeft] = useState(40)
     const [showButton, setShowButton] = useState(false)
     const [revealed, setRevealed] = useState(false)
 
@@ -28,7 +28,7 @@ export function AprilFoolsLock() {
                 <button 
                    onClick={() => {
                         // Salvar no localStorage que este usuário já viu a pegadinha para não irritar
-                        localStorage.setItem('april_fools_2026_revealed', 'true')
+                        localStorage.setItem('april_fools_2026_v2', 'true')
                         window.location.reload()
                    }}
                    className="px-12 py-5 bg-zinc-900 text-white rounded-3xl font-black uppercase text-sm tracking-widest hover:bg-zinc-800 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-zinc-500/20"
@@ -40,7 +40,7 @@ export function AprilFoolsLock() {
     }
 
     // Se já foi revelado nesta sessão, não mostra mais
-    const isAlreadyRevealed = typeof window !== 'undefined' && localStorage.getItem('april_fools_2026_revealed') === 'true'
+    const isAlreadyRevealed = typeof window !== 'undefined' && localStorage.getItem('april_fools_2026_v2') === 'true'
     if (isAlreadyRevealed) return null
 
     return (
