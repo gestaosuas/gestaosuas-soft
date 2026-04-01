@@ -3,7 +3,6 @@ import { MobileNav } from "@/components/mobile-nav"
 import { getCachedProfile, getCachedDirectorates, getSystemSettings } from "@/app/dashboard/cached-data"
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
-import { AprilFoolsLock } from "@/components/april-fools-lock"
 
 export default async function DashboardLayout({
     children,
@@ -20,12 +19,6 @@ export default async function DashboardLayout({
     const profile = await getCachedProfile(user.id)
     const directorates = await getCachedDirectorates()
     const settings = await getSystemSettings()
-
-    // PEGADINHA DE 1º DE ABRIL - Alvo: gestaosuas@uberlandia.mg.gov.br
-    const isAprilFools = new Date().getMonth() === 3 && new Date().getDate() === 1
-    if (isAprilFools && user.email === 'gestaosuas@uberlandia.mg.gov.br') {
-        return <AprilFoolsLock />
-    }
 
     return (
         <div className="flex h-screen overflow-hidden font-sans antialiased text-zinc-900 selection:bg-cyan-500 selection:text-white flex-col md:flex-row print:bg-white print:h-auto print:overflow-visible relative">
