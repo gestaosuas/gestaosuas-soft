@@ -77,8 +77,10 @@ export function VisitForm({
         setMounted(true)
     }, [])
 
-    const isEmendas = directorateName.toLowerCase().includes('emendas')
-    const isOutros = directorateName.toLowerCase().includes('outros') || directorateId === '82471122-9b28-4d9a-90d4-f5e437d15761'
+    const normalizedDirName = directorateName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    const isEmendas = normalizedDirName.includes('emendas')
+    const isOutros = normalizedDirName.includes('outros') || directorateId === '82471122-9b28-4d9a-90d4-f5e437d15761'
+    const isSubvencao = normalizedDirName.includes('subvencao')
 
     // Form State
     const [formData, setFormData] = useState({
@@ -141,6 +143,22 @@ export function VisitForm({
         tecnico2_nome: "",
         responsavel: "",
         responsavel_nome: ""
+    })
+    const [pseData, setPseData] = useState(initialVisit?.atendimento?.pse_data || initialVisit?.pse_data || {
+        item5_enabled: false,
+        item5_periodo: "",
+        item5_qualitativos: [
+            { data: "", situacao: "", recomendacoes: "", observacao: "" },
+            { data: "", situacao: "", recomendacoes: "", observacao: "" },
+            { data: "", situacao: "", recomendacoes: "", observacao: "" },
+            { data: "", situacao: "", recomendacoes: "", observacao: "" },
+        ],
+        item5_quantitativos: {
+            total_1dia: { jan: "", fev: "", mar: "", abr: "", mai: "", jun: "", jul: "", ago: "", set: "", out: "", nov: "", dez: "" },
+            inseridos: { jan: "", fev: "", mar: "", abr: "", mai: "", jun: "", jul: "", ago: "", set: "", out: "", nov: "", dez: "" },
+            desligados: { jan: "", fev: "", mar: "", abr: "", mai: "", jun: "", jul: "", ago: "", set: "", out: "", nov: "", dez: "" },
+            total_ultimo: { jan: "", fev: "", mar: "", abr: "", mai: "", jun: "", jul: "", ago: "", set: "", out: "", nov: "", dez: "" },
+        }
     })
     const [documents, setDocuments] = useState(initialVisit?.documents || [])
     const [savingSignature, setSavingSignature] = useState<'tecnico1' | 'tecnico2' | 'responsavel' | null>(null)
@@ -273,6 +291,7 @@ export function VisitForm({
                     observacoes,
                     recomendacoes,
                     assinaturas,
+                    pseData,
                     documents,
                     timestamp: Date.now()
                 }
@@ -312,6 +331,7 @@ export function VisitForm({
                         if (parsed.observacoes) setObservacoes(parsed.observacoes)
                         if (parsed.recomendacoes) setRecomendacoes(parsed.recomendacoes)
                         if (parsed.assinaturas) setAssinaturas(parsed.assinaturas)
+                        if (parsed.pseData) setPseData(parsed.pseData)
                         if (parsed.documents) setDocuments(parsed.documents)
                     } else {
                         // If opened through navigation (not reload), clear old abandoned draft 
@@ -399,7 +419,7 @@ export function VisitForm({
                 directorate_id: directorateId,
                 visit_date: formData.visit_date_1,
                 identificacao: formData,
-                atendimento,
+                atendimento: { ...atendimento, pse_data: pseData },
                 forma_acesso: formaAcesso,
                 rh_data: rhData,
                 observacoes,
@@ -446,7 +466,7 @@ export function VisitForm({
                 directorate_id: directorateId,
                 visit_date: formData.visit_date_1,
                 identificacao: formData,
-                atendimento,
+                atendimento: { ...atendimento, pse_data: pseData },
                 forma_acesso: formaAcesso,
                 rh_data: rhData,
                 observacoes,
@@ -1723,6 +1743,156 @@ export function VisitForm({
                             </>
                         )}
                     </div>
+                )}
+
+                {isSubvencao && !isLocked && (
+                    <div className="no-print pt-6 mb-8 border-t border-dashed border-zinc-200">
+                        <Button
+                            variant={pseData.item5_enabled ? "destructive" : "outline"}
+                            onClick={() => setPseData({ ...pseData, item5_enabled: !pseData.item5_enabled })}
+                            className="w-full gap-2 font-bold uppercase text-[10px]"
+                        >
+                            {pseData.item5_enabled ? "Remover PSE" : "Habilitar PSE"}
+                        </Button>
+                    </div>
+                )}
+
+                {isSubvencao && pseData.item5_enabled && (
+                    <section className="print-section locked-report animate-in fade-in slide-in-from-top-4 duration-500 mb-8 px-2 md:px-0">
+                        <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-8 print:shadow-none print:p-0">
+                            <h2 className={cn(
+                                "text-lg font-black tracking-tight",
+                                !isLocked ? "text-blue-900 border-none pb-0 print:text-black print:border-b-2 print:border-black print:pb-0" : "text-black border-b-2 border-black"
+                            )}>DADOS PSE (PROTEÇÃO SOCIAL ESPECIAL)</h2>
+
+                            <div className="space-y-4">
+                                <h3 className="font-bold text-sm text-zinc-700">Qualitativos (preencher referente ao trimestre)</h3>
+                                <div className="flex flex-col md:flex-row md:items-center gap-3">
+                                    <span className="font-bold text-[10px] shrink-0 uppercase tracking-widest text-zinc-400">Período:</span>
+                                    <Input
+                                        disabled={isLocked}
+                                        value={pseData.item5_periodo}
+                                        onChange={e => setPseData({ ...pseData, item5_periodo: e.target.value })}
+                                        placeholder="Ex: Janeiro a Março"
+                                        className="h-10 bg-zinc-50/50 border-zinc-200 font-bold focus:ring-4 focus:ring-blue-900/5 rounded-xl px-4"
+                                    />
+                                </div>
+
+                                <div className="overflow-x-auto rounded-2xl border border-zinc-100 shadow-sm">
+                                    <Table>
+                                        <TableHeader className="bg-zinc-50/80 border-b border-zinc-200">
+                                            <TableRow className="h-12 hover:bg-transparent">
+                                                <TableHead className="text-[10px] font-black uppercase text-zinc-500 text-center border-r border-zinc-200 px-1 w-32">DATA</TableHead>
+                                                <TableHead className="text-[10px] font-black uppercase text-zinc-500 text-center border-r border-zinc-200 px-1">SITUAÇÃO ENCONTRADA</TableHead>
+                                                <TableHead className="text-[10px] font-black uppercase text-zinc-500 text-center border-r border-zinc-200 px-1">RECOMENDAÇÕES</TableHead>
+                                                <TableHead className="text-[10px] font-black uppercase text-zinc-500 text-center px-1">OBSERVAÇÃO</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="bg-white">
+                                            {pseData.item5_qualitativos.map((row: any, idx: number) => (
+                                                <TableRow key={idx} className="border-b border-zinc-100 hover:bg-zinc-50/30 transition-colors">
+                                                    <TableCell className="p-0 border-r border-zinc-100">
+                                                        <Input
+                                                            disabled={isLocked}
+                                                            className="border-none text-center text-xs h-14 w-full rounded-none focus-visible:ring-0 bg-transparent font-medium"
+                                                            value={row.data}
+                                                            onChange={e => {
+                                                                const newQ = [...pseData.item5_qualitativos]
+                                                                newQ[idx].data = e.target.value
+                                                                setPseData({ ...pseData, item5_qualitativos: newQ })
+                                                            }}
+                                                            placeholder="DD/MM/AA"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="p-0 border-r border-zinc-100">
+                                                        <Textarea
+                                                            disabled={isLocked}
+                                                            autoResize
+                                                            className="border-none text-xs min-h-[56px] w-full rounded-none focus-visible:ring-0 resize-none py-4 px-3 bg-transparent leading-relaxed"
+                                                            value={row.situacao}
+                                                            onChange={e => {
+                                                                const newQ = [...pseData.item5_qualitativos]
+                                                                newQ[idx].situacao = e.target.value
+                                                                setPseData({ ...pseData, item5_qualitativos: newQ })
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="p-0 border-r border-zinc-100">
+                                                        <Textarea
+                                                            disabled={isLocked}
+                                                            autoResize
+                                                            className="border-none text-xs min-h-[56px] w-full rounded-none focus-visible:ring-0 resize-none py-4 px-3 bg-transparent leading-relaxed"
+                                                            value={row.recomendacoes}
+                                                            onChange={e => {
+                                                                const newQ = [...pseData.item5_qualitativos]
+                                                                newQ[idx].recomendacoes = e.target.value
+                                                                setPseData({ ...pseData, item5_qualitativos: newQ })
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="p-0">
+                                                        <Textarea
+                                                            disabled={isLocked}
+                                                            autoResize
+                                                            className="border-none text-xs min-h-[56px] w-full rounded-none focus-visible:ring-0 resize-none py-4 px-3 bg-transparent leading-relaxed"
+                                                            value={row.observacao}
+                                                            onChange={e => {
+                                                                const newQ = [...pseData.item5_qualitativos]
+                                                                newQ[idx].observacao = e.target.value
+                                                                setPseData({ ...pseData, item5_qualitativos: newQ })
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+
+                                <div className="mt-10 space-y-6">
+                                    <h3 className="font-bold text-sm text-zinc-700">Quantitativos (trimestral)</h3>
+                                    <div className="overflow-x-auto rounded-2xl border border-zinc-100 shadow-sm">
+                                        <Table>
+                                            <TableHeader className="bg-zinc-50/80 border-b border-zinc-200">
+                                                <TableRow className="h-12 hover:bg-transparent">
+                                                    <TableHead className="text-[10px] font-black uppercase text-zinc-500 border-r border-zinc-200 px-4 min-w-[200px]">INDICADORES</TableHead>
+                                                    {['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'].map((m: string) => (
+                                                        <TableHead key={m} className="text-[10px] font-black uppercase text-zinc-500 text-center border-r border-zinc-200 px-1 w-14">{m}</TableHead>
+                                                    ))}
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody className="bg-white">
+                                                {[
+                                                    { id: 'total_1dia', label: 'Total de usuários do serviço no 1º dia do mês' },
+                                                    { id: 'inseridos', label: 'Total de usuários inseridos no mês (novos)' },
+                                                    { id: 'desligados', label: 'Total de usuários desligados no mês' },
+                                                    { id: 'total_ultimo', label: 'Total de usuários do serviço no último dia do mês' }
+                                                ].map((indicator: any) => (
+                                                    <TableRow key={indicator.id} className="border-b border-zinc-100 hover:bg-zinc-50/30 transition-colors">
+                                                        <TableCell className="p-4 text-[10px] font-bold text-zinc-600 border-r border-zinc-100 bg-zinc-50/30 uppercase tracking-tight leading-tight">{indicator.label}</TableCell>
+                                                        {['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'].map((m: string) => (
+                                                            <TableCell key={m} className="p-0 border-r border-zinc-100">
+                                                                <Input
+                                                                    disabled={isLocked}
+                                                                    className="border-none text-center text-[11px] h-14 w-full rounded-none focus-visible:ring-0 bg-transparent font-black text-blue-900"
+                                                                    value={(pseData.item5_quantitativos as any)[indicator.id][m]}
+                                                                    onChange={e => {
+                                                                        const newQuant = { ...pseData.item5_quantitativos }
+                                                                        ;(newQuant as any)[indicator.id][m] = e.target.value
+                                                                        setPseData({ ...pseData, item5_quantitativos: newQuant })
+                                                                    }}
+                                                                />
+                                                            </TableCell>
+                                                        ))}
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 )}
             </div> {/* This closes the main content wrapper for sections I-VII */}
 
