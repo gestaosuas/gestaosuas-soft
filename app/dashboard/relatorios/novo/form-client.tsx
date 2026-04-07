@@ -2,7 +2,7 @@
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
 import { StepperForm } from "@/components/stepper-form"
-import { submitReport, getPreviousMonthData, checkSubmissionExists, deleteMonthData } from "@/app/dashboard/actions"
+import { submitReport, getPreviousMonthData, getCurrentMonthData, checkSubmissionExists, deleteMonthData } from "@/app/dashboard/actions"
 import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
 import { useState, useEffect, useCallback } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -69,7 +69,10 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            if (setor !== 'creas' && setor !== 'ceai' && setor !== 'cras' && setor !== 'naica' && setor !== 'creas_protetivo' && setor !== 'creas_socioeducativo') {
+            const isSharedEdit = (setor === 'centros' || setor === 'sine')
+            const isRecurrent = (setor === 'creas' || setor === 'ceai' || setor === 'cras' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo')
+
+            if (!isRecurrent && !isSharedEdit) {
                 if (isMounted) {
                     setLoading(false)
                     setDataLoaded(true)
@@ -88,9 +91,23 @@ export function SubmissionFormClient({
                     return;
                 }
 
-                const prevData = await getPreviousMonthData(directorateId, m, y)
+                // Logic: For CP/SINE, we fetch CURRENT month data to "Update"
+                // For others, we fetch PREVIOUS month data to "Carry Forward"
+                const isSharedEdit = (setor === 'centros' || setor === 'sine')
+                let dataToUse: any = null
 
-                if (isMounted && prevData && Object.keys(prevData).length > 0) {
+                if (isSharedEdit) {
+                    dataToUse = await getCurrentMonthData(directorateId, m, y)
+                    if (isMounted && dataToUse) {
+                        // Direct merge for shared sectors (no calculation needed, just pre-populate)
+                        setFetchedInitialData(dataToUse)
+                    }
+                } else {
+                    dataToUse = await getPreviousMonthData(directorateId, m, y)
+                }
+
+                if (isMounted && dataToUse && Object.keys(dataToUse).length > 0 && !isSharedEdit) {
+                    const prevData = dataToUse
                     let newData: any = {}
                     const getNum = (val: any) => {
                         const n = Number(val)
@@ -170,8 +187,9 @@ export function SubmissionFormClient({
                     console.log("Fetched Previous Data:", prevData)
                     console.log("Calculated New Data:", newData)
                     setFetchedInitialData(newData)
-                } else if (isMounted) {
-                    console.log("No previous data found for", { directorateId, month, year, setor, unit, subcategory });
+                } else if (isMounted && !isSharedEdit) {
+                    // Only clear if not in shared edit mode (where it might naturally be empty for new months)
+                    console.log("No data found for carry-forward", { directorateId, month, year, setor, unit, subcategory });
                     setFetchedInitialData({});
                 }
             } catch (err) {

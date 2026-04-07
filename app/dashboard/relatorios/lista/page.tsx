@@ -1,172 +1,165 @@
-import { createClient } from "@/utils/supabase/server"
-import { getCachedSubmissionsForUser, getCachedProfile } from "@/app/dashboard/cached-data"
-import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+"use client"
+
+import { useEffect, useState, Suspense } from "react"
+import { notFound, redirect, useSearchParams } from "next/navigation"
+import { listMonthlyNarratives, deleteMonthlyNarrative, getDirectorateSimple, getUserRole } from "@/app/dashboard/actions-narrative"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, FileText, Calendar, Table as TableIcon } from "lucide-react"
-import { redirect } from "next/navigation"
+import { FileText, Calendar, ArrowLeft, History, Trash2, Loader2, Search } from "lucide-react"
+import Link from "next/link"
 
-import { YearSelector } from "@/components/year-selector"
-import { DeleteReportButton } from "@/components/delete-report-button"
+function HistoryList() {
+    const searchParams = useSearchParams()
+    const directorate_id = searchParams.get('directorate_id')
+    const sector = searchParams.get('setor')
 
-export default async function ReportListPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ setor?: string, directorate_id?: string, year?: string }>
-}) {
-    const { setor, directorate_id, year } = await searchParams
-    const selectedYear = Number(year) || new Date().getFullYear()
+    const [reports, setReports] = useState<any[]>([])
+    const [directorate, setDirectorate] = useState<any>(null)
+    const [isAdmin, setIsAdmin] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [deletingId, setDeletingId] = useState<string | null>(null)
 
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!directorate_id || !sector) return
 
-    if (!user) redirect('/login')
+            // Use server action to check role (bypasses RLS)
+            const userInfo = await getUserRole()
+            if (!userInfo) {
+                redirect('/login')
+                return
+            }
+            setIsAdmin(userInfo.role === 'admin')
 
-    const cachedProfile = await getCachedProfile(user.id)
-    const isEmailAdmin = ['klismanrds@gmail.com', 'gestaosuas@uberlandia.mg.gov.br'].includes(user.email || '')
-    const isAdmin = cachedProfile?.role === 'admin' || isEmailAdmin
+            const dir = await getDirectorateSimple(directorate_id)
+            setDirectorate(dir)
 
-    // Use Safe Fetcher that checks permission via Service Role
-    const submissions = await getCachedSubmissionsForUser(user.id, directorate_id || '')
-
-    const { getUserAllowedUnits } = await import("@/lib/auth-utils")
-    const allowedUnits = isAdmin ? null : await getUserAllowedUnits(user.id, directorate_id || '')
-
-    // Granular check for SINE/CP
-    if (allowedUnits) {
-        if (setor === 'sine' && !allowedUnits.includes('SINE')) {
-            return (
-                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 mt-12">
-                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
-                    <p>Você não tem permissão para visualizar o histórico do <strong>SINE</strong>.</p>
-                </div>
-            )
+            const data = await listMonthlyNarratives(directorate_id, sector)
+            setReports(data || [])
+            setLoading(false)
         }
-        if (setor === 'centros' && !allowedUnits.includes('Centro Profissionalizante')) {
-            return (
-                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 mt-12">
-                    <h2 className="text-xl font-bold text-red-600 mb-2">Acesso Restrito</h2>
-                    <p>Você não tem permissão para visualizar o histórico do <strong>Centro Profissionalizante</strong>.</p>
-                </div>
-            )
-        }
+        fetchData()
+    }, [directorate_id, sector])
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+                <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+                <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Carregando Histórico...</p>
+            </div>
+        )
     }
 
-    // Shared sectors that can merge into the same DB row
-    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade', 'ceai', 'cras', 'naica']
-    const isSharedSector = setor && sharedSectors.includes(setor)
+    if (!directorate || !sector) return notFound()
 
-    // Filter to show ONLY Narrative Reports for this specific sector
-    const narrativeSubmissions = submissions?.filter((sub: any) => {
-        const matchesYear = sub.year === selectedYear;
+    const monthName = (m: number) => {
+        return new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })
+    }
 
-        // For shared sectors, check ONLY the sector-specific namespaced key
-        // This prevents CP reports from showing in SINE's list and vice-versa
-        let hasNarrative: boolean
-        if (isSharedSector) {
-            hasNarrative = !!sub.data?.[`_report_content_${setor}`]
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Deseja realmente excluir este relatório? Esta ação é irreversível.")) return
+
+        setDeletingId(id)
+        const result = await deleteMonthlyNarrative(id)
+
+        if (result.success) {
+            setReports(reports.filter(r => r.id !== id))
         } else {
-            hasNarrative = !!sub.data?._report_content
+            alert(result.error || "Erro ao excluir")
         }
-
-        // Sector matching: for shared sectors, check the _has_{setor} marker
-        const matchesSector = !setor || (sub.data._setor === setor) || (sub.data?.[`_has_${setor}`]);
-
-        // Visibility restriction: Only owner or admin
-        const canSee = isAdmin || sub.user_id === user.id;
-
-        return matchesYear && hasNarrative && matchesSector && canSee;
-    }) || []
-
-    // Basic permission check
-    // Omitted strictly for brevity as we are just listing, but in prod should verify link
-
-    const monthName = (m: number) => new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })
+        setDeletingId(null)
+    }
 
     return (
-        <div className="container mx-auto max-w-5xl py-8 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-20">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 px-2">
-                <div className="flex items-center gap-6">
-                    <Link href={`/dashboard/diretoria/${directorate_id}`}>
-                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
-                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
-                        </Button>
-                    </Link>
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
-                            Histórico: {setor === 'sine' ? 'SINE' : setor === 'centros' ? 'Centro Profissionalizante' : setor === 'casa_da_mulher' ? 'Casa da Mulher' : setor === 'diversidade' ? 'Diversidade' : 'Relatórios'}
-                        </h1>
-                        <p className="text-[14px] font-medium text-zinc-500 dark:text-zinc-400">
-                            Acervo de registros e narrativas consolidadas de {selectedYear}.
-                            {isAdmin && (
-                                <span className="ml-2 text-zinc-300 dark:text-zinc-700 font-normal">
-                                    (Admin: {narrativeSubmissions.length} registros encontrados para este setor/ano)
-                                </span>
-                            )}
-                        </p>
+        <div className="max-w-6xl mx-auto space-y-8 p-4 md:p-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-zinc-500 text-sm font-bold uppercase tracking-wider">
+                        <History className="w-4 h-4" /> Histórico de Documentos
                     </div>
+                    <h1 className="text-4xl font-black text-blue-900 dark:text-blue-50 tracking-tighter uppercase leading-none">
+                        {directorate.name}
+                    </h1>
+                    <p className="text-zinc-500 font-medium font-bold uppercase tracking-tight">
+                        Setor: <span className="text-blue-600">{sector.replace(/_/g, ' ')}</span>
+                        {isAdmin && <span className="ml-3 bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">Modo Admin</span>}
+                    </p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <YearSelector currentYear={selectedYear} />
-                </div>
-            </header>
+                <Button variant="outline" asChild className="h-12 border-zinc-200 dark:border-zinc-800 shadow-sm rounded-xl">
+                    <Link href={`/dashboard/diretoria/${directorate_id}`}>
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Painel da Diretoria
+                    </Link>
+                </Button>
+            </div>
 
-            <div className="grid gap-6">
-                {narrativeSubmissions.map((sub: any) => {
-                    const hasContent = sub.data && sub.data._report_content;
-
-                    return (
-                        <Card key={sub.id} className="group border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all duration-500 rounded-2xl overflow-hidden">
-                            <CardHeader className="flex flex-row items-center justify-between p-8 border-b border-zinc-50 dark:border-zinc-800/60">
-                                <div className="flex items-center gap-5">
-                                    <div className={`p-3 rounded-xl transition-colors ${hasContent ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                                        {hasContent ? <FileText className="w-6 h-6" /> : <TableIcon className="w-6 h-6" />}
+            {/* List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {reports.length === 0 ? (
+                    <Card className="col-span-full py-20 border-dashed border-2 border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/10">
+                        <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-2xl flex items-center justify-center shadow-sm mb-4">
+                            <Search className="w-8 h-8 text-zinc-300" />
+                        </div>
+                        <p className="font-bold uppercase tracking-widest text-[10px]">Nenhum relatório encontrado para este setor</p>
+                    </Card>
+                ) : (
+                    reports.map((report) => (
+                        <Card key={report.id} className="group border-none bg-white dark:bg-zinc-950 overflow-hidden ring-1 ring-zinc-200 dark:ring-zinc-800 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600">
+                                        <Calendar className="w-5 h-5" />
                                     </div>
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-lg font-bold capitalize text-blue-900 dark:text-blue-50 flex items-center gap-2">
-                                            {monthName(sub.month)} <span className="text-zinc-400 font-medium">/ {sub.year}</span>
-                                            {sub.data?._setor && !sub.data._setor.startsWith('merged_') && (
-                                                <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/40 text-[10px] uppercase font-bold tracking-widest text-blue-600/70 border border-blue-100/50">
-                                                    {sub.data._setor === 'sine' ? 'SINE' : sub.data._setor === 'centros' ? 'CP' : sub.data._setor === 'casa_da_mulher' ? 'Casa da Mulher' : sub.data._setor === 'diversidade' ? 'Diversidade' : sub.data._setor}
-                                                </span>
-                                            )}
-                                        </CardTitle>
-                                        <CardDescription className="text-[12px] font-medium text-zinc-500">
-                                            Efetivado em {new Date(sub.created_at).toLocaleDateString('pt-BR')} • {(sub.data?.[`_report_content_${setor}`] || sub.data?._report_content || []).length} seções narrativas
-                                            {isAdmin && sub.profiles?.full_name && (
-                                                <span className="block mt-1 text-blue-600/70 dark:text-blue-400/70 font-bold uppercase text-[10px]">
-                                                    Enviado por: {sub.profiles.full_name}
-                                                </span>
-                                            )}
-                                        </CardDescription>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    {isAdmin && (
-                                        <DeleteReportButton
-                                            reportId={sub.id}
-                                            monthName={monthName(sub.month)}
-                                            year={sub.year}
-                                        />
-                                    )}
-                                    <Link href={`/dashboard/relatorios/visualizar/${sub.id}${setor ? `?setor=${setor}` : ''}`}>
-                                        <Button variant="outline" className="h-10 px-6 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold text-[12px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-                                            Visualizar
+                                    <div className="flex items-center gap-2">
+                                        {isAdmin && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 font-bold px-3 text-[10px] tracking-tight transition-colors"
+                                                onClick={() => handleDelete(report.id)}
+                                                disabled={deletingId === report.id}
+                                            >
+                                                {deletingId === report.id
+                                                    ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                                                    : <Trash2 className="w-3 h-3 mr-1.5" />
+                                                }
+                                                EXCLUIR
+                                            </Button>
+                                        )}
+                                        <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                                            <Link href={`/dashboard/relatorios/visualizar/${report.id}`}>
+                                                <FileText className="w-4 h-4" />
+                                            </Link>
                                         </Button>
-                                    </Link>
+                                    </div>
                                 </div>
                             </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <h3 className="text-xl font-black text-blue-900 dark:text-blue-50 capitalize">{monthName(report.month)}</h3>
+                                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-tighter mt-0.5">Relatório Mensal</p>
+                                </div>
+                                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">
+                                        Efetivado em {new Date(report.created_at).toLocaleDateString('pt-BR')}
+                                    </span>
+                                    <Link href={`/dashboard/relatorios/visualizar/${report.id}`} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">
+                                        VER →
+                                    </Link>
+                                </div>
+                            </CardContent>
                         </Card>
-                    )
-                })}
-
-                {(!narrativeSubmissions || narrativeSubmissions.length === 0) && (
-                    <div className="text-center py-32 rounded-3xl border-2 border-dashed border-zinc-100 dark:border-zinc-800/40">
-                        <FileText className="w-12 h-12 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
-                        <p className="text-[13px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Nenhum relatório descritivo encontrado.</p>
-                    </div>
+                    ))
                 )}
             </div>
         </div>
+    )
+}
+
+export default function HistoryPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>}>
+            <HistoryList />
+        </Suspense>
     )
 }

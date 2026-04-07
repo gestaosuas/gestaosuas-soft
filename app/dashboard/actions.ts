@@ -262,11 +262,6 @@ export async function submitReport(input: Record<string, any> | FormData, month:
         if (existing) {
             // Se já existe e não é admin, vamos verificar se podemos editar (sobrescrever)
             if (!isOfficialAdmin) {
-                // Para Relatório Mensal (Narrativo), o bloqueio é total após o primeiro envio
-                const isNarrative = existing.data?._report_content !== undefined || !!setor && !!existing.data?.[`_report_content_${setor}`]
-                if (isNarrative) {
-                    return { error: "Este relatório narrativo já foi enviado e não pode mais ser editado. Entre em contato com um administrador se precisar de correções." }
-                }
 
                 // Para Indicadores (Multi-unidade), verificamos se ESTA unidade específica já foi enviada
                 if (setor === 'cras' || setor === 'ceai' || setor === 'naica') {
@@ -285,7 +280,6 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             }
 
             let mergedData;
-            const isNarrative = formData._report_content !== undefined
             const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
             const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade')
 
@@ -315,14 +309,6 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 mergedData = { ...mergedData, ...formData, _setor: setor }
             }
 
-            if (isNarrative) {
-                (mergedData as any)[`_report_content_${setor}`] = formData._report_content
-                if (isMultiUnit) {
-                    const unitName = formData._unit || 'Principal'
-                    delete (mergedData as any).units[unitName]._report_content
-                }
-                delete (mergedData as any)._report_content
-            }
 
             const { error: updateError } = await adminSupabase
                 .from('submissions')
@@ -336,7 +322,6 @@ export async function submitReport(input: Record<string, any> | FormData, month:
         } else {
             // New Submission
             let finalData: any;
-            const isNarrative = formData._report_content !== undefined
             const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
             const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade')
 
@@ -356,14 +341,6 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 finalData = { ...formData, _setor: setor }
             }
 
-            if (isNarrative) {
-                finalData[`_report_content_${setor}`] = formData._report_content
-                if (isMultiUnit) {
-                    const unitName = formData._unit || 'Principal'
-                    delete finalData.units[unitName]._report_content
-                }
-                delete finalData._report_content
-            }
 
             const submissionData = {
                 user_id: user.id,
@@ -440,10 +417,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
 }
 
 async function syncSubmissionToSheets(formData: Record<string, any>, month: number, year: number, directorate: any, setor?: string) {
-    // Skip sheets sync for narrative reports
-    if (formData._report_type === 'monthly_narrative' || formData._report_content !== undefined) {
-        return
-    }
+    // Skip sheets sync for narrative reports (Deprecated)
 
     if (setor === 'centros') {
         const formDef = CP_FORM_DEFINITION
@@ -1707,6 +1681,26 @@ export async function getPreviousMonthData(directorateId: string, currentMonth: 
         .eq('directorate_id', directorateId)
         .eq('month', prevMonth)
         .eq('year', prevYear)
+        .maybeSingle()
+
+    return submission?.data || null
+}
+
+export async function getCurrentMonthData(directorateId: string, month: number, year: number) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return null
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch submission
+    const { data: submission } = await adminSupabase
+        .from('submissions')
+        .select('data')
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
         .maybeSingle()
 
     return submission?.data || null
