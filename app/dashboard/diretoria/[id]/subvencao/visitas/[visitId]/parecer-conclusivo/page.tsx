@@ -213,7 +213,7 @@ function ParecerConclusivoContent() {
     }
 
     const handlePrint = () => {
-        window.print()
+        window.open(`/print/parecer-conclusivo/${id}/${visitId}`, '_blank')
     }
 
     if (loading) {

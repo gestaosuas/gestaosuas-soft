@@ -244,7 +244,7 @@ function RelatorioFinalContent() {
     }
 
     const handlePrint = () => {
-        window.print()
+        window.open(`/print/relatorio-final/${id}/${visitId}`, '_blank')
     }
 
     if (loading) {

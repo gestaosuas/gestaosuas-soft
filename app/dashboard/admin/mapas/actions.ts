@@ -13,7 +13,6 @@ export async function getMapCategories() {
         .order('name')
 
     if (error) {
-        console.error('Error fetching map categories:', error)
         throw new Error('Falha ao carregar as categorias.')
     }
 
@@ -34,7 +33,6 @@ export async function createMapCategory(formData: FormData) {
         .insert({ name, color })
 
     if (error) {
-        console.error('Error creating map category:', error)
         if (error.code === '23505') { // Unique constraint violation
             return { error: 'Já existe uma categoria com este nome.' }
         }
@@ -61,7 +59,6 @@ export async function updateMapCategory(id: string, formData: FormData) {
         .eq('id', id)
 
     if (error) {
-        console.error('Error updating map category:', error)
         if (error.code === '23505') {
             return { error: 'Já existe uma categoria com este nome.' }
         }
@@ -92,7 +89,6 @@ export async function deleteMapCategory(id: string) {
         .eq('id', id)
 
     if (error) {
-        console.error('Error deleting map category:', error)
         return { error: 'Falha ao excluir categoria.' }
     }
 
@@ -118,7 +114,6 @@ export async function getMapUnits() {
         .order('name')
 
     if (error) {
-        console.error('Error fetching map units:', error)
         throw new Error('Falha ao carregar as unidades.')
     }
 
@@ -152,7 +147,6 @@ export async function createMapUnit(formData: FormData) {
         })
 
     if (error) {
-        console.error('Error creating map unit:', error)
         return { error: 'Falha ao criar unidade.' }
     }
 
@@ -189,7 +183,6 @@ export async function updateMapUnit(id: string, formData: FormData) {
         .eq('id', id)
 
     if (error) {
-        console.error('Error updating map unit:', error)
         return { error: 'Falha ao atualizar unidade.' }
     }
 
@@ -206,7 +199,6 @@ export async function deleteMapUnit(id: string) {
         .eq('id', id)
 
     if (error) {
-        console.error('Error deleting map unit:', error)
         return { error: 'Falha ao excluir unidade.' }
     }
 

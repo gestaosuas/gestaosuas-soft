@@ -111,7 +111,7 @@ export default async function LoginPage({
 
                 <footer className="mt-16 text-center text-white/30">
                     <p className="text-[10px] font-black tracking-[0.3em] uppercase">
-                        © 2026 • SISTEMA DE VIGILÂNCIA • KLISMAN RDS
+                        © 2026 • SISTEMA DE VIGILÂNCIA
                     </p>
                 </footer>
             </main>
