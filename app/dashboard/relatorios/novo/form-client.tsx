@@ -110,8 +110,19 @@ export function SubmissionFormClient({
                     dataToUse = await getCurrentMonthData(directorateId, m, y, finalUnit, finalSetor)
                 }
 
-                // Se não achou dado salvo E é um finalSetor que precisa de carry-forward (como CRAS)
-                if ((!dataToUse || Object.keys(dataToUse).length === 0)) {
+                // Se não achou dado salvo E NÃO é um dos setores que deve começar vazio (SINE, Centros, Benefícios)
+                const shouldAvoidCarryForward = (finalSetor === 'sine' || finalSetor === 'centros' || finalSetor === 'beneficios')
+
+                if (!dataToUse || Object.keys(dataToUse).length === 0) {
+                    if (shouldAvoidCarryForward) {
+                        if (isMounted) {
+                            setFetchedInitialData({})
+                            setDataLoaded(true)
+                            setLoading(false)
+                        }
+                        return
+                    }
+
                     const prevData = await getPreviousMonthData(directorateId, m, y, finalUnit, finalSetor)
                     
                     if (isMounted && prevData && Object.keys(prevData).length > 0) {
