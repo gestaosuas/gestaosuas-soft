@@ -249,8 +249,74 @@ export async function submitReport(input: Record<string, any> | FormData, month:
         }
 
         // SINE, CP e outras divisões compartilham a mesma diretoria_id 
-        // e por isso devem ser MERGEADOS no mesmo registro (mesma linha)
-        // para não violar a restrição de unicidade da diretoria/mês/ano.
+        // mas agora o SINE e CP possuem tabelas PRÓPRIAS para evitar sobrescrita.
+
+        // --- NOVO: SALVAMENTO EM TABELAS ESPECIALIZADAS ---
+        if (setor === 'sine') {
+            const sineData: any = {
+                user_id: user.id,
+                directorate_id: directorateId,
+                month,
+                year,
+                updated_at: new Date().toISOString()
+            };
+
+            // Filtrar apenas campos que pertencem à tabela SINE
+            const sineColumns = [
+                'atend_trabalhador', 'atend_online_trabalhador', 'atend_empregador', 'atend_online_empregador',
+                'seguro_desemprego', 'vagas_captadas', 'ligacoes_recebidas', 'ligacoes_realizadas',
+                'curriculos', 'entrevistados', 'proc_administrativos', 'processo_seletivo',
+                'inseridos_mercado', 'carteira_digital', 'orientacao_profissional', 'convocacao_trabalhadores',
+                'vagas_alto_valor', 'atendimentos'
+            ];
+            sineColumns.forEach(col => {
+                if (formData[col] !== undefined) sineData[col] = Number(formData[col]) || 0;
+            });
+
+            const { error: sineError } = await adminSupabase
+                .from('sine_reports')
+                .upsert(sineData, { onConflict: 'month,year' });
+                
+            if (sineError) throw new Error("Erro ao salvar dados do SINE: " + sineError.message);
+            return { success: true };
+
+        } else if (setor === 'centros') {
+            const qualifData: any = {
+                user_id: user.id,
+                directorate_id: directorateId,
+                month,
+                year,
+                updated_at: new Date().toISOString()
+            };
+
+            // Filtrar apenas campos que pertencem à tabela Qualificação
+            const cpColumns = [
+                'resumo_vagas', 'resumo_cursos', 'resumo_turmas', 'resumo_concluintes', 
+                'resumo_mulheres', 'resumo_homens', 'resumo_mercado_fem', 'resumo_mercado_masc', 
+                'resumo_vagas_ocupadas', 'resumo_taxa_ocupacao',
+                'cp_morumbi_concluintes', 'cp_lagoinha_concluintes', 'cp_campo_alegre_concluintes', 
+                'cp_luizote_1_concluintes', 'cp_luizote_2_concluintes', 'cp_tocantins_concluintes', 
+                'cp_planalto_concluintes', 'onibus_concluintes_unit', 'maravilha_concluintes', 'uditech_concluintes',
+                'bairros_visitados', 'concluintes_onibus', 'cursos_onibus',
+                'cp_morumbi_atendimentos', 'cp_lagoinha_atendimentos', 'cp_campo_alegre_atendimentos', 
+                'cp_luizote_1_atendimentos', 'cp_luizote_2_atendimentos', 'cp_tocantis_atendimentos', 
+                'cp_planalto_atendimentos', 'maravilha_atendimentos', 'unitech_atendimentos', 'onibus_atendimentos',
+                'cursos_andamento'
+            ];
+            cpColumns.forEach(col => {
+                if (formData[col] !== undefined) qualifData[col] = (col === 'resumo_taxa_ocupacao') ? Number(formData[col]) : (Number(formData[col]) || 0);
+            });
+
+            const { error: qualifError } = await adminSupabase
+                .from('qualificacao_reports')
+                .upsert(qualifData, { onConflict: 'month,year' });
+                
+            if (qualifError) throw new Error("Erro ao salvar dados de Qualificação: " + qualifError.message);
+            return { success: true };
+        }
+        // --- FIM DO NOVO SALVAMENTO ---
+
+        // Para outras diretorias (Monitoramento, etc), mantemos o sistema antigo por enquanto
         const { data: existing } = await adminSupabase
             .from('submissions')
             .select('id, data, user_id')
@@ -698,6 +764,33 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     if (dbError) throw new Error("Erro ao atualizar banco de dados: " + dbError.message)
 
+    // --- NOVO: ATUALIZAÇÃO NAS TABELAS ESPECIALIZADAS ---
+    try {
+        if (dirName.includes('sine') || dirName.includes('profissional') || dirName.includes('centro') || dirName.includes('qualificacao')) {
+            const allSineFields = SINE_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
+            const allCPFields = CP_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
+
+            if (allSineFields.includes(fieldId)) {
+                await adminSupabase
+                    .from('sine_reports')
+                    .update({ [fieldId]: value, updated_at: new Date().toISOString() })
+                    .eq('month', submission.month)
+                    .eq('year', submission.year)
+                    .eq('directorate_id', submission.directorate_id);
+            } else if (allCPFields.includes(fieldId)) {
+                await adminSupabase
+                    .from('qualificacao_reports')
+                    .update({ [fieldId]: value, updated_at: new Date().toISOString() })
+                    .eq('month', submission.month)
+                    .eq('year', submission.year)
+                    .eq('directorate_id', submission.directorate_id);
+            }
+        }
+    } catch (e) {
+        console.error("Specialized table cell update error:", e);
+    }
+    // --- FIM DA ATUALIZAÇÃO ---
+
     // Sync to Sheets
     try {
         const { data: directorate } = await adminSupabase
@@ -929,6 +1022,16 @@ export async function deleteMonthData(directorateId: string, month: number, year
     }
 
     const adminSupabase = createAdminClient()
+
+    // --- NOVO: DELETE NAS TABELAS ESPECIALIZADAS ---
+    if (setor === 'sine') {
+        const { error } = await adminSupabase.from('sine_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'centros') {
+        const { error } = await adminSupabase.from('qualificacao_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    }
+    // --- FIM DO DELETE ESPECIALIZADO ---
 
     // 1. Fetch the existing submission
     const { data: existing } = await adminSupabase
@@ -1688,6 +1791,24 @@ export async function getPreviousMonthData(directorateId: string, currentMonth: 
 
 export async function getCurrentMonthData(directorateId: string, month: number, year: number) {
     const supabase = await createClient()
+
+    // --- NOVO: TENTA BUSCAR NAS TABELAS ESPECIALIZADAS PRIMEIRO ---
+    const { data: sine } = await supabase.from('sine_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+    const { data: qualif } = await supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+    
+    if (sine || qualif) {
+        const found = sine || qualif;
+        const clean: any = { ...found };
+        // Remover campos técnicos para não sujar o formulário
+        delete clean.id;
+        delete clean.user_id;
+        delete clean.directorate_id;
+        delete clean.created_at;
+        delete clean.updated_at;
+        return clean;
+    }
+    // --- FIM DA BUSCA ESPECIALIZADA ---
+
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null
@@ -2254,6 +2375,18 @@ export async function getDailyReports(date: string) {
 }
 
 export async function checkSubmissionExists(directorateId: string, month: number, year: number, unit?: string, setor?: string) {
+    const supabase = await createClient()
+
+    // --- NOVO: VERIFICA NAS TABELAS ESPECIALIZADAS ---
+    if (setor === 'sine') {
+        const { data } = await supabase.from('sine_reports').select('id').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (data) return true;
+    } else if (setor === 'centros') {
+        const { data } = await supabase.from('qualificacao_reports').select('id').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (data) return true;
+    }
+    // --- FIM DA VERIFICAÇÃO ESPECIALIZADA ---
+
     const adminSupabase = createAdminClient()
     const { data: existing } = await adminSupabase
         .from('submissions')

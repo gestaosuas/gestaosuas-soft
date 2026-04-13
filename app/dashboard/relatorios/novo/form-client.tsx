@@ -513,7 +513,7 @@ export function SubmissionFormClient({
                 if (setor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
                 } else if (setor === 'centros' || setor === 'sine') {
-                    window.location.href = `/dashboard/relatorios/lista?setor=${setor}&directorate_id=${directorateId}`
+                    window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
                 } else if (setor === 'ceai') {

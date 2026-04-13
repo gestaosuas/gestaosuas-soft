@@ -159,7 +159,6 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             }
 
             if (!hasAccess) return [] // Return empty if no access
-
             // 2. Fetch Submissions (Bypassing RLS)
             const { data: submissions } = await supabase
                 .from('submissions')
@@ -168,24 +167,84 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                 .order('year', { ascending: false })
                 .order('month', { ascending: false })
 
-            if (!submissions || submissions.length === 0) return []
+            // 3. Fetch Specialized Reports
+            const { data: sineReports } = await supabase.from('sine_reports').select('*').eq('directorate_id', directorateId);
+            const { data: qualifReports } = await supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId);
 
-            // 3. Fetch authors names from profiles to join in-memory securely
-            const userIds = Array.from(new Set(submissions.map(s => s.user_id))).filter(Boolean)
+            // 4. Extract all unique user IDs from all sources to fetch profiles
+            const allUserIds = new Set([
+                ...(submissions || []).map(s => s.user_id),
+                ...(sineReports || []).map(s => s.user_id),
+                ...(qualifReports || []).map(s => s.user_id)
+            ]);
+            const uniqueUserIds = Array.from(allUserIds).filter(Boolean);
+
             const { data: profiles } = await supabase
                 .from('profiles')
                 .select('id, full_name')
-                .in('id', userIds)
+                .in('id', uniqueUserIds)
 
             const profileMap = (profiles || []).reduce((acc: any, p) => {
                 acc[p.id] = p.full_name
                 return acc
             }, {})
 
-            return (submissions || []).map(s => ({
+            const finalSubmissions = (submissions || []).map(s => ({
                 ...s,
                 profiles: { full_name: profileMap[s.user_id] || 'Usuário Desconhecido' }
             }))
+
+            // Integrar SINE
+            if (sineReports) {
+                sineReports.forEach(sine => {
+                    const existingIdx = finalSubmissions.findIndex(fs => fs.month === sine.month && fs.year === sine.year);
+                    const cleanData = { ...sine };
+                    delete (cleanData as any).id;
+                    delete (cleanData as any).user_id;
+
+                    if (existingIdx > -1) {
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_sine: true };
+                    } else {
+                        finalSubmissions.push({
+                            id: sine.id,
+                            month: sine.month,
+                            year: sine.year,
+                            directorate_id: directorateId,
+                            user_id: sine.user_id,
+                            created_at: sine.created_at,
+                            data: { ...cleanData, _has_sine: true, _setor: 'sine' },
+                            profiles: { full_name: profileMap[sine.user_id] || 'Usuário' }
+                        } as any);
+                    }
+                });
+            }
+
+            // Integrar Qualificação
+            if (qualifReports) {
+                qualifReports.forEach(q => {
+                    const existingIdx = finalSubmissions.findIndex(fs => fs.month === q.month && fs.year === q.year);
+                    const cleanData = { ...q };
+                    delete (cleanData as any).id;
+                    delete (cleanData as any).user_id;
+
+                    if (existingIdx > -1) {
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_centros: true };
+                    } else {
+                        finalSubmissions.push({
+                            id: q.id,
+                            month: q.month,
+                            year: q.year,
+                            directorate_id: directorateId,
+                            user_id: q.user_id,
+                            created_at: q.created_at,
+                            data: { ...cleanData, _has_centros: true, _setor: 'centros' },
+                            profiles: { full_name: profileMap[q.user_id] || 'Usuário' }
+                        } as any);
+                    }
+                });
+            }
+
+            return finalSubmissions;
         },
         [`submissions-safe-${directorateId}-${userId}`], // Cache per user+directorate
         {

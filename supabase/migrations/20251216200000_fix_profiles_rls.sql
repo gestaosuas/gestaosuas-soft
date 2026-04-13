@@ -14,18 +14,23 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- 2. Garantir que o perfil do usuário atual exista e seja Admin + SINE
-INSERT INTO public.profiles (id, role, full_name, directorate_id)
-VALUES (
-  'fc51361e-34fa-4be8-b47c-23c6925e8f69', 
-  'admin', 
-  'Gestão SUAS',
-  (SELECT id FROM directorates WHERE name = 'Formação Profissional e SINE' LIMIT 1)
-)
-ON CONFLICT (id) DO UPDATE
-SET 
-  role = 'admin',
-  directorate_id = (SELECT id FROM directorates WHERE name = 'Formação Profissional e SINE' LIMIT 1);
+-- 2. Garantir que o perfil do usuário exista (apenas se o usuário de auth existir)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM auth.users WHERE id = 'fc51361e-34fa-4be8-b47c-23c6925e8f69') THEN
+    INSERT INTO public.profiles (id, role, full_name, directorate_id)
+    VALUES (
+      'fc51361e-34fa-4be8-b47c-23c6925e8f69', 
+      'admin', 
+      'Gestão SUAS',
+      (SELECT id FROM directorates WHERE name = 'Formação Profissional e SINE' LIMIT 1)
+    )
+    ON CONFLICT (id) DO UPDATE
+    SET 
+      role = 'admin',
+      directorate_id = (SELECT id FROM directorates WHERE name = 'Formação Profissional e SINE' LIMIT 1);
+  END IF;
+END $$;
 
 -- 3. Liberar RLS para Leitura
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
