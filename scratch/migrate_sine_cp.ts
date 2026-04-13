@@ -38,7 +38,7 @@ async function migrateData() {
 
         if (isSine) {
             console.log(`📊 Migrando SINE: Mês ${sub.month}/${sub.year}`)
-            const sineData = {
+            const sineData: any = {
                 user_id: sub.user_id,
                 directorate_id: sub.directorate_id,
                 month: sub.month,
@@ -69,7 +69,7 @@ async function migrateData() {
 
         if (isCP) {
             console.log(`🛠️ Migrando Qualificação: Mês ${sub.month}/${sub.year}`)
-            const qualifData = {
+            const qualifData: any = {
                 user_id: sub.user_id,
                 directorate_id: sub.directorate_id,
                 month: sub.month,
