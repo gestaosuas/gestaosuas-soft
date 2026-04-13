@@ -74,8 +74,8 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            const isSharedEdit = (finalSetor === 'centros' || finalSetor === 'sine')
-            const isRecurrent = (finalSetor === 'creas' || finalSetor === 'ceai' || finalSetor === 'cras' || finalSetor === 'naica' || finalSetor === 'creas_protetivo' || finalSetor === 'creas_socioeducativo')
+            const isSharedEdit = (finalSetor === 'centros' || finalSetor === 'sine' || finalSetor === 'beneficios')
+            const isRecurrent = (finalSetor === 'creas' || finalSetor === 'ceai' || finalSetor === 'cras' || finalSetor === 'naica' || finalSetor === 'creas_protetivo' || finalSetor === 'creas_socioeducativo' || finalSetor === 'beneficios')
 
             if (!isRecurrent && !isSharedEdit) {
                 if (isMounted) {
@@ -103,7 +103,7 @@ export function SubmissionFormClient({
 
                 // Logic: For CP/SINE, we fetch CURRENT month data to "Update"
                 // For others, we fetch PREVIOUS month data to "Carry Forward"
-                const isSpecialized = (finalSetor === 'centros' || finalSetor === 'sine' || finalSetor === 'cras')
+                const isSpecialized = (finalSetor === 'centros' || finalSetor === 'sine' || finalSetor === 'cras' || finalSetor === 'beneficios')
                 let dataToUse: any = null
 
                 if (isSpecialized) {
@@ -178,17 +178,6 @@ export function SubmissionFormClient({
                         }
                         // Pre-fetch the cumulative total from the previous month
                         newData.prev_total_atendidos_ano = getNum(targetData.total_inseridos)
-                    } else if (finalSetor === 'cras') {
-                        // CRAS logic (Multi-finalUnit)
-                        let targetData = prevData
-                        if (prevData._is_multi_unit && prevData.units && finalUnit) {
-                            targetData = prevData.units[finalUnit] || {}
-                        }
-
-                        // Mês Anterior = Prev Atual - Prev Desligadas
-                        if (targetData.atual !== undefined || targetData.desligadas !== undefined) {
-                            newData.mes_anterior = getNum(targetData.atual) - getNum(targetData.desligadas)
-                        }
                     } else if (finalSetor === 'naica') {
                         // NAICA Logic (Multi-finalUnit)
                         let targetData = prevData
