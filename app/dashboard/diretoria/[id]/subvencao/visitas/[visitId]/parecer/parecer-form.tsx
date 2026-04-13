@@ -343,7 +343,9 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                     </div>
                     <div className="flex flex-col md:flex-row md:items-baseline gap-2">
                         <strong className="uppercase shrink-0 text-blue-900 print:text-black">Data de Preenchimento:</strong> 
-                        <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">{isMounted ? today : "---"}</span>
+                        <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">
+                            {isMounted ? (report.date ? new Date(report.date + 'T12:00:00').toLocaleDateString('pt-BR') : today) : "---"}
+                        </span>
                     </div>
                 </div>
 

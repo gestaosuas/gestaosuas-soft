@@ -103,7 +103,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             }
         }
 
-        // Pre-processing and Calculations based on Sector
+
         if (setor === 'cras') {
             const mes_anterior = Number(formData.mes_anterior) || 0
             const admitidas = Number(formData.admitidas) || 0
@@ -278,7 +278,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 .upsert(sineData, { onConflict: 'month,year' });
                 
             if (sineError) throw new Error("Erro ao salvar dados do SINE: " + sineError.message);
-            return { success: true };
+            // SINE saved successfully, continuing to global sync
 
         } else if (setor === 'centros') {
             const qualifData: any = {
@@ -312,7 +312,61 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 .upsert(qualifData, { onConflict: 'month,year' });
                 
             if (qualifError) throw new Error("Erro ao salvar dados de Qualificação: " + qualifError.message);
-            return { success: true };
+            // CP saved successfully, continuing to global sync
+        } else if (setor === 'cras') {
+            const crasData: any = {
+                user_id: user.id,
+                directorate_id: directorateId,
+                unit_name: formData._unit || 'Desconhecida',
+                month,
+                year,
+                updated_at: new Date().toISOString()
+            };
+
+            const crasColumns = [
+                'mes_anterior', 'admitidas', 'desligadas', 'atual', 'atendimentos', 
+                'visita_domiciliar', 'atend_particularizado', 'pro_pao', 'dmae', 
+                'auxilio_documento', 'cesta_basica', 'fralda', 'absorvente', 'bpc', 
+                'carteirinha_idoso', 'passe_livre_deficiente', 'cadastros_novos', 'recadastros'
+            ];
+            crasColumns.forEach(col => {
+                if (formData[col] !== undefined) crasData[col] = Number(formData[col]) || 0;
+            });
+
+            const { error: crasError } = await adminSupabase
+                .from('cras_reports')
+                .upsert(crasData, { onConflict: 'unit_name,month,year' });
+                
+            if (crasError) throw new Error('Erro ao salvar dados do CRAS: ' + crasError.message);
+            // CRAS saved successfully, continuing to global sync
+        } else if (setor === 'beneficios') {
+            const beneficiosData: any = {
+                user_id: user.id,
+                directorate_id: directorateId,
+                month,
+                year,
+                updated_at: new Date().toISOString()
+            };
+
+            const beneficiosColumns = [
+                'encaminhadas_inclusao_cadunico', 'encaminhadas_atualizacao_cadunico', 'consulta_cadunico',
+                'numero_nis', 'dmae', 'pro_pao', 'auxilio_documento', 'carteirinha_idoso',
+                'bpc_presencial', 'bpc_online', 'solicitacao_colchoes', 'cesta_basica',
+                'solicitacao_fraldas', 'absorvente', 'agasalho_cobertor', 'visitas_cadunico',
+                'visita_nucleo_habitacao', 'visita_cesta_fraldas_colchoes', 'visita_dmae',
+                'visitas_pro_pao', 'total_visitas', 'busao_social_1', 'busao_social_2',
+                'dibs', 'familias_pbf', 'pessoas_cadunico'
+            ];
+            beneficiosColumns.forEach(col => {
+                if (formData[col] !== undefined) beneficiosData[col] = Number(formData[col]) || 0;
+            });
+
+            const { error: beneficiosError } = await adminSupabase
+                .from('beneficios_reports')
+                .upsert(beneficiosData, { onConflict: 'directorate_id,month,year' });
+                
+            if (beneficiosError) throw new Error('Erro ao salvar dados de Benefícios: ' + beneficiosError.message);
+            // Beneficios saved successfully, continuing to global sync
         }
         // --- FIM DO NOVO SALVAMENTO ---
 
@@ -1033,6 +1087,12 @@ export async function deleteMonthData(directorateId: string, month: number, year
         if (error) return { success: false, error: error.message };
     } else if (setor === 'centros') {
         const { error } = await adminSupabase.from('qualificacao_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'beneficios') {
+        const { error } = await adminSupabase.from('beneficios_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'cras') {
+        const { error } = await adminSupabase.from('cras_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year).eq('unit_name', unitName || '');
         if (error) return { success: false, error: error.message };
     }
     // --- FIM DO DELETE ESPECIALIZADO ---
@@ -1764,24 +1824,47 @@ export async function deleteVisit(id: string) {
     return { success: true }
 }
 
-export async function getPreviousMonthData(directorateId: string, currentMonth: number, currentYear: number) {
+export async function getPreviousMonthData(directorateId: string, currentMonth: number, currentYear: number, unit?: string, setor?: string) {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return null
 
     // Determine previous month
     let prevMonth = currentMonth - 1
     let prevYear = currentYear
-
     if (prevMonth === 0) {
         prevMonth = 12
         prevYear = currentYear - 1
     }
 
+    // --- NOVO: BUSCA NO CRAS E BENEFICIOS BLINDADOS ---
+    if (setor === 'beneficios') {
+        const { data } = await supabase.from('beneficios_reports').select('*').eq('directorate_id', directorateId).eq('month', prevMonth).eq('year', prevYear).maybeSingle();
+        return data || {};
+    }
+
+    if (setor === 'cras') {
+        const { data: cras } = await supabase.from('cras_reports')
+            .select('*')
+            .eq('directorate_id', directorateId)
+            .eq('unit_name', unit || '')
+            .eq('month', prevMonth)
+            .eq('year', prevYear)
+            .maybeSingle();
+            
+        if (cras) {
+            const clean: any = { ...cras };
+            delete clean.id;
+            delete clean.user_id;
+            delete clean.directorate_id;
+            delete clean.created_at;
+            delete clean.updated_at;
+            return clean;
+        }
+    }
+    // --- FIM DA BUSCA NO CRAS ---
+
     const adminSupabase = createAdminClient()
 
-    // Fetch submission
+    // Fetch submission from old table for other sectors
     const { data: submission } = await adminSupabase
         .from('submissions')
         .select('data')
@@ -1793,17 +1876,25 @@ export async function getPreviousMonthData(directorateId: string, currentMonth: 
     return submission?.data || null
 }
 
-export async function getCurrentMonthData(directorateId: string, month: number, year: number) {
+export async function getCurrentMonthData(directorateId: string, month: number, year: number, unit?: string, setor?: string) {
     const supabase = await createClient()
 
-    // --- NOVO: TENTA BUSCAR NAS TABELAS ESPECIALIZADAS PRIMEIRO ---
-    const { data: sine } = await supabase.from('sine_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
-    const { data: qualif } = await supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+    if (setor === 'beneficios') {
+        const { data: benef } = await supabase.from('beneficios_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (benef) return cleanse(benef);
+    } else if (setor === 'sine') {
+        const { data: sine } = await supabase.from('sine_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (sine) return cleanse(sine);
+    } else if (setor === 'centros') {
+        const { data: qualif } = await supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (qualif) return cleanse(qualif);
+    } else if (setor === 'cras') {
+        const { data: cras } = await supabase.from('cras_reports').select('*').eq('directorate_id', directorateId).eq('unit_name', unit || '').eq('month', month).eq('year', year).maybeSingle();
+        if (cras) return cleanse(cras);
+    }
     
-    if (sine || qualif) {
-        const found = sine || qualif;
+    function cleanse(found: any) {
         const clean: any = { ...found };
-        // Remover campos técnicos para não sujar o formulário
         delete clean.id;
         delete clean.user_id;
         delete clean.directorate_id;
@@ -2382,11 +2473,17 @@ export async function checkSubmissionExists(directorateId: string, month: number
     const supabase = await createClient()
 
     // --- NOVO: VERIFICA NAS TABELAS ESPECIALIZADAS ---
-    if (setor === 'sine') {
+    if (setor === 'beneficios') {
+        const { data } = await supabase.from('beneficios_reports').select('id').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (data) return true;
+    } else if (setor === 'sine') {
         const { data } = await supabase.from('sine_reports').select('id').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
         if (data) return true;
     } else if (setor === 'centros') {
         const { data } = await supabase.from('qualificacao_reports').select('id').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (data) return true;
+    } else if (setor === 'cras') {
+        const { data } = await supabase.from('cras_reports').select('id').eq('directorate_id', directorateId).eq('month', month).eq('year', year).eq('unit_name', unit || '').maybeSingle();
         if (data) return true;
     }
     // --- FIM DA VERIFICAÇÃO ESPECIALIZADA ---

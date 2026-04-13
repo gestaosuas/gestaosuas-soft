@@ -1,4 +1,5 @@
 'use client'
+import { useSearchParams } from "next/navigation"
 
 import { FormEngine, FormDefinition } from "@/components/form-engine"
 import { StepperForm } from "@/components/stepper-form"
@@ -26,9 +27,9 @@ export function SubmissionFormClient({
     definition,
     directorateName,
     directorateId,
-    setor,
-    unit,
-    subcategory,
+    setor: propSetor,
+    unit: propUnit,
+    subcategory: propSubcategory,
     isAdmin = false
 }: {
     definition: FormDefinition,
@@ -39,6 +40,10 @@ export function SubmissionFormClient({
     subcategory?: string,
     isAdmin?: boolean
 }) {
+    const searchParamsHook = useSearchParams()
+    const finalUnit = propUnit || searchParamsHook?.get('unit') || ''
+    const finalSetor = propSetor || searchParamsHook?.get('setor') || ''
+    const finalSubcategory = propSubcategory || searchParamsHook?.get('subcategory') || ''
     const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1))
     const [year, setYear] = useState<string>(String(new Date().getFullYear()))
     const [loading, setLoading] = useState(false)
@@ -46,7 +51,7 @@ export function SubmissionFormClient({
     const [dataLoaded, setDataLoaded] = useState(false)
     const [dynamicDefinition, setDynamicDefinition] = useState<FormDefinition>(definition)
     const [dynamicSteps, setDynamicSteps] = useState<any[]>(
-        setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : []
+        finalSetor === 'ceai' && finalSubcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : []
     )
     const [alreadySubmitted, setAlreadySubmitted] = useState(false)
     const [showWarning, setShowWarning] = useState(true)
@@ -55,11 +60,11 @@ export function SubmissionFormClient({
     useEffect(() => {
         async function check() {
             if (!directorateId || !month || !year) return
-            const exists = await checkSubmissionExists(directorateId, Number(month), Number(year), unit, setor)
+            const exists = await checkSubmissionExists(directorateId, Number(month), Number(year), finalUnit, finalSetor)
             setAlreadySubmitted(exists)
         }
         check()
-    }, [month, year, unit, setor, directorateId])
+    }, [month, year, finalUnit, finalSetor, directorateId])
 
     // Effect to fetch previous month data when month/year changes
     useEffect(() => {
@@ -69,8 +74,8 @@ export function SubmissionFormClient({
             // Reset to avoid showing wrong data while loading
             if (isMounted) setFetchedInitialData({})
 
-            const isSharedEdit = (setor === 'centros' || setor === 'sine')
-            const isRecurrent = (setor === 'creas' || setor === 'ceai' || setor === 'cras' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo')
+            const isSharedEdit = (finalSetor === 'centros' || finalSetor === 'sine')
+            const isRecurrent = (finalSetor === 'creas' || finalSetor === 'ceai' || finalSetor === 'cras' || finalSetor === 'naica' || finalSetor === 'creas_protetivo' || finalSetor === 'creas_socioeducativo')
 
             if (!isRecurrent && !isSharedEdit) {
                 if (isMounted) {
@@ -82,6 +87,11 @@ export function SubmissionFormClient({
 
             setLoading(true)
             try {
+                const getNum = (val: any) => {
+                    const n = Number(val)
+                    return isNaN(n) ? 0 : n
+                }
+
                 // Ensure month/year are valid numbers
                 const m = Number(month)
                 const y = Number(year)
@@ -93,33 +103,52 @@ export function SubmissionFormClient({
 
                 // Logic: For CP/SINE, we fetch CURRENT month data to "Update"
                 // For others, we fetch PREVIOUS month data to "Carry Forward"
-                const isSharedEdit = (setor === 'centros' || setor === 'sine')
+                const isSpecialized = (finalSetor === 'centros' || finalSetor === 'sine' || finalSetor === 'cras')
                 let dataToUse: any = null
 
-                if (isSharedEdit) {
-                    dataToUse = await getCurrentMonthData(directorateId, m, y)
-                    if (isMounted && dataToUse) {
-                        // Direct merge for shared sectors (no calculation needed, just pre-populate)
-                        setFetchedInitialData(dataToUse)
-                    }
-                } else {
-                    dataToUse = await getPreviousMonthData(directorateId, m, y)
+                if (isSpecialized) {
+                    dataToUse = await getCurrentMonthData(directorateId, m, y, finalUnit, finalSetor)
                 }
 
-                if (isMounted && dataToUse && Object.keys(dataToUse).length > 0 && !isSharedEdit) {
+                // Se não achou dado salvo E é um finalSetor que precisa de carry-forward (como CRAS)
+                if ((!dataToUse || Object.keys(dataToUse).length === 0)) {
+                    const prevData = await getPreviousMonthData(directorateId, m, y, finalUnit, finalSetor)
+                    
+                    if (isMounted && prevData && Object.keys(prevData).length > 0) {
+                        const newData: any = { ...prevData }
+                        
+                        if (finalSetor === 'cras') {
+                             // Cálculo da sugestão: Atual (Mês anterior) - Desligadas (Mês anterior) = Novo Mês Anterior
+                             newData.mes_anterior = getNum(prevData.atual) - getNum(prevData.desligadas)
+                             // Zerar outros campos para não confundir o usuário
+                             const crasIndicatorFields = [
+                                'admitidas', 'desligadas', 'atual', 'atendimentos', 
+                                'visita_domiciliar', 'atend_particularizado', 'pro_pao', 'dmae', 
+                                'auxilio_documento', 'cesta_basica', 'fralda', 'absorvente', 'bpc', 
+                                'carteirinha_idoso', 'passe_livre_deficiente', 'cadastros_novos', 'recadastros'
+                             ];
+                             crasIndicatorFields.forEach(f => newData[f] = 0);
+                        }
+                        
+                        setFetchedInitialData(newData)
+                        return // Interromper pois já preenchemos a sugestão
+                    }
+                }
+
+                if (isMounted && dataToUse && Object.keys(dataToUse).length > 0) {
+                    setFetchedInitialData(dataToUse)
+                }
+
+                if (isMounted && dataToUse && Object.keys(dataToUse).length > 0 && !isSpecialized) {
                     const prevData = dataToUse
                     let newData: any = {}
-                    const getNum = (val: any) => {
-                        const n = Number(val)
-                        return isNaN(n) ? 0 : n
-                    }
 
-                    if (setor === 'creas') {
+                    if (finalSetor === 'creas') {
                         // New Logic for 5 recurring sections
                         let prefixes: string[] = []
-                        if (subcategory === 'idoso') {
+                        if (finalSubcategory === 'idoso') {
                             prefixes = ['violencia_fisica', 'abuso_sexual', 'exploracao_sexual', 'negligencia', 'exploracao_financeira']
-                        } else if (subcategory === 'deficiente') {
+                        } else if (finalSubcategory === 'deficiente') {
                             prefixes = ['def_violencia_fisica', 'def_abuso_sexual', 'def_exploracao_sexual', 'def_negligencia', 'def_exploracao_financeira']
                         }
 
@@ -134,11 +163,11 @@ export function SubmissionFormClient({
                                 newData[`${prefix}_atendidas_anterior`] = prevTotal - prevDesligados
                             }
                         })
-                    } else if (setor === 'ceai') {
-                        // CEAI logic (Multi-unit)
+                    } else if (finalSetor === 'ceai') {
+                        // CEAI logic (Multi-finalUnit)
                         let targetData = prevData
-                        if (prevData._is_multi_unit && prevData.units && unit) {
-                            targetData = prevData.units[unit] || {}
+                        if (prevData._is_multi_unit && prevData.units && finalUnit) {
+                            targetData = prevData.units[finalUnit] || {}
                         }
 
                         if (targetData.atendidos_anterior_masc !== undefined || targetData.inseridos_masc !== undefined) {
@@ -149,22 +178,22 @@ export function SubmissionFormClient({
                         }
                         // Pre-fetch the cumulative total from the previous month
                         newData.prev_total_atendidos_ano = getNum(targetData.total_inseridos)
-                    } else if (setor === 'cras') {
-                        // CRAS logic (Multi-unit)
+                    } else if (finalSetor === 'cras') {
+                        // CRAS logic (Multi-finalUnit)
                         let targetData = prevData
-                        if (prevData._is_multi_unit && prevData.units && unit) {
-                            targetData = prevData.units[unit] || {}
+                        if (prevData._is_multi_unit && prevData.units && finalUnit) {
+                            targetData = prevData.units[finalUnit] || {}
                         }
 
                         // Mês Anterior = Prev Atual - Prev Desligadas
                         if (targetData.atual !== undefined || targetData.desligadas !== undefined) {
                             newData.mes_anterior = getNum(targetData.atual) - getNum(targetData.desligadas)
                         }
-                    } else if (setor === 'naica') {
-                        // NAICA Logic (Multi-unit)
+                    } else if (finalSetor === 'naica') {
+                        // NAICA Logic (Multi-finalUnit)
                         let targetData = prevData
-                        if (prevData._is_multi_unit && prevData.units && unit) {
-                            targetData = prevData.units[unit] || {}
+                        if (prevData._is_multi_unit && prevData.units && finalUnit) {
+                            targetData = prevData.units[finalUnit] || {}
                         }
 
                         // Mês Anterior Masculino = (Anterior M + Inseridos M) - Desligados M
@@ -172,7 +201,7 @@ export function SubmissionFormClient({
 
                         // Mês Anterior Feminino = (Anterior F + Inseridos F) - Desligados F
                         newData.mes_anterior_fem = (getNum(targetData.mes_anterior_fem) + getNum(targetData.inseridos_fem)) - getNum(targetData.desligados_fem)
-                    } else if (setor === 'creas_protetivo') {
+                    } else if (finalSetor === 'creas_protetivo') {
                         // CRAS Protetivo Logic (Famílias e Atendimentos)
                         // Famílias: Atual (Anterior) - Desligadas (Anterior)
                         if (prevData.fam_atual !== undefined || prevData.fam_desligadas !== undefined) {
@@ -189,7 +218,7 @@ export function SubmissionFormClient({
                     setFetchedInitialData(newData)
                 } else if (isMounted && !isSharedEdit) {
                     // Only clear if not in shared edit mode (where it might naturally be empty for new months)
-                    console.log("No data found for carry-forward", { directorateId, month, year, setor, unit, subcategory });
+                    console.log("No data found for carry-forward", { directorateId, month, year, finalSetor, finalUnit, finalSubcategory });
                     setFetchedInitialData({});
                 }
             } catch (err) {
@@ -205,16 +234,16 @@ export function SubmissionFormClient({
         loadPreviousData()
 
         return () => { isMounted = false }
-    }, [month, year, directorateId, setor, subcategory, unit])
+    }, [month, year, directorateId, finalSetor, finalSubcategory, finalUnit])
 
     // Effect to load CEAI Oficinas and dynamically modify the FormDefinition
     useEffect(() => {
         let isMounted = true
 
         async function loadOficinas() {
-            if (setor === 'ceai' && subcategory !== 'condominio' && unit) {
+            if (finalSetor === 'ceai' && finalSubcategory !== 'condominio' && finalUnit) {
                 try {
-                    const oficinas = await getOficinasComCategorias(unit)
+                    const oficinas = await getOficinasComCategorias(finalUnit)
 
                     if (isMounted && oficinas && oficinas.length > 0) {
                         // Create a new definition based on the original one
@@ -274,19 +303,19 @@ export function SubmissionFormClient({
                         setDynamicSteps(baseSteps)
                     } else if (isMounted) {
                         setDynamicDefinition(definition)
-                        setDynamicSteps(setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
+                        setDynamicSteps(finalSetor === 'ceai' && finalSubcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
                     }
                 } catch (error) {
                     console.error("Erro ao buscar oficinas:", error)
                     if (isMounted) {
                         setDynamicDefinition(definition)
-                        setDynamicSteps(setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
+                        setDynamicSteps(finalSetor === 'ceai' && finalSubcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
                     }
                 }
             } else {
                 if (isMounted) {
                     setDynamicDefinition(definition)
-                    setDynamicSteps(setor === 'ceai' && subcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
+                    setDynamicSteps(finalSetor === 'ceai' && finalSubcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
                 }
             }
         }
@@ -294,10 +323,10 @@ export function SubmissionFormClient({
         loadOficinas()
 
         return () => { isMounted = false }
-    }, [definition, setor, subcategory, unit])
+    }, [definition, finalSetor, finalSubcategory, finalUnit])
 
     const handleDataChange = useCallback((data: Record<string, any>, setData: any) => {
-        if (setor === 'cras') {
+        if (finalSetor === 'cras') {
             const mes_anterior = Number(data.mes_anterior) || 0
             const admitidas = Number(data.admitidas) || 0
             const total = mes_anterior + admitidas
@@ -307,11 +336,11 @@ export function SubmissionFormClient({
             }
         }
 
-        if (setor === 'creas') {
+        if (finalSetor === 'creas') {
             let prefixes: string[] = []
-            if (subcategory === 'idoso') {
+            if (finalSubcategory === 'idoso') {
                 prefixes = ['violencia_fisica', 'abuso_sexual', 'exploracao_sexual', 'negligencia', 'exploracao_financeira']
-            } else if (subcategory === 'deficiente') {
+            } else if (finalSubcategory === 'deficiente') {
                 prefixes = ['def_violencia_fisica', 'def_abuso_sexual', 'def_exploracao_sexual', 'def_negligencia', 'def_exploracao_financeira']
             }
             prefixes.forEach(prefix => {
@@ -325,7 +354,7 @@ export function SubmissionFormClient({
             })
         }
 
-        if (setor === 'ceai') {
+        if (finalSetor === 'ceai') {
             const inseridos_masc = Number(data.inseridos_masc) || 0
             const inseridos_fem = Number(data.inseridos_fem) || 0
             const prev_total = Number(data.prev_total_atendidos_ano) || 0
@@ -336,7 +365,7 @@ export function SubmissionFormClient({
             }
         }
 
-        if (setor === 'pop_rua') {
+        if (finalSetor === 'pop_rua') {
             const c = Number(data.num_atend_centro_ref) || 0
             const a = Number(data.num_atend_abordagem) || 0
             const m = Number(data.num_atend_migracao) || 0
@@ -347,7 +376,7 @@ export function SubmissionFormClient({
             }
         }
 
-        if (setor === 'naica') {
+        if (finalSetor === 'naica') {
             const m1 = Number(data.mes_anterior_masc) || 0
             const f1 = Number(data.mes_anterior_fem) || 0
             const am = Number(data.inseridos_masc) || 0
@@ -359,7 +388,7 @@ export function SubmissionFormClient({
             }
         }
 
-        if (setor === 'creas_socioeducativo') {
+        if (finalSetor === 'creas_socioeducativo') {
             // Famílias
             const fam_1 = Number(data.fam_acompanhamento_1_dia) || 0
             const fam_ins = Number(data.fam_inseridas) || 0
@@ -426,7 +455,7 @@ export function SubmissionFormClient({
             }
         }
 
-        if (setor === 'creas_protetivo') {
+        if (finalSetor === 'creas_protetivo') {
             // Famílias
             const fam_ant = Number(data.fam_mes_anterior) || 0
             const fam_adm = Number(data.fam_admitidas) || 0
@@ -444,7 +473,7 @@ export function SubmissionFormClient({
             }
         }
 
-        if (setor === 'centros') {
+        if (finalSetor === 'centros') {
             const oferecidas = Number(data.resumo_vagas) || 0
             const ocupadas = Number(data.resumo_vagas_ocupadas) || 0
             const taxa = oferecidas > 0 ? Number(((ocupadas / oferecidas) * 100).toFixed(1)) : 0
@@ -453,7 +482,17 @@ export function SubmissionFormClient({
                 setData((prev: any) => ({ ...prev, resumo_taxa_ocupacao: taxa }))
             }
         }
-    }, [setor, subcategory])
+
+        if (finalSetor === 'cras') {
+            const anterior = Number(data.mes_anterior) || 0
+            const admitidas = Number(data.admitidas) || 0
+            const atual = anterior + admitidas
+
+            if (data.atual !== atual) {
+                setData((prev: any) => ({ ...prev, atual: atual }))
+            }
+        }
+    }, [finalSetor, finalSubcategory])
 
 
     const handleUnlock = async () => {
@@ -463,7 +502,7 @@ export function SubmissionFormClient({
 
         setLoading(true)
         try {
-            const result = await deleteMonthData(directorateId, Number(month), Number(year), unit, setor)
+            const result = await deleteMonthData(directorateId, Number(month), Number(year), finalUnit, finalSetor)
             if (result.success) {
                 setAlreadySubmitted(false)
                 setFetchedInitialData({}) // Limpa dados carregados para permitir nova entrada limpa
@@ -500,23 +539,23 @@ export function SubmissionFormClient({
             })
 
             // Meta fields
-            fd.append('_unit', unit || '')
-            fd.append('_subcategory', subcategory || '')
+            fd.append('_unit', finalUnit)
+            fd.append('_subcategory', finalSubcategory)
 
             console.log("Submitting form data via FormData")
 
-            const result = await submitReport(fd, Number(month), Number(year), directorateId, setor)
+            const result = await submitReport(fd, Number(month), Number(year), directorateId, finalSetor)
             if (result?.error) {
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
-                if (setor === 'beneficios') {
+                if (finalSetor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-                } else if (setor === 'centros' || setor === 'sine') {
+                } else if (finalSetor === 'centros' || finalSetor === 'sine') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
-                } else if (setor === 'cras' || setor === 'creas' || setor === 'pop_rua' || setor === 'naica' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade') {
+                } else if (finalSetor === 'cras' || finalSetor === 'creas' || finalSetor === 'pop_rua' || finalSetor === 'naica' || finalSetor === 'creas_protetivo' || finalSetor === 'creas_socioeducativo' || finalSetor === 'casa_da_mulher' || finalSetor === 'diversidade' || finalSetor === 'nucleo_diversidade') {
                     window.location.href = `/dashboard/diretoria/${directorateId}`
-                } else if (setor === 'ceai') {
+                } else if (finalSetor === 'ceai') {
                     window.location.href = `/dashboard/dados?setor=ceai&directorate_id=${directorateId}`
                 } else {
                     window.location.href = `/dashboard/relatorios/lista?directorate_id=${directorateId}`
@@ -537,7 +576,7 @@ export function SubmissionFormClient({
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                 <div className="flex items-start gap-6">
-                    <Link href={setor === 'beneficios' ? `/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9` : `/dashboard/diretoria/${directorateId}`}>
+                    <Link href={finalSetor === 'beneficios' ? `/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9` : `/dashboard/diretoria/${directorateId}`}>
                         <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all mt-1">
                             <ArrowLeft className="h-5 w-5 text-zinc-500" />
                         </Button>
@@ -549,12 +588,12 @@ export function SubmissionFormClient({
                             </h1>
                             <div className="flex items-center gap-2">
                                 <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                                    {setor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName}
+                                    {finalSetor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName}
                                 </span>
-                                {unit && (
+                                {finalUnit && (
                                     <>
                                         <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                                        <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">{unit}</span>
+                                        <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">{finalUnit}</span>
                                     </>
                                 )}
                             </div>
@@ -626,7 +665,7 @@ export function SubmissionFormClient({
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
                                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 italic">
-                                    {unit ? `Unidade: ${unit}` : (setor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName)}
+                                    {finalUnit ? `Unidade: ${finalUnit}` : (finalSetor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName)}
                                 </h3>
                                 <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
                             </div>
@@ -681,17 +720,17 @@ export function SubmissionFormClient({
                             </div>
                         )}
 
-                        {setor === 'casa_da_mulher' || setor === 'diversidade' || (setor === 'ceai' && subcategory !== 'condominio') ? (
+                        {finalSetor === 'casa_da_mulher' || finalSetor === 'diversidade' || (finalSetor === 'ceai' && finalSubcategory !== 'condominio') ? (
                             <StepperForm
-                                key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}-stepper`}
+                                key={`${month}-${year}-${finalUnit}-${finalSubcategory}-${dynamicDefinition.sections.length}-stepper`}
                                 definition={dynamicDefinition}
                                 initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}
                                 onDataChange={handleDataChange}
                                 disabled={loading || (alreadySubmitted && !isAdmin)}
                                 stepsConfig={
-                                    setor === 'ceai' ? dynamicSteps :
-                                    setor === 'casa_da_mulher' ? [
+                                    finalSetor === 'ceai' ? dynamicSteps :
+                                    finalSetor === 'casa_da_mulher' ? [
                                         { title: "Perfil de Atendimento", sectionIndexes: [0, 1] },
                                         { title: "Caracterização Social", sectionIndexes: [2, 3] },
                                         { title: "Encaminhamentos", sectionIndexes: [4] }
@@ -704,7 +743,7 @@ export function SubmissionFormClient({
                             />
                         ) : (
                             <FormEngine
-                                key={`${month}-${year}-${unit}-${subcategory}-${dynamicDefinition.sections.length}`}
+                                key={`${month}-${year}-${finalUnit}-${finalSubcategory}-${dynamicDefinition.sections.length}`}
                                 definition={dynamicDefinition}
                                 initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}
