@@ -763,6 +763,10 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
         .eq('id', id)
 
     if (dbError) throw new Error("Erro ao atualizar banco de dados: " + dbError.message)
+    
+    // Buscar nome da diretoria para saber se é SINE ou QUALIFICAÇÃO
+    const { data: directorate } = await adminSupabase.from('directorates').select('name').eq('id', submission.directorate_id).single()
+    const dirName = directorate?.name.toLowerCase() || ''
 
     // --- NOVO: ATUALIZAÇÃO NAS TABELAS ESPECIALIZADAS ---
     try {
