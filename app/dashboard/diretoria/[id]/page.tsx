@@ -2,7 +2,7 @@ import { getCachedDirectorate, getCachedSubmissionsForUser, getCachedProfile } f
 import { notFound, redirect } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList, CheckCircle2, FileCheck } from "lucide-react"
+import { ArrowLeft, FileText, BarChart3, PieChart, FilePlus, FolderOpen, Database, Settings, ClipboardList, CheckCircle2, FileCheck, Calendar } from "lucide-react"
 import { getVisits } from "@/app/dashboard/actions"
 import Link from "next/link"
 import { CRAS_UNITS } from "@/app/dashboard/cras-config"
@@ -75,6 +75,21 @@ export default async function DirectoratePage({
     const latestMonthSINE_CP = latestSubmission ? getMonthName(latestSubmission.month) : null
 
     // Subvenção Admin Stats
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    const currentBimester = Math.ceil(currentMonth / 2)
+    
+    const getBimesterRange = (bim: number, yr: number) => {
+        return {
+            start: new Date(yr, (bim - 1) * 2, 1),
+            end: new Date(yr, bim * 2, 0, 23, 59, 59)
+        }
+    }
+    
+    const bRange = getBimesterRange(currentBimester, currentYear)
+    const bimesterLabel = `${currentBimester}º Bimestre (${currentBimester === 1 ? "Jan/Fev" : currentBimester === 2 ? "Mar/Abr" : currentBimester === 3 ? "Mai/Jun" : currentBimester === 4 ? "Jul/Ago" : currentBimester === 5 ? "Set/Out" : "Nov/Dez"})`
+
     let subvencaoStats = { totalOSCs: 0, totalVisits: 0, finalizedVisits: 0, draftReports: 0, finalizedReports: 0 }
     let allVisitsData: any[] | null = null
     if (isSubvencao && isAdmin) {
@@ -84,7 +99,13 @@ export default async function DirectoratePage({
             adminSupabase.from('visits').select('id, status, visit_date, assinaturas, parecer_tecnico, oscs(name)').eq('directorate_id', directorate.id)
         ])
 
-        allVisitsData = fetchedVisits
+        // Filter visits by current bimester
+        const filteredVisits = (fetchedVisits || []).filter((v: any) => {
+            const vDate = new Date(v.visit_date)
+            return vDate >= bRange.start && vDate <= bRange.end
+        })
+
+        allVisitsData = filteredVisits
         subvencaoStats = {
             totalOSCs: totalOSCs || 0,
             totalVisits: allVisitsData?.length || 0,
@@ -513,9 +534,15 @@ export default async function DirectoratePage({
 
                     {isAdmin && (
                         <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/50 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-1 w-6 bg-cyan-600 dark:bg-cyan-400 rounded-full"></div>
-                                <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Indicadores de Monitoramento</h2>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-1 w-6 bg-cyan-600 dark:bg-cyan-400 rounded-full"></div>
+                                    <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Indicadores de Monitoramento</h2>
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-full">
+                                    <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                    <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-tight">Período: {bimesterLabel}</span>
+                                </div>
                             </div>
                             
                             <SubvencaoIndicatorCards 

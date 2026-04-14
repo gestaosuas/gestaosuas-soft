@@ -68,17 +68,55 @@ export function VisitList({
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
     const [isDelegating, setIsDelegating] = useState(false)
     
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    const initialBimester = Math.ceil(currentMonth / 2).toString()
+
+    const getBimesterRange = (bim: string, yr: number) => {
+        const bInt = parseInt(bim)
+        const startM = (bInt - 1) * 2
+        const endM = bInt * 2 - 1
+        return {
+            start: new Date(yr, startM, 1).toISOString().split('T')[0],
+            end: new Date(yr, endM + 1, 0).toISOString().split('T')[0]
+        }
+    }
+
+    const initialRange = initialBimester !== "0" ? getBimesterRange(initialBimester, currentYear) : { start: "", end: "" }
+
     // Filter states
     const [oscSearch, setOscSearch] = useState("")
     const [userSearch, setUserSearch] = useState("all")
-    const [dateStart, setDateStart] = useState("")
-    const [dateEnd, setDateEnd] = useState("")
+    const [dateStart, setDateStart] = useState(initialRange.start)
+    const [dateEnd, setDateEnd] = useState(initialRange.end)
+    const [bimestre, setBimestre] = useState(initialBimester)
 
     const clearFilters = () => {
         setOscSearch("")
         setUserSearch("all")
         setDateStart("")
         setDateEnd("")
+        setBimestre("all")
+    }
+
+    const handleBimesterChange = (value: string) => {
+        setBimestre(value)
+        if (value === "all") {
+            setDateStart("")
+            setDateEnd("")
+            return
+        }
+
+        const range = getBimesterRange(value, currentYear)
+        setDateStart(range.start)
+        setDateEnd(range.end)
+    }
+
+    const handleCurrentYear = () => {
+        setBimestre("all")
+        setDateStart(`${currentYear}-01-01`)
+        setDateEnd(`${currentYear}-12-31`)
     }
 
     const filteredVisits = (visits || []).filter(visit => {
@@ -200,6 +238,24 @@ export function VisitList({
                             </Select>
                         </div>
 
+                        {/* Bimester Filter */}
+                        <div className="min-w-[150px]">
+                            <Select value={bimestre} onValueChange={handleBimesterChange}>
+                                <SelectTrigger className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-bold rounded-xl">
+                                    <SelectValue placeholder="Bimestre" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                    <SelectItem value="all" className="text-[11px] font-bold italic">Todos os Bimestres</SelectItem>
+                                    <SelectItem value="1" className="text-[11px] font-bold">1º Bimestre (Jan-Fev)</SelectItem>
+                                    <SelectItem value="2" className="text-[11px] font-bold">2º Bimestre (Mar-Abr)</SelectItem>
+                                    <SelectItem value="3" className="text-[11px] font-bold">3º Bimestre (Mai-Jun)</SelectItem>
+                                    <SelectItem value="4" className="text-[11px] font-bold">4º Bimestre (Jul-Ago)</SelectItem>
+                                    <SelectItem value="5" className="text-[11px] font-bold">5º Bimestre (Set-Out)</SelectItem>
+                                    <SelectItem value="6" className="text-[11px] font-bold">6º Bimestre (Nov-Dez)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         {/* Date Period Filter */}
                         <div className="flex items-center gap-2">
                             <Input 
@@ -218,6 +274,20 @@ export function VisitList({
                                 className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[10px] font-bold rounded-xl uppercase"
                             />
                         </div>
+
+                        {/* Year Current Button */}
+                        <Button 
+                            variant="outline"
+                            onClick={handleCurrentYear}
+                            className={cn(
+                                "h-9 px-3 text-[10px] font-black uppercase rounded-xl transition-all border",
+                                dateStart === `${currentYear}-01-01` && dateEnd === `${currentYear}-12-31` 
+                                    ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                                    : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-600 hover:border-blue-200"
+                            )}
+                        >
+                            Ver {currentYear} Inteiro
+                        </Button>
 
                         {(oscSearch || userSearch !== "all" || dateStart || dateEnd) && (
                             <Button 

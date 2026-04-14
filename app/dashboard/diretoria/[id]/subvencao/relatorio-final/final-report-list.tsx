@@ -4,10 +4,18 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink } from "lucide-react"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { delegateVisit, saveNotificacoes } from "@/app/dashboard/actions"
+import { cn } from "@/lib/utils"
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select"
 import {
     Dialog,
     DialogContent,
@@ -49,10 +57,61 @@ export function FinalReportList({
     }
 
     const [oscSearch, setOscSearch] = useState("")
+
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    const initialBimester = Math.ceil(currentMonth / 2).toString()
+
+    const getBimesterRange = (bim: string, yr: number) => {
+        const bInt = parseInt(bim)
+        const startM = (bInt - 1) * 2
+        const endM = bInt * 2 - 1
+        return {
+            start: new Date(yr, startM, 1),
+            end: new Date(yr, endM + 1, 0, 23, 59, 59)
+        }
+    }
+
+    const initialRange = getBimesterRange(initialBimester, currentYear)
+    const [dateStart, setDateStart] = useState<string>(initialRange.start.toISOString().split('T')[0])
+    const [dateEnd, setDateEnd] = useState<string>(initialRange.end.toISOString().split('T')[0])
+    const [bimestre, setBimestre] = useState(initialBimester)
+
+    const handleBimesterChange = (value: string) => {
+        setBimestre(value)
+        if (value === "all") {
+            setDateStart("")
+            setDateEnd("")
+            return
+        }
+        const range = getBimesterRange(value, currentYear)
+        setDateStart(range.start.toISOString().split('T')[0])
+        setDateEnd(range.end.toISOString().split('T')[0])
+    }
+
+    const handleCurrentYear = () => {
+        setBimestre("all")
+        setDateStart(`${currentYear}-01-01`)
+        setDateEnd(`${currentYear}-12-31`)
+    }
+
+    const clearFilters = () => {
+        setOscSearch("")
+        setBimestre("all")
+        setDateStart("")
+        setDateEnd("")
+    }
     
-    const filteredVisits = visits.filter(visit => 
-        !oscSearch || visit.oscs?.name?.toLowerCase().includes(oscSearch.toLowerCase())
-    )
+    const filteredVisits = visits.filter(visit => {
+        const matchesOsc = !oscSearch || visit.oscs?.name?.toLowerCase().includes(oscSearch.toLowerCase())
+        
+        const visitDateStr = visit.visit_date?.split('T')[0]
+        const matchesStart = !dateStart || (visitDateStr && visitDateStr >= dateStart)
+        const matchesEnd = !dateEnd || (visitDateStr && visitDateStr <= dateEnd)
+        
+        return matchesOsc && matchesStart && matchesEnd
+    })
 
     const handleNotificacaoUpload = async (visitId: string, currentNotificacoes: any[], e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -110,23 +169,55 @@ export function FinalReportList({
 
     return (
         <div className="space-y-6">
-            <div className="no-print bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center gap-4">
-                <div className="relative flex-1 min-w-[300px]">
+            <div className="no-print bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-3 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center gap-3">
+                <div className="relative min-w-[200px] flex-1">
                     <Input
                         placeholder="Filtrar por nome da OSC..."
                         value={oscSearch}
                         onChange={(e) => setOscSearch(e.target.value)}
-                        className="pl-10 h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
+                        className="pl-9 h-9 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl text-xs"
                     />
-                    <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
                 </div>
-                {oscSearch && (
+
+                <div className="min-w-[140px]">
+                    <Select value={bimestre} onValueChange={handleBimesterChange}>
+                        <SelectTrigger className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-bold rounded-xl">
+                            <SelectValue placeholder="Bimestre" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                            <SelectItem value="all" className="text-[11px] font-bold italic">Todos os Bimestres</SelectItem>
+                            <SelectItem value="1" className="text-[11px] font-bold">1º Bimestre (Jan-Fev)</SelectItem>
+                            <SelectItem value="2" className="text-[11px] font-bold">2º Bimestre (Mar-Abr)</SelectItem>
+                            <SelectItem value="3" className="text-[11px] font-bold">3º Bimestre (Mai-Jun)</SelectItem>
+                            <SelectItem value="4" className="text-[11px] font-bold">4º Bimestre (Jul-Ago)</SelectItem>
+                            <SelectItem value="5" className="text-[11px] font-bold">5º Bimestre (Set-Out)</SelectItem>
+                            <SelectItem value="6" className="text-[11px] font-bold">6º Bimestre (Nov-Dez)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <Button 
+                    variant="outline"
+                    onClick={handleCurrentYear}
+                    className={cn(
+                        "h-9 px-3 text-[10px] font-black uppercase rounded-xl transition-all border",
+                        dateStart === `${currentYear}-01-01` && dateEnd === `${currentYear}-12-31` 
+                            ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-600 hover:border-blue-200"
+                    )}
+                >
+                    Ver {currentYear}
+                </Button>
+
+                {(oscSearch || bimestre !== "all" || (dateStart && (dateStart !== initialRange.start.toISOString().split('T')[0]))) && (
                     <Button 
                         variant="ghost" 
-                        onClick={() => setOscSearch("")}
-                        className="h-11 px-6 text-xs font-bold uppercase text-zinc-500 hover:text-red-600"
+                        onClick={clearFilters}
+                        className="h-9 px-4 text-[10px] font-black uppercase text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
                     >
-                        Limpar Filtro
+                        <FilterX className="h-3.5 w-3.5 mr-2" />
+                        Limpar
                     </Button>
                 )}
             </div>
@@ -144,17 +235,17 @@ export function FinalReportList({
                 }
             `}</style>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredVisits.length > 0 ? (
                     filteredVisits.map((visit: any) => (
-                    <Card key={visit.id} className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-3xl group hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-                        <CardHeader className="p-8 pb-4">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="p-3 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-xl group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors shadow-sm">
-                                    <FileCheck className="w-5 h-5 text-zinc-500 group-hover:text-white" />
+                    <Card key={visit.id} className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-[1.5rem] group hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col">
+                        <CardHeader className="p-5 pb-3">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors shadow-sm">
+                                    <FileCheck className="w-4 h-4 text-zinc-500 group-hover:text-white" />
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full text-green-700 dark:text-green-400 uppercase tracking-tight font-black text-[10px]">
+                                <div className="flex flex-col items-end gap-1.5">
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full text-green-700 dark:text-green-400 uppercase tracking-tight font-black text-[8px]">
                                         Finalizado
                                     </div>
                                     {(isAdmin || role === 'diretor') && (
@@ -165,47 +256,48 @@ export function FinalReportList({
                                                 setDelegatingVisit(visit)
                                                 setSelectedUserIds(visit.delegated_to || [])
                                             }}
-                                            className="h-7 px-2 text-[9px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded-lg gap-1.5"
+                                            className="h-6 px-1.5 text-[8px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded-lg gap-1"
                                         >
-                                            <UserCheck className="h-3 w-3" />
+                                            <UserCheck className="h-2.5 w-2.5" />
                                             Delegar
                                         </Button>
                                     )}
                                 </div>
                             </div>
-                            <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100 transition-colors truncate" title={visit.oscs?.name}>
+                            <CardTitle className="text-[13px] font-bold text-blue-900 dark:text-blue-100 transition-colors line-clamp-2 leading-tight" title={visit.oscs?.name}>
                                 {visit.oscs?.name}
                             </CardTitle>
-                            <CardDescription className="text-[13px] text-zinc-500 mt-1 font-medium italic">
-                                Visita em {new Date(visit.visit_date).toLocaleDateString('pt-BR')}
-                            </CardDescription>
+                            <div className="flex items-center gap-1.5 mt-2">
+                                <Calendar className="h-3 w-3 text-zinc-400" />
+                                <span className="text-[11px] text-zinc-500 font-medium">{new Date(visit.visit_date).toLocaleDateString('pt-BR')}</span>
+                            </div>
 
                             {visit.is_delegated && (
-                                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md w-fit">
-                                    <UserCheck className="h-3 w-3" />
+                                <div className="mt-2 flex items-center gap-1.5 text-[8px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded w-fit">
+                                    <UserCheck className="h-2.5 w-2.5" />
                                     Atribuído a você
                                 </div>
                             )}
                         </CardHeader>
-                        <CardContent className="p-8 pt-4">
-                            <div className="flex flex-col gap-3">
+                        <CardContent className="p-5 pt-1 mt-auto">
+                            <div className="flex flex-col gap-2">
                                 <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`}>
-                                    <Button variant="outline" className="w-full h-12 gap-3 font-bold uppercase text-[11px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 shadow-sm">
-                                        <FileCheck className="h-4 w-4" />
+                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 shadow-sm">
+                                        <FileCheck className="h-3.5 w-3.5" />
                                         Relatório Final
                                     </Button>
                                 </Link>
 
                                 <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`}>
-                                    <Button variant="outline" className="w-full h-12 gap-3 font-bold uppercase text-[11px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 shadow-sm">
-                                        <CheckCircle2 className="h-4 w-4" />
+                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 shadow-sm">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
                                         Parecer Conclusivo
                                     </Button>
                                 </Link>
 
                                 <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`}>
-                                    <Button variant="outline" className="w-full h-12 gap-3 font-bold uppercase text-[11px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm">
-                                        <FileText className="h-4 w-4" />
+                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm">
+                                        <FileText className="h-3.5 w-3.5" />
                                         Instrumental
                                     </Button>
                                 </Link>
