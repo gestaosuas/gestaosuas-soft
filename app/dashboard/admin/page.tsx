@@ -54,46 +54,86 @@ export default async function AdminPage({
                         </div>
                     )}
 
-                    <form action={createUser} className="space-y-8">
+                    <form action={createUser} className="space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-2.5">
-                                <Label htmlFor="name" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Nome Completo</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    required
-                                    placeholder=""
-                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium whitespace-nowrap"
-                                />
-                            </div>
-                            <div className="space-y-2.5">
-                                <Label htmlFor="email" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">E-mail Corporativo</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    required
-                                    placeholder=""
-                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 transition-all font-medium whitespace-nowrap"
-                                />
-                            </div>
-                            <div className="space-y-2.5">
-                                <Label htmlFor="password" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Senha Provisória</Label>
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    minLength={6}
-                                    placeholder=""
-                                    className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 transition-all font-medium whitespace-nowrap"
-                                />
-                            </div>
+                            {/* Identificação Básica */}
                             <div className="space-y-4 md:col-span-2">
-                                <Label className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Atribuição de Diretorias</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2.5">
+                                        <Label htmlFor="name" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Nome Completo</Label>
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            required
+                                            placeholder=""
+                                            className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 transition-all font-medium"
+                                        />
+                                    </div>
+                                    <div className="space-y-2.5">
+                                        <Label htmlFor="email" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">E-mail Corporativo</Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            required
+                                            placeholder=""
+                                            className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 transition-all font-medium"
+                                        />
+                                    </div>
+                                    <div className="space-y-2.5">
+                                        <Label htmlFor="password" className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Senha Provisória</Label>
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type="password"
+                                            required
+                                            minLength={6}
+                                            placeholder=""
+                                            className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-zinc-400 transition-all font-medium"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Nível de Acesso e Diretoria Primária */}
+                            <div className="space-y-4 bg-zinc-50/30 dark:bg-zinc-950/20 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800/60">
+                                <Label className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5 block mb-4">Nível de Acesso</Label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {[
+                                        { id: 'admin', label: 'Administrador' },
+                                        { id: 'diretor', label: 'Diretor' },
+                                        { id: 'agente', label: 'Agente' }
+                                    ].map((r) => (
+                                        <label key={r.id} className="flex items-center gap-4 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 cursor-pointer hover:border-blue-300 transition-all group">
+                                            <input type="radio" name="role" value={r.id} defaultChecked={r.id === 'agente'} className="w-4 h-4 text-blue-900 focus:ring-blue-900" />
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 group-hover:text-blue-900 transition-colors">{r.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 bg-zinc-50/30 dark:bg-zinc-950/20 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800/60">
+                                <Label className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5 block mb-4">Diretoria Primária</Label>
+                                <div className="space-y-4">
+                                    <p className="text-[10px] text-zinc-500 italic leading-snug">Necessário para Diretores e Agentes para definir seu departamento de origem.</p>
+                                    <select 
+                                        name="primaryDirectorateId"
+                                        className="w-full h-12 rounded-xl border border-zinc-200 bg-white px-4 text-sm focus:ring-2 focus:ring-blue-900 dark:bg-zinc-900 dark:border-zinc-800 font-bold text-blue-900 dark:text-blue-400 outline-none appearance-none"
+                                    >
+                                        <option value="">Nenhuma</option>
+                                        {directorates?.map(d => (
+                                            <option key={d.id} value={d.id}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Atribuição de Diretorias */}
+                            <div className="space-y-4 md:col-span-2">
+                                <Label className="text-[12px] uppercase tracking-wider font-bold text-zinc-500 dark:text-zinc-400 ml-0.5">Atribuição de Diretorias (Acesso Adicional)</Label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6 rounded-xl border border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/30 dark:bg-zinc-950/20">
                                     {directorates?.map((d) => (
-                                        <label key={d.id} className="flex items-center gap-3 p-3 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-blue-100 dark:hover:border-blue-800 group shadow-none">
+                                        <label key={d.id} className="flex items-center gap-3 p-3 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-blue-100 dark:hover:border-blue-800 group bg-white dark:bg-zinc-900/50">
                                             <div className="flex items-center h-5">
                                                 <input
                                                     type="checkbox"

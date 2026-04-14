@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { getCachedProfile, getCachedDirectorate } from "@/app/dashboard/cached-data"
+import { getCachedProfile, getCachedDirectorate, getCachedDirectorates } from "@/app/dashboard/cached-data"
 import { VisitList } from "./visit-list"
 import { getVisits } from "@/app/dashboard/actions"
 import { Plus, ArrowLeft, FileText } from "lucide-react"
@@ -24,7 +24,7 @@ export default async function VisitasPage({
         redirect('/login')
     }
 
-    const [visits, profile, directorate, usersResponse] = await Promise.all([
+    const [visits, profile, directorate, usersResponse, allDirectorates] = await Promise.all([
         getVisits(id),
         getCachedProfile(user.id),
         getCachedDirectorate(id),
@@ -33,7 +33,8 @@ export default async function VisitasPage({
                 id,
                 full_name
             `)
-            .order('full_name')
+            .order('full_name'),
+        getCachedDirectorates()
     ])
 
     const isAdmin = profile?.role === 'admin'
@@ -96,6 +97,7 @@ export default async function VisitasPage({
                 role={role}
                 currentUserId={user.id}
                 availableUsers={availableUsers}
+                availableDirectorates={allDirectorates || []}
             />
         </div>
     )

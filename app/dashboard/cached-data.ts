@@ -132,7 +132,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
 
             // 1. Verify Permission: Does user have access to this directorate?
             // (We check Admin role OR Link)
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+            const { data: profile } = await supabase.from('profiles').select('role, directorate_id').eq('id', userId).single()
 
             // If profile role isn't admin, check auth.users metadata or hardcoded list
             // Since we can't easily join auth.users, for hardcoded admins we can just rely on their ID 
@@ -144,10 +144,10 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             }
 
             let hasAccess = false
-            if (profile?.role === 'admin' || isEmailAdmin) {
+            if (profile?.role === 'admin' || isEmailAdmin || profile?.directorate_id === directorateId) {
                 hasAccess = true
             } else {
-                // Check direct link (Correct column is profile_id)
+                // Check direct link (Many-to-Many assignments)
                 const { data: link } = await supabase
                     .from('profile_directorates')
                     .select('profile_id')

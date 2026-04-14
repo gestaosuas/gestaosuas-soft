@@ -51,7 +51,8 @@ export function VisitList({
     isEmendas,
     role,
     currentUserId,
-    availableUsers
+    availableUsers,
+    availableDirectorates = []
 }: { 
     visits: any[], 
     directorateId: string, 
@@ -59,14 +60,17 @@ export function VisitList({
     isEmendas?: boolean,
     role?: string,
     currentUserId?: string,
-    availableUsers?: { id: string, full_name: string }[]
+    availableUsers?: { id: string, full_name: string }[],
+    availableDirectorates?: { id: string, name: string }[]
 }) {
     const router = useRouter()
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [revertingId, setRevertingId] = useState<string | null>(null)
     const [delegatingVisit, setDelegatingVisit] = useState<any | null>(null)
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+    const [selectedDirIds, setSelectedDirIds] = useState<string[]>([])
     const [isDelegating, setIsDelegating] = useState(false)
+    const [delegationTab, setDelegationTab] = useState<'users' | 'directorates'>('users')
     
     const now = new Date()
     const currentYear = now.getFullYear()
@@ -136,6 +140,14 @@ export function VisitList({
             prev.includes(userId) 
                 ? prev.filter(id => id !== userId)
                 : [...prev, userId]
+        )
+    }
+
+    const toggleDirSelection = (dirId: string) => {
+        setSelectedDirIds(prev => 
+            prev.includes(dirId) 
+                ? prev.filter(id => id !== dirId)
+                : [...prev, dirId]
         )
     }
 
@@ -429,6 +441,7 @@ export function VisitList({
                                                     onClick={() => {
                                                         setDelegatingVisit(visit)
                                                         setSelectedUserIds(visit.delegated_to || [])
+                                                        setSelectedDirIds(visit.delegated_directorates || [])
                                                     }}
                                                     title="Delegar Visita"
                                                     className="h-9 w-9 rounded-xl text-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100"
@@ -489,43 +502,87 @@ export function VisitList({
                     </DialogHeader>
 
                     <div className="py-2 space-y-4">
+                        <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
+                            <button
+                                onClick={() => setDelegationTab('users')}
+                                className={cn(
+                                    "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                    delegationTab === 'users' ? "bg-white dark:bg-zinc-900 text-blue-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                                )}
+                            >Técnicos ({selectedUserIds.length})</button>
+                            <button
+                                onClick={() => setDelegationTab('directorates')}
+                                className={cn(
+                                    "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                    delegationTab === 'directorates' ? "bg-white dark:bg-zinc-900 text-blue-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                                )}
+                            >Diretorias ({selectedDirIds.length})</button>
+                        </div>
+
                         <div className="bg-zinc-50/50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4">
                             <div className="flex items-center justify-between mb-2">
-                                <label className="text-[11px] font-black uppercase text-zinc-400 tracking-widest">Técnicos do Sistema</label>
+                                <label className="text-[11px] font-black uppercase text-zinc-400 tracking-widest">
+                                    {delegationTab === 'users' ? 'Selecionar Técnicos' : 'Selecionar Diretorias'}
+                                </label>
                                 <Button 
                                     variant="link" 
                                     className="h-auto p-0 text-[10px] font-bold text-blue-600"
-                                    onClick={() => setSelectedUserIds([])}
+                                    onClick={() => delegationTab === 'users' ? setSelectedUserIds([]) : setSelectedDirIds([])}
                                 >
-                                    Limpar Seleção
+                                    Limpar
                                 </Button>
                             </div>
                             
-                            <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                                {availableUsers?.length === 0 ? (
-                                    <p className="text-xs text-zinc-400 py-4 text-center">Nenhum técnico encontrado.</p>
+                            <div className="max-h-[250px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                                {delegationTab === 'users' ? (
+                                    availableUsers?.length === 0 ? (
+                                        <p className="text-xs text-zinc-400 py-4 text-center">Nenhum técnico encontrado.</p>
+                                    ) : (
+                                        availableUsers?.map((u) => (
+                                            <div key={u.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
+                                                <Checkbox 
+                                                    id={`user-${u.id}`} 
+                                                    checked={selectedUserIds.includes(u.id)}
+                                                    onCheckedChange={() => toggleUser(u.id)}
+                                                    className="rounded-md border-zinc-300 data-[state=checked]:bg-blue-900"
+                                                />
+                                                <Label 
+                                                    htmlFor={`user-${u.id}`}
+                                                    className="text-sm font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer flex-1"
+                                                >
+                                                    {u.full_name}
+                                                </Label>
+                                            </div>
+                                        ))
+                                    )
                                 ) : (
-                                    availableUsers?.map((u) => (
-                                        <div key={u.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
-                                            <Checkbox 
-                                                id={`user-${u.id}`} 
-                                                checked={selectedUserIds.includes(u.id)}
-                                                onCheckedChange={() => toggleUser(u.id)}
-                                                className="rounded-md border-zinc-300 data-[state=checked]:bg-blue-900"
-                                            />
-                                            <Label 
-                                                htmlFor={`user-${u.id}`}
-                                                className="text-sm font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer flex-1"
-                                            >
-                                                {u.full_name}
-                                            </Label>
-                                        </div>
-                                    ))
+                                    availableDirectorates?.length === 0 ? (
+                                        <p className="text-xs text-zinc-400 py-4 text-center">Nenhuma diretoria encontrada.</p>
+                                    ) : (
+                                        availableDirectorates?.map((d) => (
+                                            <div key={d.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
+                                                <Checkbox 
+                                                    id={`dir-${d.id}`} 
+                                                    checked={selectedDirIds.includes(d.id)}
+                                                    onCheckedChange={() => toggleDirSelection(d.id)}
+                                                    className="rounded-md border-zinc-300 data-[state=checked]:bg-blue-600"
+                                                />
+                                                <Label 
+                                                    htmlFor={`dir-${d.id}`}
+                                                    className="text-sm font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer flex-1"
+                                                >
+                                                    {d.name}
+                                                </Label>
+                                            </div>
+                                        ))
+                                    )
                                 )}
                             </div>
                         </div>
                         <p className="text-[10px] text-zinc-400 italic pl-1 leading-snug">
-                            Todos os usuários selecionados terão acesso para editar rascunhos e assinar o parecer técnico desta visita.
+                            {delegationTab === 'users' 
+                                ? "Técnicos selecionados poderão editar e assinar a visita."
+                                : "Todos os membros da diretoria selecionada terão acesso a esta visita."}
                         </p>
                     </div>
 
@@ -543,7 +600,7 @@ export function VisitList({
                                 if (!delegatingVisit) return
                                 setIsDelegating(true)
                                 try {
-                                    await delegateVisit(delegatingVisit.id, selectedUserIds)
+                                    await delegateVisit(delegatingVisit.id, selectedUserIds, selectedDirIds)
                                     setDelegatingVisit(null)
                                     router.refresh()
                                 } catch (e: any) {
@@ -555,7 +612,7 @@ export function VisitList({
                             disabled={isDelegating}
                             className="bg-blue-900 dark:bg-blue-600 text-white font-bold px-8 rounded-2xl text-[11px] uppercase tracking-widest h-12 transition-all shadow-xl shadow-blue-900/10 hover:bg-blue-800 active:scale-95"
                         >
-                            {isDelegating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando</> : `Confirmar (${selectedUserIds.length})`}
+                            {isDelegating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando</> : `Confirmar (${selectedUserIds.length + selectedDirIds.length})`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

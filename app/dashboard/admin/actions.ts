@@ -24,10 +24,8 @@ export async function createUser(formData: FormData) {
     const password = formData.get('password') as string
     const name = formData.get('name') as string
     const directorateIds = formData.getAll('directorates') as string[]
-
-    if (!directorateIds || directorateIds.length === 0) {
-        redirect('/dashboard/admin?error=At least one directorate is required')
-    }
+    const role = formData.get('role') as string || 'agente'
+    const primaryDirectorateId = formData.get('primaryDirectorateId') as string
 
     const supabaseAdmin = createAdminClient()
 
@@ -53,8 +51,9 @@ export async function createUser(formData: FormData) {
         .from('profiles')
         .upsert({
             id: userData.user.id,
-            role: 'user',
-            full_name: name
+            role: role,
+            full_name: name,
+            directorate_id: primaryDirectorateId || null
         })
 
     if (profileError) {

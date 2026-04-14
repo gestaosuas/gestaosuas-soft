@@ -1606,22 +1606,42 @@ export async function getVisits(directorateId: string) {
     // - Diretor sees EVERYTHING if it's their primary directorate, OR see OWN + DELEGATED + AGENTS_IN_SAME_DIR if it's another (shared) directorate.
     // - Others (Agente/User) see OWN + DELEGATED.
     if (!isAdmin) {
-        // Fetch delegated visits first
-        const { data: delegations } = await adminSupabase
+        // Fetch delegations for THIS USER
+        const { data: userDelegations } = await adminSupabase
             .from('form_delegations')
             .select('visit_id')
             .eq('user_id', user.id)
         
-        const delegatedVisitIds = (delegations || []).map(d => d.visit_id)
+        // Fetch delegations for ANY DIRECTORATE the user has access to
+        const accessDirIds = [
+            ...(userDirectorateId ? [userDirectorateId] : []),
+            ...(profile?.profile_directorates || []).map((pd: any) => pd.directorate_id)
+        ].filter(Boolean)
+
+        const { data: dirDelegations } = await adminSupabase
+            .from('form_delegations')
+            .select('visit_id')
+            .in('directorate_id', accessDirIds)
+
+        const delegatedVisitIds = Array.from(new Set([
+            ...(userDelegations || []).map(d => d.visit_id),
+            ...(dirDelegations || []).map(d => d.visit_id)
+        ]))
 
         if (isDiretor && userDirectorateId) {
-            // If they are in their own directorate, they see all (no extra filter needed besides directorateId)
-            if (userDirectorateId !== directorateId) {
-                // In other (shared) directorates, they see their agents' work
+            // Always see everything in their OWN primary directorate
+            if (userDirectorateId === directorateId) {
+                // No additional filter needed: query already has .eq('directorate_id', directorateId)
+            } else {
+                // If viewing ANOTHER directorate, see:
+                // 1. Own work
+                // 2. Work of Agentes who share the SAME Primary Directorate (userDirectorateId)
+                // 3. Specifically delegated visits
                 const { data: agents } = await adminSupabase
                     .from('profiles')
                     .select('id')
                     .eq('directorate_id', userDirectorateId)
+                    .eq('role', 'agente')
                 
                 const agentIds = (agents || []).map(a => a.id)
                 
@@ -1633,12 +1653,12 @@ export async function getVisits(directorateId: string) {
                 query = query.or(orConditions.join(','))
             }
         } else {
-            // Regular user/agent: OWN + DELEGATED
+            // Regular user/agent or Director in a dir with no primary link: OWN + DELEGATED
+            const orConditions = [`user_id.eq.${user.id}`]
             if (delegatedVisitIds.length > 0) {
-                query = query.or(`user_id.eq.${user.id},id.in.(${delegatedVisitIds.join(',')})`)
-            } else {
-                query = query.eq('user_id', user.id)
+                orConditions.push(`id.in.(${delegatedVisitIds.join(',')})`)
             }
+            query = query.or(orConditions.join(','))
         }
     }
 
@@ -1655,41 +1675,49 @@ export async function getVisits(directorateId: string) {
     if (visits.length > 0) {
         const userIds = Array.from(new Set(visits.map((v: any) => v.user_id).filter(Boolean)))
         
-        // Fetch delegations for these visits to mark them in UI
+        // Fetch delegations for these visits
         const { data: allDelegations } = await adminSupabase
             .from('form_delegations')
-            .select('visit_id, user_id')
+            .select('visit_id, user_id, directorate_id')
             .in('visit_id', visits.map(v => v.id))
+
+        const delegationMap = new Map()
+        const dirDelegationMap = new Map()
+        
+        allDelegations?.forEach(d => {
+            if (d.user_id) {
+                if (!delegationMap.has(d.visit_id)) delegationMap.set(d.visit_id, [])
+                delegationMap.get(d.visit_id).push(d.user_id)
+            }
+            if (d.directorate_id) {
+                if (!dirDelegationMap.has(d.visit_id)) dirDelegationMap.set(d.visit_id, [])
+                dirDelegationMap.get(d.visit_id).push(d.directorate_id)
+            }
+        })
 
         const { data: profiles } = await adminSupabase
             .from('profiles')
             .select('id, full_name')
             .in('id', userIds)
 
-        if (profiles) {
-            const profileMap = new Map(profiles.map(p => [p.id, p.full_name]))
-            const delegationMap = new Map()
-            allDelegations?.forEach(d => {
-                if (!delegationMap.has(d.visit_id)) delegationMap.set(d.visit_id, [])
-                delegationMap.get(d.visit_id).push(d.user_id)
-            })
+        const profileMap = new Map((profiles || []).map(p => [p.id, p.full_name]))
 
-            return visits.map((v: any) => ({
-                ...v,
-                profiles: { 
-                    id: v.user_id,
-                    full_name: profileMap.get(v.user_id) || "Desconhecido" 
-                },
-                delegated_to: delegationMap.get(v.id) || [],
-                is_delegated: delegationMap.get(v.id)?.includes(user.id) || false
-            }))
-        }
+        return visits.map((v: any) => ({
+            ...v,
+            profiles: { 
+                id: v.user_id,
+                full_name: profileMap.get(v.user_id) || "Desconhecido" 
+            },
+            delegated_to: delegationMap.get(v.id) || [],
+            delegated_directorates: dirDelegationMap.get(v.id) || [],
+            is_delegated: delegationMap.get(v.id)?.includes(user.id) || false
+        }))
     }
 
     return visits || []
 }
 
-export async function delegateVisit(visitId: string, targetUserIds: string[]) {
+export async function delegateVisit(visitId: string, targetUserIds: string[], targetDirectorateIds: string[] = []) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -1698,7 +1726,7 @@ export async function delegateVisit(visitId: string, targetUserIds: string[]) {
     
     // Security: Only Admin or Diretor of the visit's directorate can delegate
     const [{ data: profile }, { data: visit }] = await Promise.all([
-        adminSupabase.from('profiles').select('role, directorate_id').eq('id', user.id).single(),
+        adminSupabase.from('profiles').select('role, directorate_id, full_name').eq('id', user.id).single(),
         adminSupabase.from('visits').select('directorate_id').eq('id', visitId).single()
     ])
 
@@ -1718,29 +1746,42 @@ export async function delegateVisit(visitId: string, targetUserIds: string[]) {
 
     if (deleteError) throw new Error("Erro ao limpar delegações: " + deleteError.message)
 
-    // 2. Add new delegations
+    // 2. Add new delegations (Users)
+    const newDelegations = []
+    
     if (targetUserIds.length > 0) {
+        newDelegations.push(...targetUserIds.map(targetId => ({
+            visit_id: visitId,
+            user_id: targetId,
+            delegated_by: user.id
+        })))
+    }
+
+    // 3. Add new delegations (Directorates)
+    if (targetDirectorateIds.length > 0) {
+        newDelegations.push(...targetDirectorateIds.map(dirId => ({
+            visit_id: visitId,
+            directorate_id: dirId,
+            delegated_by: user.id
+        })))
+    }
+
+    if (newDelegations.length > 0) {
         const { error: insertError } = await adminSupabase
             .from('form_delegations')
-            .insert(targetUserIds.map(targetId => ({
-                visit_id: visitId,
-                user_id: targetId,
-                delegated_by: user.id
-            })))
+            .insert(newDelegations)
         
         if (insertError) throw new Error("Erro ao inserir delegações: " + insertError.message)
     }
 
     try {
-        const { data: myProfile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
-        
         await logActivity({
             user_id: user.id,
-            user_name: myProfile?.full_name || 'Usuário',
+            user_name: profile?.full_name || 'Usuário',
             directorate_id: visit?.directorate_id,
             action_type: 'UPDATE',
             resource_type: 'VISIT',
-            resource_name: `Sincronização de delegação para ${targetUserIds.length} técnicos`
+            resource_name: `Sincronização de delegação: ${targetUserIds.length} técnicos e ${targetDirectorateIds.length} diretorias`
         })
     } catch (e) {
         console.error("Log error in delegateVisit:", e)
