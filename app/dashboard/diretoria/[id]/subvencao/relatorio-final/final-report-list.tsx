@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye } from "lucide-react"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { delegateVisit } from "@/app/dashboard/actions"
+import { delegateVisit, saveNotificacoes } from "@/app/dashboard/actions"
 import {
     Dialog,
     DialogContent,
@@ -38,6 +38,7 @@ export function FinalReportList({
     const [isDelegating, setIsDelegating] = useState(false)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const [previewTitle, setPreviewTitle] = useState<string>("")
+    const [uploadingVisitId, setUploadingVisitId] = useState<string | null>(null)
 
     const toggleUser = (userId: string) => {
         setSelectedUserIds(prev => 
@@ -52,6 +53,60 @@ export function FinalReportList({
     const filteredVisits = visits.filter(visit => 
         !oscSearch || visit.oscs?.name?.toLowerCase().includes(oscSearch.toLowerCase())
     )
+
+    const handleNotificacaoUpload = async (visitId: string, currentNotificacoes: any[], e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (file.type !== 'application/pdf') {
+            alert("Por favor, selecione apenas arquivos PDF.")
+            return
+        }
+
+        try {
+            setUploadingVisitId(visitId)
+            const uploadFormData = new FormData()
+            uploadFormData.append('file', file)
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro no upload')
+            }
+
+            const updatedNotificacoes = [...(currentNotificacoes || []), { name: file.name, url: data.url }]
+            await saveNotificacoes(visitId, updatedNotificacoes)
+            
+            router.refresh()
+        } catch (error: any) {
+            console.error("Upload error:", error)
+            alert("Erro ao fazer upload da notificação: " + error.message)
+        } finally {
+            setUploadingVisitId(null)
+            if (e.target) e.target.value = ''
+        }
+    }
+
+    const handleRemoveNotificacao = async (visitId: string, currentNotificacoes: any[], index: number) => {
+        if (!confirm("Tem certeza que deseja remover esta notificação?")) return
+
+        try {
+            setUploadingVisitId(visitId)
+            const updatedNotificacoes = currentNotificacoes.filter((_, i) => i !== index)
+            await saveNotificacoes(visitId, updatedNotificacoes)
+            router.refresh()
+        } catch (error: any) {
+            console.error("Remove error:", error)
+            alert("Erro ao remover notificação: " + error.message)
+        } finally {
+            setUploadingVisitId(null)
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -154,6 +209,73 @@ export function FinalReportList({
                                         Instrumental
                                     </Button>
                                 </Link>
+
+                                <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-1.5">
+                                            <Paperclip className="h-3 w-3" />
+                                            Notificações (PDF)
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                id={`notificacao-${visit.id}`}
+                                                className="hidden"
+                                                accept=".pdf"
+                                                onChange={(e) => handleNotificacaoUpload(visit.id, visit.notificacoes, e)}
+                                                disabled={uploadingVisitId === visit.id}
+                                            />
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2 text-[9px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded-lg gap-1.5"
+                                                onClick={() => document.getElementById(`notificacao-${visit.id}`)?.click()}
+                                                disabled={uploadingVisitId === visit.id}
+                                            >
+                                                {uploadingVisitId === visit.id ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    "Anexar PDF"
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {visit.notificacoes && visit.notificacoes.length > 0 ? (
+                                            visit.notificacoes.map((notif: any, idx: number) => (
+                                                <div key={idx} className="flex items-center justify-between p-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl group/notif">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <FileText className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                                                        <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 truncate pr-2" title={notif.name}>
+                                                            {notif.name}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <Link href={notif.url} target="_blank">
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-white dark:hover:bg-zinc-900 shadow-sm border border-transparent hover:border-zinc-200">
+                                                                <ExternalLink className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </Link>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-7 w-7 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-white dark:hover:bg-zinc-900 shadow-sm border border-transparent hover:border-zinc-200"
+                                                            onClick={() => handleRemoveNotificacao(visit.id, visit.notificacoes, idx)}
+                                                            disabled={uploadingVisitId === visit.id}
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-[10px] text-zinc-400 font-medium italic text-center py-2 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                                                Nenhuma notificação anexada.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

@@ -2404,6 +2404,61 @@ export async function finalizeRelatorioFinal(visitId: string) {
     return { success: true }
 }
 
+export async function saveNotificacoes(visitId: string, notifications: { name: string, url: string }[]) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const adminSupabase = createAdminClient()
+
+    // Fetch visit to check permissions
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    if (!await canAccessVisit(user.id, visitId)) {
+        throw new Error("Você não tem permissão para gerenciar notificações desta visita.")
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update({
+            notificacoes: notifications,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao salvar notificações: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+        
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'UPDATE',
+            resource_type: 'REPORT',
+            resource_name: `Notificações: Visita ${visitData?.visit_date.split('-').reverse().join('/')}`
+        })
+    } catch (e) {
+        console.error("Log error in saveNotificacoes:", e)
+    }
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+
+
 export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: string, objetivos: string, metas: string, atividades: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

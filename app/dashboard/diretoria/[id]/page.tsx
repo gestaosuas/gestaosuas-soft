@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { CEAIOficinasModals } from "./ceai-oficinas-modals"
 import { createAdminClient } from "@/utils/supabase/admin"
 import { SubvencaoDashboardCharts } from "@/components/subvencao-dashboard-charts"
+import { SubvencaoIndicatorCards } from "@/components/subvencao-indicator-cards"
 
 export default async function DirectoratePage({
     params,
@@ -75,13 +76,15 @@ export default async function DirectoratePage({
 
     // Subvenção Admin Stats
     let subvencaoStats = { totalOSCs: 0, totalVisits: 0, finalizedVisits: 0, draftReports: 0, finalizedReports: 0 }
+    let allVisitsData: any[] | null = null
     if (isSubvencao && isAdmin) {
         const adminSupabase = createAdminClient()
-        const [{ count: totalOSCs }, { data: allVisitsData }] = await Promise.all([
+        const [{ count: totalOSCs }, { data: fetchedVisits }] = await Promise.all([
             adminSupabase.from('oscs').select('*', { count: 'exact', head: true }).eq('directorate_id', directorate.id),
-            adminSupabase.from('visits').select('status, parecer_tecnico').eq('directorate_id', directorate.id)
+            adminSupabase.from('visits').select('id, status, visit_date, assinaturas, parecer_tecnico, oscs(name)').eq('directorate_id', directorate.id)
         ])
 
+        allVisitsData = fetchedVisits
         subvencaoStats = {
             totalOSCs: totalOSCs || 0,
             totalVisits: allVisitsData?.length || 0,
@@ -515,35 +518,10 @@ export default async function DirectoratePage({
                                 <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Indicadores de Monitoramento</h2>
                             </div>
                             
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-3 transition-all hover:shadow-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28">
-                                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">OSCs<br/>Cadastradas</span>
-                                    <span className="text-3xl font-black text-blue-900 dark:text-blue-100 leading-none">{subvencaoStats.totalOSCs}</span>
-                                </Card>
-                                
-                                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-3 transition-all hover:shadow-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28">
-                                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">Total de<br/>Visitas</span>
-                                    <span className="text-3xl font-black text-blue-900 dark:text-blue-100 leading-none">{subvencaoStats.totalVisits}</span>
-                                </Card>
-
-                                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-3 transition-all hover:shadow-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28">
-                                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">Visitas<br/>Finalizadas</span>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-black text-green-600 dark:text-green-400 leading-none">{subvencaoStats.finalizedVisits}</span>
-                                    </div>
-                                    <span className="text-[9px] font-bold text-zinc-400 mt-1">de {subvencaoStats.totalVisits}</span>
-                                </Card>
-
-                                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-3 transition-all hover:shadow-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28">
-                                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">Relatórios<br/>(Rascunho)</span>
-                                    <span className="text-3xl font-black text-amber-600 dark:text-amber-400 leading-none">{subvencaoStats.draftReports}</span>
-                                </Card>
-
-                                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-3 transition-all hover:shadow-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28">
-                                    <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">Relatórios<br/>(Finalizados)</span>
-                                    <span className="text-3xl font-black text-blue-600 dark:text-blue-400 leading-none">{subvencaoStats.finalizedReports}</span>
-                                </Card>
-                            </div>
+                            <SubvencaoIndicatorCards 
+                                visits={allVisitsData || []} 
+                                totalOSCs={subvencaoStats.totalOSCs} 
+                            />
 
                             <SubvencaoDashboardCharts stats={subvencaoStats} />
                         </div>
