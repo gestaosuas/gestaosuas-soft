@@ -96,7 +96,7 @@ export default async function DirectoratePage({
         const adminSupabase = createAdminClient()
         const [{ count: totalOSCs }, { data: fetchedVisits }] = await Promise.all([
             adminSupabase.from('oscs').select('*', { count: 'exact', head: true }).eq('directorate_id', directorate.id),
-            adminSupabase.from('visits').select('id, status, visit_date, assinaturas, parecer_tecnico, oscs(name)').eq('directorate_id', directorate.id)
+            adminSupabase.from('visits').select('id, status, visit_date, assinaturas, parecer_tecnico, relatorio_final, parecer_conclusivo, oscs(name)').eq('directorate_id', directorate.id)
         ])
 
         // Filter visits by current bimester
