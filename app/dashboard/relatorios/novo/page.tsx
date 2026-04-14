@@ -1,5 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { SubmissionFormClient } from "./form-client"
+import { CreasIdosoReportWrapper } from "./creas-idoso-wrapper"
+import { CreasPcdReportWrapper } from "./creas-pcd-wrapper"
 import type { FormDefinition } from "@/components/form-engine"
 import { redirect } from "next/navigation"
 import Link from "next/link"
@@ -295,19 +297,25 @@ export default async function NewReportPage({
         }
 
         if (subcategory === 'idoso') {
-            formDefinition = CREAS_IDOSO_FORM_DEFINITION
-            titleContext = "CREAS Idoso"
+            return (
+                <div className="container mx-auto max-w-7xl py-4">
+                    <CreasIdosoReportWrapper directorateId={directorate.id} directorateName={directorate.name} isAdmin={isAdmin} />
+                </div>
+            )
         } else if (subcategory === 'deficiente') {
-            formDefinition = CREAS_DEFICIENTE_FORM_DEFINITION
-            titleContext = "CREAS Deficiente"
+            return (
+                <div className="container mx-auto max-w-7xl py-4">
+                    <CreasPcdReportWrapper directorateId={directorate.id} directorateName={directorate.name} isAdmin={isAdmin} />
+                </div>
+            )
         } else {
-            // Fallback or Deficiente
+            // Fallback
             return (
                 <div className="container mx-auto max-w-2xl py-20 text-center">
-                    <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">Em construção</h2>
-                    <p className="text-zinc-500">O formulário para PCD ainda será configurado.</p>
+                    <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">Página de formulário não encontrada</h2>
+                    <p className="text-zinc-500">Parâmetros inválidos para o CREAS.</p>
                     <Link href={`/dashboard/relatorios/novo?setor=creas&directorate_id=${directorate?.id || ''}`} className="mt-8 inline-block text-blue-600 font-bold hover:underline">
-                        &larr; Voltar
+                        &larr; Voltar para as opções
                     </Link>
                 </div>
             )
