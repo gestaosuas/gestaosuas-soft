@@ -16,7 +16,8 @@ import {
     FileText, 
     AlertCircle, 
     CheckCircle2, 
-    Building2 
+    Building2,
+    FileCheck
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
