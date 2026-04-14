@@ -1626,10 +1626,14 @@ export async function getVisits(directorateId: string) {
 
         console.log(`[getVisits] User access scope:`, accessDirIds)
 
-        const { data: dirDelegations } = await adminSupabase
-            .from('form_delegations')
-            .select('visit_id')
-            .in('directorate_id', accessDirIds)
+        let dirDelegations: any[] | null = null
+        if (accessDirIds.length > 0) {
+            const { data } = await adminSupabase
+                .from('form_delegations')
+                .select('visit_id')
+                .in('directorate_id', accessDirIds)
+            dirDelegations = data
+        }
 
         const delegatedVisitIds = Array.from(new Set([
             ...(userDelegations || []).map(d => d.visit_id),
@@ -1703,10 +1707,14 @@ export async function getVisits(directorateId: string) {
             }
         })
 
-        const { data: profiles } = await adminSupabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', userIds)
+        let profiles: any[] | null = null
+        if (userIds.length > 0) {
+            const { data } = await adminSupabase
+                .from('profiles')
+                .select('id, full_name')
+                .in('id', userIds)
+            profiles = data
+        }
 
         const profileMap = new Map((profiles || []).map(p => [p.id, p.full_name]))
 
