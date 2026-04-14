@@ -3,6 +3,7 @@ import { createUser } from "./actions"
 import { getCachedDirectorates } from "@/app/dashboard/cached-data"
 import { UserList } from "./user-list"
 import { createAdminClient } from "@/utils/supabase/admin"
+import { unstable_noStore as noStore } from 'next/cache'
 import {
     Card,
     CardContent,
@@ -19,6 +20,7 @@ export default async function AdminPage({
 }: {
     searchParams: Promise<{ error?: string, success?: string }>
 }) {
+    noStore()
     const supabase = await createClient()
     const { error, success } = await searchParams
     const directorates = await getCachedDirectorates()
@@ -175,45 +177,50 @@ async function fetchAllUsers() {
     }
     const users = authResult.users
 
-    // 2. Get Profiles & Permissions
     try {
+        // 2. Get Profiles
         const { data: profiles, error: profError } = await supabaseAdmin
             .from('profiles')
-            .select(`
-                id, 
-                role, 
-                full_name,
-                directorate_id,
-                profile_directorates (
-                    directorate_id,
-                    allowed_units
-                )
-            `)
+            .select('id, role, full_name, directorate_id')
 
         if (profError) {
             console.error("[fetchAllUsers] Erro ao buscar perfis:", profError)
         }
 
+        // 2.5 Get All Permission Links (Many-to-Many)
+        const { data: allLinks, error: linksError } = await supabaseAdmin
+            .from('profile_directorates')
+            .select('profile_id, directorate_id, allowed_units')
+        
+        if (linksError) {
+            console.error("[fetchAllUsers] Erro ao buscar links:", linksError)
+        }
+
         // Map for easy lookup
         const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+        
+        // Map links by profile
+        const linksMap = new Map()
+        ;(allLinks || []).forEach((l: any) => {
+            if (!linksMap.has(l.profile_id)) linksMap.set(l.profile_id, [])
+            linksMap.get(l.profile_id).push({
+                id: l.directorate_id,
+                allowed_units: l.allowed_units
+            })
+        })
 
         // 3. Merge
         const mergedUsers = (users || []).map((u: any) => {
             const profile = profileMap.get(u.id)
-            const rawDirs = (profile as any)?.profile_directorates || []
-
-            const directorateAccess = rawDirs.map((pd: any) => ({
-                id: pd.directorate_id,
-                allowed_units: Array.isArray(pd.allowed_units) ? pd.allowed_units : null
-            }))
+            const directorateAccess = linksMap.get(u.id) || []
 
             return {
                 id: u.id,
                 email: u.email || 'No email',
-                name: profile?.full_name || u.user_metadata?.full_name || 'Desconhecido',
+                name: profile?.full_name || (u.user_metadata as any)?.full_name || 'Desconhecido',
                 role: profile?.role || 'user',
                 primaryDirectorateId: profile?.directorate_id || null,
-                directorateAccess: Array.isArray(directorateAccess) ? directorateAccess : []
+                directorateAccess: directorateAccess
             }
         })
 
