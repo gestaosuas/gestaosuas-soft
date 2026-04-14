@@ -1585,7 +1585,7 @@ export async function getVisits(directorateId: string) {
     // 1. Check user role and directorate link
     const { data: profile } = await adminSupabase
         .from('profiles')
-        .select('role, directorate_id')
+        .select('role, directorate_id, profile_directorates(directorate_id)')
         .eq('id', user.id)
         .single()
 
