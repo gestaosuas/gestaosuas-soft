@@ -1585,7 +1585,7 @@ export async function getVisits(directorateId: string) {
     // 1. Check user role and directorate link
     const { data: profile } = await adminSupabase
         .from('profiles')
-        .select('role, directorate_id, profile_directorates(directorate_id)')
+        .select('role, directorate_id')
         .eq('id', user.id)
         .single()
 
@@ -1612,11 +1612,19 @@ export async function getVisits(directorateId: string) {
             .select('visit_id')
             .eq('user_id', user.id)
         
-        // Fetch delegations for ANY DIRECTORATE the user has access to
-        const accessDirIds = [
+        // 1.5 Fetch any other directorates the user is linked to (access scope)
+        const { data: userLinks } = await adminSupabase
+            .from('profile_directorates')
+            .select('directorate_id')
+            .eq('profile_id', user.id)
+
+        // Fetch delegations for ANY DIRECTORATE the user has access to (Primary + Assigned)
+        const accessDirIds = Array.from(new Set([
             ...(userDirectorateId ? [userDirectorateId] : []),
-            ...(profile?.profile_directorates || []).map((pd: any) => pd.directorate_id)
-        ].filter(Boolean)
+            ...(userLinks || []).map(l => l.directorate_id)
+        ])).filter(Boolean) as string[]
+
+        console.log(`[getVisits] User access scope:`, accessDirIds)
 
         const { data: dirDelegations } = await adminSupabase
             .from('form_delegations')
