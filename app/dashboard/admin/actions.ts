@@ -265,7 +265,7 @@ export async function updateUserAccount(userId: string, data: {
         console.log(`[updateUserAccount] Atualização concluída com sucesso para o usuário: ${userId}`);
         return { success: true };
     } catch (error: any) {
-        console.error("[updateUserAccount] Falha crítica:", error.message || error);
-        throw new Error(error.message || "Erro inesperado no servidor");
+        console.error("[updateUserAccount] Falha crítica:", error);
+        return { success: false, error: error.message || "Erro inesperado no servidor" };
     }
 }

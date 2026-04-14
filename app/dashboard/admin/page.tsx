@@ -168,47 +168,58 @@ async function fetchAllUsers() {
     const supabaseAdmin = createAdminClient()
 
     // 1. Get Auth Users
-    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
-    if (error || !users) return []
+    const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+    if (authError || !authResult?.users) {
+        console.error("[fetchAllUsers] Erro ao listar usuários auth:", authError)
+        return []
+    }
+    const users = authResult.users
 
     // 2. Get Profiles & Permissions
-    const { data: profiles } = await supabaseAdmin
-        .from('profiles')
-        .select(`
-            id, 
-            role, 
-            full_name,
-            directorate_id,
-            profile_directorates (
+    try {
+        const { data: profiles, error: profError } = await supabaseAdmin
+            .from('profiles')
+            .select(`
+                id, 
+                role, 
+                full_name,
                 directorate_id,
-                allowed_units
-            )
-        `)
+                profile_directorates (
+                    directorate_id,
+                    allowed_units
+                )
+            `)
 
-    // Map for easy lookup
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
-
-    // 3. Merge
-    const mergedUsers = (users || []).map((u: any) => {
-        const profile = profileMap.get(u.id)
-        // Access nested join safely
-        // @ts-ignore
-        const rawDirs = profile?.profile_directorates || []
-
-        const directorateAccess = rawDirs.map((pd: any) => ({
-            id: pd.directorate_id,
-            allowed_units: pd.allowed_units === null ? null : (pd.allowed_units || [])
-        }))
-
-        return {
-            id: u.id,
-            email: u.email || 'No email',
-            name: profile?.full_name || u.user_metadata?.full_name || 'Desconhecido',
-            role: profile?.role || 'user',
-            primaryDirectorateId: profile?.directorate_id,
-            directorateAccess
+        if (profError) {
+            console.error("[fetchAllUsers] Erro ao buscar perfis:", profError)
         }
-    })
 
-    return mergedUsers
+        // Map for easy lookup
+        const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+        // 3. Merge
+        const mergedUsers = (users || []).map((u: any) => {
+            const profile = profileMap.get(u.id)
+            const rawDirs = (profile as any)?.profile_directorates || []
+
+            const directorateAccess = rawDirs.map((pd: any) => ({
+                id: pd.directorate_id,
+                allowed_units: Array.isArray(pd.allowed_units) ? pd.allowed_units : null
+            }))
+
+            return {
+                id: u.id,
+                email: u.email || 'No email',
+                name: profile?.full_name || u.user_metadata?.full_name || 'Desconhecido',
+                role: profile?.role || 'user',
+                primaryDirectorateId: profile?.directorate_id || null,
+                directorateAccess: Array.isArray(directorateAccess) ? directorateAccess : []
+            }
+        })
+
+        return mergedUsers
+    } catch (e) {
+        console.error("[fetchAllUsers] Erro crítico no merge:", e)
+        return []
+    }
 }

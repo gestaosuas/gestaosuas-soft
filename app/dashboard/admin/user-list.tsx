@@ -75,16 +75,21 @@ export function UserList({ users, directorates }: { users: UserData[], directora
 
         setIsSaving(true)
         try {
-            await updateUserAccount(editingUser.id, {
+            const result = await updateUserAccount(editingUser.id, {
                 password: newPassword,
                 role: selectedRole,
                 primaryDirectorateId: primaryDirId,
                 directorates: selectedDirs
             })
-            setEditingUser(null)
-            setNewPassword('')
+
+            if (result.success) {
+                setEditingUser(null)
+                setNewPassword('')
+            } else {
+                alert(result.error || "Erro ao atualizar usuário")
+            }
         } catch (e: any) {
-            alert(e.message || "Erro ao atualizar usuário")
+            alert("Erro na comunicação com o servidor")
         } finally {
             setIsSaving(false)
         }
