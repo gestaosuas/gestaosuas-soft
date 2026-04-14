@@ -600,7 +600,10 @@ export function VisitList({
                                 if (!delegatingVisit) return
                                 setIsDelegating(true)
                                 try {
-                                    await delegateVisit(delegatingVisit.id, selectedUserIds, selectedDirIds)
+                                    const result = await delegateVisit(delegatingVisit.id, selectedUserIds, selectedDirIds)
+                                    if (result && !result.success) {
+                                        throw new Error(result.error)
+                                    }
                                     setDelegatingVisit(null)
                                     router.refresh()
                                 } catch (e: any) {

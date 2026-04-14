@@ -1734,61 +1734,69 @@ export async function getVisits(directorateId: string) {
 }
 
 export async function delegateVisit(visitId: string, targetUserIds: string[], targetDirectorateIds: string[] = []) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    console.log(`[delegateVisit] Starting delegation for visit ${visitId}. Users: ${targetUserIds.length}, Dirs: ${targetDirectorateIds.length}`)
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { success: false, error: "Não autorizado" }
 
-    const adminSupabase = createAdminClient()
-    
-    // Security: Only Admin or Diretor of the visit's directorate can delegate
-    const [{ data: profile }, { data: visit }] = await Promise.all([
-        adminSupabase.from('profiles').select('role, directorate_id, full_name').eq('id', user.id).single(),
-        adminSupabase.from('visits').select('directorate_id').eq('id', visitId).single()
-    ])
-
-    const isAdmin = profile?.role === 'admin'
-    const isDiretor = profile?.role === 'diretor' && profile?.directorate_id === visit?.directorate_id
-
-    if (!isAdmin && !isDiretor) {
-        throw new Error("Apenas administradores ou diretores podem delegar formulários.")
-    }
-
-    // Synchronize delegations:
-    // 1. Remove all existing delegations for this visit
-    const { error: deleteError } = await adminSupabase
-        .from('form_delegations')
-        .delete()
-        .eq('visit_id', visitId)
-
-    if (deleteError) throw new Error("Erro ao limpar delegações: " + deleteError.message)
-
-    // 2. Add new delegations (Users)
-    const newDelegations = []
-    
-    if (targetUserIds.length > 0) {
-        newDelegations.push(...targetUserIds.map(targetId => ({
-            visit_id: visitId,
-            user_id: targetId,
-            delegated_by: user.id
-        })))
-    }
-
-    // 3. Add new delegations (Directorates)
-    if (targetDirectorateIds.length > 0) {
-        newDelegations.push(...targetDirectorateIds.map(dirId => ({
-            visit_id: visitId,
-            directorate_id: dirId,
-            delegated_by: user.id
-        })))
-    }
-
-    if (newDelegations.length > 0) {
-        const { error: insertError } = await adminSupabase
-            .from('form_delegations')
-            .insert(newDelegations)
+        const adminSupabase = createAdminClient()
         
-        if (insertError) throw new Error("Erro ao inserir delegações: " + insertError.message)
-    }
+        // Security: Only Admin or Diretor of the visit's directorate can delegate
+        const [{ data: profile }, { data: visit }] = await Promise.all([
+            adminSupabase.from('profiles').select('role, directorate_id, full_name').eq('id', user.id).single(),
+            adminSupabase.from('visits').select('directorate_id').eq('id', visitId).single()
+        ])
+
+        const isAdmin = profile?.role === 'admin'
+        const isDiretor = profile?.role === 'diretor' && profile?.directorate_id === visit?.directorate_id
+
+        if (!isAdmin && !isDiretor) {
+            return { success: false, error: "Apenas administradores ou diretores podem delegar formulários." }
+        }
+
+        // Synchronize delegations:
+        // 1. Remove all existing delegations for this visit
+        const { error: deleteError } = await adminSupabase
+            .from('form_delegations')
+            .delete()
+            .eq('visit_id', visitId)
+
+        if (deleteError) {
+            console.error("[delegateVisit] Delete error:", deleteError)
+            return { success: false, error: "Erro ao limpar delegações: " + deleteError.message }
+        }
+
+        // 2. Add new delegations (Users)
+        const newDelegations = []
+        
+        if (targetUserIds.length > 0) {
+            newDelegations.push(...targetUserIds.map(targetId => ({
+                visit_id: visitId,
+                user_id: targetId,
+                delegated_by: user.id
+            })))
+        }
+
+        // 3. Add new delegations (Directorates)
+        if (targetDirectorateIds.length > 0) {
+            newDelegations.push(...targetDirectorateIds.map(dirId => ({
+                visit_id: visitId,
+                directorate_id: dirId,
+                delegated_by: user.id
+            })))
+        }
+
+        if (newDelegations.length > 0) {
+            const { error: insertError } = await adminSupabase
+                .from('form_delegations')
+                .insert(newDelegations)
+            
+            if (insertError) {
+                console.error("[delegateVisit] Insert error:", insertError)
+                return { success: false, error: "Erro ao inserir delegações no banco. Verifique se a migração form_delegations.directorate_id foi aplicada: " + insertError.message }
+            }
+        }
 
     try {
         await logActivity({
@@ -1805,6 +1813,10 @@ export async function delegateVisit(visitId: string, targetUserIds: string[], ta
 
     revalidatePath('/dashboard', 'page')
     return { success: true }
+    } catch (error: any) {
+        console.error("[delegateVisit] Critical exception:", error)
+        return { success: false, error: error.message || "Erro inesperado ao processar delegação" }
+    }
 }
 
 export async function getVisitById(id: string) {
