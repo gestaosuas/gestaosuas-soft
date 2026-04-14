@@ -1,6 +1,14 @@
 -- Add directorate_id to form_delegations to support delegation to entire directorates
 ALTER TABLE public.form_delegations ADD COLUMN IF NOT EXISTS directorate_id UUID REFERENCES public.directorates(id) ON DELETE CASCADE;
 
+-- Allow user_id to be null when delegating to a directorate
+ALTER TABLE public.form_delegations ALTER COLUMN user_id DROP NOT NULL;
+
+-- Ensure at least one target is specified
+ALTER TABLE public.form_delegations ADD CONSTRAINT form_delegations_target_check CHECK (
+    user_id IS NOT NULL OR directorate_id IS NOT NULL
+);
+
 -- Update RLS policies for form_delegations to allow users from delegated directorates to see the record
 -- (The actual visibility logic for data like visits is handled in the app query, but RLS on this table is good practice)
 DROP POLICY IF EXISTS "Users can view delegations for their own directorate" ON public.form_delegations;
