@@ -367,6 +367,34 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 
             if (beneficiosError) throw new Error('Erro ao salvar dados de Benefícios: ' + beneficiosError.message);
             // Beneficios saved successfully, continuing to global sync
+        } else if (setor === 'naica') {
+            const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
+            const naicaData: any = { user_id: user.id, directorate_id: directorateId, unit_name: formData._unit || 'Principal', month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
+            const numCols = ['mes_anterior_masc', 'mes_anterior_fem', 'inseridos_masc', 'inseridos_fem', 'desligados_masc', 'desligados_fem', 'total_atendidas', 'atendimentos'];
+            numCols.forEach(col => { if (formData[col] !== undefined) naicaData[col] = Number(formData[col]) || 0; });
+            const { error } = await adminSupabase.from('naica_reports').upsert(naicaData, { onConflict: 'directorate_id,unit_name,month,year' });
+            if (error) console.error("NAICA Sync error:", error);
+        } else if (setor === 'pop_rua') {
+            const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
+            const prData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
+            const numCols = ['num_atend_centro_ref', 'num_atend_abordagem', 'num_atend_migracao', 'num_atend_total', 'cr_a1_masc', 'cr_a1_fem', 'cr_b1_drogas', 'cr_b2_migrantes', 'cr_b3_mental', 'cr_cad_unico', 'cr_enc_mercado', 'cr_enc_caps', 'cr_enc_saude', 'cr_enc_consultorio', 'cr_segunda_via', 'ar_e1_masc', 'ar_e2_fem', 'ar_e5_drogas', 'ar_e6_migrantes', 'ar_persistentes', 'ar_enc_centro_ref', 'ar_recusa_identificacao', 'nm_total_passagens', 'nm_passagens_deferidas', 'nm_passagens_indeferidas', 'nm_estrangeiros', 'nm_retorno_familiar', 'nm_busca_trabalho', 'nm_busca_saude'];
+            numCols.forEach(col => { if (formData[col] !== undefined) prData[col] = Number(formData[col]) || 0; });
+            const { error } = await adminSupabase.from('creas_pop_rua_reports').upsert(prData, { onConflict: 'directorate_id,month,year' });
+            if (error) console.error("POP RUA Sync error:", error);
+        } else if (setor === 'creas') {
+            if (formData._subcategory === 'idoso') {
+                const idosoData: any = { created_by: user.id, directorate_id: directorateId, month, year, updated_at: new Date().toISOString() };
+                const numCols = ['paefi_atendidas_anterior', 'paefi_inseridos', 'paefi_desligados', 'paefi_total', 'violencia_fisica_atendidas_anterior', 'violencia_fisica_inseridos', 'violencia_fisica_desligados', 'violencia_fisica_total', 'abuso_sexual_atendidas_anterior', 'abuso_sexual_inseridos', 'abuso_sexual_desligados', 'abuso_sexual_total', 'exploracao_sexual_atendidas_anterior', 'exploracao_sexual_inseridos', 'exploracao_sexual_desligados', 'exploracao_sexual_total', 'negligencia_atendidas_anterior', 'negligencia_inseridos', 'negligencia_desligados', 'negligencia_total', 'exploracao_financeira_atendidas_anterior', 'exploracao_financeira_inseridos', 'exploracao_financeira_desligados', 'exploracao_financeira_total'];
+                numCols.forEach(col => { if (formData[col] !== undefined) idosoData[col] = Number(formData[col]) || 0; });
+                const { error } = await adminSupabase.from('creas_idoso_reports').upsert(idosoData, { onConflict: 'directorate_id,month,year' });
+                if (error) console.error("CREAS IDOSO Sync error:", error);
+            } else if (formData._subcategory === 'deficiente') {
+                const pcdData: any = { created_by: user.id, directorate_id: directorateId, month, year, updated_at: new Date().toISOString() };
+                const numCols = ['def_violencia_fisica_atendidas_anterior', 'def_violencia_fisica_inseridos', 'def_violencia_fisica_desligados', 'def_violencia_fisica_total', 'def_abuso_sexual_atendidas_anterior', 'def_abuso_sexual_inseridos', 'def_abuso_sexual_desligados', 'def_abuso_sexual_total', 'def_exploracao_sexual_atendidas_anterior', 'def_exploracao_sexual_inseridos', 'def_exploracao_sexual_desligados', 'def_exploracao_sexual_total', 'def_negligencia_atendidas_anterior', 'def_negligencia_inseridos', 'def_negligencia_desligados', 'def_negligencia_total', 'def_exploracao_financeira_atendidas_anterior', 'def_exploracao_financeira_inseridos', 'def_exploracao_financeira_desligados', 'def_exploracao_financeira_total'];
+                numCols.forEach(col => { if (formData[col] !== undefined) pcdData[col] = Number(formData[col]) || 0; });
+                const { error } = await adminSupabase.from('creas_pcd_reports').upsert(pcdData, { onConflict: 'directorate_id,month,year' });
+                if (error) console.error("CREAS PCD Sync error:", error);
+            }
         }
         // --- FIM DO NOVO SALVAMENTO ---
 
