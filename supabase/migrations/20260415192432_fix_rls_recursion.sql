@@ -1,4 +1,5 @@
--- 1. Cria nossa função administrativa de bypass para ler o papel sem engatilhar RLS recursivo.
+-- Criação de uma função de bypass para evitar Recursão Infinita
+-- Ao checar `profiles` dentro de políticas RLS, causamos ciclo infinito se a própria profiles usar.
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -11,7 +12,7 @@ AS $$
   );
 $$;
 
--- 2. Atualiza os RLS da nova tabela NAICA
+-- Drop and replace NAICA policies
 DROP POLICY IF EXISTS "Admins can do everything on naica_reports" ON naica_reports;
 CREATE POLICY "Admins can do everything on naica_reports"
 ON naica_reports FOR ALL TO authenticated USING ( public.is_admin() );
@@ -49,7 +50,7 @@ USING (
     ) OR public.is_admin()
 );
 
--- 3. Atualizamos do POP RUA também pelo mesmo risco:
+-- Preemptively also fix POP RUA recursion since it uses the same buggy snippet
 DROP POLICY IF EXISTS "Admins can do everything on creas_pop_rua_reports" ON creas_pop_rua_reports;
 CREATE POLICY "Admins can do everything on creas_pop_rua_reports"
 ON creas_pop_rua_reports FOR ALL TO authenticated USING ( public.is_admin() );
@@ -64,15 +65,3 @@ USING (
         AND profile_directorates.directorate_id = creas_pop_rua_reports.directorate_id
     ) OR public.is_admin()
 );
-
-DROP POLICY IF EXISTS "Users can edit their directorate's pop rua reports" ON creas_pop_rua_reports;
-CREATE POLICY "Users can edit their directorate's pop rua reports"
-ON creas_pop_rua_reports FOR ALL TO authenticated
-USING (
-    EXISTS (
-        SELECT 1 FROM profile_directorates
-        WHERE profile_directorates.profile_id = auth.uid()
-        AND profile_directorates.directorate_id = creas_pop_rua_reports.directorate_id
-    ) OR public.is_admin()
-);
-

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { CreasPcdForm } from "./creas-pcd-form"
-import { getCreasPcdReport } from "@/app/dashboard/diretoria/[id]/creas-actions"
+import { getCreasPcdReport, deleteCreasPcdReport } from "@/app/dashboard/diretoria/[id]/creas-actions"
 
 export function CreasPcdReportWrapper({
     directorateId,
@@ -46,6 +46,28 @@ export function CreasPcdReportWrapper({
 
         return () => { isMounted = false }
     }, [directorateId, month, year])
+
+    const handleUnlock = async () => {
+        if (!confirm("Isso irá apagar os dados atuais para permitir um novo preenchimento pelo usuário. Confirmar?")) {
+            return
+        }
+        setLoading(true)
+        try {
+            const result = await deleteCreasPcdReport(directorateId, Number(month), Number(year))
+            if (result.success) {
+                setAlreadySubmitted(false)
+                setInitialData({})
+                alert("Preenchimento liberado com sucesso!")
+            } else {
+                alert("Erro ao liberar preenchimento.")
+            }
+        } catch (e) {
+            console.error(e)
+            alert("Erro ao liberar preenchimento.")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const monthName = new Date(0, Number(month) - 1).toLocaleString('pt-BR', { month: 'long' })
 
@@ -127,13 +149,35 @@ export function CreasPcdReportWrapper({
                     <div className="flex justify-center p-12"><span className="text-zinc-500 font-bold uppercase text-xs">Carregando dados...</span></div>
                 ) : (
                     <>
-                        {alreadySubmitted && !isAdmin ? (
+                        {alreadySubmitted && !isAdmin && (
                             <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-4 text-amber-800">
                                 <p className="text-[13px] leading-relaxed opacity-90">
                                     Os dados para <strong>{monthName} de {year}</strong> já foram enviados para este período e não podem ser editados.
                                 </p>
                             </div>
-                        ) : (
+                        )}
+
+                        {alreadySubmitted && isAdmin && (
+                            <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-blue-800">
+                                <div>
+                                    <p className="font-bold text-[15px] mb-1">Registro Existente (Modo Admin)</p>
+                                    <p className="text-[13px] leading-relaxed opacity-90">
+                                        Já existe um envio para este período. Você pode editar os dados abaixo ou liberar para um novo preenchimento.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleUnlock}
+                                    disabled={loading}
+                                    className="shrink-0 border-blue-200 hover:bg-blue-100 text-blue-700 font-bold text-[10px] uppercase tracking-wider h-10 px-4"
+                                >
+                                    Liberar Novo Preenchimento
+                                </Button>
+                            </div>
+                        )}
+
+                        {(!alreadySubmitted || isAdmin) && (
                             <CreasPcdForm
                                 key={`${month}-${year}`}
                                 directorateId={directorateId}

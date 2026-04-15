@@ -20,6 +20,28 @@ export async function getCreasIdosoReport(directorateId: string, month: number, 
         return currentMonthData
     }
 
+    // Checking Legacy Submissions table
+    const { data: legacyData } = await supabase
+        .from('submissions')
+        .select('data')
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+        .eq('setor', 'creas')
+        .eq('subcategory', 'idoso')
+        .single()
+
+    if (legacyData && legacyData.data) {
+        return {
+            id: 'legacy-data',
+            status: 'submitted',
+            directorate_id: directorateId,
+            month,
+            year,
+            ...legacyData.data
+        }
+    }
+
     // Carry forward calculation logic: ONLY fetch the (Total - Desligados) from the previous chronological month
     const prevMonth = month === 1 ? 12 : month - 1
     const prevYear = month === 1 ? year - 1 : year
@@ -129,6 +151,27 @@ export async function getCreasPcdReport(directorateId: string, month: number, ye
         return currentMonthData
     }
 
+    const { data: legacyData } = await supabase
+        .from('submissions')
+        .select('data')
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+        .eq('setor', 'creas')
+        .eq('subcategory', 'deficiente')
+        .single()
+
+    if (legacyData && legacyData.data) {
+        return {
+            id: 'legacy-data',
+            status: 'submitted',
+            directorate_id: directorateId,
+            month,
+            year,
+            ...legacyData.data
+        }
+    }
+
     const prevMonth = month === 1 ? 12 : month - 1
     const prevYear = month === 1 ? year - 1 : year
 
@@ -214,6 +257,70 @@ export async function saveCreasPcdReport(directorateId: string, month: number, y
             return { success: false, error: insertError.message }
         }
     }
+
+    revalidatePath(`/dashboard/diretoria/${directorateId}`)
+    return { success: true }
+}
+
+export async function deleteCreasIdosoReport(directorateId: string, month: number, year: number) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: "Não autorizado" }
+
+    const { error } = await supabase
+        .from('creas_idoso_reports')
+        .delete()
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+
+    if (error) {
+        console.error("Error unlocking CREAS Idoso:", error)
+        return { success: false, error: error.message }
+    }
+
+    // Also delete any fallback data from legacy submissions
+    await supabase
+        .from('submissions')
+        .delete()
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+        .eq('setor', 'creas')
+        .eq('subcategory', 'idoso')
+
+    revalidatePath(`/dashboard/diretoria/${directorateId}`)
+    return { success: true }
+}
+
+export async function deleteCreasPcdReport(directorateId: string, month: number, year: number) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: "Não autorizado" }
+
+    const { error } = await supabase
+        .from('creas_pcd_reports')
+        .delete()
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+
+    if (error) {
+        console.error("Error unlocking CREAS PCD:", error)
+        return { success: false, error: error.message }
+    }
+
+    // Also delete any fallback data from legacy submissions
+    await supabase
+        .from('submissions')
+        .delete()
+        .eq('directorate_id', directorateId)
+        .eq('month', month)
+        .eq('year', year)
+        .eq('setor', 'creas')
+        .eq('subcategory', 'deficiente')
 
     revalidatePath(`/dashboard/diretoria/${directorateId}`)
     return { success: true }

@@ -6,10 +6,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { CreasIdosoForm } from "./creas-idoso-form"
-import { getCreasIdosoReport, deleteCreasIdosoReport } from "@/app/dashboard/diretoria/[id]/creas-actions"
+import { PopRuaForm } from "./pop-rua-form"
+import { getPopRuaReport, deletePopRuaReport } from "@/app/dashboard/diretoria/[id]/pop-rua-actions"
 
-export function CreasIdosoReportWrapper({
+export function PopRuaReportWrapper({
     directorateId,
     directorateName,
     isAdmin
@@ -30,14 +30,14 @@ export function CreasIdosoReportWrapper({
         async function loadData() {
             setLoading(true)
             try {
-                const data = await getCreasIdosoReport(directorateId, Number(month), Number(year))
+                const data = await getPopRuaReport(directorateId, Number(month), Number(year))
                 if (isMounted) {
                     setInitialData(data)
-                    // If the returned object has an ID and status != draft, it's already submitted
-                    setAlreadySubmitted(!!data.id && data.status !== 'draft')
+                    // If it has id, or inherited legacy id, it's submitted unless it's draft
+                    setAlreadySubmitted(!!(data.id && data.status !== 'draft'))
                 }
             } catch (err) {
-                console.error("Error loading CREAS Idoso data", err)
+                console.error("Error loading Pop Rua data", err)
             } finally {
                 if (isMounted) setLoading(false)
             }
@@ -54,7 +54,7 @@ export function CreasIdosoReportWrapper({
         }
         setLoading(true)
         try {
-            const result = await deleteCreasIdosoReport(directorateId, Number(month), Number(year))
+            const result = await deletePopRuaReport(directorateId, Number(month), Number(year))
             if (result.success) {
                 setAlreadySubmitted(false)
                 setInitialData({})
@@ -75,7 +75,6 @@ export function CreasIdosoReportWrapper({
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-1000 pb-4">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                {/* Header elements remain the same */}
                 <div className="flex items-start gap-6">
                     <Link href={`/dashboard/diretoria/${directorateId}`}>
                         <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all mt-1">
@@ -92,7 +91,7 @@ export function CreasIdosoReportWrapper({
                                     {directorateName}
                                 </span>
                                 <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                                <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">CREAS Idoso</span>
+                                <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">População de Rua e Migrantes</span>
                             </div>
                         </div>
 
@@ -158,7 +157,7 @@ export function CreasIdosoReportWrapper({
                                 </p>
                             </div>
                         )}
-                        
+
                         {alreadySubmitted && isAdmin && (
                             <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-blue-800">
                                 <div>
@@ -180,7 +179,7 @@ export function CreasIdosoReportWrapper({
                         )}
 
                         {(!alreadySubmitted || isAdmin) && (
-                            <CreasIdosoForm
+                            <PopRuaForm
                                 key={`${month}-${year}`}
                                 directorateId={directorateId}
                                 month={Number(month)}

@@ -172,6 +172,10 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             const { data: qualifReports } = await supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId);
             const { data: crasReports } = await supabase.from('cras_reports').select('*').eq('directorate_id', directorateId);
             const { data: beneficiosReports } = await supabase.from('beneficios_reports').select('*').eq('directorate_id', directorateId);
+            const { data: naicaReports } = await supabase.from('naica_reports').select('*').eq('directorate_id', directorateId);
+            const { data: popRuaReports } = await supabase.from('creas_pop_rua_reports').select('*').eq('directorate_id', directorateId);
+            const { data: creasIdosoReports } = await supabase.from('creas_idoso_reports').select('*').eq('directorate_id', directorateId);
+            const { data: creasPcdReports } = await supabase.from('creas_pcd_reports').select('*').eq('directorate_id', directorateId);
 
             // 4. Extract all unique user IDs from all sources to fetch profiles
             const allUserIds = new Set([
@@ -179,7 +183,11 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                 ...(sineReports || []).map(s => s.user_id),
                 ...(qualifReports || []).map(s => s.user_id),
                 ...(crasReports || []).map(s => s.user_id),
-                ...(beneficiosReports || []).map(s => s.user_id)
+                ...(beneficiosReports || []).map(s => s.user_id),
+                ...(naicaReports || []).map(s => s.user_id),
+                ...(popRuaReports || []).map(s => s.user_id),
+                ...(creasIdosoReports || []).map(s => s.user_id),
+                ...(creasPcdReports || []).map(s => s.user_id)
             ]);
             const uniqueUserIds = Array.from(allUserIds).filter(Boolean);
 
@@ -303,6 +311,113 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                             created_at: benef.created_at,
                             data: { ...cleanData, _has_beneficios: true, _setor: 'beneficios' },
                             profiles: { full_name: profileMap[benef.user_id] || 'Usuário' }
+                        } as any);
+                    }
+                });
+            }
+
+            // Integrar NAICA
+            if (naicaReports) {
+                naicaReports.forEach(naica => {
+                    const existingIdx = finalSubmissions.findIndex(fs => fs.month === naica.month && fs.year === naica.year);
+                    const cleanData = { ...naica };
+                    delete (cleanData as any).id;
+                    delete (cleanData as any).user_id;
+
+                    if (existingIdx > -1) {
+                        const sub = finalSubmissions[existingIdx];
+                        if (!sub.data.units) sub.data.units = {};
+                        sub.data.units[naica.unit_name] = { ...sub.data.units[naica.unit_name], ...cleanData };
+                        sub.data._is_multi_unit = true;
+                        sub.data._has_naica = true;
+                    } else {
+                        finalSubmissions.push({
+                            id: naica.id,
+                            month: naica.month,
+                            year: naica.year,
+                            directorate_id: directorateId,
+                            user_id: naica.user_id,
+                            created_at: naica.created_at,
+                            data: { 
+                                units: { [naica.unit_name]: cleanData },
+                                _is_multi_unit: true,
+                                _has_naica: true,
+                                _setor: 'naica'
+                            },
+                            profiles: { full_name: profileMap[naica.user_id] || 'Usuário' }
+                        } as any);
+                    }
+                });
+            }
+
+            // Integrar POP RUA
+            if (popRuaReports) {
+                popRuaReports.forEach(pop => {
+                    const existingIdx = finalSubmissions.findIndex(fs => fs.month === pop.month && fs.year === pop.year);
+                    const cleanData = { ...pop };
+                    delete (cleanData as any).id;
+                    delete (cleanData as any).user_id;
+
+                    if (existingIdx > -1) {
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_pop_rua: true };
+                    } else {
+                        finalSubmissions.push({
+                            id: pop.id,
+                            month: pop.month,
+                            year: pop.year,
+                            directorate_id: directorateId,
+                            user_id: pop.user_id,
+                            created_at: pop.created_at,
+                            data: { ...cleanData, _has_pop_rua: true, _setor: 'pop_rua' },
+                            profiles: { full_name: profileMap[pop.user_id] || 'Usuário' }
+                        } as any);
+                    }
+                });
+            }
+
+            // Integrar CREAS (Idoso e PCD share the 'creas' module logic visually)
+            if (creasIdosoReports) {
+                creasIdosoReports.forEach(idoso => {
+                    const existingIdx = finalSubmissions.findIndex(fs => fs.month === idoso.month && fs.year === idoso.year);
+                    const cleanData = { ...idoso };
+                    delete (cleanData as any).id;
+                    delete (cleanData as any).user_id;
+
+                    if (existingIdx > -1) {
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_creas: true };
+                    } else {
+                        finalSubmissions.push({
+                            id: idoso.id,
+                            month: idoso.month,
+                            year: idoso.year,
+                            directorate_id: directorateId,
+                            user_id: idoso.user_id,
+                            created_at: idoso.created_at,
+                            data: { ...cleanData, _has_creas: true, _setor: 'creas' },
+                            profiles: { full_name: profileMap[idoso.user_id] || 'Usuário' }
+                        } as any);
+                    }
+                });
+            }
+            if (creasPcdReports) {
+                creasPcdReports.forEach(pcd => {
+                    const existingIdx = finalSubmissions.findIndex(fs => fs.month === pcd.month && fs.year === pcd.year);
+                    const cleanData = { ...pcd };
+                    delete (cleanData as any).id;
+                    delete (cleanData as any).user_id;
+
+                    if (existingIdx > -1) {
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_creas: true };
+                    } else {
+                        finalSubmissions.push({
+                            id: pcd.id,
+                            month: pcd.month,
+                            year: pcd.year,
+                            directorate_id: directorateId,
+                            user_id: pcd.user_id,
+                            created_at: pcd.created_at,
+                            data: { ...cleanData, _has_creas: true, _setor: 'creas' },
+                            profiles: { full_name: profileMap[pcd.user_id] || 'Usuário' }
                         } as any);
                     }
                 });

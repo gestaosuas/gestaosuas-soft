@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server"
 import { SubmissionFormClient } from "./form-client"
 import { CreasIdosoReportWrapper } from "./creas-idoso-wrapper"
 import { CreasPcdReportWrapper } from "./creas-pcd-wrapper"
+import { PopRuaReportWrapper } from "./pop-rua-wrapper"
+import { NaicaReportWrapper } from "./naica-wrapper"
 import type { FormDefinition } from "@/components/form-engine"
 import { redirect } from "next/navigation"
 import Link from "next/link"
@@ -248,9 +250,25 @@ export default async function NewReportPage({
         titleContext = "Diversidade"
     }
 
+    if (isNAICA) {
+        return (
+            <div className="container mx-auto max-w-7xl py-4">
+                <NaicaReportWrapper directorateId={directorate.id} directorateName={directorate.name} isAdmin={isAdmin} />
+            </div>
+        )
+    }
+
     if (isNucleoDiversidade) {
         formDefinition = NUCLEO_DIVERSIDADE_FORM_DEFINITION
         titleContext = "Núcleo de Diversidade"
+    }
+
+    if (isPopRua) {
+        return (
+            <div className="container mx-auto max-w-7xl py-4">
+                <PopRuaReportWrapper directorateId={directorate.id} directorateName={directorate.name} isAdmin={isAdmin} />
+            </div>
+        )
     }
 
     if (isCREAS) {
