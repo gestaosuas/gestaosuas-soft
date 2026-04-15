@@ -176,6 +176,12 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             const { data: popRuaReports } = await supabase.from('creas_pop_rua_reports').select('*').eq('directorate_id', directorateId);
             const { data: creasIdosoReports } = await supabase.from('creas_idoso_reports').select('*').eq('directorate_id', directorateId);
             const { data: creasPcdReports } = await supabase.from('creas_pcd_reports').select('*').eq('directorate_id', directorateId);
+            const { data: protetivoReports } = await supabase.from('creas_protetivo_reports').select('*').eq('directorate_id', directorateId);
+            const { data: socioeducativoReports } = await supabase.from('creas_socioeducativo_reports').select('*').eq('directorate_id', directorateId);
+            const { data: peConsolidadoReports } = await supabase.from('protecao_especial_reports').select('*').eq('directorate_id', directorateId);
+            const { data: cmReports } = await supabase.from('casa_da_mulher_reports').select('*').eq('directorate_id', directorateId);
+            const { data: divReports } = await supabase.from('diversidade_reports').select('*').eq('directorate_id', directorateId);
+            const { data: ndReports } = await supabase.from('nucleo_diversidade_reports').select('*').eq('directorate_id', directorateId);
 
             // 4. Extract all unique user IDs from all sources to fetch profiles
             const allUserIds = new Set([
@@ -187,7 +193,13 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                 ...(naicaReports || []).map(s => s.user_id),
                 ...(popRuaReports || []).map(s => s.user_id),
                 ...(creasIdosoReports || []).map(s => s.user_id),
-                ...(creasPcdReports || []).map(s => s.user_id)
+                ...(creasPcdReports || []).map(s => s.user_id),
+                ...(protetivoReports || []).map(s => s.user_id),
+                ...(socioeducativoReports || []).map(s => s.user_id),
+                ...(peConsolidadoReports || []).map(s => s.user_id),
+                ...(cmReports || []).map(s => s.user_id),
+                ...(divReports || []).map(s => s.user_id),
+                ...(ndReports || []).map(s => s.user_id)
             ]);
             const uniqueUserIds = Array.from(allUserIds).filter(Boolean);
 
@@ -422,6 +434,50 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                     }
                 });
             }
+
+            // Integrar Proteção Especial
+            [protetivoReports, socioeducativoReports, peConsolidadoReports].forEach((reports, idx) => {
+                if (reports) {
+                    const sector = ['creas_protetivo', 'creas_socioeducativo', 'protecao_especial'][idx];
+                    reports.forEach(report => {
+                        const existingIdx = finalSubmissions.findIndex(fs => fs.month === report.month && fs.year === report.year);
+                        const cleanData = { ...report };
+                        delete (cleanData as any).id;
+                        delete (cleanData as any).user_id;
+                        if (existingIdx > -1) {
+                            finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, [`_has_${sector}`]: true };
+                        } else {
+                            finalSubmissions.push({
+                                id: report.id, month: report.month, year: report.year, directorate_id: directorateId, user_id: report.user_id, created_at: report.created_at,
+                                data: { ...cleanData, [`_has_${sector}`]: true, _setor: sector },
+                                profiles: { full_name: profileMap[report.user_id] || 'Usuário' }
+                            } as any);
+                        }
+                    });
+                }
+            });
+
+            // Integrar Casa da Mulher
+            [cmReports, divReports, ndReports].forEach((reports, idx) => {
+                if (reports) {
+                    const sector = ['casa_da_mulher', 'diversidade', 'nucleo_diversidade'][idx];
+                    reports.forEach(report => {
+                        const existingIdx = finalSubmissions.findIndex(fs => fs.month === report.month && fs.year === report.year);
+                        const cleanData = { ...report };
+                        delete (cleanData as any).id;
+                        delete (cleanData as any).user_id;
+                        if (existingIdx > -1) {
+                            finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, [`_has_${sector}`]: true };
+                        } else {
+                            finalSubmissions.push({
+                                id: report.id, month: report.month, year: report.year, directorate_id: directorateId, user_id: report.user_id, created_at: report.created_at,
+                                data: { ...cleanData, [`_has_${sector}`]: true, _setor: sector },
+                                profiles: { full_name: profileMap[report.user_id] || 'Usuário' }
+                            } as any);
+                        }
+                    });
+                }
+            });
 
             return finalSubmissions;
         },
