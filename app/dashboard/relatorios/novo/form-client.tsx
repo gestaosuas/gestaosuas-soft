@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { FormEngine, FormDefinition } from "@/components/form-engine"
 import { StepperForm } from "@/components/stepper-form"
 import { submitReport, getPreviousMonthData, getCurrentMonthData, checkSubmissionExists, deleteMonthData } from "@/app/dashboard/actions"
-import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
+import { getOficinasComCategorias } from "@/components/ceai-actions"
 import { useState, useEffect, useCallback } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -661,22 +661,21 @@ export function SubmissionFormClient({
             {/* Form Container */}
             <div className="w-full">
                 <Card className="border border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-none rounded-2xl w-full">
-                    <CardHeader className="pt-4 px-6 lg:px-8 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 italic">
-                                    {finalUnit ? `Unidade: ${finalUnit}` : (finalSetor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : directorateName)}
+                    <CardHeader className="py-3 px-6 lg:px-8 border-b border-zinc-100 dark:border-zinc-800/60">
+                        <div className="flex flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100 italic">
+                                    {finalUnit ? `Unidade: ${finalUnit}` : (finalSetor === 'nucleo_diversidade' ? "Núcleo de Diversidade" : "Entrada de Dados")}
                                 </h3>
-                                <p className="text-[12px] font-medium text-zinc-500">Preencha todos os campos obrigatórios para prosseguir.</p>
-                            </div>
-                            <div className="hidden md:flex items-center px-4 py-2 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
-                                <p className="text-[10px] text-blue-900/70 dark:text-blue-400/70 font-bold uppercase tracking-[0.1em] leading-relaxed">
-                                    Consolidando p/ <span className="text-blue-900 dark:text-blue-400">{year}</span> no mês de <span className="text-blue-900 dark:text-blue-400 capitalize">{monthName}</span>
-                                </p>
+                                <div className="hidden sm:flex items-center px-3 py-1 rounded-full bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                                    <p className="text-[9px] text-blue-900/70 dark:text-blue-400/70 font-bold uppercase tracking-[0.1em] leading-relaxed">
+                                        Consolidando <span className="text-blue-900 dark:text-blue-400">{year}</span> - <span className="text-blue-900 dark:text-blue-400 capitalize">{monthName}</span>
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 lg:p-8 w-full overflow-x-hidden">
+                    <CardContent className="p-4 lg:p-6 w-full overflow-x-hidden">
                         {alreadySubmitted && !isAdmin && (
                             <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-4 text-amber-800 animate-in fade-in slide-in-from-top-2 duration-500">
                                 <div className="p-2 bg-amber-100 rounded-lg text-amber-600">

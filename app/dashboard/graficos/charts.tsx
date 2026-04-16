@@ -36,7 +36,7 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
                 const isPositive = (item.trend || 0) >= 0;
 
                 return (
-                    <Card key={i} className="rounded-[2rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 overflow-hidden group">
+                    <Card key={i} className="rounded-xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 overflow-hidden group">
                         <CardHeader className="p-6 pb-2">
                             <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] leading-tight">
                                 {item.label}
@@ -89,7 +89,7 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
 
 export function ServicesBarChart({ data, title = "Serviços Prestados" }: { data: any[], title?: string }) {
     return (
-        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
             <CardHeader className="p-8 pb-4">
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -116,12 +116,12 @@ export function ServicesBarChart({ data, title = "Serviços Prestados" }: { data
                         />
                         <Tooltip
                             cursor={{ fill: 'transparent' }}
-                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                         />
                         <Bar
                             dataKey="value"
                             fill="#3b82f6"
-                            radius={[0, 10, 10, 0]}
+                            radius={[0, 4, 4, 0]}
                             barSize={24}
                             label={{ position: 'right', fill: '#64748b', fontSize: 11, fontWeight: '800', dx: 10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
                         >
@@ -138,7 +138,7 @@ export function ServicesBarChart({ data, title = "Serviços Prestados" }: { data
 
 export function AttendanceLineChart({ data }: { data: any[] }) {
     return (
-        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
             <CardHeader className="p-8 pb-4">
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-slate-800"></span>
@@ -212,7 +212,7 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
 
 export function GenericLineChart({ data, title, dataKey, color, subtitle }: { data: any[], title: string, dataKey: string, color: string, subtitle?: string }) {
     return (
-        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
             <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between space-y-0">
                 <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
@@ -391,7 +391,7 @@ export function GenericPieChart({ data, title, colors }: { data: any[], title: s
     const COLORS = colors || DEFAULT_COLORS;
 
     return (
-        <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
             <CardHeader className="p-8 pb-4">
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>

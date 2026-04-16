@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -13,6 +13,7 @@ import {
     Building2,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     HandHeart,
     Activity,
     ClipboardList,
@@ -32,6 +33,26 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [isCollapsed, setIsCollapsed] = useState(false)
+    const [isDiretoriasOpen, setIsDiretoriasOpen] = useState(true)
+    const [isMonitoramentosOpen, setIsMonitoramentosOpen] = useState(true)
+
+    // Hide sidebar if inside an iframe
+    const [isInsideIframe, setIsInsideIframe] = useState(false)
+
+    useEffect(() => {
+        setIsInsideIframe(window.self !== window.top)
+    }, [])
+
+    useEffect(() => {
+        if (!isInsideIframe) {
+            const width = isCollapsed ? '80px' : '288px' // w-20 or w-72
+            document.documentElement.style.setProperty('--sidebar-width', width)
+        } else {
+            document.documentElement.style.setProperty('--sidebar-width', '0px')
+        }
+    }, [isCollapsed, isInsideIframe])
+
+    if (isInsideIframe) return null
 
     const getDirectorateIcon = (name: string) => {
         const lowerName = name.toLowerCase()
@@ -102,7 +123,7 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 </div>
             </div>
 
-            <nav className="flex-1 pt-8 px-4 space-y-8 overflow-y-auto custom-scrollbar overflow-x-hidden">
+            <nav className="flex-1 pt-8 px-4 space-y-8 overflow-y-auto custom-scrollbar overflow-x-visible">
                 <style jsx global>{`
                     .custom-scrollbar::-webkit-scrollbar {
                         width: 4px;
@@ -122,11 +143,11 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                     {!isCollapsed && (
                         <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">Principal</h3>
                     )}
-                    <Link href="/dashboard">
+                    <Link href="/dashboard" className="group">
                         <Button
                             variant="ghost"
                             className={cn(
-                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg",
+                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5 relative",
                                 isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                 (pathname === "/dashboard" && !searchParams.get('view'))
                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
@@ -135,15 +156,24 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                         >
                             <LayoutDashboard className={cn("h-[18px] w-[18px] transition-colors", (pathname === "/dashboard" && !searchParams.get('view')) ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                             {!isCollapsed && <span>Painel Geral</span>}
+
+                            {/* CUSTOM TOOLTIP */}
+                            {isCollapsed && (
+                                <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
+                                    <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
+                                        Painel Geral
+                                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
+                                    </div>
+                                </div>
+                            )}
                         </Button>
                     </Link>
 
-                    {role === 'admin' && (
-                        <Link href="/dashboard?view=daily">
+                        <Link href="/dashboard?view=daily" className="group">
                             <Button
                                 variant="ghost"
                                 className={cn(
-                                    "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mt-1",
+                                    "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mt-1 relative",
                                     isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                     searchParams.get('view') === 'daily'
                                         ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
@@ -152,29 +182,47 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                             >
                                 <TrendingUp className={cn("h-[18px] w-[18px] transition-colors", searchParams.get('view') === 'daily' ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                 {!isCollapsed && <span>Visão Diária</span>}
+
+                                {/* CUSTOM TOOLTIP */}
+                                {isCollapsed && (
+                                    <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
+                                        <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
+                                            Visão Diária
+                                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
+                                        </div>
+                                    </div>
+                                )}
                             </Button>
                         </Link>
-                    )}
                 </div>
 
                 <div className="space-y-1">
                     {!isCollapsed && (
                         <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mt-2">Mapas</h3>
                     )}
-                    <Link href="/dashboard/mapas/unidades">
+                    <Link href="/dashboard/mapas/unidades" className="group">
                         <Button
                             variant="ghost"
                             className={cn(
-                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5 relative",
                                 isCollapsed ? "justify-center px-0" : "justify-start px-3 truncate",
                                 pathname?.startsWith("/dashboard/mapas/unidades")
                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
                                     : "text-white hover:text-cyan-400 hover:bg-white/5"
                             )}
-                            title="Unidades SMDES"
                         >
                             <Map className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname?.startsWith("/dashboard/mapas/unidades") ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                             {!isCollapsed && <span className="truncate">Unidades SMDES</span>}
+
+                            {/* CUSTOM TOOLTIP */}
+                            {isCollapsed && (
+                                <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
+                                    <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
+                                        Unidades SMDES
+                                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
+                                    </div>
+                                </div>
+                            )}
                         </Button>
                     </Link>
                 </div>
@@ -182,16 +230,26 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 {mainDirectorates.length > 0 && (
                     <div className="space-y-1">
                         {!isCollapsed && (
-                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">Diretorias</h3>
+                            <button
+                                onClick={() => setIsDiretoriasOpen(!isDiretoriasOpen)}
+                                className="w-full flex items-center justify-between px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] hover:text-white transition-colors group"
+                            >
+                                <span>Diretorias</span>
+                                {isDiretoriasOpen ? (
+                                    <ChevronDown className="h-3.5 w-3.5 text-zinc-500 group-hover:text-white transition-colors" />
+                                ) : (
+                                    <ChevronRight className="h-3.5 w-3.5 text-zinc-500 group-hover:text-white transition-colors" />
+                                )}
+                            </button>
                         )}
-                        {mainDirectorates.map((dir) => {
+                        {(isDiretoriasOpen || isCollapsed) && mainDirectorates.map((dir) => {
                             const isPathActive = pathname?.includes(`/dashboard/diretoria/${dir.id}`)
                             // Verifique se o parametro 'directorate_id' bate com o id da diretoria
                             const isParamActive = searchParams?.get('directorate_id') === dir.id
                             const isActive = isPathActive || isParamActive
 
                             return (
-                                <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
+                                <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`} className="group/item">
                                     <div className="relative">
                                         {isActive && (
                                             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-blue-600 rounded-r-full"></div>
@@ -199,19 +257,28 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full min-h-[2.75rem] h-auto py-2.5 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                                "w-full min-h-[2.75rem] h-auto py-2.5 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5 relative",
                                                 isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                                 isActive
                                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
                                                     : "text-white hover:text-cyan-400 hover:bg-white/5"
                                             )}
-                                            title={dir.name}
                                         >
                                             {(() => {
                                                 const Icon = getDirectorateIcon(dir.name)
                                                 return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                             })()}
                                             {!isCollapsed && <span className="whitespace-normal text-left leading-tight">{dir.name}</span>}
+
+                                            {/* CUSTOM TOOLTIP FOR COLLAPSED STATE */}
+                                            {isCollapsed && (
+                                                <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
+                                                    <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
+                                                        {dir.name}
+                                                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </Button>
                                     </div>
                                 </Link>
@@ -223,15 +290,25 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                 {monitoringDirectorates.length > 0 && (
                     <div className="space-y-1">
                         {!isCollapsed && (
-                            <h3 className="px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mt-2">Monitoramentos</h3>
+                            <button
+                                onClick={() => setIsMonitoramentosOpen(!isMonitoramentosOpen)}
+                                className="w-full flex items-center justify-between px-3 mb-3 text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mt-2 hover:text-white transition-colors group"
+                            >
+                                <span>Monitoramentos</span>
+                                {isMonitoramentosOpen ? (
+                                    <ChevronDown className="h-3.5 w-3.5 text-zinc-500 group-hover:text-white transition-colors" />
+                                ) : (
+                                    <ChevronRight className="h-3.5 w-3.5 text-zinc-500 group-hover:text-white transition-colors" />
+                                )}
+                            </button>
                         )}
-                        {monitoringDirectorates.map((dir) => {
+                        {(isMonitoramentosOpen || isCollapsed) && monitoringDirectorates.map((dir) => {
                             const isPathActive = pathname?.includes(`/dashboard/diretoria/${dir.id}`)
                             const isParamActive = searchParams?.get('directorate_id') === dir.id
                             const isActive = isPathActive || isParamActive
 
                             return (
-                                <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`}>
+                                <Link key={dir.id} href={`/dashboard/diretoria/${dir.id}`} className="group/item">
                                     <div className="relative">
                                         {isActive && (
                                             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-blue-600 rounded-r-full"></div>
@@ -239,19 +316,28 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full min-h-[2.75rem] h-auto py-2.5 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5",
+                                                "w-full min-h-[2.75rem] h-auto py-2.5 text-[13px] font-semibold transition-all duration-200 rounded-lg mb-0.5 relative",
                                                 isCollapsed ? "justify-center px-0" : "justify-start px-3",
                                                 isActive
                                                     ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
                                                     : "text-white hover:text-cyan-400 hover:bg-white/5"
                                             )}
-                                            title={dir.name}
                                         >
                                             {(() => {
                                                 const Icon = getDirectorateIcon(dir.name)
                                                 return <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", isActive ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
                                             })()}
                                             {!isCollapsed && <span className="whitespace-normal text-left leading-tight">{dir.name}</span>}
+
+                                            {/* CUSTOM TOOLTIP FOR COLLAPSED STATE */}
+                                            {isCollapsed && (
+                                                <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
+                                                    <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
+                                                        {dir.name}
+                                                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </Button>
                                     </div>
                                 </Link>

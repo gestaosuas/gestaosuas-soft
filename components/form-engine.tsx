@@ -75,39 +75,39 @@ export function FormEngine({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-12">
+        <form onSubmit={handleSubmit} className="space-y-8">
             {definition.sections.map((section, idx) => (
-                <div key={idx} className="space-y-8">
+                <div key={idx} className="space-y-5">
                     <div className="flex items-center gap-3">
-                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                        <h3 className="text-[11px] font-extrabold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">
+                        <div className="h-[2px] w-4 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
+                        <h3 className="text-[10px] font-black text-blue-900/40 dark:text-blue-400/40 uppercase tracking-[0.2em]">
                             {section.title}
                         </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-4">
                         {section.fields.map((field) => (
-                            <div key={field.id} className="flex flex-col space-y-2.5">
-                                <div className="min-h-[40px] flex items-end">
+                            <div key={field.id} className="flex flex-col space-y-1">
+                                <div className="min-h-[22px] flex items-end">
                                     <Label
                                         htmlFor={field.id}
-                                        className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-0.5"
+                                        className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-0.5 leading-none"
                                     >
                                         {field.label}
                                         {field.tooltip && (
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Info className="h-3.5 w-3.5 text-green-600 dark:text-green-500 cursor-help hover:text-green-700 dark:hover:text-green-400 transition-colors inline-block ml-1.5 align-middle mb-0.5" />
+                                                        <Info className="h-3 w-3 text-green-600 dark:text-green-500 cursor-help hover:text-green-700 dark:hover:text-green-400 transition-colors inline-block ml-1 align-middle" />
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        <p className="max-w-[200px] text-xs font-medium">{field.tooltip}</p>
+                                                        <p className="max-w-[200px] text-[10px] font-medium">{field.tooltip}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
                                         )}
                                         {field.badgeNode && (
-                                            <span className="ml-2 mb-0.5 inline-block align-middle">
+                                            <span className="ml-1 inline-block align-middle">
                                                 {field.badgeNode}
                                             </span>
                                         )}
@@ -131,14 +131,14 @@ export function FormEngine({
                                         <label
                                             htmlFor={field.id}
                                             className={cn(
-                                                "flex items-center justify-center w-full h-11 px-4 bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all",
+                                                "flex items-center justify-center w-full h-9 px-3 bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all",
                                                 (disabled || field.disabled) && "opacity-50 cursor-not-allowed"
                                             )}
                                         >
-                                            <span className="text-xs font-semibold text-zinc-500 truncate max-w-[200px]">
+                                            <span className="text-[11px] font-medium text-zinc-500 truncate max-w-[200px]">
                                                 {formData[field.id] instanceof File
                                                     ? (formData[field.id] as File).name
-                                                    : "Selecionar Arquivo PDF"}
+                                                    : "Selecionar PDF"}
                                             </span>
                                         </label>
                                     </div>
@@ -151,7 +151,7 @@ export function FormEngine({
                                         disabled={disabled || field.disabled}
                                         required={field.required}
                                         value={formData[field.id] || ''}
-                                        className="h-11 bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-medium"
+                                        className="h-9 bg-zinc-50/20 dark:bg-zinc-950/20 border-zinc-200/60 dark:border-zinc-800 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 transition-all font-semibold text-[13px]"
                                     />
                                 )}
                             </div>
@@ -160,13 +160,13 @@ export function FormEngine({
                 </div>
             ))}
 
-            <div className="flex justify-end pt-10 border-t border-zinc-100 dark:border-zinc-800/60">
+            <div className="flex justify-end pt-6 border-t border-zinc-100 dark:border-zinc-800/60">
                 <Button
                     type="submit"
                     disabled={disabled}
-                    className="h-12 px-12 bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-900/10 dark:shadow-none uppercase tracking-widest text-[11px]"
+                    className="h-11 px-10 bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-blue-900/10 dark:shadow-none uppercase tracking-widest text-[11px]"
                 >
-                    {disabled ? 'Processando...' : 'Confirmar e Enviar'}
+                    {disabled ? 'Enviando...' : 'Finalizar Preenchimento'}
                 </Button>
             </div>
         </form>

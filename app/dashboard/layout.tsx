@@ -4,6 +4,8 @@ import { getCachedProfile, getCachedDirectorates, getSystemSettings } from "@/ap
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 
+import { ClientIframeStyles } from "@/components/client-iframe-styles"
+
 export default async function DashboardLayout({
     children,
 }: {
@@ -47,7 +49,8 @@ export default async function DashboardLayout({
                 systemName={settings?.system_name}
             />
             <main className="flex-1 overflow-y-auto relative z-10 print:overflow-visible print:h-auto">
-                <div className="h-full p-6 md:p-8 lg:p-10 w-full mx-auto animate-in fade-in slide-in-from-bottom-2 duration-700 print:h-auto print:p-0 print:animate-none">
+                <ClientIframeStyles />
+                <div className="h-full p-6 md:p-8 lg:p-10 w-full mx-auto animate-in fade-in slide-in-from-bottom-2 duration-700 print:h-auto print:p-0 print:animate-none iframe-container">
                     {children}
                 </div>
             </main>

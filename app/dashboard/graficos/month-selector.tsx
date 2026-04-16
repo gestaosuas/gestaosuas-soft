@@ -9,12 +9,15 @@ import {
 } from "@/components/ui/select"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export function MonthSelector({ currentMonth }: { currentMonth: number | string }) {
+export function MonthSelector({ currentMonth, onChange }: { currentMonth: number | string, onChange?: (month: string) => void }) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
-    const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value
+    const handleMonthChange = (value: string) => {
+        if (onChange) {
+            onChange(value)
+            return
+        }
         const params = new URLSearchParams(searchParams.toString())
         params.set('month', value)
         router.push(`?${params.toString()}`)
@@ -26,21 +29,21 @@ export function MonthSelector({ currentMonth }: { currentMonth: number | string 
     ]
 
     return (
-        <div className="relative z-[110]">
+        <div className="relative group/select">
             <select
                 value={currentMonth}
-                onChange={handleMonthChange}
-                className="h-10 w-[180px] appearance-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus:ring-zinc-300 cursor-pointer font-medium text-zinc-900 dark:text-zinc-100"
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="h-9 min-w-[140px] appearance-none rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pl-8 py-1.5 text-xs font-bold ring-offset-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer font-medium text-blue-900 dark:text-blue-100 shadow-sm"
             >
-                <option value="all">Todos os Meses</option>
+                <option value="all">Ano Inteiro</option>
                 {months.map((month, index) => (
                     <option key={index} value={index + 1}>
                         {month}
                     </option>
                 ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-500">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
         </div>
     )

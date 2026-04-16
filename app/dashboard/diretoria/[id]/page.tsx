@@ -10,10 +10,15 @@ import { CEAI_UNITS } from "@/app/dashboard/ceai-config"
 import { createClient } from "@/utils/supabase/server"
 import { NAICA_UNITS } from "@/app/dashboard/naica-config"
 import { cn } from "@/lib/utils"
-import { CEAIOficinasModals } from "./ceai-oficinas-modals"
+import { CEAIOficinasModals } from "@/components/ceai-oficinas-modals"
 import { createAdminClient } from "@/utils/supabase/admin"
 import { SubvencaoDashboardCharts } from "@/components/subvencao-dashboard-charts"
-import { SubvencaoIndicatorCards } from "@/components/subvencao-indicator-cards"
+import { BeneficiosDashboard } from "@/components/beneficios-dashboard"
+import { CrasPageClient } from "@/components/cras-page-client"
+import { BeneficiosPageClient } from "@/components/beneficios-page-client"
+import { SineCpPageClient } from "@/components/sine-cp-page-client"
+import { CeaiPageClient } from "@/components/ceai-page-client"
+import { DirectorateQuickActions } from "@/components/directorate-quick-actions"
 
 export default async function DirectoratePage({
     params,
@@ -130,14 +135,13 @@ export default async function DirectoratePage({
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-1000">
-            <header className="space-y-1">
-                <h1 className="text-3xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
-                    {directorate.name}
-                </h1>
-                <p className="text-[13px] text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl leading-tight">
-                    Painel de Monitoramento e Indicadores. Gerencie as operações e visualize a performance institucional desta unidade.
-                </p>
-            </header>
+            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && (
+                <header className="space-y-1">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
+                        {directorate.name}
+                    </h1>
+                </header>
+            )}
 
             {/* Gestão Diária - Oculto temporariamente até implementação completa */}
             {false && canSeeDailyReport && !isMonitoramento && (
@@ -189,230 +193,33 @@ export default async function DirectoratePage({
             )}
 
             {(isSINE || isCP) ? (
-                <div className="space-y-6">
-                    {/* SINE */}
-                    {isSINE && canSeeSINE && (
-                        <section className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                                <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">SINE • Operações</h2>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                {[
-                                    { label: "Atualizar Dados", href: `/dashboard/relatorios/novo?setor=sine&directorate_id=${directorate.id}`, icon: FilePlus },
-                                    { label: "Ver Dados", href: `/dashboard/dados?setor=sine&directorate_id=${directorate.id}`, icon: Database },
-                                    { label: "Dashboard", href: `/dashboard/graficos?setor=sine&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                    { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=sine&directorate_id=${directorate.id}`, icon: FileText },
-                                    { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=sine&directorate_id=${directorate.id}`, icon: FolderOpen },
-                                ].map((item, idx) => {
-                                    const theme = getCardTheme(item.label);
-                                    const isDisabled = false;
-
-                                    if (isDisabled) {
-                                        return (
-                                            <div key={idx} className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                                <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                                    <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                                        <item.icon className="w-4 h-4 text-zinc-400" />
-                                                    </div>
-                                                    <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">{item.label}</CardTitle>
-                                                </Card>
-                                            </div>
-                                        )
-                                    }
-
-                                    return (
-                                        <Link key={idx} href={item.href} className="group">
-                                            <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                                <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                                    <item.icon className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                                </div>
-                                                {item.label === "Atualizar Dados" && latestMonthSINE_CP && (
-                                                    <div className="mb-2 flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                        <CheckCircle2 className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
-                                                        <span className="text-[8px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Vigência: {latestMonthSINE_CP}</span>
-                                                    </div>
-                                                )}
-                                                <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                            </Card>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* CP */}
-                    {isCP && canSeeCP && (
-                        <section className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                                <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Qualificação Profissional</h2>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                {[
-                                    { label: "Atualizar Dados", href: `/dashboard/relatorios/novo?setor=centros&directorate_id=${directorate.id}`, icon: FilePlus },
-                                    { label: "Ver Dados", href: `/dashboard/dados?setor=centros&directorate_id=${directorate.id}`, icon: Database },
-                                    { label: "Dashboard", href: `/dashboard/graficos?setor=centros&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                    { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=centros&directorate_id=${directorate.id}`, icon: FileText },
-                                    { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=centros&directorate_id=${directorate.id}`, icon: FolderOpen },
-                                ].map((item, idx) => {
-                                    const theme = getCardTheme(item.label);
-                                    
-                                    return (
-                                        <Link key={idx} href={item.href} className="group">
-                                            <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                                <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                                    <item.icon className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                                </div>
-                                                {item.label === "Atualizar Dados" && latestMonthSINE_CP && (
-                                                    <div className="mb-2 flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                        <CheckCircle2 className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
-                                                        <span className="text-[8px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Vigência: {latestMonthSINE_CP}</span>
-                                                    </div>
-                                                )}
-                                                <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                            </Card>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        </section>
-                    )}
-                </div>
+                <SineCpPageClient 
+                    directorate={directorate}
+                    submissions={submissions}
+                    currentYear={currentYear}
+                    latestMonthSINE_CP={latestMonthSINE_CP}
+                />
             ) : isBeneficios ? (
-                <section className="space-y-6">
-                    <div className="flex items-center gap-3">
-                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Benefícios Sociais</h2>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                        {[
-                            { label: "Atualizar Dados", href: `/dashboard/relatorios/novo?setor=beneficios&directorate_id=${directorate.id}`, icon: FilePlus },
-                            { label: "Ver Dados", href: `/dashboard/dados?setor=beneficios&directorate_id=${directorate.id}`, icon: Database },
-                            { label: "Dashboard", href: `/dashboard/graficos?setor=beneficios&directorate_id=${directorate.id}`, icon: BarChart3 },
-                            { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=beneficios&directorate_id=${directorate.id}`, icon: FileText },
-                            { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=beneficios&directorate_id=${directorate.id}`, icon: FolderOpen },
-                        ].map((item, idx) => {
-                            const theme = getCardTheme(item.label);
-                            const isDisabled = false;
-
-                            if (isDisabled) {
-                                return (
-                                    <div key={idx} className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                        <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                            <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                                <item.icon className="w-4 h-4 text-zinc-400" />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">{item.label}</CardTitle>
-                                        </Card>
-                                    </div>
-                                )
-                            }
-
-                            return (
-                                <Link key={idx} href={item.href} className="group">
-                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                        <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                            <item.icon className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                        </div>
-                                        {item.label === "Atualizar Dados" && latestMonthSINE_CP && (
-                                            <div className="mb-2 flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                <CheckCircle2 className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
-                                                <span className="text-[8px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Vigência: {latestMonthSINE_CP}</span>
-                                            </div>
-                                        )}
-                                        <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                    </Card>
-                                </Link>
-                            )
-                        })}
-                    </div>
-                </section>
+                <BeneficiosPageClient 
+                    directorate={directorate}
+                    submissions={submissions}
+                    currentYear={currentYear}
+                />
             ) : isCRAS ? (
-                <div className="space-y-6">
-                    {/* Top Cards for CRAS */}
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Consolidado CRAS</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {[
-                                { label: "Ver Dados", href: `/dashboard/dados?setor=cras&directorate_id=${directorate.id}`, icon: Database },
-                                { label: "Dashboard", href: `/dashboard/graficos?setor=cras&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=cras&directorate_id=${directorate.id}`, icon: FileText },
-                                { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=cras&directorate_id=${directorate.id}`, icon: FolderOpen },
-                            ].map((item, idx) => {
-                                const theme = getCardTheme(item.label);
-                                const isDisabled = false;
-
-                                if (isDisabled) {
-                                    return (
-                                        <div key={idx} className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                            <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                                <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                                    <item.icon className="w-4 h-4 text-zinc-400" />
-                                                </div>
-                                                <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">{item.label}</CardTitle>
-                                            </Card>
-                                        </div>
-                                    )
-                                }
-
-                                return (
-                                    <Link key={idx} href={item.href} className="group">
-                                        <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                            <div className={`p-2.5 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                <item.icon className={`w-5 h-5 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                        </Card>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </section>
-
-                    {/* Unit Cards */}
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-green-600 dark:bg-green-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Unidades Territoriais</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {filteredCRAS.map((unit, idx) => {
-                                // Find latest month for THIS unit
-                                const unitLatestSub = submissions?.find(s => {
-                                    if (s.data._is_multi_unit && s.data.units) {
-                                        return !!s.data.units[unit]
-                                    }
-                                    return s.data._unit === unit
-                                })
-                                const latestUnitMonth = unitLatestSub ? getMonthName(unitLatestSub.month) : null
-                                const theme = getCardTheme("Atualizar");
-
-                                return (
-                                    <Link key={idx} href={`/dashboard/relatorios/novo?setor=cras&directorate_id=${directorate.id}&unit=${encodeURIComponent(unit)}`} className="group">
-                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                            <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                                <FilePlus className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 mb-0.5 relative z-10">{unit}</CardTitle>
-                                            <div className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 relative z-10">Atualizar</div>
-                                            {latestUnitMonth && (
-                                                <div className="flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                    <CheckCircle2 className="w-2 h-2 text-green-600 dark:text-green-400" />
-                                                    <span className="text-[7.5px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês: {latestUnitMonth}</span>
-                                                </div>
-                                            )}
-                                        </Card>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </section>
-                </div>
+                <CrasPageClient 
+                    directorate={directorate}
+                    submissions={submissions}
+                    currentYear={currentYear}
+                    allowedUnits={allowedUnits}
+                />
+            ) : isCEAI ? (
+                <CeaiPageClient 
+                    directorate={directorate}
+                    submissions={submissions}
+                    currentYear={currentYear}
+                    allowedUnits={allowedUnits}
+                    filteredCEAI={filteredCEAI}
+                />
             ) : isCREAS ? (
                 <section className="space-y-6">
                     <div className="flex items-center gap-3">
@@ -554,147 +361,6 @@ export default async function DirectoratePage({
                         </div>
                     )}
                 </section>
-            ) : isCEAI ? (
-                <div className="space-y-6">
-                    {/* Top Cards for CEAI */}
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Consolidado CEAI</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {[
-                                { label: "Ver Dados", href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}`, icon: Database },
-                                { label: "Dashboard", href: `/dashboard/graficos?setor=ceai&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=ceai&directorate_id=${directorate.id}`, icon: FileText },
-                                { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=ceai&directorate_id=${directorate.id}`, icon: FolderOpen },
-                            ].map((item, idx) => {
-                                const theme = getCardTheme(item.label);
-                                const isDisabled = false;
-
-                                if (isDisabled) {
-                                    return (
-                                        <div key={idx} className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                            <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                                <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                                    <item.icon className="w-4 h-4 text-zinc-400" />
-                                                </div>
-                                                <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">{item.label}</CardTitle>
-                                            </Card>
-                                        </div>
-                                    )
-                                }
-
-                                return (
-                                    <Link key={idx} href={item.href} className="group">
-                                        <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                            <div className={`p-2.5 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                <item.icon className={`w-5 h-5 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                            </div>
-                                            {item.label === "Atualizar Dados" && latestMonthSINE_CP && (
-                                                <div className="mb-2 flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                    <CheckCircle2 className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
-                                                    <span className="text-[8px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Vigência: {latestMonthSINE_CP}</span>
-                                                </div>
-                                            )}
-                                            <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                        </Card>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </section>
-
-                    {/* Condomínio do Idoso Section */}
-                    {(!allowedUnits) && (
-                        <section className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-1 w-6 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
-                                <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Condomínio do Idoso</h2>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                {[
-                                    {
-                                        label: "Atualizar Dados",
-                                        href: `/dashboard/relatorios/novo?setor=ceai&directorate_id=${directorate.id}&subcategory=condominio`,
-                                        icon: FilePlus
-                                    },
-                                    {
-                                        label: "Ver Dados",
-                                        href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}&subcategory=condominio`,
-                                        icon: Database
-                                    }
-                                ].map((item, idx) => {
-                                    const theme = getCardTheme(item.label);
-
-                                    return (
-                                        <Link key={idx} href={item.href} className="group">
-                                            <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                                <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                                    <item.icon className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                                </div>
-                                                {item.label === "Atualizar Dados" && latestMonthSINE_CP && (
-                                                    <div className="mb-2 flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                        <CheckCircle2 className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
-                                                        <span className="text-[8px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Vigência: {latestMonthSINE_CP}</span>
-                                                    </div>
-                                                )}
-                                                <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                            </Card>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Unit Cards */}
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-green-600 dark:bg-green-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Unidades Territoriais</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {filteredCEAI.map((unit, idx) => {
-                                // Find latest month for THIS unit
-                                const unitLatestSub = submissions?.find(s => {
-                                    if (s.data._is_multi_unit && s.data.units) {
-                                        return !!s.data.units[unit]
-                                    }
-                                    return s.data._unit === unit
-                                })
-                                const latestUnitMonth = unitLatestSub ? getMonthName(unitLatestSub.month) : null
-                                const theme = getCardTheme("Atualizar");
-
-                                return (
-                                    <Card key={idx} className="flex flex-col h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-blue-600 dark:hover:border-blue-400 transition-all duration-300 rounded-xl group-hover:shadow-lg relative overflow-hidden">
-                                        <CardHeader className="p-2.5 pb-1.5 text-center flex flex-col items-center">
-                                            <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                <FilePlus className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 mb-1 truncate w-full" title={unit}>{unit}</CardTitle>
-                                            {latestUnitMonth && (
-                                                <div className="flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                    <CheckCircle2 className="w-2 h-2 text-green-600 dark:text-green-400" />
-                                                    <span className="text-[7.5px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês: {latestUnitMonth}</span>
-                                                </div>
-                                            )}
-                                        </CardHeader>
-                                        <div className="p-2 pt-1 flex flex-col gap-1 mt-auto relative z-10">
-                                            <Link href={`/dashboard/relatorios/novo?setor=ceai&directorate_id=${directorate.id}&unit=${encodeURIComponent(unit)}`} className="w-full">
-                                                <div className="flex items-center justify-center w-full px-2 py-1 text-[9px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-md font-bold text-zinc-600 dark:text-zinc-400 transition-colors uppercase tracking-wider">
-                                                    <FilePlus className="w-3 h-3 mr-1 opacity-60" />
-                                                    Atualizar
-                                                </div>
-                                            </Link>
-                                            <CEAIOficinasModals unit={unit} directorateId={directorate.id} />
-                                        </div>
-                                    </Card>
-                                )
-                            })}
-                        </div>
-                    </section>
-                </div>
             ) : isOutros ? (
                 <section className="space-y-6">
                     <div className="flex items-center gap-3">
