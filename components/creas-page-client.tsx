@@ -43,7 +43,7 @@ export function CreasPageClient({
             />
             <MonthSelector 
                 currentMonth={selectedMonth} 
-                onMonthChange={setSelectedMonth}
+                onChange={setSelectedMonth}
             />
         </div>
     )

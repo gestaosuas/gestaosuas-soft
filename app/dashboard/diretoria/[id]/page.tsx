@@ -151,7 +151,7 @@ export default async function DirectoratePage({
 
     return (
         <div className="space-y-6">
-            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && !isMonitoramento && (
+            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && !isCREAS && !isMonitoramento && (
                 <header className="space-y-1">
                     <h1 className="text-3xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
                         {directorate.name}

@@ -57,7 +57,16 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
     const kpiData = [
         {
             label: `VIOLÊNCIAS MASC. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('violencia_fisica_m', 'idoso') +
+                getAllVal('negligencia_m', 'idoso') +
+                getAllVal('abuso_sexual_m', 'idoso') +
+                getAllVal('exploracao_financeira_m', 'idoso') +
+                getAllVal('def_violencia_fisica_m', 'deficiente') +
+                getAllVal('def_negligencia_m', 'deficiente') +
+                getAllVal('def_abuso_sexual_m', 'deficiente') +
+                getAllVal('def_exploracao_financeira_m', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'violencia_fisica_m', 'idoso') +
                 getVal(selectedMonthNum, 'negligencia_m', 'idoso') +
                 getVal(selectedMonthNum, 'abuso_sexual_m', 'idoso') +
@@ -71,7 +80,16 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `VIOLÊNCIAS FEM. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('violencia_fisica_f', 'idoso') +
+                getAllVal('negligencia_f', 'idoso') +
+                getAllVal('abuso_sexual_f', 'idoso') +
+                getAllVal('exploracao_financeira_f', 'idoso') +
+                getAllVal('def_violencia_fisica_f', 'deficiente') +
+                getAllVal('def_negligencia_f', 'deficiente') +
+                getAllVal('def_abuso_sexual_f', 'deficiente') +
+                getAllVal('def_exploracao_financeira_f', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'violencia_fisica_f', 'idoso') +
                 getVal(selectedMonthNum, 'negligencia_f', 'idoso') +
                 getVal(selectedMonthNum, 'abuso_sexual_f', 'idoso') +
@@ -85,7 +103,12 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `VIOLÊNCIA PCD MASC. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('def_violencia_fisica_m', 'deficiente') +
+                getAllVal('def_negligencia_m', 'deficiente') +
+                getAllVal('def_abuso_sexual_m', 'deficiente') +
+                getAllVal('def_exploracao_financeira_m', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'def_violencia_fisica_m', 'deficiente') +
                 getVal(selectedMonthNum, 'def_negligencia_m', 'deficiente') +
                 getVal(selectedMonthNum, 'def_abuso_sexual_m', 'deficiente') +
@@ -95,7 +118,12 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `VIOLÊNCIA PCD FEM. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('def_violencia_fisica_f', 'deficiente') +
+                getAllVal('def_negligencia_f', 'deficiente') +
+                getAllVal('def_abuso_sexual_f', 'deficiente') +
+                getAllVal('def_exploracao_financeira_f', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'def_violencia_fisica_f', 'deficiente') +
                 getVal(selectedMonthNum, 'def_negligencia_f', 'deficiente') +
                 getVal(selectedMonthNum, 'def_abuso_sexual_f', 'deficiente') +
@@ -105,7 +133,9 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `FAMÍLIAS ACOMP. ${monthLabel}`,
-            value: isAllYear ? 0 : getVal(selectedMonthNum, 'fa_atual', 'idoso'),
+            value: isAllYear ? (
+                submissions.length > 0 ? getVal(Math.max(...submissions.map(s => s.month)), 'fa_atual', 'idoso') : 0
+            ) : getVal(selectedMonthNum, 'fa_atual', 'idoso'),
             color: "#0ea5e9"
         }
     ]
