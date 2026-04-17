@@ -16,7 +16,8 @@ import {
     Search, 
     Filter, 
     FilterX, 
-    X 
+    X,
+    ArrowLeft
 } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -198,8 +199,20 @@ export function VisitList({
     }
 
     return (
-        <Card className="border-none shadow-2xl shadow-blue-900/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2rem] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            <CardHeader className="p-8 pb-4">
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <Button 
+                    variant="ghost" 
+                    onClick={() => router.push(`/dashboard/diretoria/${directorateId}`)}
+                    className="gap-2 text-zinc-500 hover:text-blue-600 transition-colors font-bold text-xs uppercase"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar para Diretoria
+                </Button>
+            </div>
+
+            <Card className="border-none shadow-2xl shadow-blue-900/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2rem] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+                <CardHeader className="p-8 pb-4">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400 rounded-2xl">
@@ -620,6 +633,7 @@ export function VisitList({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Card>
+            </Card>
+        </div>
     )
 }

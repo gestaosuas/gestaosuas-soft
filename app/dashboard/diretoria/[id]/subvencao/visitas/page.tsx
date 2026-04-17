@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button"
 import { getCachedProfile, getCachedDirectorate, getCachedDirectorates } from "@/app/dashboard/cached-data"
 import { VisitList } from "./visit-list"
 import { getVisits } from "@/app/dashboard/actions"
-import { Plus, ArrowLeft, FileText } from "lucide-react"
-import Link from "next/link"
+import { Plus, FileText } from "lucide-react"
+import { ClientNavigateButton } from "./client-navigate-button"
+import { ReturnLink } from "../return-link"
 import { isAdmin as checkAdmin } from "@/lib/auth-utils"
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
@@ -51,13 +52,6 @@ export default async function VisitasPage({
         <div className="container mx-auto py-8 space-y-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-4">
-                    <Link
-                        href={`/dashboard/diretoria/${id}`}
-                        className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors w-fit"
-                    >
-                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                        Voltar para Diretoria
-                    </Link>
                     <div className="flex items-center gap-5">
                         <div className="p-4 bg-blue-900 text-white rounded-[1.5rem] shadow-xl shadow-blue-900/20">
                             <FileText className="h-8 w-8" />
@@ -71,16 +65,10 @@ export default async function VisitasPage({
                             </p>
                         </div>
                     </div>
+                    <ReturnLink href={`/dashboard/diretoria/${id}`} />
                 </div>
 
-                <Link href={`/dashboard/diretoria/${id}/subvencao/visitas/novo`}>
-                    <Button
-                        className="h-14 px-8 rounded-2xl bg-blue-900 dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-500 font-bold uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-900/20 transition-all active:scale-[0.98] group"
-                    >
-                        <Plus className="h-5 w-5 mr-3 transition-transform group-hover:rotate-90" />
-                        Nova Visita
-                    </Button>
-                </Link>
+                <ClientNavigateButton href={`/dashboard/diretoria/${id}/subvencao/visitas/novo`} label="Nova Visita" />
             </div>
 
             <div className="relative">

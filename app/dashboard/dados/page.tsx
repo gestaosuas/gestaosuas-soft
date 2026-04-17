@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { getCachedSubmissionsForUser, getCachedProfile, getCachedDirectorates } from "@/app/dashboard/cached-data"
-import { getOficinasComCategorias } from "@/app/dashboard/diretoria/[id]/ceai-actions"
+import { getOficinasComCategorias } from "@/components/ceai-actions"
 import { redirect } from "next/navigation"
 // Trigger deploy
 import Link from "next/link"
@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { ArrowLeft, Table as TableIcon } from "lucide-react"
 import { cn, getCategoryBadgeColor } from "@/lib/utils"
 import { CEAIFilters } from "@/components/ceai-filters"
+import { CRASFilters } from "@/components/cras-data-filters"
 import {
     Table,
     TableBody,
@@ -332,7 +333,11 @@ export default async function DataPage({
                 ? getFilteredUnits(NAICA_UNITS)
                 : ['Principal']
 
-    // Filter by unit if requested (Admin only for CEAI)
+    // Filter by unit if requested (CRAS and CEAI Admin)
+    if (isCRAS && unit_filter && unit_filter !== 'todos') {
+        unitsToRender = unitsToRender.filter(u => u === unit_filter)
+    }
+
     if (isCEAI && isAdmin && unit_filter && unit_filter !== 'todos') {
         unitsToRender = unitsToRender.filter(u => u === unit_filter)
     }
@@ -395,6 +400,11 @@ export default async function DataPage({
                             isAdmin={isAdmin}
                             availableUnits={getFilteredUnits(CEAI_UNITS)}
                             availableCategories={Array.from(allCategories).sort()}
+                        />
+                    )}
+                    {isCRAS && (
+                        <CRASFilters 
+                            availableUnits={getFilteredUnits(CRAS_UNITS)}
                         />
                     )}
                     <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800 hidden md:block"></div>

@@ -2,10 +2,12 @@ import { getCachedDirectorate, getCachedProfile } from "@/app/dashboard/cached-d
 import { notFound, redirect } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { createClient } from "@/utils/supabase/server"
 import { createAdminClient } from "@/utils/supabase/admin"
 import { getVisits } from "@/app/dashboard/actions"
 import { FinalReportList } from "./final-report-list"
+import { ReturnLink } from "../return-link"
 
 export default async function FinalReportsPage({
     params,
@@ -43,14 +45,6 @@ export default async function FinalReportsPage({
 
     return (
         <div className="container mx-auto py-12 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-1000">
-            <Link
-                href={`/dashboard/diretoria/${id}`}
-                className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors w-fit"
-            >
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                Voltar para Diretoria
-            </Link>
-
             <header className="space-y-2">
                 <h1 className="text-4xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
                     Relatórios Finais e Pareceres
@@ -58,6 +52,7 @@ export default async function FinalReportsPage({
                 <p className="text-zinc-500 font-medium">
                     Listagem de visitas com monitoramento e relatórios técnicos finalizados.
                 </p>
+                <ReturnLink href={`/dashboard/diretoria/${id}`} />
             </header>
 
             <FinalReportList 

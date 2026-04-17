@@ -3,9 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Building2, Search } from "lucide-react"
+import { Building2, Search } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { ReturnLink } from "../return-link"
 
 interface OSC {
     id: string
@@ -25,6 +27,7 @@ import { WorkPlansManager } from "./work-plans-manager"
 import { AlertCircle, FileCheck } from "lucide-react"
 
 export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, logoUrl }: PlanoTrabalhoClientProps) {
+    const router = useRouter()
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOsc, setSelectedOsc] = useState<OSC | null>(null)
 
@@ -39,11 +42,6 @@ export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
-                    <Link href={`/dashboard/diretoria/${directorateId}`}>
-                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
-                            <ArrowLeft className="h-5 w-5 text-zinc-500" />
-                        </Button>
-                    </Link>
                     <div className="space-y-1">
                         <h1 className="text-3xl font-extrabold tracking-tight text-blue-900 dark:text-blue-50">
                             Plano de Trabalho
@@ -51,6 +49,7 @@ export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, 
                         <p className="text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
                             Selecione uma organização para gerenciar seu plano de trabalho.
                         </p>
+                        <ReturnLink href={`/dashboard/diretoria/${directorateId}`} />
                     </div>
                 </div>
 

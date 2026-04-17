@@ -31,6 +31,14 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
         return () => { document.body.style.overflow = "unset" }
     }, [isOpen])
 
+    // Hide if inside an iframe
+    const [isInsideIframe, setIsInsideIframe] = useState(false)
+    useEffect(() => {
+        setIsInsideIframe(window.self !== window.top)
+    }, [])
+
+    if (isInsideIframe) return null
+
     return (
         <>
             {/* Mobile Header */}

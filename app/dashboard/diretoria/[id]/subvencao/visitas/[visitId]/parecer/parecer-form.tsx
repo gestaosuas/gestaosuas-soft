@@ -12,6 +12,7 @@ import { ArrowLeft, Save, Printer, Loader2, CheckCircle } from "lucide-react"
 import { SignaturePad } from "@/components/signature-pad"
 import { saveOpinionReport, finalizeOpinionReport } from "@/app/dashboard/actions"
 import { cn } from "@/lib/utils"
+import { ReturnLink } from "../../../return-link"
 import {
     Table,
     TableBody,
@@ -260,9 +261,10 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                 "flex items-center justify-between no-print sticky top-4 z-[101] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-lg",
                 isPreview && "max-w-4xl mx-auto mb-8"
             )}>
-                <Button variant="ghost" onClick={() => isPreview ? setIsPreview(false) : router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas`)} className="gap-2 font-bold uppercase text-[10px] text-zinc-500 hover:text-blue-900 transition-colors">
-                    <ArrowLeft className="h-4 w-4" /> {isPreview ? "Voltar para Edição" : "Voltar"}
-                </Button>
+                <ReturnLink 
+                    href={`/dashboard/diretoria/${directorateId}/subvencao/visitas`} 
+                    label="Voltar para Listagem" 
+                />
                 <div className="flex gap-3 items-center">
                     {!isPreview ? (
                         <>

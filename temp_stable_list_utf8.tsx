@@ -1,0 +1,471 @@
+﻿'use client'
+
+import { useState } from "react"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { delegateVisit, saveNotificacoes } from "@/app/dashboard/actions"
+import { cn } from "@/lib/utils"
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
+export function FinalReportList({
+    visits,
+    directorateId,
+    isAdmin,
+    role,
+    availableUsers
+}: {
+    visits: any[],
+    directorateId: string,
+    isAdmin: boolean,
+    role?: string,
+    availableUsers: { id: string, full_name: string }[]
+}) {
+    const router = useRouter()
+    const [delegatingVisit, setDelegatingVisit] = useState<any | null>(null)
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+    const [isDelegating, setIsDelegating] = useState(false)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [previewTitle, setPreviewTitle] = useState<string>("")
+    const [uploadingVisitId, setUploadingVisitId] = useState<string | null>(null)
+
+    const toggleUser = (userId: string) => {
+        setSelectedUserIds(prev => 
+            prev.includes(userId) 
+                ? prev.filter(id => id !== userId)
+                : [...prev, userId]
+        )
+    }
+
+    const [oscSearch, setOscSearch] = useState("")
+
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    const initialBimester = Math.ceil(currentMonth / 2).toString()
+
+    const getBimesterRange = (bim: string, yr: number) => {
+        const bInt = parseInt(bim)
+        const startM = (bInt - 1) * 2
+        const endM = bInt * 2 - 1
+        return {
+            start: new Date(yr, startM, 1),
+            end: new Date(yr, endM + 1, 0, 23, 59, 59)
+        }
+    }
+
+    const initialRange = getBimesterRange(initialBimester, currentYear)
+    const [dateStart, setDateStart] = useState<string>(initialRange.start.toISOString().split('T')[0])
+    const [dateEnd, setDateEnd] = useState<string>(initialRange.end.toISOString().split('T')[0])
+    const [bimestre, setBimestre] = useState(initialBimester)
+
+    const handleBimesterChange = (value: string) => {
+        setBimestre(value)
+        if (value === "all") {
+            setDateStart("")
+            setDateEnd("")
+            return
+        }
+        const range = getBimesterRange(value, currentYear)
+        setDateStart(range.start.toISOString().split('T')[0])
+        setDateEnd(range.end.toISOString().split('T')[0])
+    }
+
+    const handleCurrentYear = () => {
+        setBimestre("all")
+        setDateStart(`${currentYear}-01-01`)
+        setDateEnd(`${currentYear}-12-31`)
+    }
+
+    const clearFilters = () => {
+        setOscSearch("")
+        setBimestre("all")
+        setDateStart("")
+        setDateEnd("")
+    }
+    
+    const filteredVisits = visits.filter(visit => {
+        const matchesOsc = !oscSearch || visit.oscs?.name?.toLowerCase().includes(oscSearch.toLowerCase())
+        
+        const visitDateStr = visit.visit_date?.split('T')[0]
+        const matchesStart = !dateStart || (visitDateStr && visitDateStr >= dateStart)
+        const matchesEnd = !dateEnd || (visitDateStr && visitDateStr <= dateEnd)
+        
+        return matchesOsc && matchesStart && matchesEnd
+    })
+
+    const handleNotificacaoUpload = async (visitId: string, currentNotificacoes: any[], e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (file.type !== 'application/pdf') {
+            alert("Por favor, selecione apenas arquivos PDF.")
+            return
+        }
+
+        try {
+            setUploadingVisitId(visitId)
+            const uploadFormData = new FormData()
+            uploadFormData.append('file', file)
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro no upload')
+            }
+
+            const updatedNotificacoes = [...(currentNotificacoes || []), { name: file.name, url: data.url }]
+            await saveNotificacoes(visitId, updatedNotificacoes)
+            
+            router.refresh()
+        } catch (error: any) {
+            console.error("Upload error:", error)
+            alert("Erro ao fazer upload da notifica├º├úo: " + error.message)
+        } finally {
+            setUploadingVisitId(null)
+            if (e.target) e.target.value = ''
+        }
+    }
+
+    const handleRemoveNotificacao = async (visitId: string, currentNotificacoes: any[], index: number) => {
+        if (!confirm("Tem certeza que deseja remover esta notifica├º├úo?")) return
+
+        try {
+            setUploadingVisitId(visitId)
+            const updatedNotificacoes = currentNotificacoes.filter((_, i) => i !== index)
+            await saveNotificacoes(visitId, updatedNotificacoes)
+            router.refresh()
+        } catch (error: any) {
+            console.error("Remove error:", error)
+            alert("Erro ao remover notifica├º├úo: " + error.message)
+        } finally {
+            setUploadingVisitId(null)
+        }
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="no-print bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-3 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center gap-3">
+                <div className="relative min-w-[200px] flex-1">
+                    <Input
+                        placeholder="Filtrar por nome da OSC..."
+                        value={oscSearch}
+                        onChange={(e) => setOscSearch(e.target.value)}
+                        className="pl-9 h-9 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl text-xs"
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                </div>
+
+                <div className="min-w-[140px]">
+                    <Select value={bimestre} onValueChange={handleBimesterChange}>
+                        <SelectTrigger className="h-9 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-bold rounded-xl">
+                            <SelectValue placeholder="Bimestre" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                            <SelectItem value="all" className="text-[11px] font-bold italic">Todos os Bimestres</SelectItem>
+                            <SelectItem value="1" className="text-[11px] font-bold">1┬║ Bimestre (Jan-Fev)</SelectItem>
+                            <SelectItem value="2" className="text-[11px] font-bold">2┬║ Bimestre (Mar-Abr)</SelectItem>
+                            <SelectItem value="3" className="text-[11px] font-bold">3┬║ Bimestre (Mai-Jun)</SelectItem>
+                            <SelectItem value="4" className="text-[11px] font-bold">4┬║ Bimestre (Jul-Ago)</SelectItem>
+                            <SelectItem value="5" className="text-[11px] font-bold">5┬║ Bimestre (Set-Out)</SelectItem>
+                            <SelectItem value="6" className="text-[11px] font-bold">6┬║ Bimestre (Nov-Dez)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <Button 
+                    variant="outline"
+                    onClick={handleCurrentYear}
+                    className={cn(
+                        "h-9 px-3 text-[10px] font-black uppercase rounded-xl transition-all border",
+                        dateStart === `${currentYear}-01-01` && dateEnd === `${currentYear}-12-31` 
+                            ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-600 hover:border-blue-200"
+                    )}
+                >
+                    Ver {currentYear}
+                </Button>
+
+                {(oscSearch || bimestre !== "all" || (dateStart && (dateStart !== initialRange.start.toISOString().split('T')[0]))) && (
+                    <Button 
+                        variant="ghost" 
+                        onClick={clearFilters}
+                        className="h-9 px-4 text-[10px] font-black uppercase text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                    >
+                        <FilterX className="h-3.5 w-3.5 mr-2" />
+                        Limpar
+                    </Button>
+                )}
+            </div>
+
+            <style>{`
+                @media print {
+                    .no-print { display: none !important; }
+                    .grid { display: block !important; }
+                    .Card { 
+                        break-inside: avoid !important; 
+                        margin-bottom: 2rem !important;
+                        border: 1px solid #eee !important;
+                        box-shadow: none !important;
+                    }
+                }
+            `}</style>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredVisits.length > 0 ? (
+                    filteredVisits.map((visit: any) => (
+                    <Card key={visit.id} className="h-full bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none hover:border-green-600 dark:hover:border-green-400 transition-all rounded-[1.5rem] group hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col">
+                        <CardHeader className="p-5 pb-3">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-800 rounded-lg group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors shadow-sm">
+                                    <FileCheck className="w-4 h-4 text-zinc-500 group-hover:text-white" />
+                                </div>
+                                <div className="flex flex-col items-end gap-1.5">
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full text-green-700 dark:text-green-400 uppercase tracking-tight font-black text-[8px]">
+                                        Finalizado
+                                    </div>
+                                    {(isAdmin || role === 'diretor') && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setDelegatingVisit(visit)
+                                                setSelectedUserIds(visit.delegated_to || [])
+                                            }}
+                                            className="h-6 px-1.5 text-[8px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded-lg gap-1"
+                                        >
+                                            <UserCheck className="h-2.5 w-2.5" />
+                                            Delegar
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                            <CardTitle className="text-[13px] font-bold text-blue-900 dark:text-blue-100 transition-colors line-clamp-2 leading-tight" title={visit.oscs?.name}>
+                                {visit.oscs?.name}
+                            </CardTitle>
+                            <div className="flex items-center gap-1.5 mt-2">
+                                <Calendar className="h-3 w-3 text-zinc-400" />
+                                <span className="text-[11px] text-zinc-500 font-medium">{new Date(visit.visit_date).toLocaleDateString('pt-BR')}</span>
+                            </div>
+
+                            {visit.is_delegated && (
+                                <div className="mt-2 flex items-center gap-1.5 text-[8px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded w-fit">
+                                    <UserCheck className="h-2.5 w-2.5" />
+                                    Atribu├¡do a voc├¬
+                                </div>
+                            )}
+                        </CardHeader>
+                        <CardContent className="p-5 pt-1 mt-auto">
+                            <div className="flex flex-col gap-2">
+                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`}>
+                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 shadow-sm">
+                                        <FileCheck className="h-3.5 w-3.5" />
+                                        Relat├│rio Final
+                                    </Button>
+                                </Link>
+
+                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`}>
+                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 shadow-sm">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        Parecer Conclusivo
+                                    </Button>
+                                </Link>
+
+                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`}>
+                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm">
+                                        <FileText className="h-3.5 w-3.5" />
+                                        Instrumental
+                                    </Button>
+                                </Link>
+
+                                <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-1.5">
+                                            <Paperclip className="h-3 w-3" />
+                                            Notifica├º├Áes (PDF)
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                id={`notificacao-${visit.id}`}
+                                                className="hidden"
+                                                accept=".pdf"
+                                                onChange={(e) => handleNotificacaoUpload(visit.id, visit.notificacoes, e)}
+                                                disabled={uploadingVisitId === visit.id}
+                                            />
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2 text-[9px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded-lg gap-1.5"
+                                                onClick={() => document.getElementById(`notificacao-${visit.id}`)?.click()}
+                                                disabled={uploadingVisitId === visit.id}
+                                            >
+                                                {uploadingVisitId === visit.id ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    "Anexar PDF"
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {visit.notificacoes && visit.notificacoes.length > 0 ? (
+                                            visit.notificacoes.map((notif: any, idx: number) => (
+                                                <div key={idx} className="flex items-center justify-between p-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl group/notif">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <FileText className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                                                        <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 truncate pr-2" title={notif.name}>
+                                                            {notif.name}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <Link href={notif.url} target="_blank">
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-white dark:hover:bg-zinc-900 shadow-sm border border-transparent hover:border-zinc-200">
+                                                                <ExternalLink className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </Link>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-7 w-7 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-white dark:hover:bg-zinc-900 shadow-sm border border-transparent hover:border-zinc-200"
+                                                            onClick={() => handleRemoveNotificacao(visit.id, visit.notificacoes, idx)}
+                                                            disabled={uploadingVisitId === visit.id}
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-[10px] text-zinc-400 font-medium italic text-center py-2 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                                                Nenhuma notifica├º├úo anexada.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))
+            ) : (
+                <Card className="col-span-full border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
+                    <CardContent className="p-12 text-center text-zinc-400 font-medium text-sm italic">
+                        Nenhum relat├│rio finalizado encontrado para esta diretoria.
+                    </CardContent>
+                </Card>
+            )}
+            </div>
+
+            {/* Delegation Dialog */}
+            <Dialog open={!!delegatingVisit} onOpenChange={(open) => !open && setDelegatingVisit(null)}>
+                <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 shadow-2xl rounded-[2rem]">
+                    <DialogHeader className="pt-6">
+                        <DialogTitle className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center gap-3">
+                            <UserCheck className="h-6 w-6" />
+                            Delegar Relat├│rio (M├║ltiplos)
+                        </DialogTitle>
+                        <DialogDescription className="text-sm font-medium text-zinc-500 pt-2">
+                            Selecione os t├®cnicos que poder├úo acessar e editar os relat├│rios da <span className="text-blue-900 dark:text-blue-100 font-bold">{delegatingVisit?.oscs?.name}</span>.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-2 space-y-4">
+                        <div className="bg-zinc-50/50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-[11px] font-black uppercase text-zinc-400 tracking-widest">T├®cnicos do Sistema</label>
+                                <Button 
+                                    variant="link" 
+                                    className="h-auto p-0 text-[10px] font-bold text-blue-600"
+                                    onClick={() => setSelectedUserIds([])}
+                                >
+                                    Limpar Sele├º├úo
+                                </Button>
+                            </div>
+                            
+                            <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                                {availableUsers?.length === 0 ? (
+                                    <p className="text-xs text-zinc-400 py-4 text-center">Nenhum t├®cnico encontrado.</p>
+                                ) : (
+                                    availableUsers?.map((u) => (
+                                        <div key={u.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
+                                            <Checkbox 
+                                                id={`user-${u.id}`} 
+                                                checked={selectedUserIds.includes(u.id)}
+                                                onCheckedChange={() => toggleUser(u.id)}
+                                                className="rounded-md border-zinc-300 data-[state=checked]:bg-blue-900"
+                                            />
+                                            <Label 
+                                                htmlFor={`user-${u.id}`}
+                                                className="text-sm font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer flex-1"
+                                            >
+                                                {u.full_name}
+                                            </Label>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-zinc-400 italic pl-1 leading-snug">
+                            Os usu├írios selecionados ter├úo permiss├úo para visualizar e salvar rascunhos em todos os instrumentais e relat├│rios relacionados a esta visita.
+                        </p>
+                    </div>
+
+                    <DialogFooter className="gap-3 sm:gap-2 pb-6">
+                        <Button 
+                            variant="ghost" 
+                            onClick={() => setDelegatingVisit(null)} 
+                            disabled={isDelegating}
+                            className="font-bold text-[11px] uppercase tracking-widest text-zinc-500 hover:text-blue-900 hover:bg-zinc-50"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button 
+                            onClick={async () => {
+                                if (!delegatingVisit) return
+                                setIsDelegating(true)
+                                try {
+                                    await delegateVisit(delegatingVisit.id, selectedUserIds)
+                                    setDelegatingVisit(null)
+                                    router.refresh()
+                                } catch (e: any) {
+                                    alert(e.message || "Erro ao delegar visita")
+                                } finally {
+                                    setIsDelegating(false)
+                                }
+                            }} 
+                            disabled={isDelegating}
+                            className="bg-blue-900 dark:bg-blue-600 text-white font-bold px-8 rounded-2xl text-[11px] uppercase tracking-widest h-12 transition-all shadow-xl shadow-blue-900/10 hover:bg-blue-800 active:scale-95"
+                        >
+                            {isDelegating ? <>{<Loader2 className="h-4 w-4 animate-spin mr-2" />} Processando</> : `Confirmar (${selectedUserIds.length})`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+    )
+}

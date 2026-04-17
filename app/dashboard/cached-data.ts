@@ -159,49 +159,79 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             }
 
             if (!hasAccess) return [] // Return empty if no access
-            // 2. Fetch Submissions (Bypassing RLS)
-            const { data: submissions } = await supabase
-                .from('submissions')
-                .select('*')
-                .eq('directorate_id', directorateId)
-                .order('year', { ascending: false })
-                .order('month', { ascending: false })
 
-            // 3. Fetch Specialized Reports
-            const { data: sineReports } = await supabase.from('sine_reports').select('*').eq('directorate_id', directorateId);
-            const { data: qualifReports } = await supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId);
-            const { data: crasReports } = await supabase.from('cras_reports').select('*').eq('directorate_id', directorateId);
-            const { data: beneficiosReports } = await supabase.from('beneficios_reports').select('*').eq('directorate_id', directorateId);
-            const { data: naicaReports } = await supabase.from('naica_reports').select('*').eq('directorate_id', directorateId);
-            const { data: popRuaReports } = await supabase.from('creas_pop_rua_reports').select('*').eq('directorate_id', directorateId);
-            const { data: creasIdosoReports } = await supabase.from('creas_idoso_reports').select('*').eq('directorate_id', directorateId);
-            const { data: creasPcdReports } = await supabase.from('creas_pcd_reports').select('*').eq('directorate_id', directorateId);
-            const { data: protetivoReports } = await supabase.from('creas_protetivo_reports').select('*').eq('directorate_id', directorateId);
-            const { data: socioeducativoReports } = await supabase.from('creas_socioeducativo_reports').select('*').eq('directorate_id', directorateId);
-            const { data: peConsolidadoReports } = await supabase.from('protecao_especial_reports').select('*').eq('directorate_id', directorateId);
-            const { data: cmReports } = await supabase.from('casa_da_mulher_reports').select('*').eq('directorate_id', directorateId);
-            const { data: divReports } = await supabase.from('diversidade_reports').select('*').eq('directorate_id', directorateId);
-            const { data: ndReports } = await supabase.from('nucleo_diversidade_reports').select('*').eq('directorate_id', directorateId);
-
-            // 4. Extract all unique user IDs from all sources to fetch profiles
-            const allUserIds = new Set([
-                ...(submissions || []).map(s => s.user_id),
-                ...(sineReports || []).map(s => s.user_id),
-                ...(qualifReports || []).map(s => s.user_id),
-                ...(crasReports || []).map(s => s.user_id),
-                ...(beneficiosReports || []).map(s => s.user_id),
-                ...(naicaReports || []).map(s => s.user_id),
-                ...(popRuaReports || []).map(s => s.user_id),
-                ...(creasIdosoReports || []).map(s => s.user_id),
-                ...(creasPcdReports || []).map(s => s.user_id),
-                ...(protetivoReports || []).map(s => s.user_id),
-                ...(socioeducativoReports || []).map(s => s.user_id),
-                ...(peConsolidadoReports || []).map(s => s.user_id),
-                ...(cmReports || []).map(s => s.user_id),
-                ...(divReports || []).map(s => s.user_id),
-                ...(ndReports || []).map(s => s.user_id)
+            // 2. Fetch all data in PARALLEL to avoid Waterfall (CRITICAL FOR PERFORMANCE)
+            const [
+                submissionsRes,
+                sineRes,
+                qualifRes,
+                crasRes,
+                benefRes,
+                naicaRes,
+                popRuaRes,
+                idosoRes,
+                pcdRes,
+                protetivoRes,
+                socioRes,
+                peConsolidadoRes,
+                cmRes,
+                divRes,
+                ndRes
+            ] = await Promise.all([
+                supabase.from('submissions').select('*').eq('directorate_id', directorateId).order('year', { ascending: false }).order('month', { ascending: false }),
+                supabase.from('sine_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('qualificacao_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('cras_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('beneficios_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('naica_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('creas_pop_rua_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('creas_idoso_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('creas_pcd_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('creas_protetivo_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('creas_socioeducativo_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('protecao_especial_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('casa_da_mulher_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('diversidade_reports').select('*').eq('directorate_id', directorateId),
+                supabase.from('nucleo_diversidade_reports').select('*').eq('directorate_id', directorateId)
             ]);
-            const uniqueUserIds = Array.from(allUserIds).filter(Boolean);
+
+            const submissions = submissionsRes.data;
+            const sineReports = sineRes.data;
+            const qualifReports = qualifRes.data;
+            const crasReports = crasRes.data;
+            const beneficiosReports = benefRes.data;
+            const naicaReports = naicaRes.data;
+            const popRuaReports = popRuaRes.data;
+            const creasIdosoReports = idosoRes.data;
+            const creasPcdReports = pcdRes.data;
+            const protetivoReports = protetivoRes.data;
+            const socioeducativoReports = socioRes.data;
+            const peConsolidadoReports = peConsolidadoRes.data;
+            const cmReports = cmRes.data;
+            const divReports = divRes.data;
+            const ndReports = ndRes.data;
+
+            // 4. Extract all unique user IDs efficiently
+            const allUserIds = new Set<string>();
+            const addIds = (reports: any[] | null) => reports?.forEach(r => { if (r.user_id) allUserIds.add(r.user_id) });
+            
+            addIds(submissions);
+            addIds(sineReports);
+            addIds(qualifReports);
+            addIds(crasReports);
+            addIds(beneficiosReports);
+            addIds(naicaReports);
+            addIds(popRuaReports);
+            addIds(creasIdosoReports);
+            addIds(creasPcdReports);
+            addIds(protetivoReports);
+            addIds(socioeducativoReports);
+            addIds(peConsolidadoReports);
+            addIds(cmReports);
+            addIds(divReports);
+            addIds(ndReports);
+
+            const uniqueUserIds = Array.from(allUserIds);
 
             const { data: profiles } = await supabase
                 .from('profiles')
