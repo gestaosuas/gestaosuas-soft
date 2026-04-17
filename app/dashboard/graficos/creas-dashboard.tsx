@@ -221,9 +221,9 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         <div className="space-y-6">
             <MetricsCards data={kpiData} monthName={isAllYear ? "Ano" : monthNames[selectedMonthNum - 1]} compact />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* 1. Idosos em Acompanhamento */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+                {/* LINHA 1: 3 Gráficos (Cada um ocupa 2 de 6 colunas) */}
+                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-blue-500 font-bold">◆</span>
                         <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Idosos em Acompanhamento</CardTitle>
@@ -248,8 +248,7 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                     </CardContent>
                 </Card>
 
-                {/* 2. PCD em Acompanhamento */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-amber-500 font-bold">◆</span>
                         <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">PCD em Acompanhamento</CardTitle>
@@ -274,8 +273,7 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                     </CardContent>
                 </Card>
 
-                {/* 3. Tipos de Violência (Donut) */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-red-500 font-bold">◆</span>
                         <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência</CardTitle>
@@ -314,72 +312,66 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                     </CardContent>
                 </Card>
 
-                {/* 4. Violência por Gênero de Idosos */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                {/* LINHA 2: 2 Gráficos (Cada um ocupa 3 de 6 colunas) */}
+                <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-indigo-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência: Gênero Idosos</CardTitle>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero: Idosos</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={idososGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 8, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
                                 <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '9px' }} />
+                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                 <Bar
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
-                                    radius={[2, 2, 0, 0]}
-                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
-                                    radius={[2, 2, 0, 0]}
-                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* 5. Violência por Gênero de PCD */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-emerald-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência: Gênero PCD</CardTitle>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero: Pessoa com Deficiência</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={pcdGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 8, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
                                 <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '9px' }} />
+                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                 <Bar
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
-                                    radius={[2, 2, 0, 0]}
-                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
-                                    radius={[2, 2, 0, 0]}
-                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-
-                {/* Slot vago para balanceamento ou futuras métricas */}
-                <div className="hidden lg:flex items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/10">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Painel Analítico CREAS</span>
-                </div>
             </div>
         </div>
     )
