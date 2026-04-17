@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, LogOut, ShieldCheck, Menu, X, Building2, Activity } from "lucide-react"
@@ -31,13 +31,16 @@ export function MobileNav({ role, directorates = [], logoUrl }: { role?: 'admin'
         return () => { document.body.style.overflow = "unset" }
     }, [isOpen])
 
-    // Hide if inside an iframe
+    // Hide if inside an iframe or modal mode
     const [isInsideIframe, setIsInsideIframe] = useState(false)
-    useEffect(() => {
-        setIsInsideIframe(window.self !== window.top)
-    }, [])
+    const searchParams = useSearchParams()
+    const isModal = searchParams?.get('modal') === 'true'
 
-    if (isInsideIframe) return null
+    useEffect(() => {
+        setIsInsideIframe(window.self !== window.top || isModal)
+    }, [isModal])
+
+    if (isInsideIframe || isModal) return null
 
     return (
         <>
