@@ -12,7 +12,7 @@ import { ArrowLeft, Save, Printer, Loader2, CheckCircle } from "lucide-react"
 import { SignaturePad } from "@/components/signature-pad"
 import { saveOpinionReport, finalizeOpinionReport } from "@/app/dashboard/actions"
 import { cn } from "@/lib/utils"
-import { ReturnLink } from "../../return-link"
+import { ReturnLink } from "../../../return-link"
 import {
     Table,
     TableBody,
