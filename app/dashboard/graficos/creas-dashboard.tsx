@@ -46,11 +46,6 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         return subs.reduce((acc, s) => acc + (Number(s.data[fieldId]) || 0), 0)
     }
 
-    const currentMonthData = isAllYear
-        ? null // Not used for cards if all year? Usually cards show latest month or total.
-        // User screenshot shows (MAI), implying specific month.
-        : selectedMonthNum
-
     const monthLabel = isAllYear ? "" : `(${monthNames[selectedMonthNum - 1]})`
 
     // KPIs for the selected month
@@ -226,76 +221,74 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         <div className="space-y-6">
             <MetricsCards data={kpiData} monthName={isAllYear ? "Ano" : monthNames[selectedMonthNum - 1]} compact />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Idosos em Acompanhamento */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* 1. Idosos em Acompanhamento */}
                 <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Idosos em Acompanhamento</CardTitle>
+                        <span className="text-blue-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Idosos em Acompanhamento</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[280px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={lineData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
                                 <Line
                                     type="monotone"
                                     dataKey="idosos"
                                     stroke="#3b82f6"
                                     strokeWidth={2}
-                                    dot={{ r: 3, fill: "#3b82f6" }}
-                                    label={{ position: 'top', fontSize: 10, fill: '#3b82f6', formatter: (val: any) => val > 0 ? val : '' }}
+                                    dot={{ r: 2, fill: "#3b82f6" }}
+                                    label={{ position: 'top', fontSize: 9, fill: '#3b82f6', formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* PCD em Acompanhamento */}
+                {/* 2. PCD em Acompanhamento */}
                 <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Pessoas com Deficiência em Acompanhamento</CardTitle>
+                        <span className="text-amber-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">PCD em Acompanhamento</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[280px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={lineData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 'auto']} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
                                 <Line
                                     type="monotone"
                                     dataKey="pcd"
                                     stroke="#f59e0b"
                                     strokeWidth={2}
-                                    dot={{ r: 3, fill: "#f59e0b" }}
-                                    label={{ position: 'top', fontSize: 10, fill: '#f59e0b', formatter: (val: any) => val > 0 ? val : '' }}
+                                    dot={{ r: 2, fill: "#f59e0b" }}
+                                    label={{ position: 'top', fontSize: 9, fill: '#f59e0b', formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Donut Chart */}
+                {/* 3. Tipos de Violência (Donut) */}
                 <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência (Agregado)</CardTitle>
+                        <span className="text-red-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[300px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={violenceTypesData}
                                     cx="40%"
                                     cy="50%"
-                                    innerRadius={50}
-                                    outerRadius={80}
+                                    innerRadius={45}
+                                    outerRadius={65}
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
@@ -312,8 +305,8 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                                     formatter={(value, entry: any) => {
                                         const item = violenceTypesData.find(d => d.name === value)
                                         const total = violenceTypesData.reduce((acc, curr) => acc + curr.value, 0)
-                                        const percent = total > 0 ? ((item?.value || 0) / total * 100).toFixed(1) : 0
-                                        return <span className="text-[11px] font-medium text-zinc-500">{value} ({percent}%)</span>
+                                        const percent = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0
+                                        return <span className="text-[9px] font-medium text-zinc-500">{value} ({percent}%)</span>
                                     }}
                                 />
                             </PieChart>
@@ -321,72 +314,72 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                     </CardContent>
                 </Card>
 
-                {/* Empty grid space or more content */}
-                <div />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Bar Chart Idosos */}
+                {/* 4. Violência por Gênero de Idosos */}
                 <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero de Idosos</CardTitle>
+                        <span className="text-indigo-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência: Gênero Idosos</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[350px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={idososGenderData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                            <BarChart data={idososGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 8, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" />
+                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '9px' }} />
                                 <Bar
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[2, 2, 0, 0]}
+                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[2, 2, 0, 0]}
+                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* Bar Chart PCD */}
+                {/* 5. Violência por Gênero de PCD */}
                 <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero de Pessoas com Deficiência</CardTitle>
+                        <span className="text-emerald-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência: Gênero PCD</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[350px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={pcdGenderData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                            <BarChart data={pcdGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 8, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" />
+                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '9px' }} />
                                 <Bar
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[2, 2, 0, 0]}
+                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[2, 2, 0, 0]}
+                                    label={{ position: 'top', fontSize: 9, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
+
+                {/* Slot vago para balanceamento ou futuras métricas */}
+                <div className="hidden lg:flex items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/10">
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Painel Analítico CREAS</span>
+                </div>
             </div>
         </div>
     )
