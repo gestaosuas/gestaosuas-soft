@@ -241,6 +241,7 @@ export default async function DirectoratePage({
                     directorate={directorate}
                     submissions={submissions}
                     currentYear={currentYear}
+                    latestMonth={latestMonthSINE_CP}
                 />
             ) : (isSubvencao || isOutros) ? (
                 <MonitoringPageClient 
