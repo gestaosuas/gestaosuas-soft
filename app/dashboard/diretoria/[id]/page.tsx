@@ -9,18 +9,9 @@ import { CRAS_UNITS } from "@/app/dashboard/cras-config"
 import { CEAI_UNITS } from "@/app/dashboard/ceai-config"
 import { createClient } from "@/utils/supabase/server"
 import { NAICA_UNITS } from "@/app/dashboard/naica-config"
-import { cn } from "@/lib/utils"
-import { CEAIOficinasModals } from "@/components/ceai-oficinas-modals"
-import { createAdminClient } from "@/utils/supabase/admin"
-import { SubvencaoDashboardCharts } from "@/components/subvencao-dashboard-charts"
-import { SubvencaoIndicatorCards } from "@/components/subvencao-indicator-cards"
-import { BeneficiosDashboard } from "@/components/beneficios-dashboard"
-import { CrasPageClient } from "@/components/cras-page-client"
-import { BeneficiosPageClient } from "@/components/beneficios-page-client"
-import { SineCpPageClient } from "@/components/sine-cp-page-client"
-import { CeaiPageClient } from "@/components/ceai-page-client"
 import { MonitoringPageClient } from "@/components/monitoring-page-client"
 import { DirectorateQuickActions } from "@/components/directorate-quick-actions"
+import { getMonthName } from "@/lib/date-utils"
 
 export default async function DirectoratePage({
     params,
@@ -99,26 +90,39 @@ export default async function DirectoratePage({
 
     let subvencaoStats = { totalOSCs: 0, totalVisits: 0, finalizedVisits: 0, draftReports: 0, finalizedReports: 0 }
     let allVisitsData: any[] | null = null
-    if (isSubvencao && isAdmin) {
-        const adminSupabase = createAdminClient()
-        const [{ count: totalOSCs }, { data: fetchedVisits }] = await Promise.all([
-            adminSupabase.from('oscs').select('*', { count: 'exact', head: true }).eq('directorate_id', directorate.id),
-            adminSupabase.from('visits').select('id, status, visit_date, assinaturas, parecer_tecnico, relatorio_final, parecer_conclusivo, oscs(name)').eq('directorate_id', directorate.id)
-        ])
+    let hasDelegations = false
 
-        // Filter visits by current bimester
-        const filteredVisits = (fetchedVisits || []).filter((v: any) => {
-            const vDate = new Date(v.visit_date)
-            return vDate >= bRange.start && vDate <= bRange.end
-        })
+    if (isMonitoramento) {
+        if (isAdmin) {
+            const adminSupabase = createAdminClient()
+            const [{ count: totalOSCs }, { data: fetchedVisits }] = await Promise.all([
+                adminSupabase.from('oscs').select('*', { count: 'exact', head: true }).eq('directorate_id', directorate.id),
+                adminSupabase.from('visits').select('id, status, visit_date, assinaturas, parecer_tecnico, relatorio_final, parecer_conclusivo, oscs(name)').eq('directorate_id', directorate.id)
+            ])
 
-        allVisitsData = filteredVisits
-        subvencaoStats = {
-            totalOSCs: totalOSCs || 0,
-            totalVisits: allVisitsData?.length || 0,
-            finalizedVisits: allVisitsData?.filter((v: any) => v.status === 'finalized').length || 0,
-            draftReports: allVisitsData?.filter((v: any) => v.parecer_tecnico?.status === 'draft').length || 0,
-            finalizedReports: allVisitsData?.filter((v: any) => v.parecer_tecnico?.status === 'finalized').length || 0
+            // Filter visits by current bimester
+            const filteredVisits = (fetchedVisits || []).filter((v: any) => {
+                const vDate = new Date(v.visit_date)
+                return vDate >= bRange.start && vDate <= bRange.end
+            })
+
+            allVisitsData = filteredVisits
+            subvencaoStats = {
+                totalOSCs: totalOSCs || 0,
+                totalVisits: allVisitsData?.length || 0,
+                finalizedVisits: allVisitsData?.filter((v: any) => v.status === 'finalized').length || 0,
+                draftReports: allVisitsData?.filter((v: any) => v.parecer_tecnico?.status === 'draft').length || 0,
+                finalizedReports: allVisitsData?.filter((v: any) => v.parecer_tecnico?.status === 'finalized').length || 0
+            }
+        } else {
+            // Check for delegations if not admin
+            const { count } = await supabase
+                .from('form_delegations')
+                .select('id, visits!inner(directorate_id)', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('visits.directorate_id', directorate.id)
+            
+            hasDelegations = (count || 0) > 0
         }
     }
 
@@ -275,6 +279,7 @@ export default async function DirectoratePage({
                 <MonitoringPageClient 
                     directorate={directorate}
                     isAdmin={isAdmin}
+                    hasDelegations={hasDelegations}
                     allVisitsData={allVisitsData}
                     subvencaoStats={subvencaoStats}
                     bimesterLabel={bimesterLabel}

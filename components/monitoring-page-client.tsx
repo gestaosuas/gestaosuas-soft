@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 interface MonitoringPageClientProps {
     directorate: any
     isAdmin: boolean
+    hasDelegations?: boolean
     allVisitsData: any[] | null
     subvencaoStats: {
         totalOSCs: number
@@ -35,6 +36,7 @@ interface MonitoringPageClientProps {
 export function MonitoringPageClient({
     directorate,
     isAdmin,
+    hasDelegations = false,
     allVisitsData,
     subvencaoStats,
     bimesterLabel,
@@ -44,7 +46,8 @@ export function MonitoringPageClient({
     const router = useRouter()
     const id = String(directorate.id)
 
-    const navigateTo = (path: string) => {
+    const navigateTo = (path: string, disabled?: boolean) => {
+        if (disabled) return
         router.push(`/dashboard/diretoria/${id}/subvencao/${path}`)
     }
 
@@ -53,6 +56,12 @@ export function MonitoringPageClient({
     const isEmendasMode = name.includes('emendas') || name.includes('fundos')
     const isSubvencaoMode = name.includes('subvencao') || id === '63553b96-3771-4842-9f45-630c7558adac'
     
+    // Permission Flags
+    const canManageOSC = isAdmin
+    const canManageWorkPlan = isAdmin
+    const canManageReports = true // Always enabled so they can see delegations
+    const canManageVisits = true // Always enabled so they can see delegations
+
     // As ações ficam colapsadas se for Admin E (Emendas/Fundos OU Subvenção)
     const shouldCollapseActions = isAdmin && (isEmendasMode || isSubvencaoMode)
 
@@ -85,13 +94,21 @@ export function MonitoringPageClient({
             )}>
                 {/* 1. Cadastrar OSC */}
                 <button 
-                    onClick={() => navigateTo('oscs/novo')}
-                    className="group bg-white border border-zinc-200 p-5 rounded-3xl hover:border-blue-500 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center gap-3"
+                    onClick={() => navigateTo('oscs/novo', !canManageOSC)}
+                    disabled={!canManageOSC}
+                    className={cn(
+                        "group bg-white border border-zinc-200 p-5 rounded-3xl transition-all duration-300 flex flex-col items-center text-center gap-3 relative",
+                        canManageOSC ? "hover:border-blue-500 hover:shadow-xl cursor-pointer" : "opacity-50 grayscale cursor-not-allowed"
+                    )}
                 >
-                    <div className="p-3.5 bg-blue-50 rounded-xl group-hover:bg-blue-600 transition-colors duration-300">
-                        <FilePlus className="w-5 h-5 text-blue-600 group-hover:text-white" />
+                    <div className={cn(
+                        "p-3.5 bg-blue-50 rounded-xl transition-colors duration-300",
+                        canManageOSC && "group-hover:bg-blue-600"
+                    )}>
+                        <FilePlus className={cn("w-5 h-5 text-blue-600", canManageOSC && "group-hover:text-white")} />
                     </div>
                     <span className="font-bold text-blue-900 text-[13px]">Cadastrar OSC</span>
+                    {!canManageOSC && <span className="absolute top-2 right-2 text-[8px] bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm border border-zinc-200/50">Admin</span>}
                 </button>
 
                 {/* 2. Instrumental de Visita */}
@@ -109,13 +126,21 @@ export function MonitoringPageClient({
                     <>
                         {/* 3. Plano de Trabalho */}
                         <button 
-                            onClick={() => navigateTo('plano-de-trabalho')}
-                            className="group bg-white border border-zinc-200 p-5 rounded-3xl hover:border-purple-500 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center gap-3"
+                            onClick={() => navigateTo('plano-de-trabalho', !canManageWorkPlan)}
+                            disabled={!canManageWorkPlan}
+                            className={cn(
+                                "group bg-white border border-zinc-200 p-5 rounded-3xl transition-all duration-300 flex flex-col items-center text-center gap-3 relative",
+                                canManageWorkPlan ? "hover:border-purple-500 hover:shadow-xl cursor-pointer" : "opacity-50 grayscale cursor-not-allowed"
+                            )}
                         >
-                            <div className="p-3.5 bg-purple-50 rounded-xl group-hover:bg-purple-600 transition-colors duration-300">
-                                <FolderOpen className="w-5 h-5 text-purple-600 group-hover:text-white" />
+                            <div className={cn(
+                                "p-3.5 bg-purple-50 rounded-xl transition-colors duration-300",
+                                canManageWorkPlan && "group-hover:bg-purple-600"
+                            )}>
+                                <FolderOpen className={cn("w-5 h-5 text-purple-600", canManageWorkPlan && "group-hover:text-white")} />
                             </div>
                             <span className="font-bold text-blue-900 text-[13px]">Plano de Trabalho</span>
+                            {!canManageWorkPlan && <span className="absolute top-2 right-2 text-[8px] bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm border border-zinc-200/50">Admin</span>}
                         </button>
 
                         {/* 4. Relatórios e Pareceres */}
