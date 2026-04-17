@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX } from "lucide-react"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { delegateVisit, saveNotificacoes } from "@/app/dashboard/actions"
@@ -169,6 +169,17 @@ export function FinalReportList({
 
     return (
         <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+                <Button 
+                    variant="ghost" 
+                    onClick={() => router.push(`/dashboard/diretoria/${directorateId}`)}
+                    className="gap-2 text-zinc-500 hover:text-blue-600 transition-colors font-bold text-xs uppercase"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar para Diretoria
+                </Button>
+            </div>
+
             <div className="no-print bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-3 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center gap-3">
                 <div className="relative min-w-[200px] flex-1">
                     <Input
@@ -281,26 +292,32 @@ export function FinalReportList({
                         </CardHeader>
                         <CardContent className="p-5 pt-1 mt-auto">
                             <div className="flex flex-col gap-2">
-                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`}>
-                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 shadow-sm">
-                                        <FileCheck className="h-3.5 w-3.5" />
-                                        Relatório Final
-                                    </Button>
-                                </Link>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/relatorio-final`)}
+                                    className="w-full h-11 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-green-600 hover:text-white transition-all text-green-700 shadow-sm bg-white"
+                                >
+                                    <FileCheck className="h-4 w-4" />
+                                    Relatório Final
+                                </Button>
 
-                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`}>
-                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 shadow-sm">
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                        Parecer Conclusivo
-                                    </Button>
-                                </Link>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer-conclusivo`)}
+                                    className="w-full h-11 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-blue-900 hover:text-white transition-all text-blue-900 shadow-sm bg-white"
+                                >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    Parecer Conclusivo
+                                </Button>
 
-                                <Link href={`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`}>
-                                    <Button variant="outline" className="w-full h-9 gap-2 font-bold uppercase text-[9px] rounded-lg border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm">
-                                        <FileText className="h-3.5 w-3.5" />
-                                        Instrumental
-                                    </Button>
-                                </Link>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`)}
+                                    className="w-full h-11 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm bg-white"
+                                >
+                                    <FileText className="h-4 w-4" />
+                                    Instrumental
+                                </Button>
 
                                 <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
                                     <div className="flex items-center justify-between">

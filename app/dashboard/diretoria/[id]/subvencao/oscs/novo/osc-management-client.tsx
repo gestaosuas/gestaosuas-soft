@@ -5,6 +5,8 @@ import { FormOSC } from "./form-osc"
 import { OSCList } from "./osc-list"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ReturnLink } from "../../return-link"
 
 export function OSCManagementClient({ directorateId, initialOscs }: { directorateId: string, initialOscs: any[] }) {
     const [oscToEdit, setOscToEdit] = useState<any | null>(null)
@@ -20,8 +22,11 @@ export function OSCManagementClient({ directorateId, initialOscs }: { directorat
         setShowForm(false)
     }
 
+    const router = useRouter()
+
     return (
         <div className="container mx-auto py-8 space-y-8 min-h-screen">
+            {/* Removed redundant top back button */}
             {showForm ? (
                 <FormOSC
                     directorateId={directorateId}
@@ -35,6 +40,7 @@ export function OSCManagementClient({ directorateId, initialOscs }: { directorat
                         <div>
                             <h1 className="text-3xl font-black text-blue-900 dark:text-blue-50 tracking-tight">OSCs PARCEIRAS</h1>
                             <p className="text-zinc-500 font-medium">Gerenciamento de Organizações da Sociedade Civil</p>
+                            <ReturnLink href={`/dashboard/diretoria/${directorateId}`} />
                         </div>
                         <Button
                             onClick={() => setShowForm(true)}

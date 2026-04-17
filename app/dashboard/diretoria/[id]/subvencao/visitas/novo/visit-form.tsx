@@ -50,6 +50,7 @@ import {
 import { cn } from "@/lib/utils"
 import { saveVisit, finalizeVisit } from "@/app/dashboard/actions"
 import { WorkPlanSelector } from "./work-plan-selector"
+import { ReturnLink } from "../../return-link"
 
 export function VisitForm({
     directorateId,
@@ -771,16 +772,11 @@ export function VisitForm({
                 <h1 className="text-xl font-black uppercase tracking-tight text-black border-t border-zinc-100 pt-4 w-full">INSTRUMENTAL DE MONITORAMENTO E AVALIAÇÃO</h1>
                 <p className="text-[9px] font-bold text-zinc-500 mt-1 uppercase tracking-widest">SISTEMA VIGILÂNCIA SOCIOASSISTENCIAL 2026</p>
             </div>
-            {/* Header Actions */}
             <div className="flex items-center justify-between no-print">
-                <Button
-                    variant="ghost"
-                    onClick={() => router.back()}
-                    className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors"
-                >
-                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                    Voltar
-                </Button>
+                <ReturnLink 
+                    href={`/dashboard/diretoria/${directorateId}/subvencao/visitas`} 
+                    label="Voltar para Listagem" 
+                />
 
                 <div className="flex gap-3">
                     <WorkPlanSelector

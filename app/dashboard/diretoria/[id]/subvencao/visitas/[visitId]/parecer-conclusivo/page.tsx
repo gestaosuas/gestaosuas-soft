@@ -13,6 +13,7 @@ import { SignaturePad } from "@/components/signature-pad"
 import { saveParecerConclusivo, getVisitById } from "@/app/dashboard/actions"
 import { createClient } from "@/utils/supabase/client"
 import { cn } from "@/lib/utils"
+import { ReturnLink } from "../../../return-link"
 
 interface FormData {
     osc_name: string
@@ -267,13 +268,10 @@ function ParecerConclusivoContent() {
 
             {isPreview ? null : (
                 <div className="flex items-center justify-between print:hidden mb-6">
-                <Link
-                    href={`/dashboard/diretoria/${id}/subvencao/relatorio-final`}
-                    className="group flex items-center gap-2 text-zinc-500 hover:text-blue-900 transition-colors w-fit"
-                >
-                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                    Voltar
-                </Link>
+                <ReturnLink 
+                    href={`/dashboard/diretoria/${id}/subvencao/relatorio-final`} 
+                    label="Voltar para Relatórios" 
+                />
 
                 <div className="flex gap-3">
                     <Button variant="outline" onClick={handlePrint} className="gap-2 font-bold uppercase text-[10px] shadow-sm hover:bg-zinc-50 border-zinc-300">

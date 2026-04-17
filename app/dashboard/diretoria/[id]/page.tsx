@@ -19,6 +19,7 @@ import { CrasPageClient } from "@/components/cras-page-client"
 import { BeneficiosPageClient } from "@/components/beneficios-page-client"
 import { SineCpPageClient } from "@/components/sine-cp-page-client"
 import { CeaiPageClient } from "@/components/ceai-page-client"
+import { MonitoringPageClient } from "@/components/monitoring-page-client"
 import { DirectorateQuickActions } from "@/components/directorate-quick-actions"
 
 export default async function DirectoratePage({
@@ -37,7 +38,7 @@ export default async function DirectoratePage({
     const isSINE = normalizedName.includes('sine') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isCP = normalizedName.includes('formacao') || normalizedName.includes('profissional') || normalizedName.includes('centro') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
     const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
-    const isSubvencao = (normalizedName.includes('subvencao') || normalizedName.includes('emendas') || id === '63553b96-3771-4842-9f45-630c7558adac') && !normalizedName.includes('outros')
+    const isSubvencao = (normalizedName.includes('subvencao') || normalizedName.includes('emendas') || normalizedName.includes('fundos') || id === '63553b96-3771-4842-9f45-630c7558adac') && !normalizedName.includes('outros')
     const isOutros = normalizedName.includes('outros') || id === '82471122-9b28-4d9a-90d4-f5e437d15761'
     const isCRAS = normalizedName.includes('cras')
     const isCREAS = normalizedName.includes('creas') // CREAS Idoso e Pessoa com Deficiência
@@ -85,14 +86,14 @@ export default async function DirectoratePage({
     const currentYear = now.getFullYear()
     const currentMonth = now.getMonth() + 1
     const currentBimester = Math.ceil(currentMonth / 2)
-    
+
     const getBimesterRange = (bim: number, yr: number) => {
         return {
             start: new Date(yr, (bim - 1) * 2, 1),
             end: new Date(yr, bim * 2, 0, 23, 59, 59)
         }
     }
-    
+
     const bRange = getBimesterRange(currentBimester, currentYear)
     const bimesterLabel = `${currentBimester}º Bimestre (${currentBimester === 1 ? "Jan/Fev" : currentBimester === 2 ? "Mar/Abr" : currentBimester === 3 ? "Mai/Jun" : currentBimester === 4 ? "Jul/Ago" : currentBimester === 5 ? "Set/Out" : "Nov/Dez"})`
 
@@ -135,8 +136,8 @@ export default async function DirectoratePage({
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-1000">
-            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && (
+        <div className="space-y-6">
+            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && !isMonitoramento && (
                 <header className="space-y-1">
                     <h1 className="text-3xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
                         {directorate.name}
@@ -194,27 +195,27 @@ export default async function DirectoratePage({
             )}
 
             {(isSINE || isCP) ? (
-                <SineCpPageClient 
+                <SineCpPageClient
                     directorate={directorate}
                     submissions={submissions}
                     currentYear={currentYear}
                     latestMonthSINE_CP={latestMonthSINE_CP}
                 />
             ) : isBeneficios ? (
-                <BeneficiosPageClient 
+                <BeneficiosPageClient
                     directorate={directorate}
                     submissions={submissions}
                     currentYear={currentYear}
                 />
             ) : isCRAS ? (
-                <CrasPageClient 
+                <CrasPageClient
                     directorate={directorate}
                     submissions={submissions}
                     currentYear={currentYear}
                     allowedUnits={allowedUnits}
                 />
             ) : isCEAI ? (
-                <CeaiPageClient 
+                <CeaiPageClient
                     directorate={directorate}
                     submissions={submissions}
                     currentYear={currentYear}
@@ -270,138 +271,15 @@ export default async function DirectoratePage({
                         })}
                     </div>
                 </section>
-            ) : isSubvencao ? (
-                <section className="space-y-6">
-                    <div className="flex items-center gap-3">
-                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Gestão de OSCs</h2>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
-                        {/* Cadastrar OSC */}
-                        {isAdmin ? (
-                            <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/oscs/novo`} className="group">
-                                <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${getCardTheme('Cadastrar OSC').border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                    <div className={`p-2 ${getCardTheme('Cadastrar OSC').iconBg} rounded-lg ${getCardTheme('Cadastrar OSC').iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                        <FilePlus className={`w-4 h-4 ${getCardTheme('Cadastrar OSC').iconText} group-hover:text-white transition-colors`} />
-                                    </div>
-                                    <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">Cadastrar OSC</CardTitle>
-                                </Card>
-                            </Link>
-                        ) : (
-                            <div className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                    <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                        <FilePlus className="w-4 h-4 text-zinc-400" />
-                                    </div>
-                                    <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">Cadastrar OSC</CardTitle>
-                                </Card>
-                            </div>
-                        )}
-
-                        {/* Instrumental de Visita */}
-                        <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/visitas`} className="group">
-                            <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${getCardTheme('Instrumental de Visita').border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                <div className={`p-2 ${getCardTheme('Instrumental de Visita').iconBg} rounded-lg ${getCardTheme('Instrumental de Visita').iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                    <ClipboardList className={`w-4 h-4 ${getCardTheme('Instrumental de Visita').iconText} group-hover:text-white transition-colors`} />
-                                </div>
-                                <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">Instrumental de Visita</CardTitle>
-                            </Card>
-                        </Link>
-
-                        {/* Plano de Trabalho */}
-                        {isAdmin ? (
-                            <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/plano-de-trabalho`} className="group">
-                                <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${getCardTheme('Plano de Trabalho').border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                    <div className={`p-2 ${getCardTheme('Plano de Trabalho').iconBg} rounded-lg ${getCardTheme('Plano de Trabalho').iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                        <FolderOpen className={`w-4 h-4 ${getCardTheme('Plano de Trabalho').iconText} group-hover:text-white transition-colors`} />
-                                    </div>
-                                    <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">Plano de Trabalho</CardTitle>
-                                </Card>
-                            </Link>
-                        ) : (
-                            <div className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                    <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                        <FolderOpen className="w-4 h-4 text-zinc-400" />
-                                    </div>
-                                    <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">Plano de Trabalho</CardTitle>
-                                </Card>
-                            </div>
-                        )}
-
-                        {/* Relatórios Finais e Pareceres */}
-                        <Link href={`/dashboard/diretoria/${directorate.id}/subvencao/relatorio-final`} className="group">
-                            <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${getCardTheme('Relatórios Finais e Pareceres').border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                <div className={`p-2 ${getCardTheme('Relatórios Finais e Pareceres').iconBg} rounded-lg ${getCardTheme('Relatórios Finais e Pareceres').iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                    <FileCheck className={`w-4 h-4 ${getCardTheme('Relatórios Finais e Pareceres').iconText} group-hover:text-white transition-colors`} />
-                                </div>
-                                <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">Relatórios e Pareceres</CardTitle>
-                            </Card>
-                        </Link>
-                    </div>
-
-                    {isAdmin && (
-                        <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/50 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-1 w-6 bg-cyan-600 dark:bg-cyan-400 rounded-full"></div>
-                                    <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Indicadores de Monitoramento</h2>
-                                </div>
-                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-full">
-                                    <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                                    <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-tight">Período: {bimesterLabel}</span>
-                                </div>
-                            </div>
-                            
-                            <SubvencaoIndicatorCards 
-                                visits={allVisitsData || []} 
-                                totalOSCs={subvencaoStats.totalOSCs} 
-                            />
-
-                            <SubvencaoDashboardCharts stats={subvencaoStats} />
-                        </div>
-                    )}
-                </section>
-            ) : isOutros ? (
-                <section className="space-y-6">
-                    <div className="flex items-center gap-3">
-                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Monitoramento • Outros</h2>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                        {[
-                            { label: "Cadastrar OSC", href: `/dashboard/diretoria/${directorate.id}/subvencao/oscs/novo`, icon: FilePlus, restricted: true },
-                            { label: "Instrumental de Visita", href: `/dashboard/diretoria/${directorate.id}/subvencao/visitas`, icon: ClipboardList, restricted: false },
-                        ].map((item, idx) => {
-                            const theme = getCardTheme(item.label);
-                            const isAllowed = !item.restricted || isAdmin;
-
-                            if (!isAllowed) {
-                                return (
-                                    <div key={idx} className="group opacity-60 grayscale cursor-not-allowed select-none">
-                                        <Card className="h-full min-h-[90px] bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/50 shadow-none rounded-xl flex flex-col items-center justify-center p-2.5 text-center">
-                                            <div className="p-2 bg-zinc-200 dark:bg-zinc-800/50 rounded-lg shadow-sm mb-2">
-                                                <item.icon className="w-4 h-4 text-zinc-400" />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-zinc-500 dark:text-zinc-500">{item.label}</CardTitle>
-                                        </Card>
-                                    </div>
-                                )
-                            }
-
-                            return (
-                                <Link key={idx} href={item.href} className="group">
-                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                        <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                            <item.icon className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                        </div>
-                                        <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                    </Card>
-                                </Link>
-                            )
-                        })}
-                    </div>
-                </section>
+            ) : (isSubvencao || isOutros) ? (
+                <MonitoringPageClient 
+                    directorate={directorate}
+                    isAdmin={isAdmin}
+                    allVisitsData={allVisitsData}
+                    subvencaoStats={subvencaoStats}
+                    bimesterLabel={bimesterLabel}
+                    title={directorate.name}
+                />
             ) : isNAICA ? (
                 <div className="space-y-6">
                     <section className="space-y-4">
@@ -450,7 +328,7 @@ export default async function DirectoratePage({
 
                                 return (
                                     <Link key={idx} href={`/dashboard/relatorios/novo?setor=naica&directorate_id=${directorate.id}&unit=${encodeURIComponent(unit)}`} className="group">
-                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
+                                        <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
                                             <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
                                                 <FilePlus className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
                                             </div>
@@ -669,6 +547,6 @@ export default async function DirectoratePage({
                     </p>
                 </div>
             )}
-    </div>
+        </div>
     )
 }

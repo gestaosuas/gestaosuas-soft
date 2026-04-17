@@ -102,7 +102,7 @@ export function SubvencaoIndicatorCards({ visits, totalOSCs }: SubvencaoIndicato
         <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
                 {/* OSCs Cadastradas */}
-                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2.5 transition-all hover:shadow-md rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28">
+                <Card className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2 transition-all hover:shadow-md rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22">
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">OSCs<br/>Cadastradas</span>
                     <span className="text-2xl font-black text-blue-900 dark:text-blue-100 leading-none">{totalOSCs}</span>
                 </Card>
@@ -110,7 +110,7 @@ export function SubvencaoIndicatorCards({ visits, totalOSCs }: SubvencaoIndicato
                 {/* Total de Visitas */}
                 <Card 
                     onClick={() => openModal("Total de Visitas", visits, "blue")}
-                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2.5 transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer group rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28"
+                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2 transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer group rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22"
                 >
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight group-hover:text-blue-500 transition-colors">Total de<br/>Visitas</span>
                     <span className="text-2xl font-black text-blue-900 dark:text-blue-100 leading-none">{totalVisits}</span>
@@ -119,7 +119,7 @@ export function SubvencaoIndicatorCards({ visits, totalOSCs }: SubvencaoIndicato
                 {/* Visitas Finalizadas */}
                 <Card 
                     onClick={() => openModal("Visitas Finalizadas", visits.filter(v => v.status === 'finalized'), "green")}
-                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2.5 transition-all hover:shadow-md hover:border-green-200 dark:hover:border-green-800 cursor-pointer group rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28"
+                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2 transition-all hover:shadow-md hover:border-green-200 dark:hover:border-green-800 cursor-pointer group rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22"
                 >
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight group-hover:text-green-500 transition-colors">Visitas<br/>Finalizadas</span>
                     <span className="text-2xl font-black text-green-600 dark:text-green-400 leading-none">{finalizedVisits}</span>
@@ -129,7 +129,7 @@ export function SubvencaoIndicatorCards({ visits, totalOSCs }: SubvencaoIndicato
                 {/* Relatórios (Parecer) */}
                 <Card 
                     onClick={() => openModal("Relatórios (Pareceres Técnicos)", visits, "amber")}
-                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2.5 transition-all hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 cursor-pointer group rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28"
+                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2 transition-all hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 cursor-pointer group rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22"
                 >
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight group-hover:text-amber-500 transition-colors">Relatórios<br/>(Pareceres)</span>
                     <span className="text-2xl font-black text-amber-600 dark:text-amber-400 leading-none">{finalizedReports}</span>
@@ -139,7 +139,7 @@ export function SubvencaoIndicatorCards({ visits, totalOSCs }: SubvencaoIndicato
                 {/* Relatórios Finais */}
                 <Card 
                     onClick={() => openModal("Relatórios Finais", visits, "indigo", true)}
-                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2.5 transition-all hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 cursor-pointer group rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28"
+                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2 transition-all hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 cursor-pointer group rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22"
                 >
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight group-hover:text-indigo-500 transition-colors">Relatórios<br/>Finais</span>
                     <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 leading-none">{finalizedFinalReports}</span>
@@ -149,15 +149,15 @@ export function SubvencaoIndicatorCards({ visits, totalOSCs }: SubvencaoIndicato
                 {/* Pareceres Conclusivos */}
                 <Card 
                     onClick={() => openModal("Pareceres Conclusivos", visits, "cyan", true)}
-                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2.5 transition-all hover:shadow-md hover:border-cyan-200 dark:hover:border-cyan-800 cursor-pointer group rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28"
+                    className="bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 p-2 transition-all hover:shadow-md hover:border-cyan-200 dark:hover:border-cyan-800 cursor-pointer group rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22"
                 >
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight group-hover:text-cyan-500 transition-colors">Pareceres<br/>Conclusivos</span>
                     <span className="text-2xl font-black text-cyan-600 dark:text-cyan-400 leading-none">{finalizedConclusiveOpinions}</span>
                     <span className="text-[8px] font-bold text-zinc-400 mt-1 uppercase">de {totalVisits} finalizados</span>
                 </Card>
 
-                {/* Rascunhos Gerais (Unificado se necessário ou apenas mais um) */}
-                <Card className="bg-zinc-50/50 dark:bg-zinc-800/30 border-zinc-200/60 dark:border-zinc-800 p-2.5 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm h-28 opacity-60">
+                {/* Rascunhos Gerais */}
+                <Card className="bg-zinc-50/50 dark:bg-zinc-800/30 border-zinc-200/60 dark:border-zinc-800 p-2 rounded-xl flex flex-col items-center justify-center text-center shadow-sm h-22 opacity-60">
                     <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest mb-2 leading-tight">Total<br/>Indicadores</span>
                     <span className="text-2xl font-black text-zinc-400 leading-none">6/6</span>
                 </Card>
