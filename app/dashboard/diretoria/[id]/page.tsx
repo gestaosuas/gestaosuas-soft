@@ -11,7 +11,6 @@ import { createClient } from "@/utils/supabase/server"
 import { NAICA_UNITS } from "@/app/dashboard/naica-config"
 import { MonitoringPageClient } from "@/components/monitoring-page-client"
 import { DirectorateQuickActions } from "@/components/directorate-quick-actions"
-import { getMonthName } from "@/lib/date-utils"
 
 export default async function DirectoratePage({
     params,
