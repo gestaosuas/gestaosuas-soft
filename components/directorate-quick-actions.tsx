@@ -43,7 +43,11 @@ export function DirectorateQuickActions({ title, defaultOpen = false, children, 
             if (href && isMatch) {
                 e.preventDefault()
                 e.stopPropagation()
-                setModalUrl(href)
+                
+                // Append modal=true if not present
+                const url = new URL(href, window.location.origin)
+                url.searchParams.set('modal', 'true')
+                setModalUrl(url.pathname + url.search)
             }
         }
     }

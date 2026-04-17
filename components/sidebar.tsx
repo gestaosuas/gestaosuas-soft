@@ -30,29 +30,30 @@ import {
 } from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
+    const [isCollapsed, setIsCollapsed] = useState(false)
+    const [isInsideIframe, setIsInsideIframe] = useState(false)
     const pathname = usePathname()
     const searchParams = useSearchParams()
-    const [isCollapsed, setIsCollapsed] = useState(false)
     const [isDiretoriasOpen, setIsDiretoriasOpen] = useState(true)
     const [isMonitoramentosOpen, setIsMonitoramentosOpen] = useState(true)
 
-    // Hide sidebar if inside an iframe
-    const [isInsideIframe, setIsInsideIframe] = useState(false)
+
+    const isModal = searchParams.get('modal') === 'true'
+    
+    useEffect(() => {
+        setIsInsideIframe(window.self !== window.top || isModal)
+    }, [isModal])
 
     useEffect(() => {
-        setIsInsideIframe(window.self !== window.top)
-    }, [])
-
-    useEffect(() => {
-        if (!isInsideIframe) {
+        if (!isInsideIframe && !isModal) {
             const width = isCollapsed ? '80px' : '288px' // w-20 or w-72
             document.documentElement.style.setProperty('--sidebar-width', width)
         } else {
             document.documentElement.style.setProperty('--sidebar-width', '0px')
         }
-    }, [isCollapsed, isInsideIframe])
+    }, [isCollapsed, isInsideIframe, isModal])
 
-    if (isInsideIframe) return null
+    if (isInsideIframe || isModal) return null
 
     const getDirectorateIcon = (name: string) => {
         const lowerName = name.toLowerCase()

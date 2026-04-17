@@ -46,18 +46,22 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         return subs.reduce((acc, s) => acc + (Number(s.data[fieldId]) || 0), 0)
     }
 
-    const currentMonthData = isAllYear
-        ? null // Not used for cards if all year? Usually cards show latest month or total.
-        // User screenshot shows (MAI), implying specific month.
-        : selectedMonthNum
-
     const monthLabel = isAllYear ? "" : `(${monthNames[selectedMonthNum - 1]})`
 
     // KPIs for the selected month
     const kpiData = [
         {
             label: `VIOLÊNCIAS MASC. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('violencia_fisica_m', 'idoso') +
+                getAllVal('negligencia_m', 'idoso') +
+                getAllVal('abuso_sexual_m', 'idoso') +
+                getAllVal('exploracao_financeira_m', 'idoso') +
+                getAllVal('def_violencia_fisica_m', 'deficiente') +
+                getAllVal('def_negligencia_m', 'deficiente') +
+                getAllVal('def_abuso_sexual_m', 'deficiente') +
+                getAllVal('def_exploracao_financeira_m', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'violencia_fisica_m', 'idoso') +
                 getVal(selectedMonthNum, 'negligencia_m', 'idoso') +
                 getVal(selectedMonthNum, 'abuso_sexual_m', 'idoso') +
@@ -71,7 +75,16 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `VIOLÊNCIAS FEM. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('violencia_fisica_f', 'idoso') +
+                getAllVal('negligencia_f', 'idoso') +
+                getAllVal('abuso_sexual_f', 'idoso') +
+                getAllVal('exploracao_financeira_f', 'idoso') +
+                getAllVal('def_violencia_fisica_f', 'deficiente') +
+                getAllVal('def_negligencia_f', 'deficiente') +
+                getAllVal('def_abuso_sexual_f', 'deficiente') +
+                getAllVal('def_exploracao_financeira_f', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'violencia_fisica_f', 'idoso') +
                 getVal(selectedMonthNum, 'negligencia_f', 'idoso') +
                 getVal(selectedMonthNum, 'abuso_sexual_f', 'idoso') +
@@ -85,7 +98,12 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `VIOLÊNCIA PCD MASC. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('def_violencia_fisica_m', 'deficiente') +
+                getAllVal('def_negligencia_m', 'deficiente') +
+                getAllVal('def_abuso_sexual_m', 'deficiente') +
+                getAllVal('def_exploracao_financeira_m', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'def_violencia_fisica_m', 'deficiente') +
                 getVal(selectedMonthNum, 'def_negligencia_m', 'deficiente') +
                 getVal(selectedMonthNum, 'def_abuso_sexual_m', 'deficiente') +
@@ -95,7 +113,12 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `VIOLÊNCIA PCD FEM. ${monthLabel}`,
-            value: isAllYear ? 0 : (
+            value: isAllYear ? (
+                getAllVal('def_violencia_fisica_f', 'deficiente') +
+                getAllVal('def_negligencia_f', 'deficiente') +
+                getAllVal('def_abuso_sexual_f', 'deficiente') +
+                getAllVal('def_exploracao_financeira_f', 'deficiente')
+            ) : (
                 getVal(selectedMonthNum, 'def_violencia_fisica_f', 'deficiente') +
                 getVal(selectedMonthNum, 'def_negligencia_f', 'deficiente') +
                 getVal(selectedMonthNum, 'def_abuso_sexual_f', 'deficiente') +
@@ -105,7 +128,9 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         },
         {
             label: `FAMÍLIAS ACOMP. ${monthLabel}`,
-            value: isAllYear ? 0 : getVal(selectedMonthNum, 'fa_atual', 'idoso'),
+            value: isAllYear ? (
+                submissions.length > 0 ? getVal(Math.max(...submissions.map(s => s.month)), 'fa_atual', 'idoso') : 0
+            ) : getVal(selectedMonthNum, 'fa_atual', 'idoso'),
             color: "#0ea5e9"
         }
     ]
@@ -196,76 +221,72 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         <div className="space-y-6">
             <MetricsCards data={kpiData} monthName={isAllYear ? "Ano" : monthNames[selectedMonthNum - 1]} compact />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Idosos em Acompanhamento */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+                {/* LINHA 1: 3 Gráficos (Cada um ocupa 2 de 6 colunas) */}
+                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Idosos em Acompanhamento</CardTitle>
+                        <span className="text-blue-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Idosos em Acompanhamento</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[280px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={lineData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
                                 <Line
                                     type="monotone"
                                     dataKey="idosos"
                                     stroke="#3b82f6"
                                     strokeWidth={2}
-                                    dot={{ r: 3, fill: "#3b82f6" }}
-                                    label={{ position: 'top', fontSize: 10, fill: '#3b82f6', formatter: (val: any) => val > 0 ? val : '' }}
+                                    dot={{ r: 2, fill: "#3b82f6" }}
+                                    label={{ position: 'top', fontSize: 9, fill: '#3b82f6', formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* PCD em Acompanhamento */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Pessoas com Deficiência em Acompanhamento</CardTitle>
+                        <span className="text-amber-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">PCD em Acompanhamento</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[280px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={lineData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 'auto']} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
                                 <Line
                                     type="monotone"
                                     dataKey="pcd"
                                     stroke="#f59e0b"
                                     strokeWidth={2}
-                                    dot={{ r: 3, fill: "#f59e0b" }}
-                                    label={{ position: 'top', fontSize: 10, fill: '#f59e0b', formatter: (val: any) => val > 0 ? val : '' }}
+                                    dot={{ r: 2, fill: "#f59e0b" }}
+                                    label={{ position: 'top', fontSize: 9, fill: '#f59e0b', formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Donut Chart */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência (Agregado)</CardTitle>
+                        <span className="text-red-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[300px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={violenceTypesData}
                                     cx="40%"
                                     cy="50%"
-                                    innerRadius={50}
-                                    outerRadius={80}
+                                    innerRadius={45}
+                                    outerRadius={65}
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
@@ -282,8 +303,8 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                                     formatter={(value, entry: any) => {
                                         const item = violenceTypesData.find(d => d.name === value)
                                         const total = violenceTypesData.reduce((acc, curr) => acc + curr.value, 0)
-                                        const percent = total > 0 ? ((item?.value || 0) / total * 100).toFixed(1) : 0
-                                        return <span className="text-[11px] font-medium text-zinc-500">{value} ({percent}%)</span>
+                                        const percent = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0
+                                        return <span className="text-[9px] font-medium text-zinc-500">{value} ({percent}%)</span>
                                     }}
                                 />
                             </PieChart>
@@ -291,67 +312,61 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                     </CardContent>
                 </Card>
 
-                {/* Empty grid space or more content */}
-                <div />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Bar Chart Idosos */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                {/* LINHA 2: 2 Gráficos (Cada um ocupa 3 de 6 colunas) */}
+                <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero de Idosos</CardTitle>
+                        <span className="text-indigo-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero: Idosos</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[350px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={idososGenderData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                            <BarChart data={idososGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" />
+                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                 <Bar
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                {/* Bar Chart PCD */}
-                <Card className="shadow-none border-zinc-200 dark:border-zinc-800">
+                <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-orange-500 font-bold">◆</span>
-                        <CardTitle className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero de Pessoas com Deficiência</CardTitle>
+                        <span className="text-emerald-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero: Pessoa com Deficiência</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[350px] p-6 pt-2">
+                    <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={pcdGenderData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                            <BarChart data={pcdGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -45, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
-                                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" />
+                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                 <Bar
                                     dataKey="Feminino"
                                     fill={GENDER_COLORS.Feminino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                                 <Bar
                                     dataKey="Masculino"
                                     fill={GENDER_COLORS.Masculino}
-                                    radius={[4, 4, 0, 0]}
-                                    label={{ position: 'top', fontSize: 11, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    radius={[3, 3, 0, 0]}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
