@@ -12,6 +12,15 @@ import { NAICA_UNITS } from "@/app/dashboard/naica-config"
 import { MonitoringPageClient } from "@/components/monitoring-page-client"
 import { DirectorateQuickActions } from "@/components/directorate-quick-actions"
 import { createAdminClient } from "@/utils/supabase/admin"
+import { CrasPageClient } from "@/components/cras-page-client"
+import { BeneficiosPageClient } from "@/components/beneficios-page-client"
+import { SineCpPageClient } from "@/components/sine-cp-page-client"
+import { CeaiPageClient } from "@/components/ceai-page-client"
+import { cn } from "@/lib/utils"
+import { CEAIOficinasModals } from "@/components/ceai-oficinas-modals"
+import { SubvencaoDashboardCharts } from "@/components/subvencao-dashboard-charts"
+import { SubvencaoIndicatorCards } from "@/components/subvencao-indicator-cards"
+import { BeneficiosDashboard } from "@/components/beneficios-dashboard"
 
 export default async function DirectoratePage({
     params,
