@@ -19,7 +19,7 @@ import { POP_RUA_FORM_DEFINITION, POP_RUA_SHEET_BLOCKS, POP_RUA_SPREADSHEET_ID }
 import { NAICA_FORM_DEFINITION, NAICA_SHEET_BLOCKS, NAICA_SPREADSHEET_ID } from './naica-config'
 import { PROTETIVO_FORM_DEFINITION, PROTETIVO_SHEET_BLOCKS, PROTETIVO_SPREADSHEET_ID, SOCIOEDUCATIVO_FORM_DEFINITION, SOCIOEDUCATIVO_SHEET_BLOCKS, SOCIOEDUCATIVO_SPREADSHEET_ID } from './protecao-especial-config'
 import { SINE_FORM_DEFINITION, SINE_SHEET_NAME } from './sine-config'
-import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION } from './casa-da-mulher-config'
+import { CASA_DA_MULHER_FORM_DEFINITION, DIVERSIDADE_FORM_DEFINITION, NUCLEO_DIVERSIDADE_FORM_DEFINITION } from './casa-da-mulher-config'
 import { updateSheetBlocks, validateSheetExists } from '@/lib/google-sheets'
 import { uploadFileToDrive, getOrCreateFolder } from '@/lib/google-drive'
 import { submissionBaseSchema, visitSchema, oscSchema, dailyReportSchema } from '@/lib/validation'
