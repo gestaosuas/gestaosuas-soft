@@ -223,7 +223,7 @@ export default async function NewReportPage({
     if (isPopRua) {
         return (
             <div className="container mx-auto max-w-7xl py-4">
-                <PopRuaReportWrapper directorateId={directorate.id} month={new Date().getMonth() + 1} year={new Date().getFullYear()} isAdmin={isAdmin} />
+                <PopRuaReportWrapper directorateId={directorate.id} directorateName={directorate.name} isAdmin={isAdmin} />
             </div>
         )
     }
