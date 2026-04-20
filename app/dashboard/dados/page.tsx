@@ -294,9 +294,16 @@ export default async function DataPage({
     const dataByUnitAndMonth = new Map<string, Map<number, { id: string, data: Record<string, any>, author?: string }>>()
 
     submissions?.forEach(sub => {
-        if (sub.data._is_multi_unit && sub.data.units) {
+        let currentData = { ...sub.data };
+
+        // PROMOTE SECTOR DATA: If we are looking for a specific sector and it's nested
+        if (setor && currentData[setor] && typeof currentData[setor] === 'object') {
+            currentData = { ...currentData, ...currentData[setor] };
+        }
+
+        if (currentData._is_multi_unit && currentData.units) {
             // New format: multiple units in one row
-                Object.entries(sub.data.units).forEach(([unitName, unitData]: [string, any]) => {
+                Object.entries(currentData.units).forEach(([unitName, unitData]: [string, any]) => {
                     if (!dataByUnitAndMonth.has(unitName)) {
                         dataByUnitAndMonth.set(unitName, new Map())
                     }
@@ -308,11 +315,11 @@ export default async function DataPage({
                 })
         } else {
             // Old flat format or single-unit directorates
-            const unitName = sub.data._unit || 'Principal'
+            const unitName = currentData._unit || 'Principal'
             if (!dataByUnitAndMonth.has(unitName)) {
                 dataByUnitAndMonth.set(unitName, new Map())
             }
-            dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: sub.data, author: sub.profiles?.full_name })
+            dataByUnitAndMonth.get(unitName)!.set(sub.month, { id: sub.id, data: currentData, author: sub.profiles?.full_name })
         }
     })
 

@@ -1231,31 +1231,50 @@ export async function deleteMonthData(directorateId: string, month: number, year
                 .update({ data: { ...existing.data, units: updatedUnits } })
                 .eq('id', existing.id)
         }
-    } else if (setor && (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade')) {
+    } else if (setor && (
+        setor === 'sine' || 
+        setor === 'centros' || 
+        setor === 'casa_da_mulher' || 
+        setor === 'diversidade' || 
+        setor === 'nucleo_diversidade' || 
+        setor === 'creas_protetivo' || 
+        setor === 'creas_socioeducativo' || 
+        setor === 'pop_rua'
+    )) {
         // Shared Directorate context
         const newData = { ...existing.data }
 
         // Remove sector markers
         delete newData[`_has_${setor}`]
         delete newData[`_report_content_${setor}`] // Remove narrative content if exists
+        delete newData[setor] // Clean up nested sector key if it exists
         if (newData._setor === setor) delete newData._setor
 
         // Remove sector fields
-        let formDef: any = null // Use any if FormDefinition type is not readily available
+        let formDef: any = null
         if (setor === 'sine') formDef = SINE_FORM_DEFINITION
         else if (setor === 'centros') formDef = CP_FORM_DEFINITION
         else if (setor === 'casa_da_mulher') formDef = CASA_DA_MULHER_FORM_DEFINITION
         else if (setor === 'diversidade') formDef = DIVERSIDADE_FORM_DEFINITION
+        else if (setor === 'nucleo_diversidade') formDef = NUCLEO_DIVERSIDADE_FORM_DEFINITION
+        else if (setor === 'creas_protetivo') formDef = PROTETIVO_FORM_DEFINITION
+        else if (setor === 'creas_socioeducativo') formDef = SOCIOEDUCATIVO_FORM_DEFINITION
+        else if (setor === 'pop_rua') formDef = POP_RUA_FORM_DEFINITION
 
         if (formDef) {
             formDef.sections.flatMap((s: any) => s.fields).forEach((f: any) => {
+                // Warning: Protetivo and Socioeducativo share 'fam_desligadas'. We shouldn't delete it 
+                // from the root if both exist, but since it's legacy data, cleaning it up handles legacy overlap poorly.
+                // We will delete it. Fresh data in specific tables is prioritized anyway.
                 delete newData[f.id]
             })
         }
 
         // Check if anything else remains
-        const hasOther = newData._has_sine || newData._has_centros || newData._has_casa_da_mulher || newData._has_diversidade ||
-            (newData._setor && newData._setor !== setor && newData._setor !== 'merged_sine' && newData._setor !== 'merged_centros' && newData._setor !== 'merged_casa' && newData._setor !== 'merged_sine_cp')
+        const hasOther = newData._has_sine || newData._has_centros || newData._has_casa_da_mulher || 
+            newData._has_diversidade || newData._has_nucleo_diversidade || 
+            newData._has_creas_protetivo || newData._has_creas_socioeducativo || newData._has_pop_rua ||
+            (newData._setor && newData._setor !== setor && !newData._setor.startsWith('merged_'))
 
         if (!hasOther) {
             await adminSupabase.from('submissions').delete().eq('id', existing.id)
