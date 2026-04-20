@@ -87,12 +87,12 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
     );
 }
 
-export function ServicesBarChart({ data, title = "Serviços Prestados" }: { data: any[], title?: string }) {
+export function ServicesBarChart({ data, title = "Serviços Prestados", color = "#3b82f6" }: { data: any[], title?: string, color?: string }) {
     return (
         <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
             <CardHeader className="p-8 pb-4">
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
                     {title}
                 </CardTitle>
             </CardHeader>
@@ -120,13 +120,13 @@ export function ServicesBarChart({ data, title = "Serviços Prestados" }: { data
                         />
                         <Bar
                             dataKey="value"
-                            fill="#3b82f6"
+                            fill={color}
                             radius={[0, 4, 4, 0]}
                             barSize={24}
                             label={{ position: 'right', fill: '#64748b', fontSize: 11, fontWeight: '800', dx: 10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
                         >
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#3b82f6' : '#60a5fa'} />
+                                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? color : `${color}cc`} />
                             ))}
                         </Bar>
                     </BarChart>

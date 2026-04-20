@@ -110,7 +110,7 @@ export function CasaMulherDashboard({ submissions, selectedMonth, selectedYear }
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <GenericPieChart title="Atendidas por Faixa Etária" data={ageChartData} colors={['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']} />
                 <GenericPieChart title="Atendidas por Cor/Raça" data={raceChartData} colors={['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']} />
-                <ServicesBarChart title="Tipos de Violência (Doméstica)" data={violChartData} dataKey="value" color="#f43f5e" />
+                <ServicesBarChart title="Tipos de Violência (Doméstica)" data={violChartData} color="#f43f5e" />
             </div>
         </div>
     )
