@@ -92,25 +92,7 @@ export function PopRuaDashboard({ submissions, selectedMonth, selectedYear, dire
 
     return (
         <div className="space-y-6">
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-[100] pointer-events-auto bg-white dark:bg-zinc-900 p-2 px-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all">
-                <div className="flex items-center gap-6">
-                    <Link href={`/dashboard/diretoria/${directorateId}`} className="transition-transform hover:scale-105">
-                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-zinc-200 dark:border-zinc-800"><ArrowLeft className="h-5 w-5 text-zinc-500" /></Button>
-                    </Link>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-600 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                            <h1 className="text-2xl font-black tracking-tight text-blue-900 dark:text-blue-50">Dashboard População de Rua <span className="text-blue-600/60 font-medium ml-2">{selectedYear}</span></h1>
-                        </div>
-                        <p className="text-[13px] font-medium text-zinc-500 ml-11 -mt-0.5">{selectedMonthName}</p>
-                    </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-6">
-                    <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest ml-1">Referência</span>
-                        <div className="flex items-center gap-3"><YearSelector currentYear={selectedYear} /><MonthSelector currentMonth={selectedMonth} /></div>
-                    </div>
-                </div>
-            </header>
+            {/* O cabeçalho foi movido para o PopRuaPageClient via DirectorateQuickActions */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
                 {/* Cards Row - Just 2 cards, aligned start? Image has them full width? Image has them nicely sized side by side. */}
