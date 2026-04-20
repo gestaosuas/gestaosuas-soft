@@ -439,7 +439,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     user_name: profile?.full_name || 'Usuário',
                     directorate_id: directorateId,
                     directorate_name: directorate.name,
-                    action_type: 'SUBMIT',
+                    action_type: 'CREATE',
                     resource_type: 'REPORT',
                     resource_name: `Relatório de ${month}/${year}`,
                     details: { setor, unit: unitName, month, year }
