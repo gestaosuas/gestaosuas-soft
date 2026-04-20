@@ -221,13 +221,19 @@ export default async function NewReportPage({
     }
 
     if (isPopRua) {
-        formDefinition = POP_RUA_FORM_DEFINITION
-        titleContext = "População de Rua e Migrantes"
+        return (
+            <div className="container mx-auto max-w-7xl py-4">
+                <PopRuaReportWrapper directorateId={directorate.id} month={new Date().getMonth() + 1} year={new Date().getFullYear()} isAdmin={isAdmin} />
+            </div>
+        )
     }
 
     if (isNAICA) {
-        formDefinition = NAICA_FORM_DEFINITION
-        titleContext = "NAICAs"
+        return (
+            <div className="container mx-auto max-w-7xl py-4">
+                <NaicaReportWrapper directorateId={directorate.id} directorateName={directorate.name} isAdmin={isAdmin} />
+            </div>
+        )
     }
 
     if (isSocioeducativo) {

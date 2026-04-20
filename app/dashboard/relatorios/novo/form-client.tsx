@@ -55,6 +55,7 @@ export function SubmissionFormClient({
     )
     const [alreadySubmitted, setAlreadySubmitted] = useState(false)
     const [showWarning, setShowWarning] = useState(true)
+    const [loadingOficinas, setLoadingOficinas] = useState(false)
 
     // Effect to check if submission already exists for the selected period
     useEffect(() => {
@@ -242,6 +243,7 @@ export function SubmissionFormClient({
 
         async function loadOficinas() {
             if (finalSetor === 'ceai' && finalSubcategory !== 'condominio' && finalUnit) {
+                setLoadingOficinas(true)
                 try {
                     const oficinas = await getOficinasComCategorias(finalUnit)
 
@@ -311,6 +313,8 @@ export function SubmissionFormClient({
                         setDynamicDefinition(definition)
                         setDynamicSteps(finalSetor === 'ceai' && finalSubcategory !== 'condominio' ? [{ title: "Atendimentos", sectionIndexes: [0] }] : [])
                     }
+                } finally {
+                    if (isMounted) setLoadingOficinas(false)
                 }
             } else {
                 if (isMounted) {
@@ -549,6 +553,13 @@ export function SubmissionFormClient({
                 alert(result.error)
             } else {
                 alert("Relatório enviado e sincronizado com sucesso!")
+                
+                const isModal = searchParamsHook?.get('modal') === 'true'
+                if (isModal) {
+                    window.parent.postMessage({ type: 'closeModal', refresh: true }, '*')
+                    return
+                }
+
                 if (finalSetor === 'beneficios') {
                     window.location.href = '/dashboard/diretoria/efaf606a-53ae-4bbc-996c-79f4354ce0f9'
                 } else if (finalSetor === 'centros' || finalSetor === 'sine') {
@@ -675,8 +686,18 @@ export function SubmissionFormClient({
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-4 lg:p-6 w-full overflow-x-hidden">
-                        {alreadySubmitted && !isAdmin && (
+                    <CardContent className="p-4 lg:p-6 w-full overflow-x-hidden min-h-[400px] flex flex-col justify-center">
+                        {loadingOficinas && (
+                            <div className="flex flex-col items-center justify-center space-y-4 py-20 animate-in fade-in duration-500">
+                                <div className="h-12 w-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+                                <div className="text-center space-y-1">
+                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">Carregando Oficinas...</p>
+                                    <p className="text-xs text-zinc-500 font-medium whitespace-nowrap">Sincronizando seções específicas para {finalUnit}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {!loadingOficinas && alreadySubmitted && !isAdmin && (
                             <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-4 text-amber-800 animate-in fade-in slide-in-from-top-2 duration-500">
                                 <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
                                     <AlertTriangle className="w-5 h-5" />
@@ -693,7 +714,7 @@ export function SubmissionFormClient({
                             </div>
                         )}
 
-                        {alreadySubmitted && isAdmin && (
+                        {!loadingOficinas && alreadySubmitted && isAdmin && (
                             <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-blue-800 animate-in fade-in slide-in-from-top-2 duration-500">
                                 <div className="flex items-start gap-4">
                                     <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
@@ -719,9 +740,9 @@ export function SubmissionFormClient({
                             </div>
                         )}
 
-                        {finalSetor === 'casa_da_mulher' || finalSetor === 'diversidade' || (finalSetor === 'ceai' && finalSubcategory !== 'condominio') ? (
+                        {!loadingOficinas && (finalSetor === 'casa_da_mulher' || finalSetor === 'diversidade' || (finalSetor === 'ceai' && finalSubcategory !== 'condominio')) ? (
                             <StepperForm
-                                key={`${month}-${year}-${finalUnit}-${finalSubcategory}-${dynamicDefinition.sections.length}-stepper`}
+                                key={`${month}-${year}-${finalUnit}-${finalSubcategory}-stepper`}
                                 definition={dynamicDefinition}
                                 initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}
@@ -740,9 +761,9 @@ export function SubmissionFormClient({
                                     ]
                                 }
                             />
-                        ) : (
+                        ) : !loadingOficinas && (
                             <FormEngine
-                                key={`${month}-${year}-${finalUnit}-${finalSubcategory}-${dynamicDefinition.sections.length}`}
+                                key={`${month}-${year}-${finalUnit}-${finalSubcategory}`}
                                 definition={dynamicDefinition}
                                 initialData={fetchedInitialData}
                                 onSubmit={handleSubmit}

@@ -124,20 +124,9 @@ export function ProtetivoDashboard({
     })
 
     // --------- CHART 3 & 4: Direitos Violados Masculino/Feminino (Pie Charts) ---------
-    const chart3_PieMasc = [
-        { name: "Violência Fís/Psic", value: Number(latestData.violencia_fis_psic_masc || 0) },
-        { name: "Abuso sexual", value: Number(latestData.abuso_sexual_masc || 0) },
-        { name: "Explo. Sexual", value: Number(latestData.exploracao_sexual_masc || 0) },
-        { name: "Negligência/Abandono", value: Number(latestData.negligencia_abandono_masc || 0) },
-        { name: "Trabalho Infantil", value: Number(latestData.trabalho_infantil_masc || 0) },
-    ].filter(d => d.value > 0)
-
-    const chart4_PieFem = [
-        { name: "Violência Fís/Psic", value: Number(latestData.violencia_fis_psic_fem || 0) },
-        { name: "Abuso sexual", value: Number(latestData.abuso_sexual_fem || 0) },
-        { name: "Explo. Sexual", value: Number(latestData.exploracao_sexual_fem || 0) },
-        { name: "Negligência/Abandono", value: Number(latestData.negligencia_abandono_fem || 0) },
-        { name: "Trabalho Infantil", value: Number(latestData.trabalho_infantil_fem || 0) },
+    const chart3_PieGender = [
+        { name: "Masculino", value: totalDV_Masc },
+        { name: "Feminino", value: totalDV_Fem }
     ].filter(d => d.value > 0)
 
     // Pie chart colors matching the image roughly
@@ -163,71 +152,29 @@ export function ProtetivoDashboard({
         <div className="space-y-8">
             <MetricsCards data={cardsData} monthName={selectedMonthName} />
 
-            {/* As requested: Crie os 4 primeiros na mesma linha, e os outros 3 embaixo deles. */}
-            {/* ROW 1: 4 Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            {/* 2x2 Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* 1. Direitos Violados (Line M/F) */}
                 <ComparisonLineChart
-                    title="Direitos Violados"
+                    title="Direitos Violados (Histórico)"
                     data={chart1_DV_MXF}
                     keys={['Masculino', 'Feminino']}
                     colors={['#3b82f6', '#f59e0b']}
                 />
 
-                {/* 2. Atendimentos Admitidas x Atual */}
-                <ComparisonLineChart
-                    title="Atendimentos Admitidos x Atual"
-                    data={chart2_Atend_AdmxAtual}
-                    keys={['ADMITIDAS', 'ATUAL']}
+                {/* 2. Direitos Violados (Unified Pie Gender) */}
+                <GenericPieChart
+                    title="Gênero (Direitos Violados)"
+                    data={chart3_PieGender}
                     colors={['#3b82f6', '#f59e0b']}
                 />
 
-                {/* 3. Direitos Violados Masculino */}
-                <GenericPieChart
-                    title="Direitos Violados Masculino"
-                    data={chart3_PieMasc}
-                    colors={pieColors}
-                />
-
-                {/* 4. Direitos Violados Feminino */}
-                <GenericPieChart
-                    title="Direitos Violados Feminino"
-                    data={chart4_PieFem}
-                    colors={pieColors}
-                />
-            </div>
-
-            {/* ROW 2: 3 Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-8">
-                {/* 5. Direitos Violados (Bar Chart Vertical) */}
-                <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                    <CardHeader className="p-8 pb-4">
-                        <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                            Direitos Violados
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px] p-8 pt-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chart5_BarGrouped} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                                <Bar dataKey="Masculino" fill="#3b82f6" label={{ position: 'top', fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Feminino" fill="#f59e0b" label={{ position: 'top', fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                {/* 6. Direitos Violados (Bar Chart Horizontal) */}
+                {/* 3. Direitos Violados (Bar Chart Horizontal) */}
                 <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
                     <CardHeader className="p-8 pb-4">
                         <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                             <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                            Direitos Violados
+                            Impacto por Categoria
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="h-[300px] p-8 pt-0">
@@ -245,9 +192,9 @@ export function ProtetivoDashboard({
                     </CardContent>
                 </Card>
 
-                {/* 7. Crianças e Adolescentes em Acompanhamento (Line Chart) */}
+                {/* 4. Crianças e Adolescentes em Acompanhamento (Line Chart) */}
                 <GenericLineChart
-                    title="Crianças e Adolescentes em Acompanhamento"
+                    title="Crianças/Adolescentes (Acomp.)"
                     data={chart7_CriancasAcompanhamento}
                     dataKey="ATUAL"
                     color="#3b82f6"

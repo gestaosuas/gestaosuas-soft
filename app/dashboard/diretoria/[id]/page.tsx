@@ -18,6 +18,8 @@ import { SineCpPageClient } from "@/components/sine-cp-page-client"
 import { CeaiPageClient } from "@/components/ceai-page-client"
 import { CreasPageClient } from "@/components/creas-page-client"
 import { PopRuaPageClient } from "@/components/pop-rua-page-client"
+import { NaicaPageClient } from "@/components/naica-page-client"
+import { CasaMulherPageClient } from "@/components/casa-mulher-page-client"
 import { cn } from "@/lib/utils"
 import { CEAIOficinasModals } from "@/components/ceai-oficinas-modals"
 import { SubvencaoDashboardCharts } from "@/components/subvencao-dashboard-charts"
@@ -152,7 +154,7 @@ export default async function DirectoratePage({
 
     return (
         <div className="space-y-6">
-            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && !isCREAS && !isPopRua && !isMonitoramento && (
+            {!isBeneficios && !isCRAS && !isSINE && !isCP && !isCEAI && !isCREAS && !isPopRua && !isNAICA && !isCasaDaMulher && !isMonitoramento && (
                 <header className="space-y-1">
                     <h1 className="text-3xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-blue-50">
                         {directorate.name}
@@ -255,72 +257,12 @@ export default async function DirectoratePage({
                     title={directorate.name}
                 />
             ) : isNAICA ? (
-                <div className="space-y-6">
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Consolidado NAICA</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {[
-                                { label: "Ver Dados", href: `/dashboard/dados?setor=naica&directorate_id=${directorate.id}`, icon: Database },
-                                { label: "Dashboard", href: `/dashboard/graficos?setor=naica&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=naica&directorate_id=${directorate.id}`, icon: FileText },
-                                { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=naica&directorate_id=${directorate.id}`, icon: FolderOpen },
-                            ].map((item, idx) => {
-                                const theme = getCardTheme(item.label);
-                                return (
-                                    <Link key={idx} href={item.href} className="group">
-                                        <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                            <div className={`p-2.5 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                <item.icon className={`w-5 h-5 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                        </Card>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </section>
-
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-1 w-6 bg-green-600 dark:bg-green-400 rounded-full"></div>
-                            <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Unidades NAICA</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {filteredNAICA.map((unit, idx) => {
-                                const unitSubmissions = submissions?.filter(s => {
-                                    if (s.data._is_multi_unit && s.data.units) {
-                                        return !!s.data.units[unit]
-                                    }
-                                    return s.data._unit === unit
-                                })
-                                const unitLatestSub = unitSubmissions?.[0]
-                                const latestUnitMonth = unitLatestSub ? getMonthName(unitLatestSub.month) : null
-                                const theme = getCardTheme("Atualizar Dados");
-
-                                return (
-                                    <Link key={idx} href={`/dashboard/relatorios/novo?setor=naica&directorate_id=${directorate.id}&unit=${encodeURIComponent(unit)}`} className="group">
-                                        <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                            <div className={`p-2 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-1.5 shadow-sm relative z-10`}>
-                                                <FilePlus className={`w-4 h-4 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                            </div>
-                                            <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 mb-0.5 relative z-10">{unit}</CardTitle>
-                                            <div className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 relative z-10">Atualizar</div>
-                                            {latestUnitMonth && (
-                                                <div className="flex items-center justify-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900/50 rounded-full w-fit relative z-10">
-                                                    <CheckCircle2 className="w-2 h-2 text-green-600 dark:text-green-400" />
-                                                    <span className="text-[7.5px] font-black text-green-700 dark:text-green-400 uppercase tracking-tight">Mês: {latestUnitMonth}</span>
-                                                </div>
-                                            )}
-                                        </Card>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </section>
-                </div>
+                <NaicaPageClient 
+                    directorate={directorate}
+                    submissions={submissions}
+                    currentYear={currentYear}
+                    filteredNAICA={filteredNAICA}
+                />
             ) : isPopRua ? (
                 <PopRuaPageClient 
                     directorate={directorate}
@@ -385,103 +327,11 @@ export default async function DirectoratePage({
                     </section>
                 </div>
             ) : isCasaDaMulher ? (
-                <div className="space-y-6">
-                    {(() => {
-                        const getCardTheme = (label: string) => {
-                            if (label.includes("Atualizar")) return { base: "indigo", border: "hover:border-indigo-500", iconBg: "bg-indigo-50 dark:bg-indigo-900/20", iconActive: "group-hover:bg-indigo-600", iconText: "text-indigo-600 dark:text-indigo-400" };
-                            if (label.includes("Ver Dados") || label.includes("Dados")) return { base: "emerald", border: "hover:border-emerald-500", iconBg: "bg-emerald-50 dark:bg-emerald-900/20", iconActive: "group-hover:bg-emerald-600", iconText: "text-emerald-600 dark:text-emerald-400" };
-                            if (label.includes("Dashboard") || label.includes("Gráficos")) return { base: "amber", border: "hover:border-amber-500", iconBg: "bg-amber-50 dark:bg-amber-900/20", iconActive: "group-hover:bg-amber-600", iconText: "text-amber-600 dark:text-amber-400" };
-                            if (label.includes("Mensal")) return { base: "violet", border: "hover:border-violet-500", iconBg: "bg-violet-50 dark:bg-violet-900/20", iconActive: "group-hover:bg-violet-600", iconText: "text-violet-600 dark:text-violet-400" };
-                            if (label.includes("Ver Relatórios") || label.includes("Histórico")) return { base: "sky", border: "hover:border-sky-500", iconBg: "bg-sky-50 dark:bg-sky-900/20", iconActive: "group-hover:bg-sky-600", iconText: "text-sky-600 dark:text-sky-400" };
-                            return { base: "zinc", border: "hover:border-zinc-500", iconBg: "bg-zinc-50 dark:bg-zinc-800", iconActive: "group-hover:bg-zinc-600", iconText: "text-zinc-500" };
-                        };
-
-                        return (
-                            <>
-                                {/* Casa da Mulher */}
-                                <section className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-1 w-6 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Casa da Mulher - Violência Doméstica</h2>
-                                    </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                        {[
-                                            { label: "Atualizar Dados", href: `/dashboard/relatorios/novo?setor=casa_da_mulher&directorate_id=${directorate.id}`, icon: FilePlus },
-                                            { label: "Ver Dados", href: `/dashboard/dados?setor=casa_da_mulher&directorate_id=${directorate.id}`, icon: Database },
-                                            { label: "Dashboard", href: `/dashboard/graficos?setor=casa_da_mulher&directorate_id=${directorate.id}`, icon: BarChart3 },
-                                            { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=casa_da_mulher&directorate_id=${directorate.id}`, icon: FileText },
-                                            { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=casa_da_mulher&directorate_id=${directorate.id}`, icon: FolderOpen },
-                                        ].map((item, idx) => {
-                                            const theme = getCardTheme(item.label);
-                                            return (
-                                                <Link key={idx} href={item.href} className="group">
-                                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                                        <div className={`p-2.5 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                            <item.icon className={`w-5 h-5 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                                        </div>
-                                                        <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                                    </Card>
-                                                </Link>
-                                            )
-                                        })}
-                                    </div>
-                                </section>
-
-                                {/* Diversidade */}
-                                <section className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-1 w-6 bg-purple-600 dark:bg-purple-400 rounded-full"></div>
-                                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Casa da Mulher - Atendimentos Diversos</h2>
-                                    </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                        {[
-                                            { label: "Atualizar Dados", href: `/dashboard/relatorios/novo?setor=diversidade&directorate_id=${directorate.id}`, icon: FilePlus },
-                                            { label: "Ver Dados", href: `/dashboard/dados?setor=diversidade&directorate_id=${directorate.id}`, icon: Database },
-                                        ].map((item, idx) => {
-                                            const theme = getCardTheme(item.label);
-                                            return (
-                                                <Link key={idx} href={item.href} className="group">
-                                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                                        <div className={`p-2.5 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                            <item.icon className={`w-5 h-5 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                                        </div>
-                                                        <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                                    </Card>
-                                                </Link>
-                                            )
-                                        })}
-                                    </div>
-                                </section>
-
-                                {/* Núcleo de Diversidade */}
-                                <section className="space-y-8">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-1 w-6 bg-pink-600 dark:bg-pink-400 rounded-full"></div>
-                                        <h2 className="text-[12px] font-bold text-blue-900/60 dark:text-blue-400/60 uppercase tracking-[0.2em]">Núcleo de Diversidade</h2>
-                                    </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                                        {[
-                                            { label: "Atualizar Dados", href: `/dashboard/relatorios/novo?setor=nucleo_diversidade&directorate_id=${directorate.id}`, icon: FilePlus },
-                                            { label: "Ver Dados", href: `/dashboard/dados?setor=nucleo_diversidade&directorate_id=${directorate.id}`, icon: Database },
-                                        ].map((item, idx) => {
-                                            const theme = getCardTheme(item.label);
-                                            return (
-                                                <Link key={idx} href={item.href} className="group">
-                                                    <Card className={`h-full min-h-[90px] bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 shadow-none ${theme.border} transition-all duration-300 rounded-xl group-hover:shadow-lg flex flex-col items-center justify-center p-2.5 text-center relative overflow-hidden`}>
-                                                        <div className={`p-2.5 ${theme.iconBg} rounded-lg ${theme.iconActive} transition-all duration-300 mb-2 shadow-sm relative z-10`}>
-                                                            <item.icon className={`w-5 h-5 ${theme.iconText} group-hover:text-white transition-colors`} />
-                                                        </div>
-                                                        <CardTitle className="text-[11px] font-bold text-blue-900 dark:text-blue-100 transition-colors leading-tight px-1 relative z-10">{item.label}</CardTitle>
-                                                    </Card>
-                                                </Link>
-                                            )
-                                        })}
-                                    </div>
-                                </section>
-                            </>
-                        )
-                    })()}
-                </div>
+                <CasaMulherPageClient 
+                    directorate={directorate}
+                    submissions={submissions}
+                    currentYear={currentYear}
+                />
             ) : (
                 <div className="flex flex-col items-center justify-center py-20 bg-zinc-50/30 dark:bg-zinc-900/20 rounded-[2.5rem] border border-dashed border-zinc-200 dark:border-zinc-800">
                     <div className="p-5 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 mb-6">

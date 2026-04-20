@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -31,6 +31,7 @@ export function CreasPcdForm({
     isAdmin: boolean 
 }) {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [loading, setLoading] = useState(false)
     const formRef = useRef<HTMLFormElement>(null)
     const [totals, setTotals] = useState<Record<string, number>>({})
@@ -93,6 +94,13 @@ export function CreasPcdForm({
             alert(`Erro ao salvar: ${result.error}`)
         } else {
             alert("Relatório salvo com sucesso!")
+            
+            const isModal = searchParams?.get('modal') === 'true'
+            if (isModal) {
+                window.parent.postMessage({ type: 'closeModal', refresh: true }, '*')
+                return
+            }
+
             router.push(`/dashboard/diretoria/${directorateId}`)
             router.refresh()
         }

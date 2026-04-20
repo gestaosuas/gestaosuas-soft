@@ -65,6 +65,8 @@ export function StepperForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
+        e.stopPropagation() // Prevent event bubbling
+        
         if (currentStep === stepsConfig.length - 1) {
             onSubmit(formData)
         } else {
@@ -178,7 +180,11 @@ export function StepperForm({
                         {currentStep < stepsConfig.length - 1 ? (
                             <Button
                                 type="button"
-                                onClick={nextStep}
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    nextStep()
+                                }}
                                 disabled={disabled}
                                 className="h-12 px-10 bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600 font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20 uppercase tracking-widest text-[11px] gap-2"
                             >

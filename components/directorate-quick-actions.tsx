@@ -58,7 +58,23 @@ export function DirectorateQuickActions({ title, defaultOpen = false, children, 
         } else {
             document.body.classList.remove('overflow-hidden')
         }
-        return () => { document.body.classList.remove('overflow-hidden') }
+        
+        // Listen for messages from iframe
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'closeModal' || event.data === 'closeModal') {
+                setModalUrl(null)
+                // Optional: trigger a refresh or specific action on parent
+                if (event.data?.refresh) {
+                    window.location.reload()
+                }
+            }
+        }
+        
+        window.addEventListener('message', handleMessage)
+        return () => { 
+            document.body.classList.remove('overflow-hidden')
+            window.removeEventListener('message', handleMessage)
+        }
     }, [modalUrl])
 
     return (

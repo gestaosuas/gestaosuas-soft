@@ -124,12 +124,7 @@ export function SocioeducativoDashboard({
         { name: "Fem", value: Number(latestData.fem_admitidos || 0) },
     ].filter(d => d.value > 0)
 
-    // --------- CHART 5: Crianças e Adolescentes em Acompanhamento (Line Chart) ---------
-    const chart5_Acompanhamento = monthNames.map((name, index) => {
-        const mData = dataByMonth.get(index + 1) || {}
-        const totalAcompanhamento = Number(mData.masc_total_parcial || 0) + Number(mData.fem_total_parcial || 0)
-        return { name, Total: totalAcompanhamento }
-    })
+    // Chart 5 (Acompanhamento) was removed as requested
 
 
     return (
@@ -202,17 +197,7 @@ export function SocioeducativoDashboard({
                 />
             </div>
 
-            {/* ROW 3: 1 Chart */}
-            <div className="grid grid-cols-1 gap-8">
-                {/* 5. Adolescentes em Acompanhamento (Line Chart) */}
-                <GenericLineChart
-                    title="Adolescentes em Acompanhamento"
-                    data={chart5_Acompanhamento}
-                    dataKey="Total"
-                    color="#3b82f6"
-                />
-            </div>
-
+            {/* Last row removed as requested */}
         </div>
     )
 }

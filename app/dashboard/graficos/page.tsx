@@ -8,6 +8,8 @@ import { CreasDashboard } from "./creas-dashboard"
 import { ProtetivoDashboard } from "./protetivo-dashboard"
 import { SocioeducativoDashboard } from "./socioeducativo-dashboard"
 import { PopRuaDashboard } from "./pop-rua-dashboard"
+import { NaicaDashboard } from "./naica-dashboard"
+import { CasaMulherDashboard } from "./casa-mulher-dashboard"
 import { FormDefinition } from "@/components/form-engine"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -480,114 +482,9 @@ export default async function GraficosPage({
         )
     }
 
-    // --- NAICA Dashboard ---
     if (isNAICA) {
         const selectedUnit = unit || 'all'
         const selectedMonth = month || 'all'
-        const unitDataByMonth = new Map<number, any>()
-
-        submissions.forEach(sub => {
-            let dataToUse = null
-            if (selectedUnit === 'all') {
-                const sumData: any = {}
-                if (sub.data._is_multi_unit && sub.data.units) {
-                    Object.values(sub.data.units).forEach((uData: any) => {
-                        Object.keys(uData).forEach(key => {
-                            const val = Number(uData[key])
-                            if (!isNaN(val)) {
-                                sumData[key] = (sumData[key] || 0) + val
-                            }
-                        })
-                    })
-                } else {
-                    Object.keys(sub.data).forEach(key => {
-                        const val = Number(sub.data[key])
-                        if (!isNaN(val)) {
-                            sumData[key] = (sumData[key] || 0) + val
-                        }
-                    })
-                }
-                dataToUse = sumData
-            } else {
-                if (sub.data._is_multi_unit && sub.data.units?.[selectedUnit]) {
-                    dataToUse = sub.data.units[selectedUnit]
-                } else if (sub.data._unit === selectedUnit) {
-                    dataToUse = sub.data
-                }
-            }
-            if (dataToUse) unitDataByMonth.set(sub.month, dataToUse)
-        })
-
-        const monthsWithData = Array.from(unitDataByMonth.keys()).sort((a, b) => b - a)
-        const selectedMonthNum = selectedMonth === 'all' ? 0 : Number(selectedMonth)
-        let latestData: any = {}
-        let selectedMonthName = ""
-
-        if (selectedMonth === 'all') {
-            selectedMonthName = "Ano Inteiro"
-            unitDataByMonth.forEach((mData) => {
-                ['inseridos_masc', 'inseridos_fem', 'desligados_masc', 'desligados_fem'].forEach(key => {
-                    const val = Number(mData[key])
-                    if (!isNaN(val)) latestData[key] = (latestData[key] || 0) + val
-                })
-            })
-            if (monthsWithData.length > 0) {
-                const lastMonthData = unitDataByMonth.get(monthsWithData[0])
-                latestData.total_atendidas = lastMonthData?.total_atendidas
-                latestData.mes_anterior_masc = lastMonthData?.mes_anterior_masc
-                latestData.mes_anterior_fem = lastMonthData?.mes_anterior_fem
-            }
-        } else {
-            latestData = unitDataByMonth.get(selectedMonthNum) || {}
-            selectedMonthName = monthNames[selectedMonthNum - 1] || "N/A"
-        }
-
-        const getHistory = (id: string) => monthNames.map((name, i) => ({
-            name,
-            value: Number(unitDataByMonth.get(i + 1)?.[id] || 0)
-        }))
-
-        const getTrend = (id: string) => {
-            const currentMonthNum = selectedMonthNum || (monthsWithData.length > 0 ? monthsWithData[0] : 0)
-            if (!currentMonthNum || currentMonthNum === 1) return 0
-            const currentVal = Number(unitDataByMonth.get(currentMonthNum)?.[id] || 0)
-            const prevVal = Number(unitDataByMonth.get(currentMonthNum - 1)?.[id] || 0)
-            if (prevVal === 0) return currentVal > 0 ? 100 : 0
-            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
-        }
-
-        // Metrics calculations
-        const admitidos = (Number(latestData.inseridos_masc) || 0) + (Number(latestData.inseridos_fem) || 0)
-        const desligados = (Number(latestData.desligados_masc) || 0) + (Number(latestData.desligados_fem) || 0)
-        const emAcompanhamento = (Number(latestData.total_atendidas) || 0)
-
-        // Capacidade estimada (exemplo: 120 por NAICA)
-        const capacidadeTotal = selectedUnit === 'all' ? 120 * NAICA_UNITS.length : 120
-        const taxaOcupacao = emAcompanhamento > 0 ? ((emAcompanhamento / capacidadeTotal) * 100).toFixed(1) : "0.0"
-        const taxaRetencao = emAcompanhamento > 0 ? (((emAcompanhamento - desligados) / emAcompanhamento) * 100).toFixed(1) : "0.0"
-
-        const cardsData = [
-            { label: "Total em Acompanhamento", value: emAcompanhamento, color: "#3b82f6", trend: getTrend('total_atendidas'), history: getHistory('total_atendidas') },
-            { label: "Taxa de Ocupação", value: `${taxaOcupacao}%`, color: "#8b5cf6" },
-            { label: "Taxa de Retenção", value: `${taxaRetencao}%`, color: "#10b981" },
-            { label: "Admitidos Masculino", value: Number(latestData.inseridos_masc || 0), color: "#3b82f6", trend: getTrend('inseridos_masc'), history: getHistory('inseridos_masc') },
-            { label: "Admitidos Feminino", value: Number(latestData.inseridos_fem || 0), color: "#f472b6", trend: getTrend('inseridos_fem'), history: getHistory('inseridos_fem') },
-        ]
-
-        const naicaChartData = monthNames.map((name, index) => {
-            const mData = unitDataByMonth.get(index + 1) || {}
-            return {
-                name,
-                acompanhamento: Number(mData.total_atendidas || 0),
-                admitidos: (Number(mData.inseridos_masc) || 0) + (Number(mData.inseridos_fem) || 0),
-                desligados: (Number(mData.desligados_masc) || 0) + (Number(mData.desligados_fem) || 0)
-            }
-        })
-
-        const pieData = [
-            { name: "Feminino", value: Number(latestData.inseridos_fem || 0) },
-            { name: "Masculino", value: Number(latestData.inseridos_masc || 0) }
-        ].filter(d => d.value > 0)
 
         return (
             <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
@@ -605,7 +502,7 @@ export default async function GraficosPage({
                             <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
                                 <span className="text-blue-600">Unidade {selectedUnit === 'all' ? "Geral" : selectedUnit}</span>
                                 <span className="text-zinc-300">•</span>
-                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados de Referência`}
                             </p>
                         </div>
                     </div>
@@ -628,13 +525,12 @@ export default async function GraficosPage({
                     </div>
                 </header>
 
-                <MetricsCards data={cardsData} monthName={selectedMonthName} />
-
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    <GenericLineChart title="Crianças e Adolescentes em Acompanhamento" data={naicaChartData} dataKey="acompanhamento" color="#3b82f6" />
-                    <ComparisonLineChart title="Admitidos e Desligados" data={naicaChartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} keys={['Admitidos', 'Desligados']} colors={['#10b981', '#ef4444']} />
-                    <GenericPieChart title="Crianças e Adolescentes Admitidos" data={pieData} colors={['#f472b6', '#3b82f6']} />
-                </div>
+                <NaicaDashboard 
+                    submissions={submissions}
+                    selectedMonth={selectedMonth}
+                    selectedYear={selectedYear}
+                    selectedUnit={selectedUnit}
+                />
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )
@@ -1062,121 +958,8 @@ export default async function GraficosPage({
         )
     }
 
-    // --- Casa da Mulher Dashboard ---
-    if (isCasaDaMulher) {
-        let selectedMonthNum = 0
-        if (month && month !== 'all') {
-            selectedMonthNum = Number(month)
-        }
-
-        const dataByMonth = new Map<number, any>()
-        const monthsWithData = new Set<number>()
-
-        submissions.forEach(sub => {
-            const dataToUse = sub.data || {}
-            // In Casa da Mulher, we aggregate by sector across the month
-            const currentData = dataByMonth.get(sub.month) || {}
-
-            // Sum all numerical fields
-            Object.keys(dataToUse).forEach(k => {
-                if (k.startsWith('_')) return
-                const val = Number(dataToUse[k])
-                if (!isNaN(val)) {
-                    currentData[k] = (currentData[k] || 0) + val
-                }
-            })
-
-            dataByMonth.set(sub.month, currentData)
-            monthsWithData.add(sub.month)
-        })
-
-        const monthsWithDataGlobal = Array.from(monthsWithData).sort((a, b) => b - a)
-
-        // Se `month`='all', latestData é a soma de todos os meses, se for um mês específico, é só ele
-        let latestData: any = {}
-        if (selectedMonthNum > 0) {
-            latestData = dataByMonth.get(selectedMonthNum) || {}
-        } else {
-            // Aggregate all year if 'all'
-            dataByMonth.forEach((mData) => {
-                Object.keys(mData).forEach(k => {
-                    latestData[k] = (latestData[k] || 0) + mData[k]
-                })
-            })
-        }
-
-        const sumFields = (data: any, fields: string[]) => fields.reduce((acc, f) => acc + (Number(data[f]) || 0), 0)
-
-        const getTrend = (id: string) => {
-            const currentMonthNum = selectedMonthNum || monthsWithDataGlobal[0] || 0
-            if (!currentMonthNum || currentMonthNum === 1) return 0
-            const currentVal = Number(dataByMonth.get(currentMonthNum)?.[id] || 0)
-            const prevVal = Number(dataByMonth.get(currentMonthNum - 1)?.[id] || 0)
-            if (prevVal === 0) return currentVal > 0 ? 100 : 0
-            return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
-        }
-
-        const getHistory = (id: string) => monthNames.map((name, i) => ({
-            name,
-            value: Number(dataByMonth.get(i + 1)?.[id] || 0)
-        }))
-
-        // Keys
-        const k_vio_domestica = "cm_atend_mulheres_atendidas"
-        const k_atend_diversos = "div_atend_mulheres_atendidas"
-        const k_nucleo_diversidade = "div_atend_nucleo_diversidade"
-
-        const cardsData = [
-            { label: "Violência Doméstica (Total)", value: Number(latestData[k_vio_domestica] || 0), color: "#0ea5e9", trend: getTrend(k_vio_domestica), history: getHistory(k_vio_domestica) },
-            { label: "Atend. Diversos (Total)", value: Number(latestData[k_atend_diversos] || 0), color: "#0ea5e9", trend: getTrend(k_atend_diversos), history: getHistory(k_atend_diversos) },
-            { label: "Núcleo Diversidade (Total)", value: Number(latestData[k_nucleo_diversidade] || 0), color: "#0ea5e9", trend: getTrend(k_nucleo_diversidade), history: getHistory(k_nucleo_diversidade) },
-        ]
-
-        // Faixa Etária (Rosca) - Combina cm e div
-        let ageFields = [
-            { name: "16 à 17 anos", keys: ["cm_faixa_16_17", "div_faixa_16_17"] },
-            { name: "18 à 30 anos", keys: ["cm_faixa_18_30", "div_faixa_18_30"] },
-            { name: "31 à 40 anos", keys: ["cm_faixa_31_40", "div_faixa_31_40"] },
-            { name: "41 à 50 anos", keys: ["cm_faixa_41_50", "div_faixa_41_50"] },
-            { name: "51 à 60 anos", keys: ["cm_faixa_51_60", "div_faixa_51_60"] },
-            { name: "Acima de 60", keys: ["cm_faixa_acima_60", "div_faixa_acima_60"] }
-        ]
-        const ageChartData = ageFields.map(field => ({
-            name: field.name,
-            value: sumFields(latestData, field.keys)
-        })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
-
-        // Cor/Raça (Rosca) - Combina cm e div
-        let raceFields = [
-            { name: "Branca", keys: ["cm_raca_branca", "div_raca_branca"] },
-            { name: "Preta", keys: ["cm_raca_preta", "div_raca_preta"] },
-            { name: "Parda", keys: ["cm_raca_parda", "div_raca_parda"] },
-            { name: "Amarela", keys: ["cm_raca_amarelo", "div_raca_amarela"] },
-            { name: "Indígena", keys: ["cm_raca_indigena", "div_raca_indigena"] },
-            { name: "Não Consta", keys: ["cm_raca_nao_consta", "div_raca_nao_consta"] }
-        ]
-        const raceChartData = raceFields.map(field => ({
-            name: field.name,
-            value: sumFields(latestData, field.keys)
-        })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
-
-        // Violência Bar Chart
-        let violFields = [
-            { name: "Física", key: "cm_violencia_fisica" },
-            { name: "Moral", key: "cm_violencia_moral" },
-            { name: "Psicológica", key: "cm_violencia_psicologica" },
-            { name: "Sexual", key: "cm_violencia_sexual" },
-            { name: "Patrimonial", key: "cm_violencia_patrimonial" },
-            { name: "Nenhuma", key: "cm_violencia_nenhuma" },
-            { name: "Outras", key: "cm_violencia_outras" },
-        ]
-        const violChartData = violFields.map(field => ({
-            name: field.name,
-            value: Number(latestData[field.key]) || 0
-        })).sort((a, b) => b.value - a.value).filter(d => d.value > 0)
-
-        const selectedMonthName = selectedMonthNum > 0 ? monthNames[selectedMonthNum - 1] : "Ano Todo"
-        const selectedMonthInput = selectedMonthNum > 0 ? String(selectedMonthNum) : "all"
+    if (isCasaDaMulher || isDiversidade) {
+        const selectedMonth = month || 'all'
 
         return (
             <div className="min-h-screen p-4 sm:p-8 space-y-8 pb-12">
@@ -1192,7 +975,7 @@ export default async function GraficosPage({
                                 Dashboard Casa da Mulher <span className="text-blue-600 font-bold">{selectedYear}</span>
                             </h1>
                             <p className="text-[14px] font-semibold text-zinc-400 mt-1 uppercase tracking-tight flex items-center gap-2">
-                                {selectedMonthInput === 'all' ? "Visão Anual" : `Resultados de ${selectedMonthName}`}
+                                {selectedMonth === 'all' ? "Visão Anual" : `Resultados Mensais`}
                             </p>
                         </div>
                     </div>
@@ -1202,19 +985,17 @@ export default async function GraficosPage({
                             <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 ml-1">Referência</span>
                             <div className="flex items-center gap-2">
                                 <YearSelector currentYear={selectedYear} />
-                                <MonthSelector currentMonth={selectedMonthInput} />
+                                <MonthSelector currentMonth={selectedMonth} />
                             </div>
                         </div>
                     </div>
                 </header>
 
-                <MetricsCards data={cardsData} monthName={selectedMonthName} />
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    <GenericPieChart title="Faixa Etária" data={ageChartData} colors={['#7dd3fc', '#0ea5e9', '#0284c7', '#fb923c', '#f87171', '#4ade80', '#9ca3af']} />
-                    <GenericPieChart title="Cor/Raça" data={raceChartData} colors={['#0ea5e9', '#0284c7', '#38bdf8', '#7dd3fc', '#fecaca', '#ef4444']} />
-                    <ServicesBarChart data={violChartData} title="Tipo de Violência" />
-                </div>
+                <CasaMulherDashboard 
+                    submissions={submissions}
+                    selectedMonth={selectedMonth}
+                    selectedYear={selectedYear}
+                />
                 <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">* SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG</div>
             </div>
         )
