@@ -455,7 +455,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
 
             let mergedData;
             const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
-            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade')
+            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'pop_rua')
 
             mergedData = { ...existing.data }
 
@@ -475,8 +475,8 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             } else if (isShared) {
                 mergedData = {
                     ...mergedData,
-                    ...formData,
-                    _setor: `merged_${setor.split('_')[0]}`,
+                    [setor!]: formData,
+                    _setor: `merged_${setor!.split('_')[0]}`,
                     [`_has_${setor}`]: true
                 }
             } else {
@@ -497,7 +497,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             // New Submission
             let finalData: any;
             const isMultiUnit = (setor === 'cras' || setor === 'ceai' || setor === 'naica')
-            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade')
+            const isShared = (setor === 'sine' || setor === 'centros' || setor === 'casa_da_mulher' || setor === 'diversidade' || setor === 'nucleo_diversidade' || setor === 'creas_protetivo' || setor === 'creas_socioeducativo' || setor === 'pop_rua')
 
             if (isMultiUnit) {
                 const unitName = formData._unit || 'Principal'
@@ -510,7 +510,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     [`_has_${setor}`]: true
                 }
             } else if (isShared) {
-                finalData = { ...formData, _setor: setor, [`_has_${setor}`]: true }
+                finalData = { [setor!]: formData, _setor: setor, [`_has_${setor}`]: true }
             } else {
                 finalData = { ...formData, _setor: setor }
             }
@@ -2014,6 +2014,21 @@ export async function getCurrentMonthData(directorateId: string, month: number, 
     } else if (setor === 'cras') {
         const { data: cras } = await supabase.from('cras_reports').select('*').eq('directorate_id', directorateId).eq('unit_name', unit || '').eq('month', month).eq('year', year).maybeSingle();
         if (cras) return cleanse(cras);
+    } else if (setor === 'creas_protetivo') {
+        const { data: cp } = await supabase.from('creas_protetivo_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (cp) return cleanse(cp);
+    } else if (setor === 'creas_socioeducativo') {
+        const { data: cs } = await supabase.from('creas_socioeducativo_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (cs) return cleanse(cs);
+    } else if (setor === 'casa_da_mulher') {
+        const { data: cm } = await supabase.from('casa_da_mulher_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (cm) return cleanse(cm);
+    } else if (setor === 'diversidade') {
+        const { data: div } = await supabase.from('diversidade_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (div) return cleanse(div);
+    } else if (setor === 'nucleo_diversidade') {
+        const { data: nd } = await supabase.from('nucleo_diversidade_reports').select('*').eq('directorate_id', directorateId).eq('month', month).eq('year', year).maybeSingle();
+        if (nd) return cleanse(nd);
     }
     
     function cleanse(found: any) {

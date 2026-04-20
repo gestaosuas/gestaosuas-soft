@@ -257,7 +257,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                     delete (cleanData as any).user_id;
 
                     if (existingIdx > -1) {
-                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_sine: true };
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, sine: cleanData, _has_sine: true };
                     } else {
                         finalSubmissions.push({
                             id: sine.id,
@@ -266,7 +266,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                             directorate_id: directorateId,
                             user_id: sine.user_id,
                             created_at: sine.created_at,
-                            data: { ...cleanData, _has_sine: true, _setor: 'sine' },
+                            data: { sine: cleanData, _has_sine: true, _setor: 'sine' },
                             profiles: { full_name: profileMap[sine.user_id] || 'Usuário' }
                         } as any);
                     }
@@ -282,7 +282,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                     delete (cleanData as any).user_id;
 
                     if (existingIdx > -1) {
-                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_centros: true };
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, centros: cleanData, _has_centros: true };
                     } else {
                         finalSubmissions.push({
                             id: q.id,
@@ -291,7 +291,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                             directorate_id: directorateId,
                             user_id: q.user_id,
                             created_at: q.created_at,
-                            data: { ...cleanData, _has_centros: true, _setor: 'centros' },
+                            data: { centros: cleanData, _has_centros: true, _setor: 'centros' },
                             profiles: { full_name: profileMap[q.user_id] || 'Usuário' }
                         } as any);
                     }
@@ -401,7 +401,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                     delete (cleanData as any).user_id;
 
                     if (existingIdx > -1) {
-                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, _has_pop_rua: true };
+                        finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, pop_rua: cleanData, _has_pop_rua: true };
                     } else {
                         finalSubmissions.push({
                             id: pop.id,
@@ -410,7 +410,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                             directorate_id: directorateId,
                             user_id: pop.user_id,
                             created_at: pop.created_at,
-                            data: { ...cleanData, _has_pop_rua: true, _setor: 'pop_rua' },
+                            data: { pop_rua: cleanData, _has_pop_rua: true, _setor: 'pop_rua' },
                             profiles: { full_name: profileMap[pop.user_id] || 'Usuário' }
                         } as any);
                     }
@@ -475,11 +475,11 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                         delete (cleanData as any).id;
                         delete (cleanData as any).user_id;
                         if (existingIdx > -1) {
-                            finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, [`_has_${sector}`]: true };
+                            finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, [sector]: cleanData, [`_has_${sector}`]: true };
                         } else {
                             finalSubmissions.push({
                                 id: report.id, month: report.month, year: report.year, directorate_id: directorateId, user_id: report.user_id, created_at: report.created_at,
-                                data: { ...cleanData, [`_has_${sector}`]: true, _setor: sector },
+                                data: { [sector]: cleanData, [`_has_${sector}`]: true, _setor: sector },
                                 profiles: { full_name: profileMap[report.user_id] || 'Usuário' }
                             } as any);
                         }
@@ -497,11 +497,11 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
                         delete (cleanData as any).id;
                         delete (cleanData as any).user_id;
                         if (existingIdx > -1) {
-                            finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, ...cleanData, [`_has_${sector}`]: true };
+                            finalSubmissions[existingIdx].data = { ...finalSubmissions[existingIdx].data, [sector]: cleanData, [`_has_${sector}`]: true };
                         } else {
                             finalSubmissions.push({
                                 id: report.id, month: report.month, year: report.year, directorate_id: directorateId, user_id: report.user_id, created_at: report.created_at,
-                                data: { ...cleanData, [`_has_${sector}`]: true, _setor: sector },
+                                data: { [sector]: cleanData, [`_has_${sector}`]: true, _setor: sector },
                                 profiles: { full_name: profileMap[report.user_id] || 'Usuário' }
                             } as any);
                         }

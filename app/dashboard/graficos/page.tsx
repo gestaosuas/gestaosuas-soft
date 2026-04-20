@@ -143,7 +143,7 @@ export default async function GraficosPage({
     }
 
     const allSubmissions = await getCachedSubmissionsForUser(user.id, directorate.id)
-    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade']
+    const sharedSectors = ['sine', 'centros', 'casa_da_mulher', 'diversidade', 'creas_protetivo', 'creas_socioeducativo', 'pop_rua']
     const rawSubmissions = allSubmissions.filter((s: any) => {
         if (s.year !== selectedYear) return false
         if (isCasaDaMulher) {
@@ -158,19 +158,26 @@ export default async function GraficosPage({
 
     // Filter unit data out of submissions if user doesn't have access
     const submissions = rawSubmissions.map((sub: any) => {
-        if (!allowedUnits) return sub;
+        let currentData = { ...sub.data };
 
-        if (sub.data._is_multi_unit && sub.data.units) {
+        // PROMOTE SECTOR DATA: If we are looking for a specific sector and it's nested
+        if (setor && currentData[setor] && typeof currentData[setor] === 'object') {
+            currentData = { ...currentData, ...currentData[setor] };
+        }
+
+        if (!allowedUnits) return { ...sub, data: currentData };
+
+        if (currentData._is_multi_unit && currentData.units) {
             const filteredUnits: any = {}
-            for (const [k, v] of Object.entries(sub.data.units)) {
+            for (const [k, v] of Object.entries(currentData.units)) {
                 if (allowedUnits.includes(k)) {
                     filteredUnits[k] = v;
                 }
             }
-            return { ...sub, data: { ...sub.data, units: filteredUnits } }
+            return { ...sub, data: { ...currentData, units: filteredUnits } }
         } else {
-            const uName = sub.data._unit || 'Principal';
-            if (allowedUnits.includes(uName)) return sub;
+            const uName = currentData._unit || 'Principal';
+            if (allowedUnits.includes(uName)) return { ...sub, data: currentData };
             return null;
         }
     }).filter(Boolean) as any[]
