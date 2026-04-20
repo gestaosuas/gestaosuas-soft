@@ -424,7 +424,44 @@ export async function submitReport(input: Record<string, any> | FormData, month:
         }
         // --- FIM DO NOVO SALVAMENTO ---
 
-        // Para outras diretorias (Monitoramento, etc), mantemos o sistema antigo por enquanto
+        // --- FIM DO NOVO SALVAMENTO ---
+
+        // Se chegamos aqui e o setor é um dos especializados, podemos retornar sucesso.
+        // Já salvamos nas tabelas dedicadas acima. Não precisamos mais da tabela 'submissions'.
+        const specializedSectors = ['sine', 'centros', 'cras', 'beneficios', 'naica', 'pop_rua', 'creas_protetivo', 'creas_socioeducativo', 'casa_da_mulher', 'diversidade', 'nucleo_diversidade'];
+        if (setor && specializedSectors.includes(setor)) {
+            // Log Activity for specialized sectors
+            try {
+                const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+                const unitName = formData._unit || formData._subcategory || ''
+                await logActivity({
+                    user_id: user.id,
+                    user_name: profile?.full_name || 'Usuário',
+                    directorate_id: directorateId,
+                    directorate_name: directorate.name,
+                    action_type: 'SUBMIT',
+                    resource_type: 'REPORT',
+                    resource_name: `Relatório de ${month}/${year}`,
+                    details: { setor, unit: unitName, month, year }
+                })
+                revalidatePath('/dashboard', 'layout')
+                // @ts-ignore
+                revalidateTag(`submissions-${directorateId}`)
+            } catch (logErr) {
+                console.error("Non-critical Log Error:", logErr)
+            }
+
+            // Sync to Sheets
+            try {
+                await syncSubmissionToSheets(formData, month, year, directorate, setor)
+            } catch (sheetError: any) {
+                console.error("Sheet Error:", sheetError)
+            }
+
+            return { success: true }
+        }
+
+        // Para outras diretorias legadas que ainda não tem tabela própria, mantemos o sistema antigo
         const { data: existing } = await adminSupabase
             .from('submissions')
             .select('id, data, user_id')
@@ -1147,6 +1184,25 @@ export async function deleteMonthData(directorateId: string, month: number, year
         if (error) return { success: false, error: error.message };
     } else if (setor === 'cras') {
         const { error } = await adminSupabase.from('cras_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year).eq('unit_name', unitName || '');
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'pop_rua') {
+        const { error } = await adminSupabase.from('creas_pop_rua_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'creas_protetivo') {
+        const { error } = await adminSupabase.from('creas_protetivo_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'creas_socioeducativo') {
+        const { error } = await adminSupabase.from('creas_socioeducativo_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'casa_da_mulher') {
+        const { error } = await adminSupabase.from('casa_da_mulher_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+        if (error) return { success: false, error: error.message };
+    } else if (setor === 'diversidade') {
+        const { data: q } = await adminSupabase.from('diversidade_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+    } else if (setor === 'nucleo_diversidade') {
+        const { data: q } = await adminSupabase.from('nucleo_diversidade_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year);
+    } else if (setor === 'naica') {
+        const { error } = await adminSupabase.from('naica_reports').delete().eq('directorate_id', directorateId).eq('month', month).eq('year', year).eq('unit_name', unitName || '');
         if (error) return { success: false, error: error.message };
     }
     // --- FIM DO DELETE ESPECIALIZADO ---

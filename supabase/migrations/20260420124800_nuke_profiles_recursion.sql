@@ -7,6 +7,7 @@ DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles viewable by self" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles manageable by admin" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles are viewable by self or admin" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can manage all profiles" ON public.profiles;
 
 -- 2. CREATE A SINGLE, SAFE SELECT POLICY
 -- We use public.is_admin() which is SECURITY DEFINER to avoid recursion
