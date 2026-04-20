@@ -380,47 +380,47 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             const numCols = ['num_atend_centro_ref', 'num_atend_abordagem', 'num_atend_migracao', 'num_atend_total', 'cr_a1_masc', 'cr_a1_fem', 'cr_b1_drogas', 'cr_b2_migrantes', 'cr_b3_mental', 'cr_cad_unico', 'cr_enc_mercado', 'cr_enc_caps', 'cr_enc_saude', 'cr_enc_consultorio', 'cr_segunda_via', 'ar_e1_masc', 'ar_e2_fem', 'ar_e5_drogas', 'ar_e6_migrantes', 'ar_persistentes', 'ar_enc_centro_ref', 'ar_recusa_identificacao', 'nm_total_passagens', 'nm_passagens_deferidas', 'nm_passagens_indeferidas', 'nm_estrangeiros', 'nm_retorno_familiar', 'nm_busca_trabalho', 'nm_busca_saude'];
             numCols.forEach(col => { if (formData[col] !== undefined) prData[col] = Number(formData[col]) || 0; });
             const { error } = await adminSupabase.from('creas_pop_rua_reports').upsert(prData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("POP RUA Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Pop Rua: ${error.message}`);
         } else if (setor === 'creas_protetivo') {
             const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
             const cpData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
             const numCols = ['fam_mes_anterior', 'fam_admitidas', 'fam_desligadas', 'fam_atual', 'viol_fis_psic_masc', 'viol_fis_psic_fem', 'abuso_sexual_masc', 'abuso_sexual_fem', 'expl_sexual_masc', 'expl_sexual_fem', 'negli_aband_masc', 'negli_aband_fem', 'trab_infantil_masc', 'trab_infantil_fem', 'atend_mes_anterior', 'atend_admitidas', 'atend_desligadas', 'atend_atual'];
             numCols.forEach(col => { if (formData[col] !== undefined) cpData[col] = Number(formData[col]) || 0; });
             const { error } = await adminSupabase.from('creas_protetivo_reports').upsert(cpData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("Protetivo Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Protetivo: ${error.message}`);
         } else if (setor === 'creas_socioeducativo') {
             const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
             const csData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
             const numCols = ['fam_acompanhamento_1_dia', 'fam_inseridas', 'fam_desligadas', 'fam_total_acompanhamento', 'masc_acompanhamento_1_dia', 'masc_admitidos', 'masc_desligados', 'masc_total_parcial', 'fem_acompanhamento_1_dia', 'fem_admitidos', 'fem_desligadas', 'fem_total_parcial', 'med_masc_la_andamento', 'med_masc_psc_andamento', 'med_masc_la_novas', 'med_masc_psc_novas', 'med_masc_la_encerradas', 'med_masc_psc_encerradas', 'med_masc_la_total_parcial', 'med_masc_psc_total_parcial', 'med_fem_la_andamento', 'med_fem_psc_andamento', 'med_fem_la_novas', 'med_fem_psc_novas', 'med_fem_la_encerradas', 'med_fem_psc_encerradas', 'med_fem_la_total_parcial', 'med_fem_psc_total_parcial', 'med_total_la_geral', 'med_total_psc_geral'];
             numCols.forEach(col => { if (formData[col] !== undefined) csData[col] = Number(formData[col]) || 0; });
             const { error } = await adminSupabase.from('creas_socioeducativo_reports').upsert(csData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("Socioeducativo Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Socioeducativo: ${error.message}`);
         } else if (setor === 'casa_da_mulher') {
             const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
             const cmData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
             const numCols = ['cm_atend_mulheres_atendidas', 'cm_faixa_16_17', 'cm_faixa_18_30', 'cm_faixa_31_40', 'cm_faixa_41_50', 'cm_faixa_51_60', 'cm_faixa_acima_60', 'cm_faixa_nao_consta', 'cm_raca_branca', 'cm_raca_preta', 'cm_raca_parda', 'cm_raca_amarelo', 'cm_raca_indigena', 'cm_raca_nao_consta', 'cm_violencia_fisica', 'cm_violencia_moral', 'cm_violencia_psicologica', 'cm_violencia_sexual', 'cm_violencia_patrimonial', 'cm_violencia_nenhuma', 'cm_violencia_outras', 'cm_encam_bo_ocorrencia', 'cm_encam_casa_abrigo', 'cm_encam_conselho_idoso', 'cm_encam_conselho_tutelar', 'cm_encam_defens_publica', 'cm_encam_forum_juizados', 'cm_encam_exame_c_delito', 'cm_encam_deam', 'cm_encam_ministerio_publico', 'cm_encam_outra_delegacia', 'cm_encam_ppvd', 'cm_encam_rede_ass_social', 'cm_encam_rede_saude', 'cm_encam_sine', 'cm_encam_outros'];
             numCols.forEach(col => { if (formData[col] !== undefined) cmData[col] = Number(formData[col]) || 0; });
             const { error } = await adminSupabase.from('casa_da_mulher_reports').upsert(cmData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("Casa da Mulher Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Casa da Mulher: ${error.message}`);
         } else if (setor === 'diversidade') {
             const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
             const divData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
             const numCols = ['div_atend_mulheres_atendidas', 'div_atend_nucleo_diversidade', 'div_faixa_16_17', 'div_faixa_18_30', 'div_faixa_31_40', 'div_faixa_41_50', 'div_faixa_51_60', 'div_faixa_acima_60', 'div_faixa_nao_consta', 'div_raca_branca', 'div_raca_preta', 'div_raca_parda', 'div_raca_amarela', 'div_raca_indigena', 'div_raca_nao_consta', 'div_sit_violencia_infrafamiliar', 'div_sit_violencia_extrafamiliar', 'div_sit_demanda_fora_contexto', 'div_encam_juizado', 'div_encam_rede_socioassist', 'div_encam_curso_prof', 'div_encam_sine', 'div_encam_serv_saude', 'div_encam_mobilizacao_familia', 'div_encam_orient_juridicas', 'div_encam_bo_reds', 'div_encam_exame_delito', 'div_encam_outros'];
             numCols.forEach(col => { if (formData[col] !== undefined) divData[col] = Number(formData[col]) || 0; });
             const { error } = await adminSupabase.from('diversidade_reports').upsert(divData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("Diversidade Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Diversidade: ${error.message}`);
         } else if (setor === 'nucleo_diversidade') {
             const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
             const ndData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString(), nd_pessoas_atendidas: Number(formData.nd_pessoas_atendidas) || 0 };
             const { error } = await adminSupabase.from('nucleo_diversidade_reports').upsert(ndData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("Nucleo Diversidade Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Núcleo Diversidade: ${error.message}`);
         } else if (setor === 'protecao_especial' || (!setor && directorate.name.includes('Proteção Especial'))) {
             const { data: pf } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single();
             const peData: any = { user_id: user.id, directorate_id: directorateId, month, year, created_by: pf?.full_name || 'Usuário', updated_at: new Date().toISOString() };
             const numCols = ['fam_mes_anterior', 'fam_admitidas', 'fam_desligadas', 'fam_atual', 'atend_mes_anterior', 'atend_admitidas', 'atend_desligadas', 'atend_atual', 'fam_acompanhamento_1_dia', 'fam_inseridas', 'fam_total_acompanhamento', 'masc_acompanhamento_1_dia', 'masc_admitidos', 'masc_desligados', 'masc_total_parcial', 'fem_acompanhamento_1_dia', 'fem_admitidos', 'fem_total_parcial'];
             numCols.forEach(col => { if (formData[col] !== undefined) peData[col] = Number(formData[col]) || 0; });
             const { error } = await adminSupabase.from('protecao_especial_reports').upsert(peData, { onConflict: 'directorate_id,month,year' });
-            if (error) console.error("Consolidado Sync error:", error);
+            if (error) throw new Error(`Erro ao salvar Consolidado: ${error.message}`);
         }
         // --- FIM DO NOVO SALVAMENTO ---
 
@@ -1216,7 +1216,10 @@ export async function deleteMonthData(directorateId: string, month: number, year
         .eq('year', year)
         .maybeSingle()
 
-    if (!existing) return { success: true }
+    if (!existing) {
+        revalidatePath('/dashboard', 'layout')
+        return { success: true }
+    }
 
     if (unitName && existing.data?._is_multi_unit && existing.data?.units) {
         // Multi-unit cleanup: Just remove the specific unit from the JSON
