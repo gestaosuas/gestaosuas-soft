@@ -2119,6 +2119,10 @@ export async function getCurrentMonthData(directorateId: string, month: number, 
         return clean;
     }
     // --- FIM DA BUSCA ESPECIALIZADA ---
+    const specializedSectors = ['sine', 'centros', 'cras', 'beneficios', 'naica', 'pop_rua', 'creas_protetivo', 'creas_socioeducativo', 'casa_da_mulher', 'diversidade', 'nucleo_diversidade'];
+    if (setor && specializedSectors.includes(setor)) {
+        return null;
+    }
 
     const { data: { user } } = await supabase.auth.getUser()
 
