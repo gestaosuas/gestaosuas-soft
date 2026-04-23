@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, updateTag } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { updateSheetColumn, SheetConfig } from '@/lib/google-sheets'
@@ -446,7 +446,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 })
                 revalidatePath('/dashboard', 'layout')
                 // @ts-ignore
-                revalidateTag(`submissions-${directorateId}`)
+                revalidateTag(`submissions-${directorateId}`, 'max')
             } catch (logErr) {
                 console.error("Non-critical Log Error:", logErr)
             }
@@ -598,10 +598,8 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 }
             })
             revalidatePath('/dashboard', 'layout')
-            // @ts-ignore
-            revalidateTag('submissions')
-            // @ts-ignore
-            revalidateTag(`submissions-${directorateId}`)
+            updateTag('submissions')
+            revalidateTag(`submissions-${directorateId}`, 'max')
         } catch (logErr) {
             console.error("Non-critical Log Error:", logErr)
         }
@@ -915,7 +913,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
             if (!error) {
                 revalidatePath('/dashboard', 'layout');
                 revalidatePath('/dashboard/dados', 'page');
-                revalidateTag('submissions');
+                updateTag('submissions');
                 return { success: true };
             }
         }
@@ -954,7 +952,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
                 revalidatePath('/dashboard', 'layout');
                 revalidatePath('/dashboard/dados', 'page');
-                revalidateTag('submissions');
+                updateTag('submissions');
                 return { success: true };
             }
         }
@@ -1059,7 +1057,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     revalidatePath('/dashboard/dados', 'page')
     revalidatePath('/dashboard', 'layout')
-    revalidateTag('submissions')
+    updateTag('submissions')
     return { success: true }
 }
 
@@ -1383,7 +1381,7 @@ export async function updateSystemSetting(key: string, value: string) {
 
     revalidatePath('/', 'layout')
     // @ts-ignore
-    revalidateTag('settings')
+    updateTag('settings')
     return { success: true }
 }
 
