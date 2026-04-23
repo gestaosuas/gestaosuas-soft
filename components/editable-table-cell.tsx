@@ -11,6 +11,7 @@ interface EditableTableCellProps {
     fieldId: string
     unitName?: string
     isAdmin: boolean
+    setor?: string
     className?: string
 }
 
@@ -20,6 +21,7 @@ export function EditableTableCell({
     fieldId,
     unitName,
     isAdmin,
+    setor,
     className
 }: EditableTableCellProps) {
     const [isEditing, setIsEditing] = useState(false)
@@ -48,9 +50,8 @@ export function EditableTableCell({
             return
         }
 
-        startTransition(async () => {
             try {
-                const res = await updateSubmissionCell(submissionId, fieldId, value, unitName)
+                const res = await updateSubmissionCell(submissionId, fieldId, value, unitName, setor)
                 if (res.success) {
                     setIsEditing(false)
                 } else {

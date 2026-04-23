@@ -578,6 +578,7 @@ export default async function DataPage({
                                                                                     fieldId={indicator.id}
                                                                                     unitName={(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) ? unitName : undefined}
                                                                                     isAdmin={isAdmin}
+                                                                                    setor={setor}
                                                                                 />
                                                                             </TableCell>
                                                                         )
@@ -668,6 +669,7 @@ export default async function DataPage({
                                                                                 fieldId={`oficina_${oficina.id}_vagas_totais`}
                                                                                 unitName={unitName}
                                                                                 isAdmin={isAdmin}
+                                                                                setor={setor}
                                                                             />
                                                                         </TableCell>
                                                                     )
@@ -744,6 +746,7 @@ export default async function DataPage({
                                                                                     fieldId={jsonKey}
                                                                                     unitName={unitName}
                                                                                     isAdmin={isAdmin}
+                                                                                    setor={setor}
                                                                                 />
                                                                             </TableCell>
                                                                         )

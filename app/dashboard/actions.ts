@@ -866,7 +866,7 @@ async function syncSubmissionToSheets(formData: Record<string, any>, month: numb
     }
 }
 
-export async function updateSubmissionCell(id: string, fieldId: string, value: any, unitName?: string) {
+export async function updateSubmissionCell(id: string, fieldId: string, value: any, unitName?: string, setor?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -880,26 +880,56 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
     if (!isOfficialAdmin) throw new Error("Apenas administradores podem editar dados históricos.")
 
     const adminSupabase = createAdminClient()
+
+    // 1. Identification of the table to update
+    let tableName = 'submissions';
+    if (setor) {
+        if (setor === 'sine') tableName = 'sine_reports';
+        else if (setor === 'centros') tableName = 'qualificacao_reports';
+        else if (setor === 'beneficios') tableName = 'beneficios_reports';
+        else if (setor === 'cras') tableName = 'cras_reports';
+        else if (setor === 'naica') tableName = 'naica_reports';
+        else if (setor === 'pop_rua') tableName = 'creas_pop_rua_reports';
+        else if (setor === 'creas_protetivo') tableName = 'creas_protetivo_reports';
+        else if (setor === 'creas_socioeducativo') tableName = 'creas_socioeducativo_reports';
+        else if (setor === 'casa_da_mulher') tableName = 'casa_da_mulher_reports';
+        else if (setor === 'diversidade') tableName = 'diversidade_reports';
+        else if (setor === 'nucleo_diversidade') tableName = 'nucleo_diversidade_reports';
+    }
+
+    // 2. Direct Update for Relational (Specialized) Tables
+    if (tableName !== 'submissions') {
+        const { error } = await adminSupabase
+            .from(tableName)
+            .update({ [fieldId]: value, updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) {
+            console.error(`Error updating specialized table ${tableName}:`, error);
+            // If it failed, maybe it's still in the legacy table? We continue to check 'submissions'
+        } else {
+            revalidatePath('/dashboard', 'layout');
+            return { success: true };
+        }
+    }
+
+    // 3. Fallback/Legacy Update for 'submissions' table (JSON-based)
     const { data: submission } = await adminSupabase
         .from('submissions')
         .select('*')
         .eq('id', id)
-        .single()
+        .single();
 
-    if (!submission) throw new Error("Submission not found")
+    if (!submission) throw new Error("Submission not found in legacy table");
 
     let updatedData = { ...submission.data }
-    let unitDataToSync = updatedData
-
     if (unitName && updatedData._is_multi_unit && updatedData.units) {
         updatedData.units[unitName] = {
             ...updatedData.units[unitName],
             [fieldId]: value
         }
-        unitDataToSync = updatedData.units[unitName]
     } else {
         updatedData[fieldId] = value
-        unitDataToSync = updatedData
     }
 
     const { error: dbError } = await adminSupabase
@@ -909,36 +939,9 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     if (dbError) throw new Error("Erro ao atualizar banco de dados: " + dbError.message)
     
-    // Buscar nome da diretoria para saber se é SINE ou QUALIFICAÇÃO
-    const { data: directorate } = await adminSupabase.from('directorates').select('name').eq('id', submission.directorate_id).single()
-    const dirName = directorate?.name.toLowerCase() || ''
-
-    // --- NOVO: ATUALIZAÇÃO NAS TABELAS ESPECIALIZADAS ---
-    try {
-        if (dirName.includes('sine') || dirName.includes('profissional') || dirName.includes('centro') || dirName.includes('qualificacao')) {
-            const allSineFields = SINE_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
-            const allCPFields = CP_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
-
-            if (allSineFields.includes(fieldId)) {
-                await adminSupabase
-                    .from('sine_reports')
-                    .update({ [fieldId]: value, updated_at: new Date().toISOString() })
-                    .eq('month', submission.month)
-                    .eq('year', submission.year)
-                    .eq('directorate_id', submission.directorate_id);
-            } else if (allCPFields.includes(fieldId)) {
-                await adminSupabase
-                    .from('qualificacao_reports')
-                    .update({ [fieldId]: value, updated_at: new Date().toISOString() })
-                    .eq('month', submission.month)
-                    .eq('year', submission.year)
-                    .eq('directorate_id', submission.directorate_id);
-            }
-        }
-    } catch (e) {
-        console.error("Specialized table cell update error:", e);
-    }
-    // --- FIM DA ATUALIZAÇÃO ---
+    revalidatePath('/dashboard', 'layout');
+    return { success: true };
+}
 
     // Sync to Sheets
     try {

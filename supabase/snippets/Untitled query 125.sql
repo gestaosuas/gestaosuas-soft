@@ -1,47 +1,65 @@
--- FINAL AND COMPLETE FIX FOR PROFILES RLS RECURSION
--- This migration drops ALL known policy names for the profiles table to ensure no legacy recursive policies remain.
+-- Criação forçada da tabela Socioeducativo
+CREATE TABLE IF NOT EXISTS public.creas_socioeducativo_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    directorate_id UUID NOT NULL REFERENCES public.directorates(id) ON DELETE CASCADE,
+    month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
+    year INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'finalized', 'submitted')),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+    created_by TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
 
--- 1. DROP ALL POTENTIAL POLICIES ON PROFILES
-DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Profiles viewable by self" ON public.profiles;
-DROP POLICY IF EXISTS "Profiles manageable by admin" ON public.profiles;
-DROP POLICY IF EXISTS "Profiles are viewable by self or admin" ON public.profiles;
-DROP POLICY IF EXISTS "Admins can manage all profiles" ON public.profiles;
+    -- Famílias
+    fam_acompanhamento_1_dia INTEGER DEFAULT 0,
+    fam_inseridas INTEGER DEFAULT 0,
+    fam_desligadas INTEGER DEFAULT 0,
+    fam_total_acompanhamento INTEGER DEFAULT 0,
 
--- 2. CREATE A SINGLE, SAFE SELECT POLICY
--- We use public.is_admin() which is SECURITY DEFINER to avoid recursion
-CREATE POLICY "Profiles are viewable by self or admin" ON public.profiles
-FOR SELECT TO authenticated USING (
-    auth.uid() = id OR public.is_admin()
+    -- Acompanhamento Masculino
+    masc_acompanhamento_1_dia INTEGER DEFAULT 0,
+    masc_admitidos INTEGER DEFAULT 0,
+    masc_desligados INTEGER DEFAULT 0,
+    masc_total_parcial INTEGER DEFAULT 0,
+
+    -- Acompanhamento Feminino
+    fem_acompanhamento_1_dia INTEGER DEFAULT 0,
+    fem_admitidos INTEGER DEFAULT 0,
+    fem_desligadas INTEGER DEFAULT 0,
+    fem_total_parcial INTEGER DEFAULT 0,
+
+    -- Medidas Masculino
+    med_masc_la_andamento INTEGER DEFAULT 0,
+    med_masc_psc_andamento INTEGER DEFAULT 0,
+    med_masc_la_novas INTEGER DEFAULT 0,
+    med_masc_psc_novas INTEGER DEFAULT 0,
+    med_masc_la_encerradas INTEGER DEFAULT 0,
+    med_masc_psc_encerradas INTEGER DEFAULT 0,
+    med_masc_la_total_parcial INTEGER DEFAULT 0,
+    med_masc_psc_total_parcial INTEGER DEFAULT 0,
+
+    -- Medidas Feminino
+    med_fem_la_andamento INTEGER DEFAULT 0,
+    med_fem_psc_andamento INTEGER DEFAULT 0,
+    med_fem_la_novas INTEGER DEFAULT 0,
+    med_fem_psc_novas INTEGER DEFAULT 0,
+    med_fem_la_encerradas INTEGER DEFAULT 0,
+    med_fem_psc_encerradas INTEGER DEFAULT 0,
+    med_fem_la_total_parcial INTEGER DEFAULT 0,
+    med_fem_psc_total_parcial INTEGER DEFAULT 0,
+
+    -- Totais
+    med_total_la_geral INTEGER DEFAULT 0,
+    med_total_psc_geral INTEGER DEFAULT 0,
+
+    CONSTRAINT creas_socioeducativo_unq UNIQUE (directorate_id, month, year)
 );
 
--- 3. CREATE A SAFE ALL POLICY FOR ADMINS
-CREATE POLICY "Admins can manage all profiles" ON public.profiles
-FOR ALL TO authenticated USING (
-    public.is_admin()
-);
+-- Habilitar RLS e dar permissões
+ALTER TABLE public.creas_socioeducativo_reports ENABLE ROW LEVEL SECURITY;
 
--- 4. ALSO FIX OTHER TABLES MENTIONED IN REINFORCE_SECURITY
-DROP POLICY IF EXISTS "Users can view OSCs" ON public.oscs;
-CREATE POLICY "Users can view OSCs" ON public.oscs
-FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Enable all for authenticated users" ON public.creas_socioeducativo_reports
+FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Admins can manage OSCs" ON public.oscs;
-CREATE POLICY "Admins can manage OSCs" ON public.oscs
-FOR ALL TO authenticated USING ( public.is_admin() );
-
--- Visits
-DROP POLICY IF EXISTS "Technicians can view visits for their directorate" ON public.visits;
-CREATE POLICY "Technicians can view visits for their directorate" ON public.visits
-FOR SELECT TO authenticated USING (
-    directorate_id IN (
-        SELECT directorate_id FROM profile_directorates WHERE profile_id = auth.uid()
-    ) OR public.is_admin()
-);
-
-DROP POLICY IF EXISTS "Technicians can manage their own visits" ON public.visits;
-CREATE POLICY "Technicians can manage their own visits" ON public.visits
-FOR ALL TO authenticated USING (
-    (user_id = auth.uid() AND status = 'draft') OR public.is_admin()
-);
+-- Forçar o recarregamento do cache (opcional mas ajuda)
+NOTIFY pgrst, 'reload schema';
