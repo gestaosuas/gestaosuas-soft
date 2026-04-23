@@ -577,8 +577,7 @@ export default async function DataPage({
                                                                                     submissionId={monthRecord?.id}
                                                                                     fieldId={indicator.id}
                                                                                     unitName={(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) ? unitName : undefined}
-                                                                                    isAdmin={isAdmin}
-                                                                                    setor={setor}
+                                                                                    isAdmin={isAdmin} setor={setor}
                                                                                 />
                                                                             </TableCell>
                                                                         )
@@ -745,8 +744,7 @@ export default async function DataPage({
                                                                                     submissionId={monthRecord?.id}
                                                                                     fieldId={jsonKey}
                                                                                     unitName={unitName}
-                                                                                    isAdmin={isAdmin}
-                                                                                    setor={setor}
+                                                                                    isAdmin={isAdmin} setor={setor}
                                                                                 />
                                                                             </TableCell>
                                                                         )

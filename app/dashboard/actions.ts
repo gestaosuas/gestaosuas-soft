@@ -899,17 +899,64 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     // 2. Direct Update for Relational (Specialized) Tables
     if (tableName !== 'submissions') {
-        const { error } = await adminSupabase
+        const { data: recordByRecordId, error: checkError } = await adminSupabase
             .from(tableName)
-            .update({ [fieldId]: value, updated_at: new Date().toISOString() })
-            .eq('id', id);
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
 
-        if (error) {
-            console.error(`Error updating specialized table ${tableName}:`, error);
-            // If it failed, maybe it's still in the legacy table? We continue to check 'submissions'
-        } else {
-            revalidatePath('/dashboard', 'layout');
-            return { success: true };
+        if (recordByRecordId) {
+            // Found by ID, update directly
+            const { error } = await adminSupabase
+                .from(tableName)
+                .update({ [fieldId]: value, updated_at: new Date().toISOString() })
+                .eq('id', id);
+
+            if (!error) {
+                revalidatePath('/dashboard', 'layout');
+                revalidatePath('/dashboard/dados', 'page');
+                revalidateTag('submissions');
+                return { success: true };
+            }
+        }
+
+        // If not found by ID, maybe 'id' is a legacy submission ID?
+        const { data: submission } = await adminSupabase
+            .from('submissions')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (submission) {
+            // Yes, it was a legacy ID. Try to update specialized table using coordinates
+            let query = adminSupabase
+                .from(tableName)
+                .update({ [fieldId]: value, updated_at: new Date().toISOString() })
+                .eq('month', submission.month)
+                .eq('year', submission.year)
+                .eq('directorate_id', submission.directorate_id);
+
+            // CRAS and NAICA also need unit match
+            if ((setor === 'cras' || setor === 'naica') && unitName) {
+                query = query.eq('unit_name', unitName);
+            }
+
+            const { error: coordError } = await query;
+            if (!coordError) {
+                // Also update legacy if it contains this field (to keep them in sync during migration)
+                let updatedData = { ...submission.data }
+                if (unitName && updatedData._is_multi_unit && updatedData.units) {
+                    updatedData.units[unitName] = { ...updatedData.units[unitName], [fieldId]: value }
+                } else {
+                    updatedData[fieldId] = value
+                }
+                await adminSupabase.from('submissions').update({ data: updatedData }).eq('id', id);
+
+                revalidatePath('/dashboard', 'layout');
+                revalidatePath('/dashboard/dados', 'page');
+                revalidateTag('submissions');
+                return { success: true };
+            }
         }
     }
 
@@ -920,7 +967,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
         .eq('id', id)
         .single();
 
-    if (!submission) throw new Error("Submission not found in legacy table");
+    if (!submission) throw new Error("Submission not found");
 
     let updatedData = { ...submission.data }
     if (unitName && updatedData._is_multi_unit && updatedData.units) {
@@ -934,15 +981,11 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     const { error: dbError } = await adminSupabase
         .from('submissions')
-        .update({ data: updatedData, created_at: new Date().toISOString() })
+        .update({ data: updatedData, updated_at: new Date().toISOString() })
         .eq('id', id)
 
     if (dbError) throw new Error("Erro ao atualizar banco de dados: " + dbError.message)
     
-    revalidatePath('/dashboard', 'layout');
-    return { success: true };
-}
-
     // Sync to Sheets
     try {
         const { data: directorate } = await adminSupabase
@@ -951,47 +994,47 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
             .eq('id', submission.directorate_id)
             .single()
 
-        let setor = ""
+        let syncSetor = ""
         const normName = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         const dirName = normName(directorate.name)
 
-        if (dirName.includes('cras')) setor = 'cras'
-        else if (dirName.includes('beneficios')) setor = 'beneficios'
-        else if (dirName.includes('ceai')) setor = 'ceai'
-        else if (dirName.includes('populacao') && dirName.includes('rua')) setor = 'pop_rua'
-        else if (dirName.includes('naica')) setor = 'naica'
+        if (dirName.includes('cras')) syncSetor = 'cras'
+        else if (dirName.includes('beneficios')) syncSetor = 'beneficios'
+        else if (dirName.includes('ceai')) syncSetor = 'ceai'
+        else if (dirName.includes('populacao') && dirName.includes('rua')) syncSetor = 'pop_rua'
+        else if (dirName.includes('naica')) syncSetor = 'naica'
         else if (dirName.includes('protecao') || dirName.includes('especial')) {
-            if (unitDataToSync._subcategory === 'socioeducativo') setor = 'creas_socioeducativo'
-            else if (unitDataToSync._subcategory === 'protetivo') setor = 'creas_protetivo'
-            else setor = 'creas'
+            if (updatedData._subcategory === 'socioeducativo') syncSetor = 'creas_socioeducativo'
+            else if (updatedData._subcategory === 'protetivo') syncSetor = 'creas_protetivo'
+            else syncSetor = 'creas'
         }
 
-        // SINE and CP check - since they share directorate, we check the field itself
+        // SINE and CP check
         if (dirName.includes('sine') || dirName.includes('profissional') || dirName.includes('centro') || dirName.includes('qualificacao')) {
             const allSineFields = SINE_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
             const allCPFields = CP_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
 
-            if (allSineFields.includes(fieldId)) setor = 'sine'
-            else if (allCPFields.includes(fieldId)) setor = 'centros'
+            if (allSineFields.includes(fieldId)) syncSetor = 'sine'
+            else if (allCPFields.includes(fieldId)) syncSetor = 'centros'
             else {
-                if (unitDataToSync._has_sine) setor = 'sine'
-                else if (unitDataToSync._has_centros) setor = 'centros'
-                else setor = 'centros'
+                if (updatedData._has_sine) syncSetor = 'sine'
+                else if (updatedData._has_centros) syncSetor = 'centros'
+                else syncSetor = 'centros'
             }
         } else if (dirName.includes('mulher') || dirName.includes('casa da mulher')) {
             const allCMFields = CASA_DA_MULHER_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
             const allDivFields = DIVERSIDADE_FORM_DEFINITION.sections.flatMap((s: any) => s.fields.map((f: any) => f.id))
 
-            if (allCMFields.includes(fieldId)) setor = 'casa_da_mulher'
-            else if (allDivFields.includes(fieldId)) setor = 'diversidade'
+            if (allCMFields.includes(fieldId)) syncSetor = 'casa_da_mulher'
+            else if (allDivFields.includes(fieldId)) syncSetor = 'diversidade'
             else {
-                if (unitDataToSync._has_casa_da_mulher) setor = 'casa_da_mulher'
-                else if (unitDataToSync._has_diversidade) setor = 'diversidade'
-                else setor = 'casa_da_mulher'
+                if (updatedData._has_casa_da_mulher) syncSetor = 'casa_da_mulher'
+                else if (updatedData._has_diversidade) syncSetor = 'diversidade'
+                else syncSetor = 'casa_da_mulher'
             }
         }
 
-        await syncSubmissionToSheets(unitDataToSync, submission.month, submission.year, directorate, setor)
+        await syncSubmissionToSheets(updatedData, submission.month, submission.year, directorate, syncSetor)
     } catch (sheetError) {
         console.error("Sheet Sync Error in updateSubmissionCell:", sheetError)
     }
@@ -1016,6 +1059,7 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
 
     revalidatePath('/dashboard/dados', 'page')
     revalidatePath('/dashboard', 'layout')
+    revalidateTag('submissions')
     return { success: true }
 }
 

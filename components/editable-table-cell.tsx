@@ -49,7 +49,7 @@ export function EditableTableCell({
             setIsEditing(false)
             return
         }
-
+        startTransition(async () => {
             try {
                 const res = await updateSubmissionCell(submissionId, fieldId, value, unitName, setor)
                 if (res.success) {
