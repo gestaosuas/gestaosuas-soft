@@ -111,72 +111,36 @@ export async function submitReport(input: Record<string, any> | FormData, month:
 
             const isFile = (val: any) => val && typeof val === 'object' && (val.constructor?.name === 'File' || (typeof val.arrayBuffer === 'function' && !!val.name));
 
-            // Handle PDF Upload to Google Drive if present
+            // Handle PDF Upload to Supabase Storage
             if (isFile(formData.anexo_rma)) {
                 const rmaFile = formData.anexo_rma as File
-                console.log(`DEBUG: CRAS RMA Upload detected. File: ${rmaFile.name}, Size: ${rmaFile.size} bytes`);
                 const buffer = Buffer.from(await rmaFile.arrayBuffer());
 
                 try {
-                    if (buffer.length === 0) {
-                        console.warn("DEBUG: Buffer is empty!");
-                    }
+                    const fileName = `${formData._unit?.replace(/\s+/g, '_')}_${month}_${year}_${Date.now()}.pdf`
+                    const filePath = `rmas/${year}/${month}/${fileName}`
 
-                    // Root folder from user: Plataforma Vigilância
-                    const rootFolderId = "1V-ReKw3wvgg8chtZIIhY_mPYuJMyHQJ9"
+                    const { data: uploadData, error: supabaseError } = await adminSupabase.storage
+                        .from('system-assets')
+                        .upload(filePath, buffer, {
+                            contentType: 'application/pdf',
+                            upsert: true
+                        })
 
-                    console.log(`DEBUG: Resolving folder structure for unit: ${formData._unit}`);
-                    // 1. Get or Create "Cras" folder
-                    const crasFolderId = await getOrCreateFolder("Cras", rootFolderId)
+                    if (supabaseError) throw supabaseError
 
-                    // 2. Get or Create unit folder
-                    const unitName = formData._unit || 'Geral'
-                    const unitFolderId = await getOrCreateFolder(unitName, crasFolderId)
+                    // Get public URL
+                    const { data: { publicUrl } } = adminSupabase.storage
+                        .from('system-assets')
+                        .getPublicUrl(filePath)
 
-                    console.log(`DEBUG: Target Unit Folder ID: ${unitFolderId}`);
-
-                    // 3. Document Name: RMA + Mês referência (Portuguese)
-                    const monthNamesPt = [
-                        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-                    ]
-                    const monthName = monthNamesPt[month - 1]
-                    const fileName = `RMA ${monthName} ${year}.pdf`
-
-                    const uploadResult = await uploadFileToDrive(buffer, fileName, rmaFile.type || 'application/pdf', unitFolderId)
-
-                    console.log(`DEBUG: Upload successful. Link: ${uploadResult.webViewLink}`);
-                    formData.anexo_rma_link = uploadResult.webViewLink
-                    formData.anexo_rma_id = uploadResult.id as string
-                } catch (driveError: any) {
-                    console.error("DEBUG: Failed to upload RMA to Drive. Falling back to Supabase:", driveError.message || driveError)
-
-                    // FALLBACK: Se o Google Drive der erro (ex: erro de cota 403 de Service Account), salvamos no Supabase
-                    try {
-                        const filePath = `rmas/${year}/${month}/${formData._unit?.replace(/\s+/g, '_')}_${Date.now()}.pdf`
-
-                        const { data: uploadData, error: supabaseError } = await adminSupabase.storage
-                            .from('system-assets')
-                            .upload(filePath, buffer, {
-                                contentType: 'application/pdf',
-                                upsert: true
-                            })
-
-                        if (supabaseError) throw supabaseError
-
-                        // Get public URL
-                        const { data: { publicUrl } } = adminSupabase.storage
-                            .from('system-assets')
-                            .getPublicUrl(filePath)
-
-                        console.log(`DEBUG: Fallback to Supabase successful. Link: ${publicUrl}`)
-                        formData.anexo_rma_link = publicUrl
-                        formData.anexo_rma_id = filePath // save path as ID for reference
-                    } catch (fallbackError) {
-                        console.error("DEBUG: Both Google Drive and Supabase fallback failed.", fallbackError)
-                    }
+                    console.log(`DEBUG: RMA Upload to Supabase successful. Link: ${publicUrl}`)
+                    formData.anexo_rma_link = publicUrl
+                    formData.anexo_rma_id = filePath
+                } catch (uploadError: any) {
+                    console.error("DEBUG: Failed to upload RMA to Supabase:", uploadError.message || uploadError)
+                    throw new Error("Erro ao fazer upload do arquivo RMA para o Supabase Storage.")
                 } finally {
-                    // Always remove the File object (or empty object proxy) before saving to DB
                     delete formData.anexo_rma
                 }
             }
@@ -327,10 +291,15 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 'mes_anterior', 'admitidas', 'desligadas', 'atual', 'atendimentos', 
                 'visita_domiciliar', 'atend_particularizado', 'pro_pao', 'dmae', 
                 'auxilio_documento', 'cesta_basica', 'fralda', 'absorvente', 'bpc', 
-                'carteirinha_idoso', 'passe_livre_deficiente', 'cadastros_novos', 'recadastros'
+                'carteirinha_idoso', 'passe_livre_deficiente', 'cadastros_novos', 'recadastros',
+                'anexo_rma'
             ];
             crasColumns.forEach(col => {
-                if (formData[col] !== undefined) crasData[col] = Number(formData[col]) || 0;
+                if (col === 'anexo_rma') {
+                    if (formData.anexo_rma_link) crasData[col] = formData.anexo_rma_link;
+                } else if (formData[col] !== undefined) {
+                    crasData[col] = Number(formData[col]) || 0;
+                }
             });
 
             const { error: crasError } = await adminSupabase

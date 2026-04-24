@@ -48,7 +48,7 @@ export const CRAS_FORM_DEFINITION: FormDefinition = {
                 { id: "passe_livre_deficiente", label: "Passe livre do deficiente(Orientações)", type: "number" },
                 { id: "cadastros_novos", label: "Cadastros Novos", type: "number" },
                 { id: "recadastros", label: "Atualização Cadastral", type: "number" },
-                { id: "anexo_rma", label: "Anexar RMA (Em breve)", type: "file" },
+                { id: "anexo_rma", label: "Anexar RMA", type: "file" },
             ]
         }
     ]

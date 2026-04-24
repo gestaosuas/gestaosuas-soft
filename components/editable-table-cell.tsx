@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { updateSubmissionCell } from '@/app/dashboard/actions'
-import { Loader2, Check, X } from 'lucide-react'
+import { Loader2, Check, X, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface EditableTableCellProps {
@@ -37,6 +37,24 @@ export function EditableTableCell({
     }, [isEditing])
 
     if (!isAdmin || !submissionId) {
+        const isUrl = typeof initialValue === 'string' && (initialValue.startsWith('http://') || initialValue.startsWith('https://'))
+        
+        if (isUrl) {
+            return (
+                <div className="flex items-center justify-center p-1">
+                    <a 
+                        href={initialValue} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-all"
+                    >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-black uppercase tracking-tight">Ver PDF</span>
+                    </a>
+                </div>
+            )
+        }
+
         return (
             <span className={cn("font-bold text-zinc-900 dark:text-zinc-100", className)}>
                 {initialValue !== undefined && initialValue !== '' ? initialValue : '-'}
@@ -114,7 +132,20 @@ export function EditableTableCell({
             title="Clique para editar"
         >
             <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                {initialValue !== undefined && initialValue !== '' ? initialValue : '-'}
+                {typeof initialValue === 'string' && (initialValue.startsWith('http://') || initialValue.startsWith('https://')) ? (
+                    <a 
+                        href={initialValue} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-all relative z-10"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-black uppercase tracking-tight">Ver PDF</span>
+                    </a>
+                ) : (
+                    initialValue !== undefined && initialValue !== '' ? initialValue : '-'
+                )}
             </span>
             <div className="absolute inset-0 border border-transparent group-hover/cell:border-blue-200 dark:group-hover/cell:border-blue-800 rounded pointer-events-none" />
         </div>
