@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from "@/utils/supabase/server"
+import { redirect } from "next/navigation"
 import { createAdminClient } from "@/utils/supabase/admin"
 import { DailyDashboard } from "./daily-dashboard"
 import { getCachedProfile } from "./cached-data"
