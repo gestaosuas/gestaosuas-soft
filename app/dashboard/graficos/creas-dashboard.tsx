@@ -331,14 +331,14 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear, tvMod
                         <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight flex items-center gap-2">
                             Violência Pessoa com Deficiência
                             <TooltipProvider>
-                                <Tooltip>
+                                <UITooltip>
                                     <TooltipTrigger asChild>
                                         <Info className="h-3 w-3 cursor-help text-zinc-300 hover:text-blue-500 transition-colors" />
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-[200px] text-[10px] font-normal normal-case tracking-normal">
                                         O campo Abuso/Expl. Sexual é a soma de "Abuso Sexual" e "Exploração Sexual".
                                     </TooltipContent>
-                                </Tooltip>
+                                </UITooltip>
                             </TooltipProvider>
                         </CardTitle>
                     </CardHeader>
