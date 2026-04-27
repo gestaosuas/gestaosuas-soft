@@ -81,7 +81,6 @@ export function CeaiPageClient({ directorate, submissions, currentYear, allowedU
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                             {[
                                 { label: "Ver Dados", href: `/dashboard/dados?setor=ceai&directorate_id=${directorate.id}`, icon: Database },
-                                { label: "Dashboard", href: `/dashboard/graficos?setor=ceai&directorate_id=${directorate.id}`, icon: BarChart3 },
                                 { label: "Relatório Mensal", href: `/dashboard/relatorios/mensal?setor=ceai&directorate_id=${directorate.id}`, icon: FileText },
                                 { label: "Ver Relatórios", href: `/dashboard/relatorios/lista?setor=ceai&directorate_id=${directorate.id}`, icon: FolderOpen },
                             ].map((item, idx) => {
