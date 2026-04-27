@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils"
 export function SocioeducativoDashboard({
     submissions,
     selectedMonth,
-    selectedYear
+    selectedYear,
+    tvMode = false
 }: {
     submissions: any[],
     selectedMonth: string,

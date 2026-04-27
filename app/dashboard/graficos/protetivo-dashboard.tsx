@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils"
 export function ProtetivoDashboard({
     submissions,
     selectedMonth,
-    selectedYear
+    selectedYear,
+    tvMode = false
 }: {
     submissions: any[],
     selectedMonth: string,
