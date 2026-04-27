@@ -30,9 +30,10 @@ interface CeaiPageClientProps {
     currentYear: number
     allowedUnits: string[] | null
     filteredCEAI: string[]
+    tvMode?: boolean
 }
 
-export function CeaiPageClient({ directorate, submissions, currentYear, allowedUnits, filteredCEAI }: CeaiPageClientProps) {
+export function CeaiPageClient({ directorate, submissions, currentYear, allowedUnits, filteredCEAI, tvMode = false }: CeaiPageClientProps) {
     const [selectedYear, setSelectedYear] = useState(currentYear)
     const [selectedMonth, setSelectedMonth] = useState("all")
     const [selectedUnit, setSelectedUnit] = useState("all")
@@ -67,8 +68,10 @@ export function CeaiPageClient({ directorate, submissions, currentYear, allowedU
             <DirectorateQuickActions 
                 title="CEAI - Centro de Apoio ao Idoso"
                 actions={headerControls}
+                tvMode={tvMode}
             >
-                <div className="space-y-8 p-1">
+                {!tvMode && (
+                    <div className="space-y-8 p-1">
                     {/* Consolidado CEAI Section */}
                     <section className="space-y-4">
                         <div className="flex items-center gap-3">
@@ -176,7 +179,8 @@ export function CeaiPageClient({ directorate, submissions, currentYear, allowedU
                             })}
                         </div>
                     </section>
-                </div>
+                    </div>
+                )}
             </DirectorateQuickActions>
 
             <main className="animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -185,6 +189,7 @@ export function CeaiPageClient({ directorate, submissions, currentYear, allowedU
                     selectedYear={selectedYear}
                     selectedMonth={selectedMonth}
                     selectedUnit={selectedUnit}
+                    tvMode={tvMode}
                 />
             </main>
         </div>

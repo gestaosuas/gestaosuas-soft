@@ -8,15 +8,17 @@ import { MetricsCards, GenericPieChart, ComparisonLineChart, GenericLineChart } 
 import { BarChart3, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface PopRuaDashboardProps {
     submissions: any[]
     selectedMonth: string
     selectedYear: number
     directorateId: string
+    tvMode?: boolean
 }
 
-export function PopRuaDashboard({ submissions, selectedMonth, selectedYear, directorateId }: PopRuaDashboardProps) {
+export function PopRuaDashboard({ submissions, selectedMonth, selectedYear, directorateId, tvMode = false }: PopRuaDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     const selectedMonthNum = selectedMonth === 'all' ? 0 : Number(selectedMonth)
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[selectedMonthNum - 1]
@@ -91,7 +93,7 @@ export function PopRuaDashboard({ submissions, selectedMonth, selectedYear, dire
 
 
     return (
-        <div className="space-y-6">
+        <div className={cn("space-y-6", tvMode && "space-y-4")}>
             {/* O cabeçalho foi movido para o PopRuaPageClient via DirectorateQuickActions */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
@@ -117,17 +119,20 @@ export function PopRuaDashboard({ submissions, selectedMonth, selectedYear, dire
                     data={lineChart1Data}
                     keys={["Centro de Referência", "Abordagem Social", "Migração"]}
                     colors={["#3b82f6", "#f59e0b", "#8b5cf6"]}
+                    tvMode={tvMode}
                 />
                 <GenericPieChart
                     title="Usuários de Drogas"
                     data={pieChartData}
                     colors={["#f59e0b", "#3b82f6"]}
+                    tvMode={tvMode}
                 />
                 <GenericLineChart
                     title="Pessoas Recusam Sair das Ruas"
                     data={lineChart2Data}
                     dataKey="Persistem nas Ruas"
                     color="#6366f1"
+                    tvMode={tvMode}
                 />
             </div>
         </div>

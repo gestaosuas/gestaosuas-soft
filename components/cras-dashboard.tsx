@@ -6,19 +6,22 @@ import { MonthSelector } from "@/app/dashboard/graficos/month-selector"
 import { YearSelector } from "@/components/year-selector"
 import { UnitSelector } from "@/app/dashboard/graficos/unit-selector"
 import { CRAS_UNITS } from "@/app/dashboard/cras-config"
+import { cn } from "@/lib/utils"
 
 interface CrasDashboardProps {
     submissions: any[]
     selectedYear: number
     selectedMonth: string
     selectedUnit: string
+    tvMode?: boolean
 }
 
 export function CrasDashboard({ 
     submissions: initialSubmissions, 
     selectedYear, 
     selectedMonth, 
-    selectedUnit 
+    selectedUnit,
+    tvMode = false
 }: CrasDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
@@ -125,7 +128,7 @@ export function CrasDashboard({
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[selectedMonthNum - 1]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className={cn("space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000", tvMode && "space-y-4")}>
             <MetricsCards data={cardsData} monthName={selectedMonthName} />
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-10">
@@ -138,6 +141,7 @@ export function CrasDashboard({
                     }))} 
                     keys={['Cadastros Novos', 'Recadastros']} 
                     colors={['#3b82f6', '#f59e0b']} 
+                    tvMode={tvMode}
                 />
                 <ComparisonLineChart 
                     title="Famílias Admitidas e Desligadas" 
@@ -148,18 +152,21 @@ export function CrasDashboard({
                     }))} 
                     keys={['Admitidas', 'Desligadas']} 
                     colors={['#10b981', '#ef4444']} 
+                    tvMode={tvMode}
                 />
                 <GenericLineChart 
                     title="Evolução de Atendimentos" 
                     data={monthNames.map((name, i) => ({ name, value: Number(unitDataByMonth.get(i + 1)?.atendimentos || 0) }))} 
                     dataKey="value" 
                     color="#3b82f6" 
+                    tvMode={tvMode}
                 />
                 <GenericLineChart 
                     title="Famílias em Acompanhamento (PAIF)" 
                     data={monthNames.map((name, i) => ({ name, value: Number(unitDataByMonth.get(i + 1)?.atual || 0) }))} 
                     dataKey="value" 
                     color="#8b5cf6" 
+                    tvMode={tvMode}
                 />
             </div>
             

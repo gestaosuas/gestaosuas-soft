@@ -26,7 +26,8 @@ import {
     Briefcase,
     Backpack,
     TrendingUp,
-    HeartHandshake
+    HeartHandshake,
+    MonitorPlay
 } from "lucide-react"
 
 export function Sidebar({ role, directorates = [], userName, logoUrl, systemName }: { role?: 'admin' | 'user', directorates?: any[], userName?: string, logoUrl?: string, systemName?: string }) {
@@ -189,6 +190,32 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
                                     <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
                                         <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
                                             Visão Diária
+                                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
+                                        </div>
+                                    </div>
+                                )}
+                            </Button>
+                        </Link>
+
+                        <Link href="/dashboard/tv" className="group">
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full h-11 text-[13px] font-semibold transition-all duration-200 rounded-lg mt-1 relative",
+                                    isCollapsed ? "justify-center px-0" : "justify-start px-3",
+                                    pathname === '/dashboard/tv'
+                                        ? "bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20"
+                                        : "text-white hover:text-cyan-400 hover:bg-white/5"
+                                )}
+                            >
+                                <MonitorPlay className={cn("h-[18px] w-[18px] transition-colors", pathname === '/dashboard/tv' ? "text-cyan-400" : "text-white/70", !isCollapsed && "mr-3")} />
+                                {!isCollapsed && <span>Dashboard Diretorias</span>}
+
+                                {/* CUSTOM TOOLTIP */}
+                                {isCollapsed && (
+                                    <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-150 z-[100]">
+                                        <div className="bg-zinc-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg shadow-2xl whitespace-nowrap border border-white/10 flex items-center gap-2">
+                                            Dashboard Diretorias
                                             <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-l border-b border-white/10" />
                                         </div>
                                     </div>

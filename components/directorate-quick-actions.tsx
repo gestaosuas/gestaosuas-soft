@@ -10,9 +10,10 @@ interface DirectorateQuickActionsProps {
     defaultOpen?: boolean
     children: React.ReactNode
     actions?: React.ReactNode
+    tvMode?: boolean
 }
 
-export function DirectorateQuickActions({ title, defaultOpen = false, children, actions }: DirectorateQuickActionsProps) {
+export function DirectorateQuickActions({ title, defaultOpen = false, children, actions, tvMode = false }: DirectorateQuickActionsProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen)
     const [modalUrl, setModalUrl] = useState<string | null>(null)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -83,35 +84,45 @@ export function DirectorateQuickActions({ title, defaultOpen = false, children, 
                 "sticky top-2 z-[40] transition-all duration-300",
                 isScrolled ? "translate-y-1" : "translate-y-0"
             )}>
-                <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl p-3 px-5 shadow-lg shadow-zinc-200/20 dark:shadow-none flex items-center justify-between gap-4">
+                <div className={cn(
+                    "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl p-3 px-5 shadow-lg shadow-zinc-200/20 dark:shadow-none flex items-center justify-between gap-4",
+                    tvMode && "bg-transparent dark:bg-transparent backdrop-blur-none border-none shadow-none p-0"
+                )}>
                     <div className="flex items-center gap-4 flex-1 overflow-hidden">
-                        <h1 className="text-xl md:text-2xl font-black text-[#1e3a8a] dark:text-blue-50 tracking-tight truncate shrink-0">
-                            {title}
-                        </h1>
+                        {!tvMode && (
+                            <h1 className="text-xl md:text-2xl font-black text-[#1e3a8a] dark:text-blue-50 tracking-tight truncate shrink-0">
+                                {title}
+                            </h1>
+                        )}
                         {actions && (
-                            <div className="hidden md:flex flex-1 items-center justify-end px-4 border-l border-zinc-100 dark:border-zinc-800 ml-2 overflow-x-auto no-scrollbar">
+                            <div className={cn(
+                                "flex flex-1 items-center justify-end px-4 ml-2 overflow-x-auto no-scrollbar",
+                                !tvMode && "hidden md:flex border-l border-zinc-100 dark:border-zinc-800"
+                            )}>
                                 {actions}
                             </div>
                         )}
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            onClick={() => setIsOpen(!isOpen)}
-                            className={cn(
-                                "font-bold rounded-xl px-4 py-6 transition-all active:scale-95 flex items-center gap-2 ring-2 ring-blue-500/10",
-                                isOpen 
-                                    ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 shadow-none border-zinc-200" 
-                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30"
-                            )}
-                        >
-                            <Settings className={cn("w-4 h-4 transition-transform duration-500", !isOpen && "rotate-90")} />
-                            <span className="hidden sm:inline font-black uppercase tracking-wider text-[11px]">
-                                {isOpen ? "Fechar Menu" : "Gerenciar Unidade"}
-                            </span>
-                            {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                        </Button>
-                    </div>
+                    {!tvMode && (
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                onClick={() => setIsOpen(!isOpen)}
+                                className={cn(
+                                    "font-bold rounded-xl px-4 py-6 transition-all active:scale-95 flex items-center gap-2 ring-2 ring-blue-500/10",
+                                    isOpen 
+                                        ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 shadow-none border-zinc-200" 
+                                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30"
+                                )}
+                            >
+                                <Settings className={cn("w-4 h-4 transition-transform duration-500", !isOpen && "rotate-90")} />
+                                <span className="hidden sm:inline font-black uppercase tracking-wider text-[11px]">
+                                    {isOpen ? "Fechar Menu" : "Gerenciar Unidade"}
+                                </span>
+                                {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -14,13 +14,15 @@ interface PopRuaPageClientProps {
     submissions: any[]
     currentYear: number
     latestMonth?: string | null
+    tvMode?: boolean
 }
 
 export function PopRuaPageClient({
     directorate,
     submissions,
     currentYear,
-    latestMonth
+    latestMonth,
+    tvMode = false
 }: PopRuaPageClientProps) {
     const [selectedYear, setSelectedYear] = useState(currentYear)
     const [selectedMonth, setSelectedMonth] = useState("all")
@@ -61,8 +63,10 @@ export function PopRuaPageClient({
             <DirectorateQuickActions 
                 title={directorate.name}
                 actions={headerFilters}
+                tvMode={tvMode}
             >
-                <div className="p-1 space-y-4">
+                {!tvMode && (
+                    <div className="p-1 space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="h-1 w-4 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                         <h3 className="text-[10px] font-black text-blue-900/40 dark:text-blue-400/40 uppercase tracking-[0.2em]">Operações População de Rua</h3>
@@ -86,7 +90,8 @@ export function PopRuaPageClient({
                             </Link>
                         ))}
                     </div>
-                </div>
+                    </div>
+                )}
             </DirectorateQuickActions>
 
             {/* Dashboard Principal */}
@@ -96,12 +101,15 @@ export function PopRuaPageClient({
                     selectedMonth={selectedMonth}
                     selectedYear={selectedYear}
                     directorateId={directorate.id}
+                    tvMode={tvMode}
                 />
             </div>
 
-            <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">
-                * SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG
-            </div>
+            {!tvMode && (
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">
+                    * SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG
+                </div>
+            )}
         </div>
     )
 }

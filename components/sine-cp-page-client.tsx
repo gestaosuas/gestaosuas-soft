@@ -16,13 +16,15 @@ interface SineCpPageClientProps {
     submissions: any[]
     currentYear: number
     latestMonthSINE_CP?: string | null
+    tvMode?: boolean
 }
 
 export function SineCpPageClient({
     directorate,
     submissions,
     currentYear: initialYear,
-    latestMonthSINE_CP
+    latestMonthSINE_CP,
+    tvMode = false
 }: SineCpPageClientProps) {
     const [selectedYear, setSelectedYear] = useState(initialYear)
     const [selectedMonth, setSelectedMonth] = useState<string>("all")
@@ -137,11 +139,14 @@ export function SineCpPageClient({
                 title={directorate.name} 
                 defaultOpen={false}
                 actions={headerControls}
+                tvMode={tvMode}
             >
-                <div className="space-y-8 p-1">
+                {!tvMode && (
+                    <div className="space-y-8 p-1">
                     <ActionSection title="Gestão SINE" actions={sineActions} icon={Briefcase} />
                     <ActionSection title="Gestão Qualificação Profissional" actions={cpActions} icon={GraduationCap} />
                 </div>
+                )}
             </DirectorateQuickActions>
 
             <div className="relative overflow-hidden min-h-[600px]">
@@ -151,12 +156,14 @@ export function SineCpPageClient({
                         selectedYear={selectedYear} 
                         selectedMonth={selectedMonth} 
                         directorate={directorate}
+                        tvMode={tvMode}
                     />
                 ) : (
                     <CpDashboard 
                         submissions={submissions} 
                         selectedYear={selectedYear} 
                         selectedMonth={selectedMonth} 
+                        tvMode={tvMode}
                     />
                 )}
             </div>

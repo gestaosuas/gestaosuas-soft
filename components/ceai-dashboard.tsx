@@ -2,19 +2,22 @@
 
 import { useMemo } from "react"
 import { MetricsCards, GenericLineChart, ComparisonLineChart, GenericPieChart } from "@/app/dashboard/graficos/charts"
+import { cn } from "@/lib/utils"
 
 interface CeaiDashboardProps {
     submissions: any[]
     selectedYear: number
     selectedMonth: string
     selectedUnit: string
+    tvMode?: boolean
 }
 
 export function CeaiDashboard({ 
     submissions: initialSubmissions, 
     selectedYear, 
     selectedMonth, 
-    selectedUnit 
+    selectedUnit,
+    tvMode = false
 }: CeaiDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
@@ -141,8 +144,8 @@ export function CeaiDashboard({
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[selectedMonthNum - 1]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 <ComparisonLineChart 
@@ -150,18 +153,20 @@ export function CeaiDashboard({
                     data={ceaiChartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} 
                     keys={['Admitidos', 'Desligados']} 
                     colors={['#10b981', '#ef4444']} 
+                    tvMode={tvMode}
                 />
                 <GenericLineChart 
                     title="Evolução de Atendidos no Mês" 
                     data={ceaiChartData} 
                     dataKey="total" 
                     color="#3b82f6" 
+                    tvMode={tvMode}
                 />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-1">
-                    <GenericPieChart title="Gênero (Admitidos)" data={pieData} colors={['#f472b6', '#3b82f6']} />
+                    <GenericPieChart title="Gênero (Admitidos)" data={pieData} colors={['#f472b6', '#3b82f6']} tvMode={tvMode} />
                 </div>
                 <div className="md:col-span-2 flex flex-col justify-center bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-100 dark:border-zinc-800">
                     <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200 mb-2">Resumo Operacional</h3>

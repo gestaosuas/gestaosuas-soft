@@ -15,13 +15,15 @@ interface NaicaPageClientProps {
     submissions: any[]
     currentYear: number
     filteredNAICA: string[]
+    tvMode?: boolean
 }
 
 export function NaicaPageClient({
     directorate,
     submissions,
     currentYear,
-    filteredNAICA
+    filteredNAICA,
+    tvMode = false
 }: NaicaPageClientProps) {
     const [selectedYear, setSelectedYear] = useState(currentYear)
     const [selectedMonth, setSelectedMonth] = useState("all")
@@ -72,8 +74,10 @@ export function NaicaPageClient({
             <DirectorateQuickActions 
                 title={directorate.name}
                 actions={headerFilters}
+                tvMode={tvMode}
             >
-                <div className="p-1 space-y-6">
+                {!tvMode && (
+                    <div className="p-1 space-y-6">
                     {/* Seção 1: Operações Globais */}
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
@@ -131,7 +135,8 @@ export function NaicaPageClient({
                             })}
                         </div>
                     </div>
-                </div>
+                    </div>
+                )}
             </DirectorateQuickActions>
 
             {/* Dashboard Principal */}
@@ -141,12 +146,15 @@ export function NaicaPageClient({
                     selectedMonth={selectedMonth}
                     selectedYear={selectedYear}
                     selectedUnit={selectedUnit}
+                    tvMode={tvMode}
                 />
             </div>
 
-            <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">
-                * SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG
-            </div>
+            {!tvMode && (
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">
+                    * SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG
+                </div>
+            )}
         </div>
     )
 }

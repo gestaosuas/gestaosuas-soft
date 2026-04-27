@@ -2,14 +2,16 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { MetricsCards, GenericPieChart, ServicesBarChart } from "./charts"
+import { cn } from "@/lib/utils"
 
 interface CasaMulherDashboardProps {
     submissions: any[]
     selectedMonth: string
     selectedYear: number
+    tvMode?: boolean
 }
 
-export function CasaMulherDashboard({ submissions, selectedMonth, selectedYear }: CasaMulherDashboardProps) {
+export function CasaMulherDashboard({ submissions, selectedMonth, selectedYear, tvMode = false }: CasaMulherDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
     // Data Map by Month (1-12)
@@ -104,13 +106,13 @@ export function CasaMulherDashboard({ submissions, selectedMonth, selectedYear }
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[selectedMonthNum - 1]
 
     return (
-        <div className="space-y-6">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-6", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <GenericPieChart title="Atendidas por Faixa Etária" data={ageChartData} colors={['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']} />
-                <GenericPieChart title="Atendidas por Cor/Raça" data={raceChartData} colors={['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']} />
-                <ServicesBarChart title="Tipos de Violência (Doméstica)" data={violChartData} color="#f43f5e" />
+                <GenericPieChart title="Atendidas por Faixa Etária" data={ageChartData} colors={['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']} tvMode={tvMode} />
+                <GenericPieChart title="Atendidas por Cor/Raça" data={raceChartData} colors={['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']} tvMode={tvMode} />
+                <ServicesBarChart title="Tipos de Violência (Doméstica)" data={violChartData} color="#f43f5e" tvMode={tvMode} />
             </div>
         </div>
     )

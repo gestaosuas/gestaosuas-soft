@@ -3,6 +3,7 @@
 import { MetricsCards, GenericLineChart, ComparisonLineChart, GenericPieChart } from "./charts"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Cell } from "recharts"
+import { cn } from "@/lib/utils"
 
 export function ProtetivoDashboard({
     submissions,
@@ -11,7 +12,8 @@ export function ProtetivoDashboard({
 }: {
     submissions: any[],
     selectedMonth: string,
-    selectedYear: number
+    selectedYear: number,
+    tvMode?: boolean
 }) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
@@ -149,8 +151,8 @@ export function ProtetivoDashboard({
 
 
     return (
-        <div className="space-y-8">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-8", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             {/* 2x2 Grid Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -160,6 +162,7 @@ export function ProtetivoDashboard({
                     data={chart1_DV_MXF}
                     keys={['Masculino', 'Feminino']}
                     colors={['#3b82f6', '#f59e0b']}
+                    tvMode={tvMode}
                 />
 
                 {/* 2. Direitos Violados (Unified Pie Gender) */}
@@ -167,17 +170,21 @@ export function ProtetivoDashboard({
                     title="Gênero (Direitos Violados)"
                     data={chart3_PieGender}
                     colors={['#3b82f6', '#f59e0b']}
+                    tvMode={tvMode}
                 />
 
                 {/* 3. Direitos Violados (Bar Chart Horizontal) */}
-                <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                    <CardHeader className="p-8 pb-4">
+                <Card className={cn(
+                    "rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+                    tvMode && "rounded-2xl shadow-none border-zinc-100/50"
+                )}>
+                    <CardHeader className={cn("p-8 pb-4", tvMode && "p-4 pb-2")}>
                         <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                             <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                             Impacto por Categoria
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[300px] p-8 pt-0">
+                    <CardContent className={cn("h-[300px] p-8 pt-0", tvMode && "h-[220px] p-4 pt-0")}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart layout="vertical" data={chart5_BarGrouped} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
@@ -198,6 +205,7 @@ export function ProtetivoDashboard({
                     data={chart7_CriancasAcompanhamento}
                     dataKey="ATUAL"
                     color="#3b82f6"
+                    tvMode={tvMode}
                 />
             </div>
         </div>

@@ -13,12 +13,14 @@ interface CasaMulherPageClientProps {
     directorate: any
     submissions: any[]
     currentYear: number
+    tvMode?: boolean
 }
 
 export function CasaMulherPageClient({
     directorate,
     submissions,
-    currentYear
+    currentYear,
+    tvMode = false
 }: CasaMulherPageClientProps) {
     const [selectedYear, setSelectedYear] = useState(currentYear)
     const [selectedMonth, setSelectedMonth] = useState("all")
@@ -95,8 +97,10 @@ export function CasaMulherPageClient({
             <DirectorateQuickActions 
                 title={directorate.name}
                 actions={headerFilters}
+                tvMode={tvMode}
             >
-                <div className="p-1 space-y-8">
+                {!tvMode && (
+                    <div className="p-1 space-y-8">
                     {sections.map((section, sIdx) => (
                         <div key={sIdx} className="space-y-4">
                             <div className="flex items-center justify-between pr-2">
@@ -128,7 +132,8 @@ export function CasaMulherPageClient({
                             </div>
                         </div>
                     ))}
-                </div>
+                    </div>
+                )}
             </DirectorateQuickActions>
 
             {/* Dashboard Principal */}
@@ -137,12 +142,15 @@ export function CasaMulherPageClient({
                     submissions={filteredSubmissions}
                     selectedMonth={selectedMonth}
                     selectedYear={selectedYear}
+                    tvMode={tvMode}
                 />
             </div>
 
-            <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">
-                * SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG
-            </div>
+            {!tvMode && (
+                <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-2 uppercase tracking-[0.2em]">
+                    * SISTEMA DE VIGILÂNCIA SOCIOASSISTENCIAL - UBERLÂNDIA-MG
+                </div>
+            )}
         </div>
     )
 }

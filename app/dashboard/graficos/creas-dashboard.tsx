@@ -17,11 +17,15 @@ import {
     Cell
 } from "recharts"
 import { MetricsCards } from "./charts"
+import { Info } from "lucide-react"
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
 interface CreasDashboardProps {
     submissions: any[]
     selectedMonth: string
     selectedYear: number
+    tvMode?: boolean
 }
 
 const COLORS = ["#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6", "#f97316"]
@@ -30,7 +34,7 @@ const GENDER_COLORS = {
     Masculino: "#3b82f6"  // Blue
 }
 
-export function CreasDashboard({ submissions, selectedMonth, selectedYear }: CreasDashboardProps) {
+export function CreasDashboard({ submissions, selectedMonth, selectedYear, tvMode = false }: CreasDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     const isAllYear = selectedMonth === 'all'
     const selectedMonthNum = Number(selectedMonth)
@@ -51,86 +55,49 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
     // KPIs for the selected month
     const kpiData = [
         {
-            label: `VIOLÊNCIAS MASC. ${monthLabel}`,
+            label: `VIOLÊNCIA IDOSO ${monthLabel}`,
+            description: "Soma de todos os casos de Idosos: PAEFI (Novos), Violência Física/Psicológica, Abuso Sexual, Exploração Sexual, Negligência/Abandono e Exploração Financeira.",
             value: isAllYear ? (
-                getAllVal('violencia_fisica_m', 'idoso') +
-                getAllVal('negligencia_m', 'idoso') +
-                getAllVal('abuso_sexual_m', 'idoso') +
-                getAllVal('exploracao_financeira_m', 'idoso') +
-                getAllVal('def_violencia_fisica_m', 'deficiente') +
-                getAllVal('def_negligencia_m', 'deficiente') +
-                getAllVal('def_abuso_sexual_m', 'deficiente') +
-                getAllVal('def_exploracao_financeira_m', 'deficiente')
+                getAllVal('paefi_inseridos') +
+                getAllVal('violencia_fisica_total') +
+                getAllVal('abuso_sexual_total') +
+                getAllVal('exploracao_sexual_total') +
+                getAllVal('negligencia_total') +
+                getAllVal('exploracao_financeira_total')
             ) : (
-                getVal(selectedMonthNum, 'violencia_fisica_m', 'idoso') +
-                getVal(selectedMonthNum, 'negligencia_m', 'idoso') +
-                getVal(selectedMonthNum, 'abuso_sexual_m', 'idoso') +
-                getVal(selectedMonthNum, 'exploracao_financeira_m', 'idoso') +
-                getVal(selectedMonthNum, 'def_violencia_fisica_m', 'deficiente') +
-                getVal(selectedMonthNum, 'def_negligencia_m', 'deficiente') +
-                getVal(selectedMonthNum, 'def_abuso_sexual_m', 'deficiente') +
-                getVal(selectedMonthNum, 'def_exploracao_financeira_m', 'deficiente')
+                getVal(selectedMonthNum, 'paefi_inseridos') +
+                getVal(selectedMonthNum, 'violencia_fisica_total') +
+                getVal(selectedMonthNum, 'abuso_sexual_total') +
+                getVal(selectedMonthNum, 'exploracao_sexual_total') +
+                getVal(selectedMonthNum, 'negligencia_total') +
+                getVal(selectedMonthNum, 'exploracao_financeira_total')
             ),
             color: "#0ea5e9"
         },
         {
-            label: `VIOLÊNCIAS FEM. ${monthLabel}`,
+            label: `VIOLÊNCIA PCD ${monthLabel}`,
+            description: "Soma de todos os casos de PCD: Violência Física/Psicológica, Abuso Sexual, Exploração Sexual, Negligência/Abandono e Exploração Financeira.",
             value: isAllYear ? (
-                getAllVal('violencia_fisica_f', 'idoso') +
-                getAllVal('negligencia_f', 'idoso') +
-                getAllVal('abuso_sexual_f', 'idoso') +
-                getAllVal('exploracao_financeira_f', 'idoso') +
-                getAllVal('def_violencia_fisica_f', 'deficiente') +
-                getAllVal('def_negligencia_f', 'deficiente') +
-                getAllVal('def_abuso_sexual_f', 'deficiente') +
-                getAllVal('def_exploracao_financeira_f', 'deficiente')
+                getAllVal('def_violencia_fisica_total') +
+                getAllVal('def_abuso_sexual_total') +
+                getAllVal('def_exploracao_sexual_total') +
+                getAllVal('def_negligencia_total') +
+                getAllVal('def_exploracao_financeira_total')
             ) : (
-                getVal(selectedMonthNum, 'violencia_fisica_f', 'idoso') +
-                getVal(selectedMonthNum, 'negligencia_f', 'idoso') +
-                getVal(selectedMonthNum, 'abuso_sexual_f', 'idoso') +
-                getVal(selectedMonthNum, 'exploracao_financeira_f', 'idoso') +
-                getVal(selectedMonthNum, 'def_violencia_fisica_f', 'deficiente') +
-                getVal(selectedMonthNum, 'def_negligencia_f', 'deficiente') +
-                getVal(selectedMonthNum, 'def_abuso_sexual_f', 'deficiente') +
-                getVal(selectedMonthNum, 'def_exploracao_financeira_f', 'deficiente')
-            ),
-            color: "#0ea5e9"
-        },
-        {
-            label: `VIOLÊNCIA PCD MASC. ${monthLabel}`,
-            value: isAllYear ? (
-                getAllVal('def_violencia_fisica_m', 'deficiente') +
-                getAllVal('def_negligencia_m', 'deficiente') +
-                getAllVal('def_abuso_sexual_m', 'deficiente') +
-                getAllVal('def_exploracao_financeira_m', 'deficiente')
-            ) : (
-                getVal(selectedMonthNum, 'def_violencia_fisica_m', 'deficiente') +
-                getVal(selectedMonthNum, 'def_negligencia_m', 'deficiente') +
-                getVal(selectedMonthNum, 'def_abuso_sexual_m', 'deficiente') +
-                getVal(selectedMonthNum, 'def_exploracao_financeira_m', 'deficiente')
-            ),
-            color: "#0ea5e9"
-        },
-        {
-            label: `VIOLÊNCIA PCD FEM. ${monthLabel}`,
-            value: isAllYear ? (
-                getAllVal('def_violencia_fisica_f', 'deficiente') +
-                getAllVal('def_negligencia_f', 'deficiente') +
-                getAllVal('def_abuso_sexual_f', 'deficiente') +
-                getAllVal('def_exploracao_financeira_f', 'deficiente')
-            ) : (
-                getVal(selectedMonthNum, 'def_violencia_fisica_f', 'deficiente') +
-                getVal(selectedMonthNum, 'def_negligencia_f', 'deficiente') +
-                getVal(selectedMonthNum, 'def_abuso_sexual_f', 'deficiente') +
-                getVal(selectedMonthNum, 'def_exploracao_financeira_f', 'deficiente')
+                getVal(selectedMonthNum, 'def_violencia_fisica_total') +
+                getVal(selectedMonthNum, 'def_abuso_sexual_total') +
+                getVal(selectedMonthNum, 'def_exploracao_sexual_total') +
+                getVal(selectedMonthNum, 'def_negligencia_total') +
+                getVal(selectedMonthNum, 'def_exploracao_financeira_total')
             ),
             color: "#0ea5e9"
         },
         {
             label: `FAMÍLIAS ACOMP. ${monthLabel}`,
+            description: "Total de famílias que iniciaram o mês em acompanhamento somado às famílias inseridas no período.",
             value: isAllYear ? (
-                submissions.length > 0 ? getVal(Math.max(...submissions.map(s => s.month)), 'fa_atual', 'idoso') : 0
-            ) : getVal(selectedMonthNum, 'fa_atual', 'idoso'),
+                submissions.length > 0 ? getVal(Math.max(...submissions.map(s => s.month)), 'paefi_acomp_inicio') + getVal(Math.max(...submissions.map(s => s.month)), 'paefi_inseridos') : 0
+            ) : getVal(selectedMonthNum, 'paefi_acomp_inicio') + getVal(selectedMonthNum, 'paefi_inseridos'),
             color: "#0ea5e9"
         }
     ]
@@ -145,152 +112,120 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
         }
     })
 
-    // Donut Chart Data (Aggregated by Type)
-    const violenceTypesData = [
+    // Donut Chart Data (Aggregated by Type - Idosos only)
+    const idososViolenceTypesData = [
         {
             name: "Negligência/Abandono",
-            value: (isAllYear ? getAllVal('negligencia_m') + getAllVal('negligencia_f') + getAllVal('def_negligencia_m') + getAllVal('def_negligencia_f') :
-                getVal(selectedMonthNum, 'negligencia_m') + getVal(selectedMonthNum, 'negligencia_f') + getVal(selectedMonthNum, 'def_negligencia_m') + getVal(selectedMonthNum, 'def_negligencia_f'))
+            value: (isAllYear ? getAllVal('negligencia_total') : getVal(selectedMonthNum, 'negligencia_total'))
         },
         {
-            name: "Violência Física/Psicológica",
-            value: (isAllYear ? getAllVal('violencia_fisica_m') + getAllVal('violencia_fisica_f') + getAllVal('def_violencia_fisica_m') + getAllVal('def_violencia_fisica_f') :
-                getVal(selectedMonthNum, 'violencia_fisica_m') + getVal(selectedMonthNum, 'violencia_fisica_f') + getVal(selectedMonthNum, 'def_violencia_fisica_m') + getVal(selectedMonthNum, 'def_violencia_fisica_f'))
+            name: "Violência Física/Psic.",
+            value: (isAllYear ? getAllVal('violencia_fisica_total') : getVal(selectedMonthNum, 'violencia_fisica_total'))
         },
         {
             name: "Exploração Financeira",
-            value: (isAllYear ? getAllVal('exploracao_financeira_m') + getAllVal('exploracao_financeira_f') + getAllVal('def_exploracao_financeira_m') + getAllVal('def_exploracao_financeira_f') :
-                getVal(selectedMonthNum, 'exploracao_financeira_m') + getVal(selectedMonthNum, 'exploracao_financeira_f') + getVal(selectedMonthNum, 'def_exploracao_financeira_m') + getVal(selectedMonthNum, 'def_exploracao_financeira_f'))
+            value: (isAllYear ? getAllVal('exploracao_financeira_total') : getVal(selectedMonthNum, 'exploracao_financeira_total'))
         },
         {
-            name: "Abuso/Expl. Sexual",
-            value: (isAllYear ? getAllVal('abuso_sexual_m') + getAllVal('abuso_sexual_f') + getAllVal('def_abuso_sexual_m') + getAllVal('def_abuso_sexual_f') :
-                getVal(selectedMonthNum, 'abuso_sexual_m') + getVal(selectedMonthNum, 'abuso_sexual_f') + getVal(selectedMonthNum, 'def_abuso_sexual_m') + getVal(selectedMonthNum, 'def_abuso_sexual_f'))
+            name: "Abuso Sexual",
+            value: (isAllYear ? getAllVal('abuso_sexual_total') : getVal(selectedMonthNum, 'abuso_sexual_total'))
+        },
+        {
+            name: "Exploração Sexual",
+            value: (isAllYear ? getAllVal('exploracao_sexual_total') : getVal(selectedMonthNum, 'exploracao_sexual_total'))
+        }
+    ].filter(d => d.value > 0)
+
+    // Donut Chart Data (Aggregated by Type - PCD only)
+    const pcdDonutData = [
+        {
+            name: "Negligência/Abandono",
+            value: (isAllYear ? getAllVal('def_negligencia_total') : getVal(selectedMonthNum, 'def_negligencia_total'))
+        },
+        {
+            name: "Violência Física/Psic.",
+            value: (isAllYear ? getAllVal('def_violencia_fisica_total') : getVal(selectedMonthNum, 'def_violencia_fisica_total'))
+        },
+        {
+            name: "Exploração Financeira",
+            value: (isAllYear ? getAllVal('def_exploracao_financeira_total') : getVal(selectedMonthNum, 'def_exploracao_financeira_total'))
+        },
+        {
+            name: "Abuso Sexual",
+            value: (isAllYear ? getAllVal('def_abuso_sexual_total') : getVal(selectedMonthNum, 'def_abuso_sexual_total'))
+        },
+        {
+            name: "Exploração Sexual",
+            value: (isAllYear ? getAllVal('def_exploracao_sexual_total') : getVal(selectedMonthNum, 'def_exploracao_sexual_total'))
         }
     ].filter(d => d.value > 0)
 
     // Bar Chart Data (Idosos)
-    const idososGenderData = [
+    const idososViolenceData = [
         {
-            name: "Violência/Psic",
-            Feminino: isAllYear ? getAllVal('violencia_fisica_f', 'idoso') : getVal(selectedMonthNum, 'violencia_fisica_f', 'idoso'),
-            Masculino: isAllYear ? getAllVal('violencia_fisica_m', 'idoso') : getVal(selectedMonthNum, 'violencia_fisica_m', 'idoso'),
+            name: "Violência Fís/Psic",
+            total: isAllYear ? getAllVal('violencia_fisica_total') : getVal(selectedMonthNum, 'violencia_fisica_total'),
         },
         {
             name: "Negligência/Abandono",
-            Feminino: isAllYear ? getAllVal('negligencia_f', 'idoso') : getVal(selectedMonthNum, 'negligencia_f', 'idoso'),
-            Masculino: isAllYear ? getAllVal('negligencia_m', 'idoso') : getVal(selectedMonthNum, 'negligencia_m', 'idoso'),
+            total: isAllYear ? getAllVal('negligencia_total') : getVal(selectedMonthNum, 'negligencia_total'),
         },
         {
             name: "Exploração Financeira",
-            Feminino: isAllYear ? getAllVal('exploracao_financeira_f', 'idoso') : getVal(selectedMonthNum, 'exploracao_financeira_f', 'idoso'),
-            Masculino: isAllYear ? getAllVal('exploracao_financeira_m', 'idoso') : getVal(selectedMonthNum, 'exploracao_financeira_m', 'idoso'),
+            total: isAllYear ? getAllVal('exploracao_financeira_total') : getVal(selectedMonthNum, 'exploracao_financeira_total'),
         },
         {
             name: "Abuso/Expl. Sexual",
-            Feminino: isAllYear ? getAllVal('abuso_sexual_f', 'idoso') : getVal(selectedMonthNum, 'abuso_sexual_f', 'idoso'),
-            Masculino: isAllYear ? getAllVal('abuso_sexual_m', 'idoso') : getVal(selectedMonthNum, 'abuso_sexual_m', 'idoso'),
+            total: isAllYear ? (getAllVal('abuso_sexual_total') + getAllVal('exploracao_sexual_total')) : (getVal(selectedMonthNum, 'abuso_sexual_total') + getVal(selectedMonthNum, 'exploracao_sexual_total')),
         },
     ]
 
     // Bar Chart Data (PCD)
-    const pcdGenderData = [
+    const pcdViolenceData = [
         {
-            name: "Violência/Psic",
-            Feminino: isAllYear ? getAllVal('def_violencia_fisica_f', 'deficiente') : getVal(selectedMonthNum, 'def_violencia_fisica_f', 'deficiente'),
-            Masculino: isAllYear ? getAllVal('def_violencia_fisica_m', 'deficiente') : getVal(selectedMonthNum, 'def_violencia_fisica_m', 'deficiente'),
+            name: "Violência Fís/Psic",
+            total: isAllYear ? getAllVal('def_violencia_fisica_total') : getVal(selectedMonthNum, 'def_violencia_fisica_total'),
         },
         {
             name: "Negligência/Abandono",
-            Feminino: isAllYear ? getAllVal('def_negligencia_f', 'deficiente') : getVal(selectedMonthNum, 'def_negligencia_f', 'deficiente'),
-            Masculino: isAllYear ? getAllVal('def_negligencia_m', 'deficiente') : getVal(selectedMonthNum, 'def_negligencia_m', 'deficiente'),
+            total: isAllYear ? getAllVal('def_negligencia_total') : getVal(selectedMonthNum, 'def_negligencia_total'),
         },
         {
             name: "Exploração Financeira",
-            Feminino: isAllYear ? getAllVal('def_exploracao_financeira_f', 'deficiente') : getVal(selectedMonthNum, 'def_exploracao_financeira_f', 'deficiente'),
-            Masculino: isAllYear ? getAllVal('def_exploracao_financeira_m', 'deficiente') : getVal(selectedMonthNum, 'def_exploracao_financeira_m', 'deficiente'),
+            total: isAllYear ? getAllVal('def_exploracao_financeira_total') : getVal(selectedMonthNum, 'def_exploracao_financeira_total'),
         },
         {
             name: "Abuso/Expl. Sexual",
-            Feminino: isAllYear ? getAllVal('def_abuso_sexual_f', 'deficiente') : getVal(selectedMonthNum, 'def_abuso_sexual_f', 'deficiente'),
-            Masculino: isAllYear ? getAllVal('def_abuso_sexual_m', 'deficiente') : getVal(selectedMonthNum, 'def_abuso_sexual_m', 'deficiente'),
+            total: isAllYear ? (getAllVal('def_abuso_sexual_total') + getAllVal('def_exploracao_sexual_total')) : (getVal(selectedMonthNum, 'def_abuso_sexual_total') + getVal(selectedMonthNum, 'def_exploracao_sexual_total')),
         },
     ]
 
     return (
-        <div className="space-y-6">
-            <MetricsCards data={kpiData} monthName={isAllYear ? "Ano" : monthNames[selectedMonthNum - 1]} compact />
+        <div className={cn("space-y-6", tvMode && "space-y-3")}>
+            <MetricsCards data={kpiData} monthName={isAllYear ? "Ano" : monthNames[selectedMonthNum - 1]} compact tvMode={tvMode} />
 
             <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
-                {/* LINHA 1: 3 Gráficos (Cada um ocupa 2 de 6 colunas) */}
-                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
-                    <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-blue-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Idosos em Acompanhamento</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[260px] p-6 pt-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={lineData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                                <Tooltip />
-                                <Line
-                                    type="monotone"
-                                    dataKey="idosos"
-                                    stroke="#3b82f6"
-                                    strokeWidth={2}
-                                    dot={{ r: 2, fill: "#3b82f6" }}
-                                    label={{ position: 'top', fontSize: 9, fill: '#3b82f6', formatter: (val: any) => val > 0 ? val : '' }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
-                    <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
-                        <span className="text-amber-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">PCD em Acompanhamento</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[260px] p-6 pt-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={lineData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                                <Tooltip />
-                                <Line
-                                    type="monotone"
-                                    dataKey="pcd"
-                                    stroke="#f59e0b"
-                                    strokeWidth={2}
-                                    dot={{ r: 2, fill: "#f59e0b" }}
-                                    label={{ position: 'top', fontSize: 9, fill: '#f59e0b', formatter: (val: any) => val > 0 ? val : '' }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-2 shadow-none border-zinc-200 dark:border-zinc-800">
+                {/* LINHA 1: 2 Gráficos de Rosca */}
+                <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-red-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência</CardTitle>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência Idosos</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[260px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={violenceTypesData}
+                                    data={idososViolenceTypesData}
                                     cx="40%"
                                     cy="50%"
-                                    innerRadius={45}
-                                    outerRadius={65}
+                                    innerRadius={50}
+                                    outerRadius={85}
                                     paddingAngle={5}
                                     dataKey="value"
+                                    label={({ value }) => value}
+                                    isAnimationActive={!tvMode}
                                 >
-                                    {violenceTypesData.map((entry, index) => (
+                                    {idososViolenceTypesData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -301,8 +236,49 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                                     align="right"
                                     iconType="rect"
                                     formatter={(value, entry: any) => {
-                                        const item = violenceTypesData.find(d => d.name === value)
-                                        const total = violenceTypesData.reduce((acc, curr) => acc + curr.value, 0)
+                                        const item = idososViolenceTypesData.find(d => d.name === value)
+                                        const total = idososViolenceTypesData.reduce((acc, curr) => acc + curr.value, 0)
+                                        const percent = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0
+                                        return <span className="text-[9px] font-medium text-zinc-500">{value} ({percent}%)</span>
+                                    }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
+                    <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
+                        <span className="text-amber-500 font-bold">◆</span>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Tipos de Violência PCD</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[260px] p-6 pt-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pcdDonutData}
+                                    cx="40%"
+                                    cy="50%"
+                                    innerRadius={50}
+                                    outerRadius={85}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    label={({ value }) => value}
+                                    isAnimationActive={!tvMode}
+                                >
+                                    {pcdDonutData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend
+                                    layout="vertical"
+                                    verticalAlign="middle"
+                                    align="right"
+                                    iconType="rect"
+                                    formatter={(value, entry: any) => {
+                                        const item = pcdDonutData.find(d => d.name === value)
+                                        const total = pcdDonutData.reduce((acc, curr) => acc + curr.value, 0)
                                         const percent = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0
                                         return <span className="text-[9px] font-medium text-zinc-500">{value} ({percent}%)</span>
                                     }}
@@ -316,27 +292,33 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                 <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-indigo-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero: Idosos</CardTitle>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight flex items-center gap-2">
+                            Violência Idosos
+                            <TooltipProvider>
+                                <UITooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 cursor-help text-zinc-300 hover:text-blue-500 transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-[200px] text-[10px] font-normal normal-case tracking-normal">
+                                        O campo Abuso/Expl. Sexual é a soma de "Abuso Sexual" e "Exploração Sexual".
+                                    </TooltipContent>
+                                </UITooltip>
+                            </TooltipProvider>
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[260px] p-6 pt-2">
+                    <CardContent className="h-[320px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={idososGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                            <BarChart data={idososViolenceData} margin={{ top: 10, right: 10, left: -20, bottom: 60 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold', angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
                                 <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                 <Bar
-                                    dataKey="Feminino"
-                                    fill={GENDER_COLORS.Feminino}
+                                    dataKey="total"
+                                    fill="#3b82f6"
                                     radius={[3, 3, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
-                                />
-                                <Bar
-                                    dataKey="Masculino"
-                                    fill={GENDER_COLORS.Masculino}
-                                    radius={[3, 3, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: '#3b82f6', formatter: (val: any) => val > 0 ? val : '' }}
+                                    isAnimationActive={!tvMode}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
@@ -346,27 +328,33 @@ export function CreasDashboard({ submissions, selectedMonth, selectedYear }: Cre
                 <Card className="lg:col-span-3 shadow-none border-zinc-200 dark:border-zinc-800">
                     <CardHeader className="p-4 pb-0 flex flex-row items-center gap-2">
                         <span className="text-emerald-500 font-bold">◆</span>
-                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">Violência por Gênero: Pessoa com Deficiência</CardTitle>
+                        <CardTitle className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight flex items-center gap-2">
+                            Violência Pessoa com Deficiência
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 cursor-help text-zinc-300 hover:text-blue-500 transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-[200px] text-[10px] font-normal normal-case tracking-normal">
+                                        O campo Abuso/Expl. Sexual é a soma de "Abuso Sexual" e "Exploração Sexual".
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[260px] p-6 pt-2">
+                    <CardContent className="h-[320px] p-6 pt-2">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={pcdGenderData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                            <BarChart data={pcdViolenceData} margin={{ top: 10, right: 10, left: -20, bottom: 60 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 9, angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold', angle: -30, textAnchor: 'end' } as any} axisLine={false} tickLine={false} interval={0} />
                                 <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                                 <Tooltip />
-                                <Legend verticalAlign="top" align="right" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
                                 <Bar
-                                    dataKey="Feminino"
-                                    fill={GENDER_COLORS.Feminino}
+                                    dataKey="total"
+                                    fill="#10b981"
                                     radius={[3, 3, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Feminino, formatter: (val: any) => val > 0 ? val : '' }}
-                                />
-                                <Bar
-                                    dataKey="Masculino"
-                                    fill={GENDER_COLORS.Masculino}
-                                    radius={[3, 3, 0, 0]}
-                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: GENDER_COLORS.Masculino, formatter: (val: any) => val > 0 ? val : '' }}
+                                    label={{ position: 'top', fontSize: 10, fontWeight: '800', fill: '#10b981', formatter: (val: any) => val > 0 ? val : '' }}
+                                    isAnimationActive={!tvMode}
                                 />
                             </BarChart>
                         </ResponsiveContainer>

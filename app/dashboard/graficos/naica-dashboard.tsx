@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { MetricsCards, ComparisonLineChart, GenericLineChart, GenericPieChart } from "./charts"
+import { cn } from "@/lib/utils"
 import { NAICA_UNITS } from "../naica-config"
 
 interface NaicaDashboardProps {
@@ -9,13 +10,15 @@ interface NaicaDashboardProps {
     selectedMonth: string
     selectedYear: number
     selectedUnit?: string
+    tvMode?: boolean
 }
 
 export function NaicaDashboard({ 
     submissions, 
     selectedMonth, 
     selectedYear,
-    selectedUnit = 'all'
+    selectedUnit = 'all',
+    tvMode = false
 }: NaicaDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
@@ -116,8 +119,8 @@ export function NaicaDashboard({
     ].filter(d => d.value > 0)
 
     return (
-        <div className="space-y-6">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} compact />
+        <div className={cn("space-y-6", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} compact tvMode={tvMode} />
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <GenericLineChart 
@@ -125,17 +128,20 @@ export function NaicaDashboard({
                     data={naicaChartData} 
                     dataKey="acompanhamento" 
                     color="#3b82f6" 
+                    tvMode={tvMode}
                 />
                 <ComparisonLineChart 
                     title="Movimentação (Admitidos x Desligados)" 
                     data={naicaChartData.map(d => ({ name: d.name, Admitidos: d.admitidos, Desligados: d.desligados }))} 
                     keys={['Admitidos', 'Desligados']} 
                     colors={['#10b981', '#ef4444']} 
+                    tvMode={tvMode}
                 />
                 <GenericPieChart 
                     title="Perfil dos Admitidos" 
                     data={pieData} 
                     colors={['#f472b6', '#3b82f6']} 
+                    tvMode={tvMode}
                 />
             </div>
         </div>

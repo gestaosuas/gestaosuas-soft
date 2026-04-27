@@ -13,12 +13,14 @@ interface BeneficiosPageClientProps {
     directorate: any
     submissions: any[]
     currentYear: number
+    tvMode?: boolean
 }
 
 export function BeneficiosPageClient({
     directorate,
     submissions,
     currentYear: initialYear,
+    tvMode = false
 }: BeneficiosPageClientProps) {
     const [selectedYear, setSelectedYear] = useState(initialYear)
     const [selectedMonth, setSelectedMonth] = useState<string>("all")
@@ -51,8 +53,10 @@ export function BeneficiosPageClient({
                 title={directorate.name} 
                 defaultOpen={false}
                 actions={filters}
+                tvMode={tvMode}
             >
-                <div className="space-y-8 p-1">
+                {!tvMode && (
+                    <div className="space-y-8 p-1">
                     <section className="space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="h-1 w-4 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
@@ -79,13 +83,15 @@ export function BeneficiosPageClient({
                             })}
                         </div>
                     </section>
-                </div>
+                    </div>
+                )}
             </DirectorateQuickActions>
 
             <BeneficiosDashboard 
                 submissions={submissions} 
                 selectedYear={selectedYear} 
                 selectedMonth={selectedMonth}
+                tvMode={tvMode}
             />
         </div>
     )

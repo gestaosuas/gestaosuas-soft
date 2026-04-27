@@ -18,6 +18,7 @@ interface CrasPageClientProps {
     allowedUnits: string[] | null
     getMonthName: (month: number) => string
     getCardTheme: (label: string) => any
+    tvMode?: boolean
 }
 
 export function CrasPageClient({
@@ -25,6 +26,7 @@ export function CrasPageClient({
     submissions,
     currentYear: initialYear,
     allowedUnits,
+    tvMode = false
 }: Omit<CrasPageClientProps, 'getMonthName' | 'getCardTheme'>) {
     const [selectedYear, setSelectedYear] = useState(initialYear)
     const [selectedMonth, setSelectedMonth] = useState<string>("all")
@@ -74,8 +76,10 @@ export function CrasPageClient({
                 title={directorate.name} 
                 defaultOpen={false}
                 actions={filters}
+                tvMode={tvMode}
             >
-                <div className="space-y-8 p-1">
+                {!tvMode && (
+                    <div className="space-y-8 p-1">
                     {/* Ações Consolidadas */}
                     <section className="space-y-4">
                         <div className="flex items-center gap-3">
@@ -134,7 +138,8 @@ export function CrasPageClient({
                             })}
                         </div>
                     </section>
-                </div>
+                    </div>
+                )}
             </DirectorateQuickActions>
 
             <CrasDashboard 
@@ -142,6 +147,7 @@ export function CrasPageClient({
                 selectedYear={selectedYear} 
                 selectedMonth={selectedMonth}
                 selectedUnit={selectedUnit}
+                tvMode={tvMode}
             />
         </div>
     )

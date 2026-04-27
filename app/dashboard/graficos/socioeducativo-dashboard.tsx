@@ -3,6 +3,7 @@
 import { MetricsCards, GenericLineChart, GenericPieChart } from "./charts"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Cell } from "recharts"
+import { cn } from "@/lib/utils"
 
 export function SocioeducativoDashboard({
     submissions,
@@ -11,7 +12,8 @@ export function SocioeducativoDashboard({
 }: {
     submissions: any[],
     selectedMonth: string,
-    selectedYear: number
+    selectedYear: number,
+    tvMode?: boolean
 }) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
@@ -128,20 +130,23 @@ export function SocioeducativoDashboard({
 
 
     return (
-        <div className="space-y-8">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-8", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             {/* ROW 1: 2 Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* 1. Total LA e PSC Mensal */}
-                <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                    <CardHeader className="p-8 pb-4">
+                <Card className={cn(
+                    "rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+                    tvMode && "rounded-2xl shadow-none border-zinc-100/50"
+                )}>
+                    <CardHeader className={cn("p-8 pb-4", tvMode && "p-4 pb-2")}>
                         <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                             <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                             Total LA e PSC Mensal
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[300px] p-8 pt-0">
+                    <CardContent className={cn("h-[300px] p-8 pt-0", tvMode && "h-[220px] p-4 pt-0")}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chart1_LAxPSC} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -161,20 +166,24 @@ export function SocioeducativoDashboard({
                     title="Medidas Aplicadas (LA x PSC)"
                     data={chart2_PieLAxPSC}
                     colors={['#3b82f6', '#f59e0b']}
+                    tvMode={tvMode}
                 />
             </div>
 
             {/* ROW 2: 2 Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* 3. Medidas Aplicadas por Gênero */}
-                <Card className="rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                    <CardHeader className="p-8 pb-4">
+                <Card className={cn(
+                    "rounded-[2.5rem] border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+                    tvMode && "rounded-2xl shadow-none border-zinc-100/50"
+                )}>
+                    <CardHeader className={cn("p-8 pb-4", tvMode && "p-4 pb-2")}>
                         <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                             <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                             Medidas Aplicadas por Gênero
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[300px] p-8 pt-0">
+                    <CardContent className={cn("h-[300px] p-8 pt-0", tvMode && "h-[220px] p-4 pt-0")}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chart3_GeneroBar} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -194,6 +203,7 @@ export function SocioeducativoDashboard({
                     title="Adolescentes Admitidos por Gênero"
                     data={chart4_PieAdmitidosGenero}
                     colors={['#3b82f6', '#f59e0b']}
+                    tvMode={tvMode}
                 />
             </div>
 

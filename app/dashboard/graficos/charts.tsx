@@ -18,8 +18,11 @@ import {
     Cell
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Info } from "lucide-react"
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
-export function MetricsCards({ data, monthName, compact = false }: { data: any[], monthName: string, compact?: boolean }) {
+export function MetricsCards({ data, monthName, compact = false, tvMode = false }: { data: any[], monthName: string, compact?: boolean, tvMode?: boolean }) {
     let gridClass = "grid-cols-1 sm:grid-cols-2 md:grid-cols-3";
 
     if (data.length === 7) gridClass = "grid-cols-2 md:grid-cols-4 xl:grid-cols-[repeat(7,minmax(0,1fr))]";
@@ -36,13 +39,28 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
                 const isPositive = (item.trend || 0) >= 0;
 
                 return (
-                    <Card key={i} className="rounded-xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 overflow-hidden group">
-                        <CardHeader className="p-6 pb-2">
-                            <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] leading-tight">
+                    <Card key={i} className={cn(
+                        "rounded-xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 overflow-hidden group",
+                        tvMode && "shadow-none border-zinc-100/50"
+                    )}>
+                        <CardHeader className={cn("p-6 pb-2", tvMode && "p-3 pb-1")}>
+                            <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] leading-tight flex items-center gap-2">
                                 {item.label}
+                                {item.description && (
+                                    <TooltipProvider>
+                                        <UITooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-3 w-3 cursor-help text-zinc-300 hover:text-blue-500 transition-colors" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-[200px] text-[11px] font-normal normal-case tracking-normal">
+                                                {item.description}
+                                            </TooltipContent>
+                                        </UITooltip>
+                                    </TooltipProvider>
+                                )}
                             </h3>
                         </CardHeader>
-                        <CardContent className="p-6 pt-0 flex items-center justify-between">
+                        <CardContent className={cn("p-6 pt-0 flex items-center justify-between", tvMode && "p-3 pt-0")}>
                             <div className="space-y-1">
                                 <div className="text-3xl font-black tracking-tight text-slate-800 dark:text-white" style={{ color: item.color ? item.color : undefined }}>
                                     {item.value.toLocaleString('pt-BR')}
@@ -87,16 +105,19 @@ export function MetricsCards({ data, monthName, compact = false }: { data: any[]
     );
 }
 
-export function ServicesBarChart({ data, title = "Serviços Prestados", color = "#3b82f6" }: { data: any[], title?: string, color?: string }) {
+export function ServicesBarChart({ data, title = "Serviços Prestados", color = "#3b82f6", tvMode = false }: { data: any[], title?: string, color?: string, tvMode?: boolean }) {
     return (
-        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-            <CardHeader className="p-8 pb-4">
+        <Card className={cn(
+            "rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+            tvMode && "shadow-none border-zinc-100/50"
+        )}>
+            <CardHeader className={cn("p-8 pb-4", tvMode && "p-4 pb-2")}>
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
                     {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[350px] p-8 pt-0">
+            <CardContent className={cn("h-[350px] p-8 pt-0", tvMode && "h-[250px] p-4 pt-0")}>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         layout="vertical"
@@ -124,6 +145,7 @@ export function ServicesBarChart({ data, title = "Serviços Prestados", color = 
                             radius={[0, 4, 4, 0]}
                             barSize={24}
                             label={{ position: 'right', fill: '#64748b', fontSize: 11, fontWeight: '800', dx: 10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                            isAnimationActive={!tvMode}
                         >
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={index % 2 === 0 ? color : `${color}cc`} />
@@ -136,16 +158,19 @@ export function ServicesBarChart({ data, title = "Serviços Prestados", color = 
     )
 }
 
-export function AttendanceLineChart({ data }: { data: any[] }) {
+export function AttendanceLineChart({ data, tvMode = false }: { data: any[], tvMode?: boolean }) {
     return (
-        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-            <CardHeader className="p-8 pb-4">
+        <Card className={cn(
+            "rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+            tvMode && "shadow-none border-zinc-100/50"
+        )}>
+            <CardHeader className={cn("p-8 pb-4", tvMode && "p-4 pb-2")}>
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-slate-800"></span>
                     Atendimento ao Empregador e Trabalhador
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[350px] p-8 pt-0">
+            <CardContent className={cn("h-[350px] p-8 pt-0", tvMode && "h-[250px] p-4 pt-0")}>
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
@@ -191,6 +216,7 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
                             fill="url(#colorTrabalhador)"
                             dot={{ r: 3, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
                             label={{ position: 'top', fill: '#3b82f6', fontSize: 10, fontWeight: 'bold', dy: -10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                            isAnimationActive={!tvMode}
                         />
                         <Area
                             type="monotone"
@@ -202,6 +228,7 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
                             fill="url(#colorEmpregador)"
                             dot={{ r: 3, fill: '#0f172a', strokeWidth: 2, stroke: '#fff' }}
                             label={{ position: 'top', fill: '#0f172a', fontSize: 10, fontWeight: 'bold', dy: -10, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                            isAnimationActive={!tvMode}
                         />
                     </AreaChart>
                 </ResponsiveContainer>
@@ -210,10 +237,13 @@ export function AttendanceLineChart({ data }: { data: any[] }) {
     )
 }
 
-export function GenericLineChart({ data, title, dataKey, color, subtitle }: { data: any[], title: string, dataKey: string, color: string, subtitle?: string }) {
+export function GenericLineChart({ data, title, dataKey, color, subtitle, tvMode = false }: { data: any[], title: string, dataKey: string, color: string, subtitle?: string, tvMode?: boolean }) {
     return (
-        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-            <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between space-y-0">
+        <Card className={cn(
+            "rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+            tvMode && "shadow-none border-zinc-100/50"
+        )}>
+            <CardHeader className={cn("p-8 pb-4 flex flex-row items-center justify-between space-y-0", tvMode && "p-4 pb-2")}>
                 <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
                     <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight">
@@ -224,7 +254,7 @@ export function GenericLineChart({ data, title, dataKey, color, subtitle }: { da
                     <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tight">{subtitle}</span>
                 )}
             </CardHeader>
-            <CardContent className="h-[300px] p-8 pt-0">
+            <CardContent className={cn("h-[300px] p-8 pt-0", tvMode && "h-[220px] p-4 pt-0")}>
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                         <defs>
@@ -260,6 +290,7 @@ export function GenericLineChart({ data, title, dataKey, color, subtitle }: { da
                             dot={{ r: 4, fill: color, strokeWidth: 2, stroke: '#fff' }}
                             activeDot={{ r: 6, fill: color, stroke: '#fff', strokeWidth: 2 }}
                             label={{ position: 'top', fill: color, fontSize: 10, fontWeight: 'bold', dy: -10, formatter: (val: any) => Number(val) > 0 ? val.toLocaleString('pt-BR') : '' }}
+                            isAnimationActive={!tvMode}
                         />
                     </AreaChart>
                 </ResponsiveContainer>
@@ -268,16 +299,16 @@ export function GenericLineChart({ data, title, dataKey, color, subtitle }: { da
     )
 }
 
-export function ComparisonLineChart({ data, title, keys, colors }: { data: any[], title: string, keys: string[], colors: string[] }) {
+export function ComparisonLineChart({ data, title, keys, colors, tvMode = false }: { data: any[], title: string, keys: string[], colors: string[], tvMode?: boolean }) {
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="p-3">
+        <Card className={cn("shadow-sm", tvMode && "shadow-none border-zinc-100/50")}>
+            <CardHeader className={cn("p-3", tvMode && "p-2")}>
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[220px] p-2 pt-0">
+            <CardContent className={cn("h-[220px] p-2 pt-0", tvMode && "h-[180px] p-2 pt-0")}>
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -308,6 +339,7 @@ export function ComparisonLineChart({ data, title, keys, colors }: { data: any[]
                                 dot={{ r: 4, fill: colors[index], strokeWidth: 2, stroke: '#fff' }}
                                 activeDot={{ r: 6 }}
                                 label={{ position: 'top', fill: colors[index], fontSize: 10, dy: -5, formatter: (val: any) => Number(val) > 0 ? val : '' }}
+                                isAnimationActive={!tvMode}
                             />
                         ))}
                     </LineChart>
@@ -338,18 +370,18 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, val
     );
 };
 
-export function GenderPieChart({ data }: { data: any[] }) {
+export function GenderPieChart({ data, tvMode = false }: { data: any[], tvMode?: boolean }) {
     const COLORS = ['#3b82f6', '#f43f5e']; // Blue for Men, Rose for Women
 
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="p-3">
+        <Card className={cn("shadow-sm", tvMode && "shadow-none border-zinc-100/50")}>
+            <CardHeader className={cn("p-3", tvMode && "p-2")}>
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     Gênero
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[220px] p-2 pt-0">
+            <CardContent className={cn("h-[220px] p-2 pt-0", tvMode && "h-[180px] p-2 pt-0")}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -359,7 +391,7 @@ export function GenderPieChart({ data }: { data: any[] }) {
                             paddingAngle={2}
                             dataKey="value"
                             label={renderCustomizedLabel}
-                            labelLine={false}
+                            labelLine={false} isAnimationActive={!tvMode}
                         >
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -385,20 +417,23 @@ export function GenderPieChart({ data }: { data: any[] }) {
     )
 }
 
-export function GenericPieChart({ data, title, colors }: { data: any[], title: string, colors?: string[] }) {
+export function GenericPieChart({ data, title, colors, tvMode = false }: { data: any[], title: string, colors?: string[], tvMode?: boolean }) {
     // Default colors if not provided
     const DEFAULT_COLORS = ['#3b82f6', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6'];
     const COLORS = colors || DEFAULT_COLORS;
 
     return (
-        <Card className="rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-            <CardHeader className="p-8 pb-4">
+        <Card className={cn(
+            "rounded-2xl border-zinc-100/80 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300",
+            tvMode && "shadow-none border-zinc-100/50"
+        )}>
+            <CardHeader className={cn("p-8 pb-4", tvMode && "p-4 pb-2")}>
                 <CardTitle className="text-[11px] font-black text-slate-800 dark:text-zinc-300 uppercase tracking-widest leading-tight flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                     {title}
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px] p-8 pt-0 relative">
+            <CardContent className={cn("h-[300px] p-8 pt-0 relative", tvMode && "h-[220px] p-4 pt-0")}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -408,7 +443,7 @@ export function GenericPieChart({ data, title, colors }: { data: any[], title: s
                             paddingAngle={2}
                             dataKey="value"
                             label={renderCustomizedLabel}
-                            labelLine={false}
+                            labelLine={false} isAnimationActive={!tvMode}
                         >
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

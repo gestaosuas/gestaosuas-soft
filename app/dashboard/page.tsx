@@ -27,6 +27,16 @@ export default async function DashboardPage({
     const profile = await getCachedProfile(user.id)
     const isAdmin = profile?.role === 'admin'
 
+    // Redirect admins to TV dashboard by default
+    if (isAdmin && !view) {
+        redirect('/dashboard/tv')
+    }
+
+    // Redirect non-admins to units map by default
+    if (!isAdmin) {
+        redirect('/dashboard/mapas/unidades')
+    }
+
     // Fetch all directorates for the progress list using admin client to bypass RLS
     const adminSupabase = createAdminClient()
     const { data: allDirectorates, error: dirError } = await adminSupabase.from('directorates').select('id, name').order('name')

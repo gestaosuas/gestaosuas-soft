@@ -2,18 +2,21 @@
 
 import { useMemo } from "react"
 import { MetricsCards, GenericLineChart, ComparisonLineChart, GenderPieChart } from "@/app/dashboard/graficos/charts"
+import { cn } from "@/lib/utils"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 
 interface CpDashboardProps {
     submissions: any[]
     selectedYear: number
     selectedMonth: string
+    tvMode?: boolean
 }
 
 export function CpDashboard({ 
     submissions: initialSubmissions, 
     selectedYear,
-    selectedMonth 
+    selectedMonth,
+    tvMode = false
 }: CpDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
@@ -99,13 +102,13 @@ export function CpDashboard({
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mt-10">
-                <GenericLineChart title="Concluintes" data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_concluintes] || 0) }))} dataKey="value" color="#0ea5e9" />
-                <ComparisonLineChart title="Atendimentos e Procedimentos" data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, Atendimentos: sumFields(mData, atendimentosFields), Procedimentos: sumFields(mData, procedimentosFields) } })} keys={['Atendimentos', 'Procedimentos']} colors={['#3b82f6', '#10b981']} />
-                <GenderPieChart data={[{ name: "Homem", value: Number(latestData[id_homens] || 0) }, { name: "Mulher", value: Number(latestData[id_mulheres] || 0) }].filter(d => d.value > 0)} />
+                <GenericLineChart title="Concluintes" data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_concluintes] || 0) }))} dataKey="value" color="#0ea5e9" tvMode={tvMode} />
+                <ComparisonLineChart title="Atendimentos e Procedimentos" data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, Atendimentos: sumFields(mData, atendimentosFields), Procedimentos: sumFields(mData, procedimentosFields) } })} keys={['Atendimentos', 'Procedimentos']} colors={['#3b82f6', '#10b981']} tvMode={tvMode} />
+                <GenderPieChart data={[{ name: "Homem", value: Number(latestData[id_homens] || 0) }, { name: "Mulher", value: Number(latestData[id_mulheres] || 0) }].filter(d => d.value > 0)} tvMode={tvMode} />
             </div>
 
             <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-8 uppercase tracking-[0.2em]">

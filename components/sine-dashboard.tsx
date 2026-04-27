@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { MetricsCards, ServicesBarChart, AttendanceLineChart } from "@/app/dashboard/graficos/charts"
+import { cn } from "@/lib/utils"
 import { FormDefinition } from "@/components/form-engine"
 
 interface SineDashboardProps {
@@ -9,6 +10,7 @@ interface SineDashboardProps {
     selectedYear: number
     selectedMonth: string
     directorate: any
+    tvMode?: boolean
 }
 
 function findFieldId(fields: any[], keywords: string[]): string | undefined {
@@ -23,7 +25,8 @@ export function SineDashboard({
     submissions: initialSubmissions, 
     selectedYear,
     selectedMonth,
-    directorate
+    directorate,
+    tvMode = false
 }: SineDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
@@ -101,8 +104,8 @@ export function SineDashboard({
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[Number(selectedMonth) - 1]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
                 <ServicesBarChart data={[
@@ -111,7 +114,7 @@ export function SineDashboard({
                     { name: "Processo Seletivo", value: Number(latestData[ids.processo || ''] || 0) },
                     { name: "Currículos", value: Number(latestData[ids.curriculos || ''] || 0) },
                     { name: "Seguro Desemprego", value: Number(latestData[ids.seguro || ''] || 0) }
-                ]} />
+                ]} tvMode={tvMode} />
                 <AttendanceLineChart data={monthNames.map((name, i) => { 
                     const mData = dataByMonth.get(i + 1) || {}; 
                     return { 
@@ -119,7 +122,7 @@ export function SineDashboard({
                         empregador: Number(mData[ids.atend_empregador || ''] || 0), 
                         trabalhador: Number(mData[ids.atend_trabalhador || ''] || 0) 
                     } 
-                })} />
+                })} tvMode={tvMode} />
             </div>
 
             <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-8 uppercase tracking-[0.2em]">

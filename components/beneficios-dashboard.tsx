@@ -2,17 +2,20 @@
 
 import { useMemo } from "react"
 import { MetricsCards, GenericLineChart, GenericPieChart } from "@/app/dashboard/graficos/charts"
+import { cn } from "@/lib/utils"
 
 interface BeneficiosDashboardProps {
     submissions: any[]
     selectedYear: number
     selectedMonth: string
+    tvMode?: boolean
 }
 
 export function BeneficiosDashboard({ 
     submissions: initialSubmissions, 
     selectedYear,
-    selectedMonth 
+    selectedMonth,
+    tvMode = false
 }: BeneficiosDashboardProps) {
     const monthNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
@@ -92,8 +95,8 @@ export function BeneficiosDashboard({
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[monthNum - 1]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <MetricsCards data={cardsData} monthName={selectedMonthName} />
+        <div className={cn("space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000", tvMode && "space-y-4")}>
+            <MetricsCards data={cardsData} monthName={selectedMonthName} tvMode={tvMode} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
                 <GenericLineChart
@@ -102,6 +105,7 @@ export function BeneficiosDashboard({
                     data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_familias_pbf] || 0) }))}
                     dataKey="value"
                     color="#3b82f6"
+                    tvMode={tvMode}
                 />
                 <GenericLineChart
                     title="Pessoas Cadastradas"
@@ -109,11 +113,13 @@ export function BeneficiosDashboard({
                     data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_pessoas_cadunico] || 0) }))}
                     dataKey="value"
                     color="#f59e0b"
+                    tvMode={tvMode}
                 />
                 <GenericPieChart
                     title="Visitas Domiciliares"
                     data={visitas_ids.map(v => ({ name: v.label, value: Number(latestData[v.id] || 0) })).filter(d => d.value > 0)}
                     colors={['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#f97316']}
+                    tvMode={tvMode}
                 />
             </div>
             
