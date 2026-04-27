@@ -169,16 +169,6 @@ export function FinalReportList({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-                <Button 
-                    variant="ghost" 
-                    onClick={() => router.push(`/dashboard/diretoria/${directorateId}`)}
-                    className="gap-2 text-zinc-500 hover:text-blue-600 transition-colors font-bold text-xs uppercase"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Voltar para Diretoria
-                </Button>
-            </div>
 
             <div className="no-print bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-3 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center gap-3">
                 <div className="relative min-w-[200px] flex-1">
