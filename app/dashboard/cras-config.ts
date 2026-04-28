@@ -34,8 +34,7 @@ export const CRAS_FORM_DEFINITION: FormDefinition = {
                     id: "mes_anterior", 
                     label: "Mês Anterior", 
                     type: "number", 
-                    disabled: true,
-                    tooltip: "Preenchido automaticamente: (Atual do mês anterior - Desligadas do mês anterior)" 
+                    tooltip: "Preenchido automaticamente (Sugestão): (Atual do mês anterior - Desligadas do mês anterior)" 
                 },
                 { id: "admitidas", label: "Famílias Inseridas (PAIF)", type: "number" },
                 { id: "desligadas", label: "Famílias Desligadas (PAIF)", type: "number" },

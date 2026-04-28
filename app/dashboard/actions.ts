@@ -2086,7 +2086,7 @@ export async function getPreviousMonthData(directorateId: string, currentMonth: 
 
     const adminSupabase = createAdminClient()
 
-    // Fetch submission from old table for other sectors
+    // Fetch submission from old table for other sectors or fallback
     const { data: submission } = await adminSupabase
         .from('submissions')
         .select('data')
@@ -2095,7 +2095,16 @@ export async function getPreviousMonthData(directorateId: string, currentMonth: 
         .eq('year', prevYear)
         .maybeSingle()
 
-    return submission?.data || null
+    if (submission?.data) {
+        const d = submission.data as any
+        // Se for CRAS ou NAICA na tabela antiga, os dados estão dentro de .units[unit]
+        if ((setor === 'cras' || setor === 'naica') && unit && d.units && d.units[unit]) {
+            return d.units[unit]
+        }
+        return d
+    }
+
+    return null
 }
 
 export async function getCurrentMonthData(directorateId: string, month: number, year: number, unit?: string, setor?: string) {
