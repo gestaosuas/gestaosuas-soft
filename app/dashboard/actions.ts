@@ -159,6 +159,13 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                 }
             });
             formData = cleanData;
+
+            // CRAS Server-side Calculation for consistency
+            if (formData.mes_anterior !== undefined || formData.admitidas !== undefined) {
+                const anterior = Number(formData.mes_anterior) || 0
+                const admitidas = Number(formData.admitidas) || 0
+                formData.atual = anterior + admitidas
+            }
         }
 
         if (setor === 'creas') {
