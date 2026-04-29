@@ -46,12 +46,18 @@ export function Sidebar({ role, directorates = [], userName, logoUrl, systemName
     }, [isModal])
 
     useEffect(() => {
-        if (!isInsideIframe && !isModal) {
-            const width = isCollapsed ? '80px' : '288px' // w-20 or w-72
-            document.documentElement.style.setProperty('--sidebar-width', width)
-        } else {
-            document.documentElement.style.setProperty('--sidebar-width', '0px')
+        const updateWidth = () => {
+            if (window.innerWidth < 768 || isInsideIframe || isModal) {
+                document.documentElement.style.setProperty('--sidebar-width', '0px')
+            } else {
+                const width = isCollapsed ? '80px' : '288px' // w-20 or w-72
+                document.documentElement.style.setProperty('--sidebar-width', width)
+            }
         }
+
+        updateWidth()
+        window.addEventListener('resize', updateWidth)
+        return () => window.removeEventListener('resize', updateWidth)
     }, [isCollapsed, isInsideIframe, isModal])
 
     if (isInsideIframe || isModal) return null

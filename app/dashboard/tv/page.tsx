@@ -33,8 +33,6 @@ export default async function TvDashboardPage() {
     )
 
     return (
-        <main className="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 overflow-hidden">
-            <TvDashboardClient directorates={directoratesWithData} />
-        </main>
+        <TvDashboardClient directorates={directoratesWithData} />
     )
 }

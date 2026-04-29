@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Vigilância Socioassistencial",
   description: "Sistema de Monitoramento e Avaliação da Rede Socioassistencial",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "GestãoSUAS",
+  },
 };
 
 export default function RootLayout({
@@ -28,17 +33,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );

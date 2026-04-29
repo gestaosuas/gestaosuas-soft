@@ -120,127 +120,135 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
     if (!isMounted) return null
 
     return (
-        <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-950">
-            {/* Header / Progress Bar */}
-            <ProgressBar isPlaying={isPlaying} onComplete={nextSlide} activeIndex={activeIndex} />
+        <main 
+            className={cn(
+                "fixed inset-y-0 right-0 z-[15] bg-white dark:bg-zinc-950 overflow-hidden transition-all duration-300 ease-in-out",
+                isFullscreen && "z-[100]"
+            )}
+            style={{ left: isFullscreen ? '0px' : 'var(--sidebar-width, 0px)' }}
+        >
+            <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-950">
+                {/* Header / Progress Bar */}
+                <ProgressBar isPlaying={isPlaying} onComplete={nextSlide} activeIndex={activeIndex} />
 
-            {/* Top Toolbar */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard">
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <X className="h-5 w-5" />
+                {/* Top Toolbar */}
+                <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md">
+                    <div className="flex items-center gap-4">
+                        <Link href="/dashboard">
+                            <Button variant="ghost" size="icon" className="rounded-full">
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2" />
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none">
+                                Dashboard Diretorias
+                            </span>
+                            <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight leading-tight">
+                                {currentDir.name}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 py-1.5 flex items-center gap-4 mr-4">
+                            <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">
+                                {activeIndex + 1} / {directorates.length}
+                            </span>
+                        </div>
+
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="rounded-full shadow-sm"
+                            onClick={prevSlide}
+                        >
+                            <ChevronLeft className="h-5 w-5" />
                         </Button>
-                    </Link>
-                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2" />
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none">
-                            Dashboard Diretorias
-                        </span>
-                        <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight leading-tight">
-                            {currentDir.name}
-                        </h2>
+
+                        <Button 
+                            variant="default" 
+                            size="icon" 
+                            className="rounded-full w-12 h-12 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700"
+                            onClick={() => setIsPlaying(!isPlaying)}
+                        >
+                            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
+                        </Button>
+
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="rounded-full shadow-sm"
+                            onClick={nextSlide}
+                        >
+                            <ChevronRight className="h-5 w-5" />
+                        </Button>
+
+                        <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2" />
+
+                        <Button 
+                            variant={showFilters ? "secondary" : "ghost"}
+                            size="icon" 
+                            className="rounded-full"
+                            onClick={() => setShowFilters(!showFilters)}
+                            title="Alternar Filtros"
+                        >
+                            <Filter className="h-5 w-5" />
+                        </Button>
+
+                        <Button 
+                            variant="ghost"
+                            size="icon" 
+                            className="rounded-full"
+                            onClick={toggleFullscreen}
+                            title="Tela Cheia"
+                        >
+                            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+                        </Button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 py-1.5 flex items-center gap-4 mr-4">
-                        <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">
-                            {activeIndex + 1} / {directorates.length}
-                        </span>
+                {/* Dashboard Content */}
+                <div className={cn(
+                    "flex-1 overflow-hidden p-4 md:p-6 lg:p-8 relative",
+                    !showFilters && "hide-filters"
+                )}>
+                    <style jsx global>{`
+                        .hide-filters div[class*="filter"], 
+                        .hide-filters div[class*="Filter"],
+                        .hide-filters .sticky.top-0,
+                        .hide-filters .z-50.sticky {
+                            display: ${showFilters ? 'flex' : 'none'} !important;
+                        }
+                        /* Remove scrollbars */
+                        *::-webkit-scrollbar {
+                            display: none !important;
+                        }
+                        * {
+                            -ms-overflow-style: none !important;
+                            scrollbar-width: none !important;
+                        }
+                        body {
+                            overflow: hidden !important;
+                        }
+                    `}</style>
+                    <div className="max-w-[1600px] mx-auto animate-in fade-in zoom-in-95 duration-700">
+                        {renderDashboard()}
                     </div>
+                </div>
 
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="rounded-full shadow-sm"
-                        onClick={prevSlide}
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </Button>
-
-                    <Button 
-                        variant="default" 
-                        size="icon" 
-                        className="rounded-full w-12 h-12 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700"
-                        onClick={() => setIsPlaying(!isPlaying)}
-                    >
-                        {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
-                    </Button>
-
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="rounded-full shadow-sm"
-                        onClick={nextSlide}
-                    >
-                        <ChevronRight className="h-5 w-5" />
-                    </Button>
-
-                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2" />
-
-                    <Button 
-                        variant={showFilters ? "secondary" : "ghost"}
-                        size="icon" 
-                        className="rounded-full"
-                        onClick={() => setShowFilters(!showFilters)}
-                        title="Alternar Filtros"
-                    >
-                        <Filter className="h-5 w-5" />
-                    </Button>
-
-                    <Button 
-                        variant="ghost"
-                        size="icon" 
-                        className="rounded-full"
-                        onClick={toggleFullscreen}
-                        title="Tela Cheia"
-                    >
-                        {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-                    </Button>
+                {/* Footer Status */}
+                <div className="px-6 py-2 border-t border-zinc-200 dark:border-zinc-800 bg-white/30 dark:bg-zinc-900/30 backdrop-blur-sm flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Modo TV Ativo • Atualização em Tempo Real</span>
+                    </div>
+                    <div className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">
+                        {currentTime}
+                    </div>
                 </div>
             </div>
-
-            {/* Dashboard Content */}
-            <div className={cn(
-                "flex-1 overflow-hidden p-4 md:p-6 lg:p-8 relative",
-                !showFilters && "hide-filters"
-            )}>
-                <style jsx global>{`
-                    .hide-filters div[class*="filter"], 
-                    .hide-filters div[class*="Filter"],
-                    .hide-filters .sticky.top-0,
-                    .hide-filters .z-50.sticky {
-                        display: ${showFilters ? 'flex' : 'none'} !important;
-                    }
-                    /* Remove scrollbars */
-                    *::-webkit-scrollbar {
-                        display: none !important;
-                    }
-                    * {
-                        -ms-overflow-style: none !important;
-                        scrollbar-width: none !important;
-                    }
-                    body {
-                        overflow: hidden !important;
-                    }
-                `}</style>
-                <div className="max-w-[1600px] mx-auto animate-in fade-in zoom-in-95 duration-700">
-                    {renderDashboard()}
-                </div>
-            </div>
-
-            {/* Footer Status */}
-            <div className="px-6 py-2 border-t border-zinc-200 dark:border-zinc-800 bg-white/30 dark:bg-zinc-900/30 backdrop-blur-sm flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Modo TV Ativo • Atualização em Tempo Real</span>
-                </div>
-                <div className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">
-                    {currentTime}
-                </div>
-            </div>
-        </div>
+        </main>
     )
 }
 
@@ -254,18 +262,22 @@ function ProgressBar({ isPlaying, onComplete, activeIndex }: { isPlaying: boolea
     useEffect(() => {
         if (!isPlaying) return
 
+        const step = 100 / (30000 / 100) // SLIDE_DURATION is 30000
         const interval = setInterval(() => {
             setProgress((prev) => {
-                if (prev >= 100) {
-                    onComplete()
-                    return 0
-                }
-                return prev + (100 / (SLIDE_DURATION / 100))
+                const next = prev + step
+                return next > 100 ? 100 : next
             })
         }, 100)
 
         return () => clearInterval(interval)
-    }, [isPlaying, onComplete])
+    }, [isPlaying])
+
+    useEffect(() => {
+        if (progress >= 100) {
+            onComplete()
+        }
+    }, [progress, onComplete])
 
     return (
         <div className="h-1 bg-zinc-200 dark:bg-zinc-800 w-full relative">
