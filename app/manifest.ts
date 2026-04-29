@@ -16,15 +16,15 @@ export default function manifest(): MetadataRoute.Manifest {
         orientation: 'portrait',
         icons: [
             {
-                src: '/icon.jpg',
+                src: '/icon.png',
                 sizes: '192x192 512x512 1024x1024',
-                type: 'image/jpeg',
+                type: 'image/png',
                 purpose: 'maskable',
             },
             {
-                src: '/logo-vigilancia.jpg',
+                src: '/logo-vigilancia.png',
                 sizes: '192x192 512x512 1024x1024',
-                type: 'image/jpeg',
+                type: 'image/png',
                 purpose: 'any',
             },
         ],
@@ -32,26 +32,26 @@ export default function manifest(): MetadataRoute.Manifest {
             {
                 name: 'Painel Geral',
                 url: '/dashboard',
-                icons: [{ src: '/icon.jpg', sizes: '192x192 512x512', type: 'image/jpeg' }]
+                icons: [{ src: '/icon.png', sizes: '192x192 512x512', type: 'image/png' }]
             },
             {
                 name: 'Modo TV',
                 url: '/dashboard/tv',
-                icons: [{ src: '/icon.jpg', sizes: '192x192 512x512', type: 'image/jpeg' }]
+                icons: [{ src: '/icon.png', sizes: '192x192 512x512', type: 'image/png' }]
             }
         ],
         categories: ['business', 'productivity', 'government'],
         screenshots: [
             {
-                src: '/screenshots/screenshot1.jpg',
+                src: '/screenshots/screenshot1.png',
                 sizes: '589x945',
-                type: 'image/jpeg',
+                type: 'image/png',
                 form_factor: 'narrow',
             },
             {
-                src: '/screenshots/screenshot2.jpg',
+                src: '/screenshots/screenshot2.png',
                 sizes: '1910x945',
-                type: 'image/jpeg',
+                type: 'image/png',
                 form_factor: 'wide',
             }
         ]
