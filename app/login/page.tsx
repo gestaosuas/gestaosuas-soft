@@ -22,7 +22,7 @@ export default async function LoginPage({
             {/* Elegant Background Layering */}
             <div className="absolute inset-0 -z-10">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),rgba(54,108,176,0))]"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05] mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-black/5 mix-blend-overlay"></div>
             </div>
 
             <main className="w-full max-w-[400px] animate-in fade-in zoom-in-95 duration-1000">

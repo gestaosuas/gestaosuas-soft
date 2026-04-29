@@ -114,20 +114,28 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             // Handle PDF Upload to Supabase Storage
             if (isFile(formData.anexo_rma)) {
                 const rmaFile = formData.anexo_rma as File
-                const buffer = Buffer.from(await rmaFile.arrayBuffer());
-
+                
                 try {
-                    const fileName = `${formData._unit?.replace(/\s+/g, '_')}_${month}_${year}_${Date.now()}.pdf`
+                    const arrayBuffer = await rmaFile.arrayBuffer();
+                    const sanitizedUnit = (formData._unit || 'unidade')
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, "") // Remove accents
+                        .replace(/[^a-zA-Z0-9]/g, '_'); // Replace non-alphanumeric with underscore
+
+                    const fileName = `${sanitizedUnit}_${month}_${year}_${Date.now()}.pdf`
                     const filePath = `rmas/${year}/${month}/${fileName}`
 
                     const { data: uploadData, error: supabaseError } = await adminSupabase.storage
                         .from('system-assets')
-                        .upload(filePath, buffer, {
+                        .upload(filePath, arrayBuffer, {
                             contentType: 'application/pdf',
                             upsert: true
                         })
 
-                    if (supabaseError) throw supabaseError
+                    if (supabaseError) {
+                        console.error("Supabase Storage Error:", supabaseError);
+                        throw new Error(`Erro no Supabase: ${supabaseError.message}`);
+                    }
 
                     // Get public URL
                     const { data: { publicUrl } } = adminSupabase.storage
@@ -139,7 +147,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     formData.anexo_rma_id = filePath
                 } catch (uploadError: any) {
                     console.error("DEBUG: Failed to upload RMA to Supabase:", uploadError.message || uploadError)
-                    throw new Error("Erro ao fazer upload do arquivo RMA para o Supabase Storage.")
+                    throw new Error(`Erro ao fazer upload do arquivo RMA: ${uploadError.message || 'Erro desconhecido'}`)
                 } finally {
                     delete formData.anexo_rma
                 }
