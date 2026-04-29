@@ -224,8 +224,8 @@ export function DailyDashboard() {
                                                     </div>
                                                 </div>
                                             ) : isSineCP ? (
-                                                <div className="flex flex-row gap-2 items-stretch h-full min-h-0">
-                                                    <Card className="w-[420px] shrink-0 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
+                                                <div className="flex flex-col lg:flex-row gap-4 items-stretch h-full min-h-0 overflow-y-auto lg:overflow-hidden custom-scrollbar">
+                                                    <Card className="w-full lg:w-[400px] shrink-0 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
                                                         <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-700">
                                                             <h4 className="text-[10px] font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-tighter">SINE • INDICADORES</h4>
                                                         </div>
@@ -259,7 +259,7 @@ export function DailyDashboard() {
                                                         </CardContent>
                                                     </Card>
 
-                                                    <Card className="w-[240px] shrink-0 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
+                                                    <Card className="w-full lg:w-[240px] shrink-0 border-zinc-200 dark:border-zinc-800 shadow-none overflow-hidden rounded-xl flex flex-col">
                                                         <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-700">
                                                             <h4 className="text-[10px] font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-tighter">CP • CONSOLIDADO</h4>
                                                         </div>
@@ -290,7 +290,7 @@ export function DailyDashboard() {
                                                         <div className="bg-zinc-100/80 dark:bg-zinc-800/80 px-2.5 py-1 border-b border-zinc-200 dark:border-zinc-700">
                                                             <h4 className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">PERFORMANCE POR UNIDADE TÉCNICA</h4>
                                                         </div>
-                                                        <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
+                                                        <CardContent className="p-0 flex-1 overflow-auto custom-scrollbar">
                                                             <table className="w-full text-[9px] border-collapse min-w-max">
                                                                 <thead>
                                                                     <tr className="bg-zinc-200/50 dark:bg-zinc-950/50 sticky top-0 z-20 h-7">
@@ -330,7 +330,7 @@ export function DailyDashboard() {
                                                     </Card>
                                                 </div>
                                             ) : (
-                                                <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
                                                     {Object.entries(report.data).map(([k, v]: [any, any]) => (
                                                         <div key={k} className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-300">
                                                             <div className="flex items-start justify-between mb-4">
