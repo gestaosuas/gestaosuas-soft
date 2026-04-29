@@ -17,13 +17,13 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [
             {
                 src: '/icon.png',
-                sizes: '1024x1024',
+                sizes: '192x192 512x512 1024x1024',
                 type: 'image/png',
                 purpose: 'maskable',
             },
             {
                 src: '/logo-vigilancia.png',
-                sizes: '1024x1024',
+                sizes: '192x192 512x512 1024x1024',
                 type: 'image/png',
                 purpose: 'any',
             },
@@ -32,12 +32,12 @@ export default function manifest(): MetadataRoute.Manifest {
             {
                 name: 'Painel Geral',
                 url: '/dashboard',
-                icons: [{ src: '/icon.png', sizes: '1024x1024', type: 'image/png' }]
+                icons: [{ src: '/icon.png', sizes: '192x192 512x512', type: 'image/png' }]
             },
             {
                 name: 'Modo TV',
                 url: '/dashboard/tv',
-                icons: [{ src: '/icon.png', sizes: '1024x1024', type: 'image/png' }]
+                icons: [{ src: '/icon.png', sizes: '192x192 512x512', type: 'image/png' }]
             }
         ],
         categories: ['business', 'productivity', 'government'],
@@ -47,14 +47,12 @@ export default function manifest(): MetadataRoute.Manifest {
                 sizes: '589x945',
                 type: 'image/png',
                 form_factor: 'narrow',
-                label: 'Tela de Login'
             },
             {
                 src: '/screenshots/screenshot2.png',
                 sizes: '1910x945',
                 type: 'image/png',
                 form_factor: 'wide',
-                label: 'Dashboard'
             }
         ]
     }
