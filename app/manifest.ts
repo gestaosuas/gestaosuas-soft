@@ -16,31 +16,31 @@ export default function manifest(): MetadataRoute.Manifest {
         orientation: 'portrait',
         icons: [
             {
-                src: '/icon.png',
+                src: '/icon-v2.png',
                 sizes: '192x192',
                 type: 'image/png',
                 purpose: 'maskable',
             },
             {
-                src: '/icon.png',
+                src: '/icon-v2.png',
                 sizes: '512x512',
                 type: 'image/png',
                 purpose: 'maskable',
             },
             {
-                src: '/icon.png',
+                src: '/icon-v2.png',
                 sizes: '1024x1024',
                 type: 'image/png',
                 purpose: 'maskable',
             },
             {
-                src: '/logo-vigilancia.png',
+                src: '/logo-vigilancia-v2.png',
                 sizes: '512x512',
                 type: 'image/png',
                 purpose: 'any',
             },
             {
-                src: '/logo-vigilancia.png',
+                src: '/logo-vigilancia-v2.png',
                 sizes: '1024x1024',
                 type: 'image/png',
                 purpose: 'any',
@@ -50,24 +50,24 @@ export default function manifest(): MetadataRoute.Manifest {
             {
                 name: 'Painel Geral',
                 url: '/dashboard',
-                icons: [{ src: '/icon.png', sizes: '192x192', type: 'image/png' }]
+                icons: [{ src: '/icon-v2.png', sizes: '192x192', type: 'image/png' }]
             },
             {
                 name: 'Modo TV',
                 url: '/dashboard/tv',
-                icons: [{ src: '/icon.png', sizes: '192x192', type: 'image/png' }]
+                icons: [{ src: '/icon-v2.png', sizes: '192x192', type: 'image/png' }]
             }
         ],
         categories: ['business', 'productivity', 'government'],
         screenshots: [
             {
-                src: '/screenshots/screenshot1.png',
+                src: '/screenshots/screenshot1-v2.png',
                 sizes: '589x945',
                 type: 'image/png',
                 form_factor: 'narrow',
             },
             {
-                src: '/screenshots/screenshot2.png',
+                src: '/screenshots/screenshot2-v2.png',
                 sizes: '1910x945',
                 type: 'image/png',
                 form_factor: 'wide',
