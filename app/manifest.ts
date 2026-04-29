@@ -41,5 +41,21 @@ export default function manifest(): MetadataRoute.Manifest {
             }
         ],
         categories: ['business', 'productivity', 'government'],
+        screenshots: [
+            {
+                src: '/screenshots/screenshot1.png',
+                sizes: '640x1080',
+                type: 'image/png',
+                form_factor: 'narrow',
+                label: 'Tela de Login'
+            },
+            {
+                src: '/screenshots/screenshot2.png',
+                sizes: '1920x1080',
+                type: 'image/png',
+                form_factor: 'wide',
+                label: 'Dashboard'
+            }
+        ]
     }
 }
