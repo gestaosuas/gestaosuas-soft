@@ -574,7 +574,7 @@ export default async function DataPage({
                                                                             <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
                                                                                 <EditableTableCell
                                                                                     initialValue={val}
-                                                                                    submissionId={monthRecord?.id}
+                                                                                    submissionId={monthRecord?.data?._id || monthRecord?.id}
                                                                                     fieldId={indicator.id}
                                                                                     unitName={(isCRAS || (isCEAI && subcategory !== 'condominio') || isNAICA) ? unitName : undefined}
                                                                                     isAdmin={isAdmin} setor={setor}
@@ -664,7 +664,7 @@ export default async function DataPage({
                                                                         <TableCell key={idx} className="text-center text-[12px] font-bold text-zinc-900 dark:text-zinc-100 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
                                                                             <EditableTableCell
                                                                                 initialValue={val}
-                                                                                submissionId={monthRecord?.id}
+                                                                                submissionId={monthRecord?.data?._id || monthRecord?.id}
                                                                                 fieldId={`oficina_${oficina.id}_vagas_totais`}
                                                                                 unitName={unitName}
                                                                                 isAdmin={isAdmin}
@@ -741,7 +741,7 @@ export default async function DataPage({
                                                                             <TableCell key={monthNum} className="text-center text-[12px] font-medium text-zinc-500 dark:text-zinc-400 p-0 border-r border-zinc-100/50 dark:border-zinc-800/20 last:border-0">
                                                                                 <EditableTableCell
                                                                                     initialValue={val}
-                                                                                    submissionId={monthRecord?.id}
+                                                                                    submissionId={monthRecord?.data?._id || monthRecord?.id}
                                                                                     fieldId={jsonKey}
                                                                                     unitName={unitName}
                                                                                     isAdmin={isAdmin} setor={setor}
