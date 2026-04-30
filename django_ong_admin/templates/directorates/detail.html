@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <p class="eyebrow">{{ directorate.get_group_display }}</p>
+    <h1>{{ directorate.name }}</h1>
+</header>
+<section class="table-card">
+    <p>{{ directorate.description|default:"Modulo pronto para receber telas especificas." }}</p>
+</section>
+{% endblock %}
+

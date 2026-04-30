@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header"><h1>Curso</h1></header>
+<form class="form-card" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Salvar</button>
+</form>
+{% endblock %}
+

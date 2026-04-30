@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar - ONG Admin</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="login-page">
+    <main class="login-card">
+        <p class="eyebrow">Sistema Administrativo</p>
+        <h1>Entrar no painel</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Entrar</button>
+        </form>
+    </main>
+</body>
+</html>
+

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Matriculas</h1>
+    <a class="button" href="{% url 'enrollment_create' %}">Nova matricula</a>
+</header>
+<section class="table-card">
+    {% for enrollment in enrollments %}
+        <div class="list-row">{{ enrollment.student }} <small>{{ enrollment.course }} - {{ enrollment.get_status_display }}</small></div>
+    {% empty %}
+        <p class="muted">Nenhuma matricula registrada.</p>
+    {% endfor %}
+</section>
+{% endblock %}
+

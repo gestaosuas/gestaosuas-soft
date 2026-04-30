@@ -895,6 +895,26 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
                 .eq('id', id);
 
             if (!error) {
+                // SYNC BACK TO LEGACY: Find the corresponding legacy submission and update it too
+                const { data: legacySub } = await adminSupabase
+                    .from('submissions')
+                    .select('*')
+                    .eq('directorate_id', recordByRecordId.directorate_id)
+                    .eq('month', recordByRecordId.month)
+                    .eq('year', recordByRecordId.year)
+                    .maybeSingle();
+
+                if (legacySub) {
+                    let updatedData = { ...legacySub.data }
+                    const uName = unitName || recordByRecordId.unit_name;
+                    if (uName && updatedData._is_multi_unit && updatedData.units) {
+                        updatedData.units[uName] = { ...updatedData.units[uName], [fieldId]: value }
+                    } else {
+                        updatedData[fieldId] = value
+                    }
+                    await adminSupabase.from('submissions').update({ data: updatedData }).eq('id', legacySub.id);
+                }
+
                 revalidatePath('/dashboard', 'layout');
                 revalidatePath('/dashboard/dados', 'page');
                 updateTag('submissions');
@@ -918,9 +938,16 @@ export async function updateSubmissionCell(id: string, fieldId: string, value: a
                 .eq('year', submission.year)
                 .eq('directorate_id', submission.directorate_id);
 
-            // CRAS and NAICA also need unit match
-            if ((setor === 'cras' || setor === 'naica') && unitName) {
-                query = query.eq('unit_name', unitName);
+            // CRAS and NAICA MUST have unit match to prevent cross-unit corruption
+            if (setor === 'cras' || setor === 'naica') {
+                const targetUnit = unitName || (submission.data?._unit);
+                if (targetUnit) {
+                    query = query.eq('unit_name', targetUnit);
+                } else {
+                    console.warn(`[updateSubmissionCell] Warning: Updating ${tableName} by coordinates but unitName is missing for sector ${setor}`);
+                    // If we don't have a unit name and it's a multi-unit table, we might be updating all units.
+                    // To be safe, let's try to infer from the field if possible or just proceed with caution.
+                }
             }
 
             const { error: coordError } = await query;

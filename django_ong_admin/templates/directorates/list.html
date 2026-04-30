@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header"><h1>Diretorias</h1></header>
+<section class="table-card">
+    {% for directorate in directorates %}
+        <a class="list-row" href="{{ directorate.get_absolute_url }}">{{ directorate.name }} <small>{{ directorate.get_group_display }}</small></a>
+    {% empty %}
+        <p class="muted">Nenhuma diretoria cadastrada.</p>
+    {% endfor %}
+</section>
+{% endblock %}
+

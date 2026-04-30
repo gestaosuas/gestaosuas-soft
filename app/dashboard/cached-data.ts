@@ -302,7 +302,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             if (crasReports) {
                 crasReports.forEach(cras => {
                     const existingIdx = finalSubmissions.findIndex(fs => fs.month === cras.month && fs.year === cras.year);
-                    const cleanData = { ...cras };
+                    const cleanData = { ...cras, _author_name: profileMap[cras.user_id] || 'Usuário' };
                     delete (cleanData as any).id;
                     delete (cleanData as any).user_id;
 
@@ -362,7 +362,7 @@ export const getCachedSubmissionsForUser = async (userId: string, directorateId:
             if (naicaReports) {
                 naicaReports.forEach(naica => {
                     const existingIdx = finalSubmissions.findIndex(fs => fs.month === naica.month && fs.year === naica.year);
-                    const cleanData = { ...naica };
+                    const cleanData = { ...naica, _author_name: profileMap[naica.user_id] || 'Usuário' };
                     delete (cleanData as any).id;
                     delete (cleanData as any).user_id;
 

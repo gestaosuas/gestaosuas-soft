@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - ONG Admin{% endblock %}
+{% block content %}
+<header class="page-header">
+    <p class="eyebrow">Visao geral</p>
+    <h1>Dashboard</h1>
+</header>
+<section class="stats-grid">
+    <article><span>{{ total_students }}</span><p>Alunos</p></article>
+    <article><span>{{ total_courses }}</span><p>Cursos</p></article>
+    <article><span>{{ total_interests }}</span><p>Interesses</p></article>
+    <article><span>{{ total_active_enrollments }}</span><p>Matriculas ativas</p></article>
+</section>
+<section class="split-grid">
+    <div>
+        <h2>Diretorias</h2>
+        {% for directorate in main_directorates %}
+            <a class="list-row" href="{{ directorate.get_absolute_url }}">{{ directorate.name }}</a>
+        {% empty %}
+            <p class="muted">Nenhuma diretoria cadastrada.</p>
+        {% endfor %}
+    </div>
+    <div>
+        <h2>Monitoramentos</h2>
+        {% for directorate in monitoring_directorates %}
+            <a class="list-row" href="{{ directorate.get_absolute_url }}">{{ directorate.name }}</a>
+        {% empty %}
+            <p class="muted">Nenhum monitoramento cadastrado.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+

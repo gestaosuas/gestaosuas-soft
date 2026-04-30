@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>{{ object.full_name }}</h1>
+    <a class="button" href="{% url 'student_update' object.pk %}">Editar</a>
+</header>
+<section class="table-card">
+    <p><strong>CPF:</strong> {{ object.cpf|default:"-" }}</p>
+    <p><strong>Telefone:</strong> {{ object.phone|default:"-" }}</p>
+    <p><strong>Status:</strong> {{ object.get_status_display }}</p>
+    <p>{{ object.notes }}</p>
+</section>
+{% endblock %}
+

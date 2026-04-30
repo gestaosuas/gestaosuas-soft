@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ONG Admin{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="{% url 'dashboard' %}">ONG Admin</a>
+        <nav>
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'student_list' %}">Alunos</a>
+            <a href="{% url 'course_list' %}">Cursos</a>
+            <a href="{% url 'interest_list' %}">Interesses</a>
+            <a href="{% url 'enrollment_list' %}">Matriculas</a>
+            <a href="{% url 'directorate_list' %}">Diretorias</a>
+            <a href="{% url 'monitoring_index' %}">Monitoramentos</a>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit">Sair</button>
+            </form>
+        </nav>
+    </aside>
+    <main class="content">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
+

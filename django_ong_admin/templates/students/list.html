@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+    <h1>Alunos</h1>
+    <a class="button" href="{% url 'student_create' %}">Novo aluno</a>
+</header>
+<form class="search-form" method="get"><input name="q" placeholder="Buscar aluno" value="{{ request.GET.q }}"></form>
+<section class="table-card">
+    {% for student in students %}
+        <a class="list-row" href="{{ student.get_absolute_url }}">{{ student.full_name }} <small>{{ student.get_status_display }}</small></a>
+    {% empty %}
+        <p class="muted">Nenhum aluno cadastrado.</p>
+    {% endfor %}
+</section>
+{% endblock %}
+

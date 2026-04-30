@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    container_name: ong_admin_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    environment:
+      DJANGO_SECRET_KEY: change-me
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: ong_admin
+      POSTGRES_USER: ong_admin
+      POSTGRES_PASSWORD: ong_admin
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    container_name: ong_admin_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ong_admin
+      POSTGRES_USER: ong_admin
+      POSTGRES_PASSWORD: ong_admin
+    ports:
+      - "5433:5432"
+    volumes:
+      - ong_admin_pgdata:/var/lib/postgresql/data
+
+volumes:
+  ong_admin_pgdata:
