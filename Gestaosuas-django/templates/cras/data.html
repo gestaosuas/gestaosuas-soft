@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Dados CRAS | {{ directorate.name }}{% endblock %}
+
+{% block content %}
+<section class="simple-shell benefits-shell">
+    <a class="back-link" href="{% url 'cras:home' directorate.pk %}?year={{ selected_year }}">&larr; Voltar para o painel</a>
+    <div class="benefits-hero">
+        <div>
+            <p class="eyebrow">Tabela de Dados</p>
+            <h1>Indicadores CRAS &mdash; {{ selected_year }}</h1>
+            <p class="section-description">Visualizacao anual dos indicadores por unidade.</p>
+        </div>
+        <div class="benefits-filter-bar static-bar">
+            <span class="pill">Ano {{ selected_year }}</span>
+            <a href="{% url 'cras:form' directorate.pk %}?year={{ selected_year }}" class="primary-button" style="text-decoration:none;">
+                <i data-lucide="file-plus" style="width:16px;height:16px;"></i> Novo Preenchimento
+            </a>
+        </div>
+    </div>
+
+    {% for unit_table in units_tables %}
+    <div class="data-table-card" style="margin-top:28px;">
+        <div class="section-head">
+            <div class="section-line" style="background:#3b82f6;"></div>
+            <h2>{{ unit_table.unit }}</h2>
+        </div>
+        {% for group in unit_table.groups %}
+        <div style="margin-top:18px;">
+            <h3 style="margin:0 0 10px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;">{{ group.title }}</h3>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Indicador</th>{% for label in month_labels %}<th>{{ label }}</th>{% endfor %}</tr>
+                    </thead>
+                    <tbody>
+                        {% for row in group.rows %}
+                        <tr>
+                            <td><strong>{{ row.label }}</strong></td>
+                            {% for val in row.values %}
+                            <td>{% if val != '' and val != None %}{{ val }}{% else %}&mdash;{% endif %}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</section>
+{% endblock %}

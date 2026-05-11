@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Relatorios | {{ directorate.name }}{% endblock %}
+
+{% block content %}
+<section class="simple-shell benefits-shell">
+    <a class="back-link" href="{% url 'beneficios:home' directorate.pk %}?year={{ selected_year }}">&larr; Voltar para o painel</a>
+
+    <div class="benefits-hero">
+        <div>
+            <p class="eyebrow">Historico de Documentos</p>
+            <h1>{{ directorate.name }}</h1>
+            <p class="section-description">Consulta dos relatorios mensais armazenados para Beneficios Socioassistenciais.</p>
+        </div>
+        <form method="get" class="benefits-filter-bar">
+            <label class="pill-input">
+                <span>Ano</span>
+                <input type="number" name="year" value="{{ selected_year }}" min="2020">
+            </label>
+            <button type="submit" class="secondary-button">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="report-history-grid">
+        {% for report in reports %}
+            <article class="history-card">
+                <p class="eyebrow">Relatorio Mensal</p>
+                <h2>{{ report.month }}/{{ report.year }}</h2>
+                <p>Status: {{ report.get_status_display|default:report.status }}</p>
+                <a class="secondary-button" href="{% url 'beneficios:narrative' directorate.pk %}?year={{ report.year }}&month={{ report.month }}">Abrir</a>
+            </article>
+        {% empty %}
+            <article class="panel">
+                <p>Nenhum relatorio encontrado para o ano filtrado.</p>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

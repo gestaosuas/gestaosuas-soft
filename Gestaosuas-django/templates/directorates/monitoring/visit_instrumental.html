@@ -1,0 +1,2504 @@
+{% extends "base.html" %}
+{% load static %}
+{% load directorate_extras %}
+
+{% block title %}{% if is_new %}Nova Visita{% elif object.status == 'finalized' or object.status == 'completed' %}Visualizar{% else %}Editar{% endif %} Instrumental | {{ system_name }}{% endblock %}
+
+{% block content %}
+<div class="monitoring-header-container no-print visit-hero">
+    <div class="monitoring-header-content visit-hero-content">
+        <div class="monitoring-title-area">
+            <div class="visit-hero-badge-row">
+                <div class="visit-hero-icon">
+                    <i data-lucide="{% if is_new %}calendar-plus{% elif object.status == 'finalized' or object.status == 'completed' %}file-check{% else %}file-text{% endif %}"></i>
+                </div>
+                <div>
+                    <h1>{% if is_new %}Nova Visita{% elif object.status == 'finalized' or object.status == 'completed' %}Visualizar{% else %}Editar{% endif %} Instrumental</h1>
+                    <p>{% if is_new %}{{ directorate.name }}{% else %}{{ object.osc.name }} | {{ object.visit_date|date:"d/m/Y" }} {% if object.visit_time %}as {{ object.visit_time|time:"H:i" }}{% endif %}{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if object.status == 'finalized' or object.status == 'completed' %}
+<div class="locked-banner no-print visit-locked-banner">
+    <i data-lucide="lock"></i>
+    <span>Documento finalizado. O formulario esta em modo somente leitura.</span>
+</div>
+{% endif %}
+
+<div class="visit-page-shell">
+    <form method="post" id="instrumentalForm" class="visit-form-stack" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <section class="visit-top-actions-card no-print">
+            <div class="visit-top-actions">
+                <a href="{% url 'directorates:visit-list' directorate.pk %}" class="visit-top-action-btn visit-top-action-back">
+                    <i data-lucide="arrow-left"></i> Voltar para listagem
+                </a>
+                <a href="{% url 'directorates:plan-list' directorate.pk %}{% if not is_new %}?osc={{ object.osc.pk }}{% endif %}" class="visit-top-action-btn" id="planButton" data-plan-base="{% url 'directorates:plan-list' directorate.pk %}" data-preview-base="{% url 'directorates:plan-preview' directorate.pk %}" onclick="return openPlanPreview(event)">
+                    <i data-lucide="file-text"></i> Plano de Trabalho
+                </a>
+                <button type="button" onclick="window.print()" class="visit-top-action-btn" {% if is_new %}id="printReportButton"{% endif %}>
+                    <i data-lucide="printer"></i> Imprimir Relatorio
+                </button>
+                {% if object.status != 'finalized' and object.status != 'completed' %}
+                <button type="button" onclick="submitVisit('draft')" class="visit-top-action-btn">
+                    <i data-lucide="save"></i> Salvar Rascunho
+                </button>
+                <button type="button" onclick="openFinalizeModal()" class="visit-top-action-btn visit-top-action-primary">
+                    <i data-lucide="check-circle"></i> Finalizar Visita
+                </button>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="visit-section-card">
+            <div class="visit-section-header">
+                <div class="section-icon visit-section-icon-blue"><i data-lucide="building-2"></i></div>
+                <div>
+                    <h2>I. Identificacao da OSC</h2>
+                    <p>Dados da instituicao e configuracao da visita.</p>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                {% if is_new %}
+                <div class="visit-field">
+                    <label class="premium-label">Selecione a Organizacao Social Civil (OSC)</label>
+                    <select name="osc" required class="form-input-premium">
+                        <option value="">Selecione a OSC...</option>
+                        {% for osc in oscs %}
+                        <option value="{{ osc.pk }}" data-subsidized="{{ osc.subsidized_count|default:0 }}">{{ osc.name }} - {{ osc.activity_type|default:'' }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="section-divider"><span>Dados da visita</span></div>
+                {% else %}
+                <div class="visit-grid visit-grid-two">
+                    <div class="visit-field">
+                        <label class="premium-label">Instituicao</label>
+                        <input type="text" value="{{ object.osc.name }}" disabled class="form-input-premium is-readonly">
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Atividade</label>
+                        <input type="text" value="{{ object.osc.activity_type|default:'Nao informado' }}" disabled class="form-input-premium is-readonly">
+                    </div>
+                </div>
+                <div class="visit-grid visit-grid-two">
+                    <div class="visit-field">
+                        <label class="premium-label">Endereco</label>
+                        <input type="text" value="{{ object.osc.address }}{% if object.osc.number %}, {{ object.osc.number }}{% endif %} - {{ object.osc.neighborhood|default:'' }}" disabled class="form-input-premium is-readonly">
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Telefone</label>
+                        <input type="text" value="{{ object.osc.phone|default:'Nao informado' }}" disabled class="form-input-premium is-readonly">
+                    </div>
+                </div>
+                <div class="section-divider"><span>Dados da visita</span></div>
+                {% endif %}
+
+                <div class="visit-grid visit-grid-three visit-grid-align-end">
+                    <div class="visit-field">
+                        <label class="premium-label">Data da Visita</label>
+                        {% if not is_new %}<input type="hidden" name="osc" value="{{ object.osc.pk }}">{% endif %}
+                        <input type="date" name="identificacao[visit_date_1]" value="{% firstof object.identificacao.visit_date_1 object.visit_date|date:'Y-m-d' now|date:'Y-m-d' %}" class="form-input-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Turno</label>
+                        <select name="identificacao[visit_shift_1]" class="form-input-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                            <option value="">Selecione...</option>
+                            <option value="manha" {% if object.identificacao.visit_shift_1 == 'manha' %}selected{% endif %}>Manha</option>
+                            <option value="tarde" {% if object.identificacao.visit_shift_1 == 'tarde' %}selected{% endif %}>Tarde</option>
+                            <option value="integral" {% if object.identificacao.visit_shift_1 == 'integral' %}selected{% endif %}>Integral</option>
+                        </select>
+                    </div>
+                    <div class="visit-field visit-field-action">
+                        <button type="button" class="btn-toggle-segunda" id="btnSegundaVisita" onclick="toggleSecondVisit()" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                            <i data-lucide="{% if object.identificacao.visit_date_2 %}minus{% else %}plus{% endif %}"></i>
+                            {% if object.identificacao.visit_date_2 %}Remover{% else %}Adicionar{% endif %} 2a visita
+                        </button>
+                    </div>
+                </div>
+
+                <div id="segundaVisitaFields" class="visit-grid visit-grid-two visit-secondary-grid" {% if not object.identificacao.visit_date_2 %}style="display:none;"{% endif %}>
+                    <div class="visit-field">
+                        <label class="premium-label">Data da 2a Visita</label>
+                        <input type="date" name="identificacao[visit_date_2]" value="{{ object.identificacao.visit_date_2|default:'' }}" class="form-input-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Turno</label>
+                        <select name="identificacao[visit_shift_2]" class="form-input-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                            <option value="">Selecione...</option>
+                            <option value="manha" {% if object.identificacao.visit_shift_2 == 'manha' %}selected{% endif %}>Manha</option>
+                            <option value="tarde" {% if object.identificacao.visit_shift_2 == 'tarde' %}selected{% endif %}>Tarde</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="visit-section-card">
+            <div class="visit-section-header">
+                <div class="section-icon visit-section-icon-green"><i data-lucide="users"></i></div>
+                <div>
+                    <h2>II. Atendimento</h2>
+                    <p>Volume atendido, presenca observada e atividades em curso.</p>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="attendance-top-grid">
+                    <div class="visit-field">
+                        <label class="premium-label">Tipo de Horario</label>
+                        <div class="attendance-radio-row">
+                            <label>
+                                <input type="radio" name="atendimento[tipo_horario]" value="periodo" {% if object.atendimento.tipo_horario != '24h' %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                                <span>Periodo</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="atendimento[tipo_horario]" value="24h" {% if object.atendimento.tipo_horario == '24h' %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                                <span>24hrs</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Horario Inicio</label>
+                        <input type="time" name="atendimento[horario_inicio]" value="{{ object.atendimento.horario_inicio|default:'' }}" class="form-input-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Horario Fim</label>
+                        <input type="time" name="atendimento[horario_fim]" value="{{ object.atendimento.horario_fim|default:'' }}" class="form-input-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Total / Mes</label>
+                        <input type="number" name="atendimento[total_mes]" value="{{ object.atendimento.total_mes|default:0 }}" class="form-input-premium attendance-total-month is-readonly" readonly>
+                    </div>
+                </div>
+
+                <div class="visit-field attendance-subsidized-field">
+                    <label class="premium-label">Subvencionados</label>
+                    <input type="text" name="atendimento[subvencionados]" value="{% if object %}{% if object.osc.subsidized_count == -1 %}Conforme Demanda{% else %}{{ object.osc.subsidized_count|default:0 }}{% endif %}{% else %}0{% endif %}" class="form-input-premium is-readonly" id="attendanceSubsidizedInput" readonly>
+                </div>
+
+                <div class="attendance-present-card">
+                    <div class="attendance-subtitle">Usuarios presentes no momento da visita</div>
+                    <div class="attendance-present-grid">
+                        <div class="visit-field">
+                            <label class="micro-label">Manha</label>
+                            <input type="number" name="atendimento[presentes][manha]" value="{{ object.atendimento.presentes.manha|default:0 }}" class="form-input-premium attendance-present-input" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        </div>
+                        <div class="visit-field">
+                            <label class="micro-label">Tarde</label>
+                            <input type="number" name="atendimento[presentes][tarde]" value="{{ object.atendimento.presentes.tarde|default:0 }}" class="form-input-premium attendance-present-input" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        </div>
+                        <div class="attendance-waiting-list">
+                            <span class="premium-label">Lista de Espera?</span>
+                            <label>
+                                <input type="radio" name="atendimento[lista_espera]" value="sim" class="attendance-waiting-radio" {% if object.atendimento.lista_espera == 'sim' %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                                <span>Sim</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="atendimento[lista_espera]" value="nao" class="attendance-waiting-radio" {% if object.atendimento.lista_espera != 'sim' %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                                <span>Nao</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="attendanceWaitingQuantityField" class="attendance-waiting-quantity" {% if object.atendimento.lista_espera != 'sim' %}style="display:none;"{% endif %}>
+                        <label class="premium-label">Quantidade em lista de espera</label>
+                        <input type="number" name="atendimento[lista_espera_quantidade]" value="{{ object.atendimento.lista_espera_quantidade|default:'' }}" class="form-input-premium" placeholder="Informe a quantidade" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                    </div>
+                    <div class="attendance-present-total">
+                        <span>Total</span>
+                        <strong id="attendancePresentTotal">0</strong>
+                    </div>
+                </div>
+
+                {% if is_subvencao_visit %}
+                <div class="visit-grid visit-grid-two">
+                    <div class="visit-field">
+                        <label class="premium-label">Tipos de atividades desenvolvidas</label>
+                        <textarea name="atendimento[atividades_momento]" rows="5" class="form-textarea-premium" placeholder="Descreva os tipos de atividades desenvolvidas..." {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.atividades_momento|default:'' }}</textarea>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Atividades em execucao no momento da visita</label>
+                        <textarea name="atendimento[atividades_execucao]" rows="5" class="form-textarea-premium" placeholder="Descreva as atividades em execucao..." {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.atividades_execucao|default:'' }}</textarea>
+                    </div>
+                </div>
+                {% else %}
+                <div class="visit-field">
+                    <label class="premium-label">Aplicacao do Recurso, Conforme Objeto Estabelecido e Prestacao de Contas: (Contribuicoes)</label>
+                    <textarea name="atendimento[aplicacao_recurso]" rows="4" class="form-textarea-premium" placeholder="Descreva a aplicacao do recurso..." {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.aplicacao_recurso|default:'' }}</textarea>
+                </div>
+                <div class="visit-field">
+                    <label class="premium-label">Resultados da Aplicacao dos Recursos no Atendimento: (Contribuicoes)</label>
+                    <textarea name="atendimento[resultados_recursos]" rows="4" class="form-textarea-premium" placeholder="Descreva os resultados..." {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.resultados_recursos|default:'' }}</textarea>
+                </div>
+                <div class="visit-field">
+                    <label class="premium-label">Itens Identificados no Momento da Visita Tecnica na OSC, Conforme Objeto Estabelecido e Prestacao de Contas. (Anexar Foto) (Auxilios)</label>
+                    <textarea name="atendimento[itens_identificados]" rows="4" class="form-textarea-premium" placeholder="Liste os itens identificados..." {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.itens_identificados|default:'' }}</textarea>
+                </div>
+                <div class="visit-field">
+                    <label class="premium-label">Itens Nao Identificados na OSC no Momento da Visita Tecnica (se houver): (Auxilios)</label>
+                    <textarea name="atendimento[itens_nao_identificados]" rows="4" class="form-textarea-premium" placeholder="Liste os itens nao identificados, se houver..." {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.itens_nao_identificados|default:'' }}</textarea>
+                </div>
+                {% endif %}
+
+                {% if not is_subvencao_visit %}
+                <div class="visit-grid visit-grid-two">
+                    <div class="visit-field">
+                        <label class="premium-label">Observacoes</label>
+                        <textarea name="atendimento[observacoes_atendimento]" rows="4" class="form-textarea-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.observacoes_atendimento|default:'' }}</textarea>
+                    </div>
+                    <div class="visit-field">
+                        <label class="premium-label">Recomendacoes</label>
+                        <textarea name="atendimento[recomendacoes_atendimento]" rows="4" class="form-textarea-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.recomendacoes_atendimento|default:'' }}</textarea>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if not is_subvencao_visit %}
+        <section class="visit-section-card">
+            <div class="visit-section-header visit-section-header-compact">
+                <div>
+                    <h2>Balanço Financeiro</h2>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <label class="visit-upload-dropzone">
+                    <input type="file" name="balanco_financeiro" accept="application/pdf,.pdf" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                    <span class="visit-upload-icon"><i data-lucide="plus"></i></span>
+                    <span>
+                        <strong>Fazer Upload de Balanço Financeiro</strong>
+                        <small>Apenas arquivos .PDF</small>
+                    </span>
+                </label>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if not is_subvencao_visit %}
+        <section class="visit-section-card">
+            <div class="visit-section-header visit-section-header-compact">
+                <div>
+                    <h2>Fotos / Evidências</h2>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="visit-evidence-grid">
+                    <label class="visit-evidence-option">
+                        <input type="file" name="fotos_camera" accept="image/*" capture="environment" multiple {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span><i data-lucide="camera"></i></span>
+                        <strong>Abrir Câmera</strong>
+                    </label>
+                    <label class="visit-evidence-option">
+                        <input type="file" name="fotos_galeria" accept="image/*" multiple {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span><i data-lucide="image-plus"></i></span>
+                        <strong>Selecionar da Galeria</strong>
+                    </label>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="visit-section-card">
+            <div class="visit-section-header">
+                <div class="section-icon visit-section-icon-amber"><i data-lucide="door-open"></i></div>
+                <div>
+                    <h2>III. Forma de Acesso dos Usuarios</h2>
+                    <p>Marque todas as opcoes que se aplicam ao fluxo de entrada.</p>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="visit-check-grid">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="forma_acesso[demanda_espontanea]" {% if object.forma_acesso.demanda_espontanea %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span>Demanda Espontanea</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="forma_acesso[busca_ativa]" {% if object.forma_acesso.busca_ativa %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span>Busca Ativa</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="forma_acesso[encaminhamento]" {% if object.forma_acesso.encaminhamento %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span>Encaminhamento</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="forma_acesso[outros]" {% if object.forma_acesso.outros %}checked{% endif %} {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span>Outros</span>
+                    </label>
+                </div>
+                <div id="encaminhamentoField" class="visit-field visit-conditional-field" {% if not object.forma_acesso.encaminhamento %}style="display:none;"{% endif %}>
+                    <label class="premium-label">Quem encaminha?</label>
+                    <input type="text" name="forma_acesso[quem_encaminha]" value="{{ object.forma_acesso.quem_encaminha|default:'' }}" class="form-input-premium" placeholder="Origem do encaminhamento" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                </div>
+            </div>
+        </section>
+
+        <section class="visit-section-card">
+            <div class="visit-section-header">
+                <div class="section-icon visit-section-icon-violet"><i data-lucide="users-2"></i></div>
+                <div>
+                    <h2>IV. {% if is_subvencao_visit %}Colaboradores{% else %}Recursos Humanos{% endif %}</h2>
+                    <p>{% if is_subvencao_visit %}Colaboradores registrados na visita.{% else %}Equipe de referencia registrada na visita.{% endif %}</p>
+                </div>
+            </div>
+            <div class="visit-section-body visit-table-body">
+                <div class="visit-table-toolbar">
+                    <p>Use a tabela para descrever cargos, vinculos e quantitativos.</p>
+                    {% if object.status != 'finalized' and object.status != 'completed' %}
+                    <button type="button" onclick="addRhRow()" class="btn-outline-monitoring visit-add-row-btn">
+                        <i data-lucide="plus"></i> Adicionar cargo
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="visit-table-wrap">
+                    <table class="table-monitoring visit-rh-table" id="rhTable">
+                        <thead>
+                            <tr>
+                                <th>Cargo / Funcao</th>
+                                <th>Subv.</th>
+                                <th>Volunt.</th>
+                                <th>Terc.</th>
+                                <th>Qtd</th>
+                                {% if object.status != 'finalized' and object.status != 'completed' %}
+                                <th>Acao</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="visit-section-card">
+            <div class="visit-section-header">
+                <div class="section-icon visit-section-icon-red"><i data-lucide="alert-circle"></i></div>
+                <div>
+                    <h2>V. Observacoes e Recomendacoes</h2>
+                    <p>Registre leitura tecnica, alertas e encaminhamentos.</p>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="visit-field">
+                    <label class="premium-label">Observacoes da Equipe Tecnica</label>
+                    <textarea name="observacoes" rows="5" class="form-textarea-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.observacoes|default:'' }}</textarea>
+                </div>
+                <div class="visit-field">
+                    <label class="premium-label">Recomendacoes e Encaminhamentos</label>
+                    <textarea name="recomendacoes" rows="5" class="form-textarea-premium" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.recomendacoes|default:'' }}</textarea>
+                </div>
+            </div>
+        </section>
+
+        {% if is_subvencao_visit %}
+        <div class="pse-toggle-wrap">
+            <button type="button" class="pse-toggle-btn" id="pseToggleButton" onclick="togglePseSection()" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                <span class="pse-toggle-remove"><i data-lucide="x"></i></span>
+                <strong id="pseToggleText">Habilitar PSE</strong>
+            </button>
+        </div>
+
+        <section class="visit-section-card pse-section-card" id="pseSection" style="display:none;">
+            <input type="hidden" name="atendimento[pse_habilitado]" id="pseEnabledInput" value="{{ object.atendimento.pse_habilitado|default:'nao' }}">
+            <div class="visit-section-header visit-section-header-compact">
+                <div>
+                    <h2>Dados PSE (Proteção Social Especial)</h2>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="pse-subsection-title">Qualitativos (preencher referente ao trimestre)</div>
+                <div class="pse-period-row">
+                    <label class="premium-label">Período:</label>
+                    <input type="text" name="atendimento[pse_periodo]" value="{{ object.atendimento.pse_periodo|default:'' }}" class="form-input-premium" placeholder="Ex: Janeiro a Março" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                </div>
+                <div class="pse-table-wrap">
+                    <table class="pse-table pse-qualitative-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Situação Encontrada</th>
+                                <th>Recomendações</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in "1234" %}
+                            <tr>
+                                <td><input type="date" name="atendimento[pse_qualitativos][{{ forloop.counter0 }}][data]" value="{{ object.atendimento.pse_qualitativos|get_item:forloop.counter0|get_item:'data'|default:'' }}" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}></td>
+                                <td><textarea name="atendimento[pse_qualitativos][{{ forloop.counter0 }}][situacao]" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.pse_qualitativos|get_item:forloop.counter0|get_item:'situacao'|default:'' }}</textarea></td>
+                                <td><textarea name="atendimento[pse_qualitativos][{{ forloop.counter0 }}][recomendacoes]" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.pse_qualitativos|get_item:forloop.counter0|get_item:'recomendacoes'|default:'' }}</textarea></td>
+                                <td><textarea name="atendimento[pse_qualitativos][{{ forloop.counter0 }}][observacao]" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>{{ object.atendimento.pse_qualitativos|get_item:forloop.counter0|get_item:'observacao'|default:'' }}</textarea></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pse-subsection-title">Quantitativos (Trimestral)</div>
+                <div class="pse-table-wrap">
+                    <table class="pse-table pse-quantitative-table">
+                        <thead>
+                            <tr>
+                                <th>Indicadores</th>
+                                <th>Jan</th>
+                                <th>Fev</th>
+                                <th>Mar</th>
+                                <th>Abr</th>
+                                <th>Mai</th>
+                                <th>Jun</th>
+                                <th>Jul</th>
+                                <th>Ago</th>
+                                <th>Set</th>
+                                <th>Out</th>
+                                <th>Nov</th>
+                                <th>Dez</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>Total de usuários do serviço no 1º dia do mês</th>
+                                {% for month in "jan,fev,mar,abr,mai,jun,jul,ago,set,out,nov,dez"|split:"," %}
+                                <td><input type="number" name="atendimento[pse_quantitativos][usuarios_primeiro_dia][{{ month }}]" value="{{ object.atendimento.pse_quantitativos|get_item:'usuarios_primeiro_dia'|get_item:month|default:'' }}" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}></td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <th>Total de usuários inseridos no mês (novos)</th>
+                                {% for month in "jan,fev,mar,abr,mai,jun,jul,ago,set,out,nov,dez"|split:"," %}
+                                <td><input type="number" name="atendimento[pse_quantitativos][usuarios_inseridos][{{ month }}]" value="{{ object.atendimento.pse_quantitativos|get_item:'usuarios_inseridos'|get_item:month|default:'' }}" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}></td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <th>Total de usuários desligados no mês</th>
+                                {% for month in "jan,fev,mar,abr,mai,jun,jul,ago,set,out,nov,dez"|split:"," %}
+                                <td><input type="number" name="atendimento[pse_quantitativos][usuarios_desligados][{{ month }}]" value="{{ object.atendimento.pse_quantitativos|get_item:'usuarios_desligados'|get_item:month|default:'' }}" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}></td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <th>Total de usuários do serviço no último dia do mês</th>
+                                {% for month in "jan,fev,mar,abr,mai,jun,jul,ago,set,out,nov,dez"|split:"," %}
+                                <td><input type="number" name="atendimento[pse_quantitativos][usuarios_ultimo_dia][{{ month }}]" value="{{ object.atendimento.pse_quantitativos|get_item:'usuarios_ultimo_dia'|get_item:month|default:'' }}" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}></td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="visit-section-card">
+            <div class="visit-section-header visit-section-header-compact">
+                <div>
+                    <h2>Fotos / Evidências</h2>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="visit-evidence-grid">
+                    <label class="visit-evidence-option">
+                        <input type="file" name="fotos_camera" accept="image/*" capture="environment" multiple {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span><i data-lucide="camera"></i></span>
+                        <strong>Abrir Câmera</strong>
+                    </label>
+                    <label class="visit-evidence-option">
+                        <input type="file" name="fotos_galeria" accept="image/*" multiple {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <span><i data-lucide="image-plus"></i></span>
+                        <strong>Selecionar da Galeria</strong>
+                    </label>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="visit-section-card no-print">
+            <div class="visit-section-header">
+                <div class="section-icon visit-section-icon-rose"><i data-lucide="pen-tool"></i></div>
+                <div>
+                    <h2>VI. Assinaturas Digitais</h2>
+                    <p>Coleta organizada em tres blocos com canvas responsivo.</p>
+                </div>
+            </div>
+            <div class="visit-section-body">
+                <div class="signature-grid">
+                    <div class="signature-block">
+                        <label class="premium-label">Tecnico Responsavel 1</label>
+                        <input type="text" name="assinaturas[tecnico1_nome]" value="{{ object.assinaturas.tecnico1_nome|default:'' }}" placeholder="Nome completo" class="form-input-premium signature-name-input" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <div class="signature-pad-container" id="pad-tecnico1"><canvas></canvas></div>
+                        {% if object.status != 'finalized' and object.status != 'completed' %}
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('tecnico1')" class="signature-action-link signature-action-muted">Limpar assinatura</button>
+                        </div>
+                        {% endif %}
+                        <input type="hidden" name="assinaturas[tecnico1]" id="val-tecnico1" value="{{ object.assinaturas.tecnico1|default:'' }}">
+                    </div>
+
+                    <div class="signature-block">
+                        <label class="premium-label">Tecnico Responsavel 2</label>
+                        <input type="text" name="assinaturas[tecnico2_nome]" value="{{ object.assinaturas.tecnico2_nome|default:'' }}" placeholder="Nome completo" class="form-input-premium signature-name-input" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <div class="signature-pad-container" id="pad-tecnico2"><canvas></canvas></div>
+                        {% if object.status != 'finalized' and object.status != 'completed' %}
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('tecnico2')" class="signature-action-link signature-action-muted">Limpar assinatura</button>
+                        </div>
+                        {% endif %}
+                        <input type="hidden" name="assinaturas[tecnico2]" id="val-tecnico2" value="{{ object.assinaturas.tecnico2|default:'' }}">
+                    </div>
+
+                    <div class="signature-block">
+                        <label class="premium-label">Representante da OSC</label>
+                        <input type="text" name="assinaturas[responsavel_nome]" value="{{ object.assinaturas.responsavel_nome|default:'' }}" placeholder="Nome completo" class="form-input-premium signature-name-input" {% if object.status == 'finalized' or object.status == 'completed' %}disabled{% endif %}>
+                        <div class="signature-pad-container" id="pad-responsavel"><canvas></canvas></div>
+                        {% if object.status != 'finalized' and object.status != 'completed' %}
+                        <div class="signature-actions">
+                            <button type="button" onclick="clearSignature('responsavel')" class="signature-action-link signature-action-muted">Limpar assinatura</button>
+                        </div>
+                        {% endif %}
+                        <input type="hidden" name="assinaturas[responsavel]" id="val-responsavel" value="{{ object.assinaturas.responsavel|default:'' }}">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <input type="hidden" name="status" id="finalStatus" value="{% if object and object.status %}{{ object.status }}{% else %}draft{% endif %}">
+        <input type="hidden" name="rh_data" id="id_rh_data">
+
+        {% if object.status != 'finalized' and object.status != 'completed' %}
+        <div class="sticky-footer-actions no-print visit-footer-actions">
+            <div class="visit-footer-actions-inner">
+                <button type="button" onclick="submitVisit('draft')" class="btn-outline-monitoring visit-save-draft-btn">
+                    <i data-lucide="save"></i> Salvar rascunho
+                </button>
+                <button type="button" onclick="openFinalizeModal()" class="btn-primary-premium visit-finish-btn">
+                    <i data-lucide="check-circle"></i> Finalizar e bloquear
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<div id="finalizeVisitModal" class="visit-confirm-modal" style="display:none;">
+    <div class="visit-confirm-dialog">
+        <div class="visit-confirm-icon">
+            <i data-lucide="lock-keyhole"></i>
+        </div>
+        <div class="visit-confirm-copy">
+            <span>Finalizar visita</span>
+            <h3>Deseja finalizar e bloquear este instrumental?</h3>
+            <p>Depois da finalizacao, o formulario ficara em modo somente leitura. Voce ainda podera visualizar e imprimir o documento.</p>
+        </div>
+        <div class="visit-confirm-actions">
+            <button type="button" class="visit-confirm-secondary" onclick="closeFinalizeModal()">Continuar editando</button>
+            <button type="button" class="visit-confirm-primary" id="confirmFinalizeButton" onclick="confirmFinalizeVisit()">
+                <i data-lucide="check-circle"></i> Finalizar visita
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="planPreviewModal" class="plan-preview-modal" style="display:none;">
+    <div class="plan-preview-dialog">
+        <div class="plan-preview-modal-header">
+            <div>
+                <span class="plan-preview-modal-eyebrow">Plano de trabalho</span>
+                <h3 id="planPreviewTitle">Visualizacao do documento</h3>
+            </div>
+            <button type="button" class="plan-preview-close" onclick="closePlanPreview()" aria-label="Fechar visualizacao">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div id="planPreviewBody" class="plan-preview-modal-body"></div>
+        <div class="plan-preview-modal-actions">
+            <button type="button" class="visit-top-action-btn" onclick="closePlanPreview()">Fechar</button>
+            <a href="#" target="_blank" rel="noopener noreferrer" id="planPreviewOpenLink" class="visit-top-action-btn visit-top-action-primary">Abrir em nova guia</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    var rhData = {{ object.rh_data|safe|default:"[]" }};
+    if (!Array.isArray(rhData) || rhData.length === 0) {
+        rhData = [
+            { cargo: "Coordenador", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Assistente Social", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Psicologo", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Instrutor", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Educador Fisico", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Aux. Administrativo", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Monitor", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Servico Geral", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" },
+            { cargo: "Cozinheiro", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" }
+        ];
+    }
+
+    var pads = {};
+    var signatureSnapshots = {};
+    var signatureResizeTimer = null;
+    var initialSignatures = {
+        tecnico1: "{{ object.assinaturas.tecnico1|default:''|escapejs }}",
+        tecnico2: "{{ object.assinaturas.tecnico2|default:''|escapejs }}",
+        responsavel: "{{ object.assinaturas.responsavel|default:''|escapejs }}"
+    };
+    var readOnlyVisit = {% if object.status == 'finalized' or object.status == 'completed' %}true{% else %}false{% endif %};
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function updateAttendanceTotal() {
+        var manhaInput = document.getElementsByName("atendimento[presentes][manha]")[0];
+        var tardeInput = document.getElementsByName("atendimento[presentes][tarde]")[0];
+        var totalMonthInput = document.getElementsByName("atendimento[total_mes]")[0];
+        var totalElement = document.getElementById("attendancePresentTotal");
+        var manha = Number(manhaInput ? manhaInput.value || 0 : 0);
+        var tarde = Number(tardeInput ? tardeInput.value || 0 : 0);
+        var total = manha + tarde;
+
+        if (totalElement) {
+            totalElement.textContent = total;
+        }
+
+        if (totalMonthInput) {
+            totalMonthInput.value = total;
+        }
+    }
+
+    function updateWaitingListQuantityVisibility() {
+        var selected = document.querySelector("input[name='atendimento[lista_espera]']:checked");
+        var quantityField = document.getElementById("attendanceWaitingQuantityField");
+
+        if (!quantityField) {
+            return;
+        }
+
+        quantityField.style.display = selected && selected.value === "sim" ? "block" : "none";
+    }
+
+    function setPseSectionState(enabled) {
+        var section = document.getElementById("pseSection");
+        var input = document.getElementById("pseEnabledInput");
+        var text = document.getElementById("pseToggleText");
+        var button = document.getElementById("pseToggleButton");
+
+        if (!section || !input || !text || !button) {
+            return;
+        }
+
+        section.style.display = enabled ? "block" : "none";
+        input.value = enabled ? "sim" : "nao";
+        text.textContent = enabled ? "Remover PSE" : "Habilitar PSE";
+        button.classList.toggle("is-enabled", enabled);
+    }
+
+    function togglePseSection() {
+        var input = document.getElementById("pseEnabledInput");
+        setPseSectionState(!(input && input.value === "sim"));
+    }
+
+    function setupAttachmentLabels() {
+        document.querySelectorAll(".visit-upload-dropzone input[type='file'], .visit-evidence-option input[type='file']").forEach(function(input) {
+            input.addEventListener("change", function() {
+                var label = this.closest("label");
+                var text = label ? label.querySelector("strong") : null;
+                var fileCount = this.files ? this.files.length : 0;
+
+                if (text && fileCount) {
+                    text.textContent = fileCount === 1 ? this.files[0].name : fileCount + " arquivos selecionados";
+                }
+            });
+        });
+    }
+
+    function updateSubsidizedFromOsc() {
+        var oscSelect = document.querySelector("select[name='osc']");
+        var subsidizedInput = document.getElementById("attendanceSubsidizedInput");
+
+        if (!oscSelect || !subsidizedInput) {
+            return;
+        }
+
+        var selectedOption = oscSelect.options[oscSelect.selectedIndex];
+        if (selectedOption && selectedOption.dataset.subsidized !== undefined) {
+            subsidizedInput.value = selectedOption.dataset.subsidized === "-1" ? "Conforme Demanda" : selectedOption.dataset.subsidized || 0;
+        }
+    }
+
+    function renderRhRows() {
+        var tbody = document.querySelector("#rhTable tbody");
+        tbody.innerHTML = "";
+
+        rhData.forEach(function(row, index) {
+            var tr = document.createElement("tr");
+            var disabledAttr = readOnlyVisit ? "disabled" : "";
+            tr.innerHTML =
+                "<td><input type='text' value='" + escapeHtml(row.cargo) + "' onchange=\"updateRh(" + index + ", 'cargo', this.value)\" class='form-input-premium visit-table-input' " + disabledAttr + "></td>" +
+                "<td class='text-center'><input type='checkbox' " + (row.subvencao ? "checked" : "") + " onchange=\"updateRh(" + index + ", 'subvencao', this.checked)\" " + disabledAttr + "></td>" +
+                "<td class='text-center'><input type='checkbox' " + (row.voluntario ? "checked" : "") + " onchange=\"updateRh(" + index + ", 'voluntario', this.checked)\" " + disabledAttr + "></td>" +
+                "<td class='text-center'><input type='checkbox' " + (row.terceirizado ? "checked" : "") + " onchange=\"updateRh(" + index + ", 'terceirizado', this.checked)\" " + disabledAttr + "></td>" +
+                "<td><input type='number' value='" + escapeHtml(row.quantidade) + "' onchange=\"updateRh(" + index + ", 'quantidade', this.value)\" class='form-input-premium visit-table-input visit-table-input-center' " + disabledAttr + "></td>" +
+                (readOnlyVisit ? "" : "<td class='text-center'><button type='button' onclick='removeRhRow(" + index + ")' class='visit-delete-row-btn'><i data-lucide='trash-2'></i></button></td>");
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById("id_rh_data").value = JSON.stringify(rhData);
+        lucide.createIcons();
+    }
+
+    function addRhRow() {
+        rhData.push({ cargo: "", voluntario: false, terceirizado: false, subvencao: false, quantidade: "" });
+        renderRhRows();
+    }
+
+    function removeRhRow(index) {
+        rhData.splice(index, 1);
+        renderRhRows();
+    }
+
+    function updateRh(index, field, value) {
+        rhData[index][field] = value;
+        document.getElementById("id_rh_data").value = JSON.stringify(rhData);
+    }
+
+    function drawExistingSignature(pad, dataUrl) {
+        if (!dataUrl) {
+            return;
+        }
+
+        var image = new Image();
+        image.onload = function() {
+            pad.context.clearRect(0, 0, pad.width, pad.height);
+            pad.context.drawImage(image, 0, 0, pad.width, pad.height);
+            pad.hasDrawing = true;
+        };
+        image.src = dataUrl;
+    }
+
+    function getCanvasPoint(canvas, event) {
+        var rect = canvas.getBoundingClientRect();
+        var clientX = event.clientX;
+        var clientY = event.clientY;
+
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function createSignaturePad(canvas, width, height) {
+        var context = canvas.getContext("2d");
+        var pad = {
+            canvas: canvas,
+            context: context,
+            width: width,
+            height: height,
+            drawing: false,
+            hasDrawing: false,
+            clear: function() {
+                this.context.clearRect(0, 0, this.width, this.height);
+                this.hasDrawing = false;
+            },
+            isEmpty: function() {
+                return !this.hasDrawing;
+            },
+            toDataURL: function() {
+                return this.canvas.toDataURL("image/png");
+            },
+            persist: function(id) {
+                if (this.hasDrawing || canvasHasInk(this.canvas)) {
+                    var dataUrl = this.toDataURL();
+                    document.getElementById("val-" + id).value = dataUrl;
+                    signatureSnapshots[id] = dataUrl;
+                }
+            }
+        };
+
+        context.lineWidth = 2.2;
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.strokeStyle = "#0f172a";
+
+        canvas.onpointerdown = function(event) {
+            if (readOnlyVisit) {
+                return;
+            }
+
+            event.preventDefault();
+            canvas.setPointerCapture(event.pointerId);
+            var point = getCanvasPoint(canvas, event);
+            pad.drawing = true;
+            pad.hasDrawing = true;
+            context.beginPath();
+            context.moveTo(point.x, point.y);
+        };
+
+        canvas.onpointermove = function(event) {
+            if (!pad.drawing || readOnlyVisit) {
+                return;
+            }
+
+            event.preventDefault();
+            var point = getCanvasPoint(canvas, event);
+            context.lineTo(point.x, point.y);
+            context.stroke();
+        };
+
+        canvas.onpointerup = canvas.onpointercancel = canvas.onpointerleave = function(event) {
+            if (!pad.drawing) {
+                return;
+            }
+
+            pad.drawing = false;
+            pad.persist(canvas.dataset.signatureId);
+            try {
+                canvas.releasePointerCapture(event.pointerId);
+            } catch (error) {
+                // Pointer may already be released by the browser.
+            }
+        };
+
+        return pad;
+    }
+
+    function setupSignaturePad(id) {
+        var canvas = document.querySelector("#pad-" + id + " canvas");
+        if (!canvas) {
+            return;
+        }
+
+        var container = canvas.parentElement;
+        var existingPad = pads[id];
+        if (existingPad && !existingPad.isEmpty()) {
+            signatureSnapshots[id] = existingPad.toDataURL();
+        } else if (document.getElementById("val-" + id).value) {
+            signatureSnapshots[id] = document.getElementById("val-" + id).value;
+        } else if (initialSignatures[id]) {
+            signatureSnapshots[id] = initialSignatures[id];
+        }
+
+        var rect = container.getBoundingClientRect();
+        var width = Math.max(Math.floor(rect.width), 1);
+        var height = Math.max(Math.floor(rect.height), 1);
+
+        if (width <= 1 || height <= 1) {
+            window.requestAnimationFrame(function() {
+                setupSignaturePad(id);
+            });
+            return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        canvas.style.touchAction = "none";
+        canvas.dataset.signatureId = id;
+        var context = canvas.getContext("2d");
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.clearRect(0, 0, width, height);
+
+        pads[id] = createSignaturePad(canvas, width, height);
+        drawExistingSignature(pads[id], signatureSnapshots[id]);
+    }
+
+    function resizeSignaturePads() {
+        ["tecnico1", "tecnico2", "responsavel"].forEach(function(id) {
+            setupSignaturePad(id);
+        });
+    }
+
+    function queueSignaturePadResize() {
+        window.clearTimeout(signatureResizeTimer);
+        signatureResizeTimer = window.setTimeout(resizeSignaturePads, 120);
+    }
+
+    function clearSignature(id) {
+        if (pads[id]) {
+            pads[id].clear();
+            document.getElementById("val-" + id).value = "";
+            signatureSnapshots[id] = "";
+        }
+    }
+
+    function syncSignatureValues() {
+        ["tecnico1", "tecnico2", "responsavel"].forEach(function(id) {
+            var canvas = document.querySelector("#pad-" + id + " canvas");
+            if (pads[id] && canvas && (!pads[id].isEmpty() || canvasHasInk(canvas))) {
+                var dataUrl = pads[id].toDataURL();
+                document.getElementById("val-" + id).value = dataUrl;
+                signatureSnapshots[id] = dataUrl;
+            }
+        });
+    }
+
+    function canvasHasInk(canvas) {
+        var context = canvas.getContext("2d");
+        var pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (var index = 3; index < pixels.length; index += 4) {
+            if (pixels[index] > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function submitVisit(status) {
+        var form = document.getElementById("instrumentalForm");
+        document.getElementById("finalStatus").value = status;
+
+        try {
+            syncSignatureValues();
+        } catch (error) {
+            console.error("Erro ao preparar assinaturas antes do envio:", error);
+        }
+
+        HTMLFormElement.prototype.submit.call(form);
+    }
+
+    function openFinalizeModal() {
+        var modal = document.getElementById("finalizeVisitModal");
+        modal.style.display = "flex";
+        document.body.classList.add("modal-open");
+        lucide.createIcons();
+    }
+
+    function closeFinalizeModal() {
+        var modal = document.getElementById("finalizeVisitModal");
+        modal.style.display = "none";
+        document.body.classList.remove("modal-open");
+    }
+
+    function confirmFinalizeVisit() {
+        var button = document.getElementById("confirmFinalizeButton");
+        button.disabled = true;
+        button.innerHTML = "<i data-lucide='loader-circle'></i> Finalizando...";
+        lucide.createIcons();
+        submitVisit("completed");
+    }
+
+    function toggleSecondVisit() {
+        var fields = document.getElementById("segundaVisitaFields");
+        var btn = document.getElementById("btnSegundaVisita");
+        var showed = fields.style.display !== "none";
+        fields.style.display = showed ? "none" : "grid";
+        btn.innerHTML = (showed ? "<i data-lucide='plus'></i> Adicionar" : "<i data-lucide='minus'></i> Remover") + " 2a visita";
+        lucide.createIcons();
+    }
+
+    function updatePlanButtonLink() {
+        var planButton = document.getElementById("planButton");
+        if (!planButton) {
+            return;
+        }
+
+        var baseUrl = planButton.getAttribute("data-plan-base");
+        var oscSelect = document.querySelector("select[name='osc']");
+        if (!oscSelect) {
+            return;
+        }
+
+        var oscId = oscSelect.value;
+        planButton.href = oscId ? (baseUrl + "?osc=" + encodeURIComponent(oscId)) : baseUrl;
+        planButton.classList.toggle("is-disabled", !oscId);
+        planButton.setAttribute("aria-disabled", !oscId ? "true" : "false");
+    }
+
+    function getSelectedOscId() {
+        var oscSelect = document.querySelector("select[name='osc']");
+        if (oscSelect) {
+            return oscSelect.value;
+        }
+
+        var hiddenOsc = document.querySelector("input[name='osc']");
+        return hiddenOsc ? hiddenOsc.value : "";
+    }
+
+    function openPlanPreview(event) {
+        if (event) {
+            event.preventDefault();
+        }
+
+        var planButton = document.getElementById("planButton");
+        if (!planButton || planButton.classList.contains("is-disabled")) {
+            return false;
+        }
+
+        var oscId = getSelectedOscId();
+        if (!oscId) {
+            alert("Selecione uma OSC para visualizar o plano de trabalho.");
+            return false;
+        }
+
+        var modal = document.getElementById("planPreviewModal");
+        var body = document.getElementById("planPreviewBody");
+        var title = document.getElementById("planPreviewTitle");
+        var openLink = document.getElementById("planPreviewOpenLink");
+        var previewUrl = planButton.getAttribute("data-preview-base") + "?osc=" + encodeURIComponent(oscId);
+
+        title.textContent = "Carregando plano de trabalho...";
+        body.innerHTML = "<div class='plan-preview-loading'><i data-lucide='loader-circle'></i><span>Montando visualizacao do plano...</span></div>";
+        openLink.href = planButton.href;
+        modal.style.display = "flex";
+        document.body.classList.add("modal-open");
+        lucide.createIcons();
+
+        fetch(previewUrl, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { ok: response.ok, data: data };
+                });
+            })
+            .then(function(result) {
+                if (!result.ok || !result.data.success) {
+                    throw new Error(result.data.error || "Nao foi possivel carregar o plano de trabalho.");
+                }
+
+                title.textContent = result.data.title;
+                body.innerHTML = result.data.html;
+                openLink.href = result.data.open_url;
+                lucide.createIcons();
+            })
+            .catch(function(error) {
+                title.textContent = "Plano de trabalho indisponivel";
+                body.innerHTML = "<div class='plan-preview-empty-state'><i data-lucide='file-x2'></i><p>" + escapeHtml(error.message) + "</p></div>";
+                openLink.href = planButton.href;
+                lucide.createIcons();
+            });
+
+        return false;
+    }
+
+    function closePlanPreview() {
+        var modal = document.getElementById("planPreviewModal");
+        modal.style.display = "none";
+        document.body.classList.remove("modal-open");
+    }
+
+    var chkEncaminhamento = document.querySelector("input[name='forma_acesso[encaminhamento]']");
+    if (chkEncaminhamento) {
+        chkEncaminhamento.addEventListener("change", function() {
+            document.getElementById("encaminhamentoField").style.display = this.checked ? "block" : "none";
+        });
+    }
+
+    var oscSelectField = document.querySelector("select[name='osc']");
+    if (oscSelectField) {
+        oscSelectField.addEventListener("change", updatePlanButtonLink);
+        oscSelectField.addEventListener("change", updateSubsidizedFromOsc);
+    }
+
+    document.querySelectorAll(".attendance-present-input").forEach(function(input) {
+        input.addEventListener("input", updateAttendanceTotal);
+        input.addEventListener("change", updateAttendanceTotal);
+    });
+
+    document.querySelectorAll(".attendance-waiting-radio").forEach(function(input) {
+        input.addEventListener("change", updateWaitingListQuantityVisibility);
+    });
+
+    document.getElementById("instrumentalForm").addEventListener("submit", function() {
+        syncSignatureValues();
+    });
+
+    document.getElementById("planPreviewModal").addEventListener("click", function(event) {
+        if (event.target.id === "planPreviewModal") {
+            closePlanPreview();
+        }
+    });
+
+    document.getElementById("finalizeVisitModal").addEventListener("click", function(event) {
+        if (event.target.id === "finalizeVisitModal") {
+            closeFinalizeModal();
+        }
+    });
+
+    renderRhRows();
+    updateAttendanceTotal();
+    updateWaitingListQuantityVisibility();
+    setupAttachmentLabels();
+    updateSubsidizedFromOsc();
+    setPseSectionState(document.getElementById("pseEnabledInput")?.value === "sim");
+    window.requestAnimationFrame(resizeSignaturePads);
+    updatePlanButtonLink();
+    window.addEventListener("resize", queueSignaturePadResize);
+</script>
+
+<style>
+    .visit-hero {
+        padding-bottom: 104px;
+    }
+
+    .visit-hero-content {
+        align-items: flex-end;
+    }
+
+    .visit-hero-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+
+    .visit-hero-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(14px);
+    }
+
+    .visit-hero-icon i {
+        width: 28px;
+        height: 28px;
+    }
+
+    .visit-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .visit-page-shell {
+        max-width: 1120px;
+        margin: -54px auto 140px;
+        padding: 0 24px;
+        position: relative;
+        z-index: 12;
+    }
+
+    .visit-form-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .visit-top-actions-card,
+    .visit-section-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 28px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+    }
+
+    .visit-top-actions-card {
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.92);
+    }
+
+    .visit-top-actions {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .visit-top-action-btn {
+        min-height: 54px;
+        padding: 12px 18px;
+        border-radius: 18px;
+        border: 1px solid #dbe4ee;
+        background: #f8fafc;
+        color: #0f172a;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 8px 24px rgba(148, 163, 184, 0.08);
+    }
+
+    .visit-top-action-btn:hover {
+        transform: translateY(-1px);
+        border-color: #bfdbfe;
+        background: #ffffff;
+    }
+
+    .visit-top-action-btn i {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+    }
+
+    .visit-top-action-back {
+        border-radius: 999px;
+        justify-content: flex-start;
+        padding-left: 20px;
+        background: #ffffff;
+    }
+
+    .visit-top-action-primary {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.25);
+    }
+
+    .visit-top-action-primary:hover {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        border-color: transparent;
+    }
+
+    .visit-top-action-btn.is-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .visit-confirm-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1400;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 22px;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(8px);
+    }
+
+    .visit-confirm-dialog {
+        width: min(460px, 100%);
+        border-radius: 24px;
+        border: 1px solid #dbe4ee;
+        background: #ffffff;
+        box-shadow: 0 28px 70px rgba(15, 23, 42, 0.26);
+        padding: 28px;
+        text-align: center;
+    }
+
+    .visit-confirm-icon {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 18px;
+        border-radius: 18px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .visit-confirm-icon i {
+        width: 26px;
+        height: 26px;
+    }
+
+    .visit-confirm-copy span {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+    }
+
+    .visit-confirm-copy h3 {
+        margin: 0 0 10px;
+        font-size: 22px;
+        line-height: 1.25;
+        color: #0f172a;
+    }
+
+    .visit-confirm-copy p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.65;
+        color: #475569;
+    }
+
+    .visit-confirm-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .visit-confirm-secondary,
+    .visit-confirm-primary {
+        min-height: 46px;
+        border-radius: 14px;
+        border: 1px solid #dbe4ee;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+    }
+
+    .visit-confirm-secondary {
+        background: #ffffff;
+        color: #475569;
+    }
+
+    .visit-confirm-primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        color: #ffffff;
+    }
+
+    .visit-confirm-primary:disabled {
+        opacity: 0.72;
+        cursor: wait;
+    }
+
+    .visit-confirm-primary i {
+        width: 15px;
+        height: 15px;
+    }
+
+    .plan-preview-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1300;
+        background: rgba(15, 23, 42, 0.48);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 22px;
+        backdrop-filter: blur(6px);
+    }
+
+    .plan-preview-dialog {
+        width: min(980px, 100%);
+        max-height: min(88vh, 920px);
+        background: #ffffff;
+        border-radius: 24px;
+        border: 1px solid #dbe4ee;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.24);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .plan-preview-modal-header,
+    .plan-preview-modal-actions {
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .plan-preview-modal-header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .plan-preview-modal-actions {
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .plan-preview-modal-eyebrow {
+        display: inline-block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+
+    .plan-preview-modal-header h3 {
+        margin: 0;
+        font-size: 20px;
+        color: #0f172a;
+    }
+
+    .plan-preview-close {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid #dbe4ee;
+        background: #f8fafc;
+        color: #475569;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .plan-preview-close i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .plan-preview-modal-body {
+        flex: 1;
+        overflow: auto;
+        background: #f8fafc;
+        padding: 22px;
+    }
+
+    .plan-preview-loading,
+    .plan-preview-empty-state {
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .plan-preview-loading i,
+    .plan-preview-empty-state i {
+        width: 28px;
+        height: 28px;
+    }
+
+    .plan-preview-doc {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 34px 38px;
+        border-radius: 22px;
+        background: #ffffff;
+        border: 1px solid #dbe4ee;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+    }
+
+    .plan-preview-doc-header {
+        text-align: center;
+        padding-bottom: 24px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+    }
+
+    .plan-preview-doc-logo {
+        display: block;
+        max-width: 300px;
+        width: 100%;
+        margin: 0 auto 18px;
+    }
+
+    .plan-preview-doc-header h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        line-height: 1.25;
+        color: #1e40af;
+        text-transform: uppercase;
+    }
+
+    .plan-preview-doc-header p {
+        margin: 0;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .plan-preview-doc-section + .plan-preview-doc-section {
+        margin-top: 22px;
+    }
+
+    .plan-preview-doc-section h4 {
+        margin: 0 0 14px;
+        font-size: 15px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #1e3a8a;
+    }
+
+    .plan-preview-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .plan-preview-info-grid div,
+    .plan-preview-text-stack div,
+    .plan-preview-table-card {
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid #dbe4ee;
+        background: #f8fbff;
+    }
+
+    .plan-preview-info-grid span,
+    .plan-preview-text-stack span,
+    .plan-preview-table-card span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+
+    .plan-preview-info-grid strong,
+    .plan-preview-text-stack p,
+    .plan-preview-blocks p,
+    .plan-preview-empty {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #0f172a;
+    }
+
+    .plan-preview-blocks h5 {
+        margin: 20px 0 10px;
+        font-size: 16px;
+        color: #1e3a8a;
+    }
+
+    .plan-preview-table-card p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #475569;
+    }
+
+    body.modal-open {
+        overflow: hidden;
+    }
+
+    .visit-section-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 24px 28px 18px;
+        border-bottom: 1px solid #edf2f7;
+    }
+
+    .visit-section-header h2 {
+        margin: 0 0 4px;
+        font-size: 15px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #0f172a;
+    }
+
+    .visit-section-header p {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        flex-shrink: 0;
+    }
+
+    .section-icon i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .visit-section-icon-blue {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #bfdbfe;
+    }
+
+    .visit-section-icon-green {
+        background: #ecfdf5;
+        color: #059669;
+        border-color: #a7f3d0;
+    }
+
+    .visit-section-icon-amber {
+        background: #fffbeb;
+        color: #d97706;
+        border-color: #fde68a;
+    }
+
+    .visit-section-icon-violet {
+        background: #f5f3ff;
+        color: #7c3aed;
+        border-color: #ddd6fe;
+    }
+
+    .visit-section-icon-red {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+    }
+
+    .visit-section-icon-rose {
+        background: #fff1f2;
+        color: #e11d48;
+        border-color: #fecdd3;
+    }
+
+    .visit-section-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 24px 28px 30px;
+    }
+
+    .visit-grid {
+        display: grid;
+        gap: 18px;
+    }
+
+    .visit-grid-two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .visit-grid-three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .visit-grid-align-end {
+        align-items: end;
+    }
+
+    .visit-secondary-grid {
+        margin-top: -6px;
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+    }
+
+    .visit-field {
+        min-width: 0;
+    }
+
+    .visit-field-action {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .premium-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #94a3b8;
+    }
+
+    .form-input-premium,
+    .form-textarea-premium {
+        width: 100%;
+        border: 1px solid #dbe4ee;
+        background: #fcfdff;
+        color: #0f172a;
+        border-radius: 14px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .form-input-premium {
+        height: 48px;
+        padding: 0 15px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .form-textarea-premium {
+        min-height: 140px;
+        padding: 14px 15px;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+    }
+
+    select.form-input-premium {
+        padding-right: 44px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+    }
+
+    .form-input-premium:focus,
+    .form-textarea-premium:focus {
+        outline: none;
+        border-color: #60a5fa;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+
+    .form-input-premium:disabled,
+    .form-textarea-premium:disabled,
+    .form-input-premium.is-readonly {
+        background: #f8fafc;
+        color: #64748b;
+    }
+
+    .visit-inline-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .attendance-top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 16px;
+        align-items: end;
+    }
+
+    .attendance-radio-row,
+    .attendance-waiting-list {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        min-height: 48px;
+    }
+
+    .attendance-radio-row label,
+    .attendance-waiting-list label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .attendance-radio-row input,
+    .attendance-waiting-list input {
+        width: 17px;
+        height: 17px;
+        accent-color: #1d4ed8;
+    }
+
+    .attendance-subsidized-field {
+        width: min(250px, 100%);
+    }
+
+    .attendance-subsidized-field input,
+    .attendance-total-month,
+    .attendance-present-input {
+        text-align: center;
+        font-weight: 900;
+    }
+
+    .attendance-present-card {
+        border: 1px solid #bfdbfe;
+        border-radius: 16px;
+        padding: 20px 24px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .attendance-subtitle {
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #e0edff;
+        color: #6477b6;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+    }
+
+    .attendance-present-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 18px;
+        align-items: end;
+    }
+
+    .micro-label {
+        display: block;
+        margin-bottom: 5px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+    .attendance-present-total {
+        width: min(180px, 100%);
+        min-height: 42px;
+        margin: 14px auto 0;
+        border-radius: 13px;
+        background: #f1f1f1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .attendance-present-total span {
+        font-size: 9px;
+        font-weight: 800;
+        color: #475569;
+    }
+
+    .attendance-present-total strong {
+        color: #000000;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .attendance-waiting-list {
+        min-height: auto;
+        height: 48px;
+        gap: 12px;
+        justify-content: center;
+        border: 1px solid #dbe4ee;
+        border-radius: 13px;
+        background: #ffffff;
+        padding: 0 12px;
+    }
+
+    .attendance-waiting-list .premium-label {
+        margin: 0 6px 0 0;
+        white-space: nowrap;
+    }
+
+    .attendance-waiting-quantity {
+        width: min(260px, 100%);
+        margin: 14px auto 0;
+    }
+
+    .attendance-waiting-quantity .premium-label {
+        text-align: center;
+    }
+
+    .visit-section-header-compact {
+        padding-bottom: 0;
+    }
+
+    .visit-section-header-compact h2 {
+        display: inline-block;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #0f172a;
+    }
+
+    .visit-upload-dropzone {
+        min-height: 130px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        cursor: pointer;
+        background: #ffffff;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .visit-upload-dropzone:hover,
+    .visit-evidence-option:hover {
+        border-color: #93c5fd;
+        background: #f8fbff;
+    }
+
+    .visit-upload-dropzone input,
+    .visit-evidence-option input {
+        display: none;
+    }
+
+    .visit-upload-icon,
+    .visit-evidence-option span {
+        width: 58px;
+        height: 58px;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .visit-upload-icon i {
+        width: 24px;
+        height: 24px;
+    }
+
+    .visit-upload-dropzone strong,
+    .visit-evidence-option strong {
+        display: block;
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: none;
+    }
+
+    .visit-upload-dropzone small {
+        display: block;
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .visit-evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 250px));
+        gap: 18px;
+    }
+
+    .visit-evidence-option {
+        min-height: 190px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        text-align: center;
+        cursor: pointer;
+        background: #ffffff;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .visit-evidence-option span {
+        width: 46px;
+        height: 46px;
+    }
+
+    .visit-evidence-option i {
+        width: 20px;
+        height: 20px;
+    }
+
+    .visit-evidence-option strong {
+        color: #94a3b8;
+        font-size: 9px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .pse-toggle-wrap {
+        display: flex;
+        justify-content: center;
+    }
+
+    .pse-toggle-btn {
+        width: min(100%, 1040px);
+        min-height: 42px;
+        border: 1px solid #0f172a;
+        border-radius: 12px;
+        background: transparent;
+        color: #020617;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .pse-toggle-btn strong {
+        font-size: 11px;
+        font-weight: 900;
+    }
+
+    .pse-toggle-remove {
+        display: none;
+        width: 54px;
+        height: 54px;
+        margin-left: -72px;
+        border-radius: 999px;
+        background: #4b5563;
+        color: #ffffff;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    }
+
+    .pse-toggle-remove i {
+        width: 22px;
+        height: 22px;
+    }
+
+    .pse-toggle-btn.is-enabled {
+        border-color: transparent;
+    }
+
+    .pse-toggle-btn.is-enabled .pse-toggle-remove {
+        display: inline-flex;
+    }
+
+    .pse-section-card {
+        overflow: hidden;
+    }
+
+    .pse-subsection-title {
+        padding-bottom: 8px;
+        border-bottom: 2px solid #0f172a;
+        color: #020617;
+        font-size: 13px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .pse-period-row {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .pse-period-row .premium-label {
+        margin: 0;
+    }
+
+    .pse-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .pse-table {
+        width: 100%;
+        min-width: 900px;
+        border-collapse: collapse;
+    }
+
+    .pse-table th,
+    .pse-table td {
+        border-right: 1px solid #edf2f7;
+        border-bottom: 1px solid #edf2f7;
+        padding: 0;
+    }
+
+    .pse-table th:last-child,
+    .pse-table td:last-child {
+        border-right: none;
+    }
+
+    .pse-table tr:last-child td,
+    .pse-table tr:last-child th {
+        border-bottom: none;
+    }
+
+    .pse-table thead th {
+        height: 50px;
+        padding: 0 12px;
+        border-bottom: 1px solid #0f172a;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .pse-table tbody th {
+        width: 310px;
+        padding: 16px;
+        text-align: left;
+        color: #334155;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .pse-table input,
+    .pse-table textarea {
+        width: 100%;
+        min-height: 78px;
+        border: none;
+        background: transparent;
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 700;
+        outline: none;
+        resize: vertical;
+    }
+
+    .pse-table input {
+        min-height: 48px;
+        padding: 0 10px;
+        text-align: center;
+    }
+
+    .pse-table textarea {
+        padding: 12px;
+    }
+
+    .pse-quantitative-table {
+        min-width: 1060px;
+    }
+
+    .pse-quantitative-table td input {
+        min-height: 56px;
+        padding: 0 6px;
+    }
+
+    .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #94a3b8;
+    }
+
+    .section-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 54px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        color: #334155;
+        cursor: pointer;
+        transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .checkbox-label:hover {
+        border-color: #93c5fd;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(148, 163, 184, 0.12);
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #2563eb;
+        flex-shrink: 0;
+    }
+
+    .visit-check-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .visit-conditional-field {
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fbff;
+        border: 1px dashed #bfdbfe;
+    }
+
+    .btn-toggle-segunda {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 48px;
+        padding: 0 18px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-toggle-segunda:hover {
+        border-color: #60a5fa;
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .btn-toggle-segunda:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    .visit-table-body {
+        gap: 18px;
+    }
+
+    .visit-table-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .visit-table-toolbar p {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .visit-table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+    }
+
+    .visit-rh-table {
+        min-width: 700px;
+        margin: 0;
+    }
+
+    .visit-rh-table th,
+    .visit-rh-table td {
+        vertical-align: middle;
+    }
+
+    .visit-table-input {
+        height: 40px;
+        min-width: 120px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    .visit-table-input-center {
+        text-align: center;
+    }
+
+    .visit-delete-row-btn {
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 999px;
+        background: #fef2f2;
+        color: #dc2626;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .visit-delete-row-btn i {
+        width: 15px;
+        height: 15px;
+    }
+
+    .visit-add-row-btn {
+        white-space: nowrap;
+    }
+
+    .signature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .signature-block {
+        padding: 18px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+    }
+
+    .signature-name-input {
+        margin-bottom: 12px;
+    }
+
+    .signature-pad-container {
+        height: 130px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .signature-pad-container canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        user-select: none;
+    }
+
+    .signature-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .signature-action-link {
+        border: none;
+        background: none;
+        padding: 0;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+    }
+
+    .signature-action-muted {
+        color: #94a3b8;
+    }
+
+    .visit-footer-actions {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 18px 24px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(226, 232, 240, 0.96);
+    }
+
+    .visit-footer-actions-inner {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .visit-save-draft-btn,
+    .visit-finish-btn {
+        min-height: 48px;
+    }
+
+    .visit-finish-btn {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border: none;
+    }
+
+    .visit-finish-btn:hover {
+        background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    }
+
+    .visit-locked-banner {
+        max-width: 1120px;
+        margin: 0 auto 14px;
+        padding: 14px 24px;
+        border-radius: 18px;
+    }
+
+    .btn-ghost-white {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: transparent;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-ghost-white:hover {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.42);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-ghost-white i {
+        width: 14px;
+        height: 14px;
+    }
+
+    @media (max-width: 1024px) {
+        .visit-top-actions,
+        .signature-grid,
+        .visit-grid-two,
+        .visit-grid-three,
+        .attendance-top-grid,
+        .visit-check-grid,
+        .attendance-present-grid,
+        .visit-evidence-grid,
+        .plan-preview-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .visit-table-toolbar,
+        .visit-footer-actions-inner {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .visit-field-action {
+            align-items: stretch;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .visit-hero {
+            padding: 28px 20px 88px;
+        }
+
+        .visit-hero-badge-row {
+            align-items: flex-start;
+        }
+
+        .visit-page-shell {
+            margin: -42px auto 120px;
+            padding: 0 14px;
+        }
+
+        .visit-section-header,
+        .visit-section-body {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+
+        .visit-inline-fields {
+            grid-template-columns: 1fr;
+        }
+
+        .visit-footer-actions {
+            padding: 14px;
+        }
+
+        .plan-preview-dialog {
+            max-height: 92vh;
+        }
+
+        .plan-preview-doc {
+            padding: 22px 18px;
+        }
+    }
+
+    @media print {
+        .visit-page-shell {
+            margin: 0;
+            padding: 0;
+        }
+
+        .visit-section-card {
+            box-shadow: none;
+            border-color: #dbe4ee;
+            break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,79 @@
+<nav class="navbar">
+    <a href="{% url 'core:dashboard' %}" class="nav-brand">
+        {% load static %}
+        <img src="{% static 'img/logo.png' %}" alt="Gestão SUAS">
+        <span>{{ system_name }}</span>
+    </a>
+
+    <div class="nav-main">
+        <a href="{% url 'core:dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Início</span>
+        </a>
+
+        <div class="nav-group">
+            <button class="nav-btn">
+                <i data-lucide="building-2"></i>
+                <span>Diretorias</span>
+                <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+            </button>
+            <div class="nav-dropdown">
+                {% for dir in main_directorates %}
+                    <a href="{% url 'directorates:detail' dir.pk %}" class="dropdown-item">
+                        <span>{{ dir.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <button class="nav-btn">
+                <i data-lucide="bar-chart-3"></i>
+                <span>Monitoramento</span>
+                <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+            </button>
+            <div class="nav-dropdown">
+                {% for dir in monitoring_directorates %}
+                    <a href="{% url 'directorates:detail' dir.pk %}" class="dropdown-item">
+                        <span>{{ dir.name }}</span>
+                    </a>
+                {% endfor %}
+                {% for dir in outros_directorates %}
+                    <a href="{% url 'directorates:detail' dir.pk %}" class="dropdown-item">
+                        <span>{{ dir.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <a href="/admin/auth/user/" class="nav-link">
+            <i data-lucide="users"></i>
+            <span>Usuários</span>
+        </a>
+
+        <a href="/admin/" class="nav-link">
+            <i data-lucide="settings"></i>
+            <span>Configurações</span>
+        </a>
+
+        <a href="/admin/core/mapunit/" class="nav-link">
+            <i data-lucide="map-pin"></i>
+            <span>Mapas</span>
+        </a>
+    </div>
+
+    <div class="nav-right">
+        <div class="user-profile-mini">
+            <div class="user-info-mini">
+                <span class="user-name-mini">{% if profile and profile.full_name %}{{ profile.full_name }}{% else %}{{ request.user.username }}{% endif %}</span>
+                <span class="user-role-mini">{% if profile %}{{ profile.get_role_display }}{% else %}Agente{% endif %}</span>
+            </div>
+        </div>
+        <form action="{% url 'accounts:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="logout-icon-btn" title="Sair">
+                <i data-lucide="log-out"></i>
+            </button>
+        </form>
+    </div>
+</nav>

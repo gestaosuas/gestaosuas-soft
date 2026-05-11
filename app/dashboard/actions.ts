@@ -108,6 +108,8 @@ export async function submitReport(input: Record<string, any> | FormData, month:
             const mes_anterior = Number(formData.mes_anterior) || 0
             const admitidas = Number(formData.admitidas) || 0
             formData.atual = mes_anterior + admitidas
+            
+            console.log(`DEBUG: Início processamento CRAS - Unidade: ${formData._unit}, Período: ${month}/${year}`)
 
             const isFile = (val: any) => val && typeof val === 'object' && (val.constructor?.name === 'File' || (typeof val.arrayBuffer === 'function' && !!val.name));
 
@@ -145,6 +147,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
                     console.log(`DEBUG: RMA Upload to Supabase successful. Link: ${publicUrl}`)
                     formData.anexo_rma_link = publicUrl
                     formData.anexo_rma_id = filePath
+                    console.log(`DEBUG: Link do RMA salvo no formData: ${formData.anexo_rma_link}`)
                 } catch (uploadError: any) {
                     console.error("DEBUG: Failed to upload RMA to Supabase:", uploadError.message || uploadError)
                     throw new Error(`Erro ao fazer upload do arquivo RMA: ${uploadError.message || 'Erro desconhecido'}`)
@@ -610,6 +613,7 @@ export async function submitReport(input: Record<string, any> | FormData, month:
 }
 
 async function syncSubmissionToSheets(formData: Record<string, any>, month: number, year: number, directorate: any, setor?: string) {
+    console.log(`DEBUG: Iniciando sincronização com Google Sheets para setor: ${setor}`)
     // Skip sheets sync for narrative reports (Deprecated)
 
     if (setor === 'centros') {
@@ -666,11 +670,13 @@ async function syncSubmissionToSheets(formData: Record<string, any>, month: numb
             return { startRow: blockConfig.startRow, values: values }
         }).filter(b => b !== null) as { startRow: number, values: (string | number)[] }[]
 
+        console.log(`DEBUG: Chamando updateSheetBlocks para CRAS na aba: ${formData._unit || 'CRAS'}`)
         await updateSheetBlocks(
-            { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: formData._unit || 'CRAS' },
+            { spreadsheetId: CRAS_SPREADSHEET_ID, sheetName: (formData._unit || 'CRAS').trim() },
             month,
             blocksData
         )
+        console.log(`DEBUG: Sincronização Google Sheets CRAS concluída com sucesso.`)
     } else if (setor === 'creas') {
         const subcategory = formData._subcategory || 'idoso'
         if (subcategory === 'idoso') {

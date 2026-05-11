@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Dados Beneficios | {{ directorate.name }}{% endblock %}
+
+{% block content %}
+<section class="simple-shell benefits-shell">
+    <a class="back-link" href="{% url 'beneficios:home' directorate.pk %}?year={{ selected_year }}">&larr; Voltar para o painel</a>
+
+    <div class="benefits-hero">
+        <div>
+            <p class="eyebrow">Historico de Dados</p>
+            <h1>{{ directorate.name }}</h1>
+            <p class="section-description">Tabela anual espelhando a tela de ver dados da aplicacao atual.</p>
+        </div>
+        <form method="get" class="benefits-filter-bar">
+            <label class="pill-input">
+                <span>Ano</span>
+                <input type="number" name="year" value="{{ selected_year }}" min="2020">
+            </label>
+            <button type="submit" class="secondary-button">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="action-strip">
+        <a class="primary-button" href="{% url 'beneficios:update' directorate.pk %}?year={{ selected_year }}">Atualizar Dados</a>
+        <a class="secondary-button" href="{% url 'beneficios:narrative' directorate.pk %}?year={{ selected_year }}">Relatorio Mensal</a>
+    </div>
+
+    {% for group in table_groups %}
+        <div class="data-table-card">
+            <h2>{{ group.title }}</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Indicador</th>
+                            {% for month in month_labels %}
+                                <th>{{ month }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in group.rows %}
+                            <tr>
+                                <td>{{ row.label }}</td>
+                                {% for value in row.values %}
+                                    <td>{{ value|default_if_none:"" }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}

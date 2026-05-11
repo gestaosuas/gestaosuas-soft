@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoramento | {{ directorate.name }}{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    {% include "partials/navbar.html" %}
+
+    <main class="dashboard-main">
+        <section class="monitoring-detail-shell">
+
+            <header class="monitoring-detail-header">
+                <div class="monitoring-detail-title">
+                    <a href="{% url 'directorates:list' %}" class="back-link-modern">
+                        <i data-lucide="arrow-left"></i> Diretorias
+                    </a>
+                    <p class="eyebrow">Monitoramento e Avaliacao</p>
+                    <h1>{{ directorate.name }}</h1>
+                    {% if bimester_label %}
+                    <p class="subtitle-muted">{{ bimester_label }} &mdash; Painel de acompanhamento de OSCs e visitas</p>
+                    {% endif %}
+                </div>
+
+                <div class="monitoring-detail-actions">
+                    <form method="get" class="filter-group-modern">
+                        <label class="pill-select">
+                            <span>Bimestre</span>
+                            <select name="bimestre">
+                                <option value="all" {% if selected_bimester == 'all' %}selected{% endif %}>Todo o Periodo</option>
+                                {% for b_num, b_label in bimester_options %}
+                                    <option value="{{ b_num }}" {% if selected_bimester == b_num|stringformat:"s" %}selected{% endif %}>{{ b_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="pill-select">
+                            <span>Ano</span>
+                            <select name="year">
+                                {% for y in years_range %}
+                                    <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <button type="submit" class="btn-icon-apply"><i data-lucide="filter"></i></button>
+                    </form>
+
+                    <a href="{% url 'directorates:visit-create' directorate.pk %}" class="btn-primary-premium">
+                        <i data-lucide="plus"></i> Nova Visita
+                    </a>
+                    <a href="{% url 'directorates:visit-list' directorate.pk %}" class="btn-outline-monitoring-detail">
+                        <i data-lucide="clipboard-list"></i> Ver Visitas
+                    </a>
+                    <a href="{% url 'directorates:osc-list' directorate.pk %}" class="btn-outline-monitoring-detail">
+                        <i data-lucide="building"></i> OSCs
+                    </a>
+                </div>
+            </header>
+
+            <div class="mon-action-cards">
+                <a href="{% url 'directorates:osc-list' directorate.pk %}" class="mon-action-card">
+                    <div class="mac-icon mac-icon-blue"><i data-lucide="building-2"></i></div>
+                    <span>Cadastrar OSC</span>
+                </a>
+                <a href="{% url 'directorates:visit-list' directorate.pk %}" class="mon-action-card">
+                    <div class="mac-icon mac-icon-orange"><i data-lucide="clipboard-list"></i></div>
+                    <span>Instrumental de Visita</span>
+                </a>
+                <a href="{% url 'directorates:plan-list' directorate.pk %}" class="mon-action-card">
+                    <div class="mac-icon mac-icon-violet"><i data-lucide="folder-open"></i></div>
+                    <span>Plano de Trabalho</span>
+                </a>
+                <a href="{% url 'directorates:report-list' directorate.pk %}" class="mon-action-card">
+                    <div class="mac-icon mac-icon-green"><i data-lucide="file-check-2"></i></div>
+                    <span>Relatorios e Pareceres</span>
+                </a>
+            </div>
+
+            {% if cards %}
+            <div class="monitoring-kpi-grid">
+                {% for card in cards %}
+                <article class="monitoring-kpi-card kpi-blue">
+                    <div class="kpi-icon-wrap"><i data-lucide="bar-chart-3"></i></div>
+                    <div class="kpi-body">
+                        <p>{{ card.label }}</p>
+                        <strong>{{ card.value }}</strong>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="monitoring-kpi-grid">
+                <article class="monitoring-kpi-card kpi-blue">
+                    <div class="kpi-icon-wrap"><i data-lucide="building-2"></i></div>
+                    <div class="kpi-body">
+                        <p>Total de OSCs</p>
+                        <strong>{{ subvencao_stats.totalOSCs }}</strong>
+                    </div>
+                </article>
+                <article class="monitoring-kpi-card kpi-indigo">
+                    <div class="kpi-icon-wrap"><i data-lucide="clipboard-list"></i></div>
+                    <div class="kpi-body">
+                        <p>Visitas no Bimestre</p>
+                        <strong>{{ subvencao_stats.totalVisits }}</strong>
+                    </div>
+                </article>
+                <article class="monitoring-kpi-card kpi-emerald">
+                    <div class="kpi-icon-wrap"><i data-lucide="check-circle-2"></i></div>
+                    <div class="kpi-body">
+                        <p>Visitas Finalizadas</p>
+                        <strong>{{ subvencao_stats.finalizedVisits }}</strong>
+                    </div>
+                </article>
+            </div>
+
+        </section>
+    </main>
+</div>
+
+<style>
+.monitoring-detail-shell { width: 96%; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+.monitoring-detail-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 24px; flex-wrap: wrap;
+    background: white; border-radius: 24px; padding: 28px 32px;
+    box-shadow: 0 4px 24px rgba(47,104,230,0.08); border: 1px solid #e8edf5;
+}
+.monitoring-detail-title h1 { margin: 4px 0 6px; font-size: 26px; font-weight: 800; color: #1e3a8a; }
+.subtitle-muted { font-size: 13px; color: #64748b; font-weight: 500; margin: 0; }
+.monitoring-detail-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.btn-outline-monitoring-detail {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 16px; border-radius: 12px;
+    border: 1.5px solid #e2e8f0; font-size: 12px; font-weight: 700;
+    color: #475569; background: white; text-transform: uppercase; letter-spacing: .04em;
+    transition: all .2s; text-decoration: none;
+}
+.btn-outline-monitoring-detail:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+.btn-outline-monitoring-detail i { width: 14px; height: 14px; }
+
+.mon-action-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+}
+.mon-action-card {
+    background: white; border-radius: 20px; padding: 24px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    box-shadow: 0 4px 18px rgba(47,104,230,0.05); border: 1px solid #e8edf5;
+    text-decoration: none; transition: transform .2s, box-shadow .2s;
+}
+.mon-action-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(47,104,230,0.1); border-color: #3b82f6; }
+.mon-action-card span { font-size: 13px; font-weight: 800; color: #1e3a8a; text-align: center; }
+.mac-icon { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.mac-icon i { width: 24px; height: 24px; }
+.mac-icon-blue { background: #eff6ff; color: #3b82f6; }
+.mac-icon-orange { background: #fff7ed; color: #f97316; }
+.mac-icon-violet { background: #f5f3ff; color: #8b5cf6; }
+.mac-icon-green { background: #ecfdf5; color: #10b981; }
+
+.monitoring-kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;
+}
+.monitoring-kpi-card {
+    background: white; border-radius: 20px; padding: 22px 24px;
+    display: flex; align-items: center; gap: 18px;
+    box-shadow: 0 4px 18px rgba(47,104,230,0.07); border: 1px solid #e8edf5;
+    transition: transform .2s;
+}
+.monitoring-kpi-card:hover { transform: translateY(-2px); }
+.kpi-icon-wrap { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi-icon-wrap i { width: 22px; height: 22px; }
+.kpi-body p { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #64748b; margin: 0 0 4px; }
+.kpi-body strong { font-size: 32px; font-weight: 900; line-height: 1; display: block; }
+
+.kpi-blue .kpi-icon-wrap { background: #eff6ff; color: #3b82f6; }
+.kpi-blue .kpi-body strong { color: #1d4ed8; }
+.kpi-indigo .kpi-icon-wrap { background: #eef2ff; color: #6366f1; }
+.kpi-indigo .kpi-body strong { color: #4338ca; }
+.kpi-emerald .kpi-icon-wrap { background: #ecfdf5; color: #10b981; }
+.kpi-emerald .kpi-body strong { color: #059669; }
+
+.back-link-modern{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;transition:color .2s;text-decoration:none;}
+.back-link-modern:hover{color:#3b82f6;}
+.back-link-modern i{width:14px;height:14px;}
+.eyebrow{text-transform:uppercase;letter-spacing:.24em;font-size:11px;color:#6d7f9c;font-weight:700;margin:0 0 4px;}
+.btn-primary-premium{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 8px 20px rgba(59,130,246,.25);transition:all .2s;text-decoration:none;}
+.btn-primary-premium:hover{background:#2563eb;transform:translateY(-1px);}
+.btn-primary-premium i{width:14px;height:14px;}
+.filter-group-modern{display:flex;gap:8px;background:#f8fafc;padding:4px;border-radius:14px;border:1px solid #f1f5f9;}
+.pill-select{display:flex;align-items:center;gap:6px;padding:0 12px;border-right:1px solid #f1f5f9;}
+.pill-select:last-of-type{border-right:none;}
+.pill-select span{font-size:9px;font-weight:800;text-transform:uppercase;color:#94a3b8;}
+.pill-select select{border:none;font-size:13px;font-weight:700;color:#1e293b;background:transparent;cursor:pointer;padding:4px 0;outline:none;}
+.btn-icon-apply{background:white;border:none;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#64748b;cursor:pointer;transition:all .2s;}
+.btn-icon-apply:hover{background:#eff6ff;color:#3b82f6;}
+.btn-icon-apply i{width:14px;height:14px;}
+
+@media (max-width:900px) {
+    .monitoring-detail-header { flex-direction: column; }
+}
+</style>
+{% endblock %}

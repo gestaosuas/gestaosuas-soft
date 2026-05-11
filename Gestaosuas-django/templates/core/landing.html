@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{{ system_name }}{% endblock %}
+
+{% block content %}
+<section class="landing-shell">
+    <div class="landing-card">
+        <p class="eyebrow">Migracao para Django em andamento</p>
+        <h1>{{ system_name }}</h1>
+        <p>
+            Nova base Django modular criada dentro de <strong>Gestaosuas-django</strong>, preparada para
+            absorver diretorias, monitoramentos, visitas tecnicas, OSCs, dashboards e configuracoes do sistema atual.
+        </p>
+        <div class="landing-actions">
+            <a class="primary-button" href="{% url 'accounts:login' %}">Entrar</a>
+            <a class="secondary-button" href="{% url 'core:dashboard' %}">Ver dashboard base</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

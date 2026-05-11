@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Monitoramento | {{ system_name }}{% endblock %}
+
+{% block content %}
+<div class="monitoring-header-container no-print" style="padding-bottom: 40px;">
+    <div class="monitoring-header-content">
+        <div class="monitoring-title-area">
+            <h1>{{ report_label }}</h1>
+            <p>OSC: {{ visit.osc.name }} | Data da Visita: {{ visit.visit_date|date:"d/m/Y" }}</p>
+            <a href="{% url 'directorates:report-list' directorate.pk %}" class="btn-ghost-white">
+                <i data-lucide="arrow-left"></i> Voltar para Listagem
+            </a>
+        </div>
+        <div class="monitoring-header-actions">
+            <button type="button" class="btn-ghost-white" onclick="window.print()" style="margin-right: 10px;">
+                <i data-lucide="printer"></i> IMPRIMIR
+            </button>
+            <button type="button" class="btn-monitoring-primary" id="saveBtn">
+                <i data-lucide="save"></i> SALVAR RELATÓRIO
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="report-container" style="max-width: 900px; margin: 40px auto; padding: 60px; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+    <!-- Document Header -->
+    <div style="text-align: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 30px; margin-bottom: 40px;">
+        <img src="https://ovfpxrepxlrspsjbtpnd.supabase.co/storage/v1/object/public/system/logo-pm-uberlandia.png" alt="Logo" style="height: 60px; margin-bottom: 15px;">
+        <h2 style="font-size: 20px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 0;">SECRETARIA MUNICIPAL DE DESENVOLVIMENTO SOCIAL</h2>
+        <h3 style="font-size: 16px; font-weight: 700; color: #475569; text-transform: uppercase; margin: 5px 0;">RELATÓRIO DO MONITORAMENTO</h3>
+    </div>
+
+    <!-- Main Form Content -->
+    <form id="reportForm">
+        <div class="space-y-8">
+            <section>
+                <h4 style="font-size: 12px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">1. Objeto do Relatório</h4>
+                <textarea class="report-textarea" id="objeto" style="width: 100%; min-height: 80px; border: 1px dashed #cbd5e1; padding: 10px; font-size: 13px;">{{ report_data.objeto|default:visit.osc.objeto }}</textarea>
+            </section>
+
+            <section>
+                <h4 style="font-size: 12px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">2. Resultados Detectados</h4>
+                <p style="font-size: 10px; color: #94a3b8; font-style: italic; margin-bottom: 10px;">Explicitar os resultados detectados na visita em relação aos objetivos, metas e atividades.</p>
+                <textarea class="report-textarea" id="resultados" style="width: 100%; min-height: 200px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; font-size: 13px; line-height: 1.6;">{{ report_data.resultados|default:'' }}</textarea>
+            </section>
+
+            <section>
+                <h4 style="font-size: 12px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">3. Cumprimento do Objeto</h4>
+                <div class="space-y-3">
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; cursor: pointer;">
+                        <input type="radio" name="cumprimento" value="integral" {% if report_data.cumprimento == 'integral' %}checked{% endif %}> Cumprimento Integral
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; cursor: pointer;">
+                        <input type="radio" name="cumprimento" value="parcial" {% if report_data.cumprimento == 'parcial' %}checked{% endif %}> Cumprimento Parcial
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; cursor: pointer;">
+                        <input type="radio" name="cumprimento" value="ressalvas" {% if report_data.cumprimento == 'ressalvas' %}checked{% endif %}> Cumprimento com Ressalvas
+                    </label>
+                </div>
+            </section>
+
+            <section style="padding-top: 40px; margin-top: 40px; border-top: 1px solid #e2e8f0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center;">
+                    <div>
+                        <div style="height: 60px; border-bottom: 1px solid #000; margin-bottom: 10px;"></div>
+                        <p style="font-size: 11px; font-weight: 800; margin: 0;">TÉCNICO RESPONSÁVEL</p>
+                        <input type="text" id="tecnico1" value="{{ report_data.tecnico1|default:'' }}" style="width: 100%; border: none; text-align: center; font-size: 11px;" placeholder="Nome Completo">
+                    </div>
+                    <div>
+                        <div style="height: 60px; border-bottom: 1px solid #000; margin-bottom: 10px;"></div>
+                        <p style="font-size: 11px; font-weight: 800; margin: 0;">COORDENADOR / DIRETOR</p>
+                        <input type="text" id="tecnico2" value="{{ report_data.tecnico2|default:'' }}" style="width: 100%; border: none; text-align: center; font-size: 11px;" placeholder="Nome Completo">
+                    </div>
+                </div>
+            </section>
+        </div>
+    </form>
+</div>
+
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        body { background: white !important; padding: 0 !important; }
+        .report-container { box-shadow: none !important; border: none !important; margin: 0 !important; max-width: 100% !important; padding: 0 !important; }
+        textarea { border: none !important; resize: none !important; }
+        input[type="radio"] { appearance: none; -webkit-appearance: none; border: 1px solid #000; width: 12px; height: 12px; border-radius: 50%; position: relative; }
+        input[type="radio"]:checked::after { content: 'X'; position: absolute; font-size: 10px; top: -2px; left: 1px; font-weight: bold; }
+    }
+    .btn-ghost-white {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 8px 16px; border-radius: 10px;
+        font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.2);
+        background: transparent; cursor: pointer; text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-ghost-white:hover { color: #fff; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.08); }
+    .btn-ghost-white i { width: 14px; height: 14px; }
+</style>
+
+<script>
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        const data = {
+            objeto: document.getElementById('objeto').value,
+            resultados: document.getElementById('resultados').value,
+            cumprimento: document.querySelector('input[name="cumprimento"]:checked')?.value,
+            tecnico1: document.getElementById('tecnico1').value,
+            tecnico2: document.getElementById('tecnico2').value,
+            status: 'finalized'
+        };
+
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(data));
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(res => {
+            if (res.success) {
+                alert('Relatório salvo com sucesso!');
+                window.location.reload();
+            } else {
+                alert('Erro ao salvar: ' + res.error);
+            }
+        });
+    });
+</script>
+{% endblock %}

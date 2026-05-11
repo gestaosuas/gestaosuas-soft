@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ system_name }}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+    {% if messages %}
+    <div id="globalToastStack" class="global-toast-stack" aria-live="polite" aria-atomic="true">
+        {% for message in messages %}
+        <div class="global-toast global-toast-{{ message.tags|default:'info' }}" data-toast>
+            <div class="global-toast-icon">
+                <i data-lucide="{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}alert-circle{% else %}info{% endif %}"></i>
+            </div>
+            <div class="global-toast-copy">
+                <strong>{% if message.tags == 'success' %}Sucesso{% elif message.tags == 'error' %}Erro{% else %}Aviso{% endif %}</strong>
+                <p>{{ message }}</p>
+            </div>
+            <button type="button" class="global-toast-close" data-toast-close aria-label="Fechar aviso">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <script>
+        lucide.createIcons();
+
+        document.querySelectorAll("[data-toast]").forEach(function(toast) {
+            var removeToast = function() {
+                toast.classList.add("is-hiding");
+                window.setTimeout(function() {
+                    toast.remove();
+                }, 220);
+            };
+
+            var closeButton = toast.querySelector("[data-toast-close]");
+            if (closeButton) {
+                closeButton.addEventListener("click", removeToast);
+            }
+
+            window.setTimeout(removeToast, 4200);
+        });
+    </script>
+    <style>
+        .global-toast-stack {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: min(380px, calc(100vw - 24px));
+        }
+
+        .global-toast {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 12px;
+            align-items: start;
+            padding: 16px 16px 16px 14px;
+            border-radius: 18px;
+            border: 1px solid #dbeafe;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+            backdrop-filter: blur(14px);
+            animation: toast-in .22s ease-out;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+
+        .global-toast.is-hiding {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        .global-toast-success {
+            border-color: #bbf7d0;
+        }
+
+        .global-toast-error {
+            border-color: #fecaca;
+        }
+
+        .global-toast-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .global-toast-success .global-toast-icon {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .global-toast-error .global-toast-icon {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .global-toast-icon i,
+        .global-toast-close i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .global-toast-copy strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #0f172a;
+        }
+
+        .global-toast-copy p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #475569;
+        }
+
+        .global-toast-close {
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .global-toast-stack {
+                top: 12px;
+                right: 12px;
+                left: 12px;
+                width: auto;
+            }
+        }
+    </style>
+</body>
+</html>

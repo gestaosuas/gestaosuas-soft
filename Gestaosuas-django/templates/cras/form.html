@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Preencher CRAS | {{ directorate.name }}{% endblock %}
+
+{% block content %}
+<section class="simple-shell benefits-shell">
+    <a class="back-link" href="{% url 'cras:home' directorate.pk %}?year={{ selected_year }}">&larr; Voltar para o painel</a>
+
+    <div class="benefits-hero">
+        <div>
+            <p class="eyebrow">Formulario Mensal</p>
+            <h1>Atualizar Dados - CRAS</h1>
+            <p class="section-description">Preenchimento dos indicadores mensais por unidade CRAS.</p>
+        </div>
+        <div class="benefits-filter-bar static-bar">
+            <span class="pill">Ano {{ selected_year }}</span>
+            <span class="pill">Mes {{ selected_month }}</span>
+            {% if selected_unit %}<span class="pill">{{ selected_unit }}</span>{% endif %}
+            {% if existing_report %}<span class="pill">Editando registro existente</span>{% endif %}
+        </div>
+    </div>
+
+    {% if not selected_unit %}
+    <div class="report-section-card" style="text-align:center;padding:48px 24px;margin-top:24px;">
+        <i data-lucide="building-2" style="width:48px;height:48px;color:#94a3b8;margin-bottom:16px;"></i>
+        <h2 style="margin:0 0 12px;font-size:20px;color:#1e3a8a;">Selecione uma Unidade</h2>
+        <p style="color:#64748b;margin-bottom:20px;">Escolha uma unidade CRAS para iniciar o preenchimento.</p>
+        <form method="get" style="display:inline-flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <label class="pill-select">
+                <span>Unidade</span>
+                <select name="unit" style="min-width:200px;">
+                    <option value="">Selecione...</option>
+                    {% for unit in cras_units %}
+                    <option value="{{ unit }}">{{ unit }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit" class="btn-premium-action"><i data-lucide="arrow-right"></i> Continuar</button>
+        </form>
+    </div>
+    {% else %}
+    <form method="post" class="report-form-shell" style="margin-top:24px;">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="error-text">{{ form.non_field_errors }}</div>{% endif %}
+        <input type="hidden" name="unit_name" value="{{ selected_unit }}">
+        <div class="report-period-grid">
+            <div class="field-group">
+                <label for="{{ form.month.id_for_label }}">{{ form.month.label }}</label>
+                {{ form.month }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.year.id_for_label }}">{{ form.year.label }}</label>
+                {{ form.year }}
+            </div>
+        </div>
+        {% for section in section_items %}
+        <div class="report-section-card">
+            <div class="section-head">
+                <div class="section-line"></div>
+                <h2>{{ section.title }}</h2>
+            </div>
+            <div class="report-form-grid">
+                {% for field in section.fields %}
+                <div class="field-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {% if field.errors %}<div class="error-text">{{ field.errors }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <div class="form-actions-row">
+            <a class="secondary-button" href="{% url 'cras:data' directorate.pk %}?year={{ selected_year }}">Ver Dados</a>
+            <button type="submit" class="primary-button">Salvar Preenchimento</button>
+        </div>
+    </form>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var mesAnt = document.getElementById("id_mes_anterior");
+        var admitidas = document.getElementById("id_admitidas");
+        var atual = document.getElementById("id_atual");
+        function calc() {
+            var m = parseInt(mesAnt.value) || 0;
+            var a = parseInt(admitidas.value) || 0;
+            atual.value = m + a;
+        }
+        if (mesAnt && admitidas) {
+            mesAnt.addEventListener("input", calc);
+            admitidas.addEventListener("input", calc);
+        }
+    });
+    </script>
+    {% endif %}
+</section>
+{% endblock %}
