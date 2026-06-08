@@ -96,10 +96,21 @@ export function CpDashboard({
         return Number(trendValue.toFixed(1))
     }
 
+    // Average of monthly tax rates when showing year total
+    const avgTaxaOcupacao = useMemo(() => {
+        let sum = 0, count = 0
+        for (let m = 1; m <= 12; m++) {
+            const md = dataByMonth.get(m)
+            const val = Number(md?.['resumo_taxa_ocupacao'] || 0)
+            if (val > 0) { sum += val; count++ }
+        }
+        return count > 0 ? (sum / count) : 0
+    }, [dataByMonth])
+
     const cardsData = [
         { label: "Concluintes", value: Number(latestData[id_concluintes] || 0), color: "#3b82f6", trend: getTrend(id_concluintes), history: getHistory(id_concluintes) },
         { label: "Vagas Oferecidas", value: Number(latestData['resumo_vagas'] || 0), color: "#60a5fa", trend: getTrend('resumo_vagas'), history: getHistory('resumo_vagas') },
-        { label: "Taxa de Ocupação (%)", value: `${Number(latestData['resumo_taxa_ocupacao'] || 0).toFixed(1)}%`, color: "#10b981" },
+        { label: "Taxa de Ocupação (%)", value: `${avgTaxaOcupacao.toFixed(1)}%`, color: "#10b981" },
         { label: "Cursos Total", value: totalCursos, color: "#f59e0b" },
         { label: "Turmas Total", value: totalTurmas, color: "#10b981" },
     ]

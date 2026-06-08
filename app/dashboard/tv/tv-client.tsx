@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { 
     Play, 
@@ -14,7 +14,8 @@ import {
 } from "lucide-react"
 import { CrasPageClient } from "@/components/cras-page-client"
 import { BeneficiosPageClient } from "@/components/beneficios-page-client"
-import { SineCpPageClient } from "@/components/sine-cp-page-client"
+import { SineDashboard } from "@/components/sine-dashboard"
+import { CpDashboard } from "@/components/cp-dashboard"
 import { CeaiPageClient } from "@/components/ceai-page-client"
 import { CreasPageClient } from "@/components/creas-page-client"
 import { PopRuaPageClient } from "@/components/pop-rua-page-client"
@@ -29,6 +30,23 @@ import Link from "next/link"
 const SLIDE_DURATION = 30000 // 30 seconds per dashboard
 
 export function TvDashboardClient({ directorates }: { directorates: any[] }) {
+    // Build slides: expand SINE/CP into two separate entries
+    const slides = useMemo(() => {
+        const result: any[] = []
+        for (const dir of directorates) {
+            const n = dir.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            const isSINE = n.includes('sine') || dir.id === 'd9f66b00-4782-4fc3-a064-04029529054b'
+            const isCP = n.includes('formacao') || n.includes('profissional') || n.includes('centro') || dir.id === 'd9f66b00-4782-4fc3-a064-04029529054b'
+            if (isSINE || isCP) {
+                result.push({ ...dir, _slideType: 'sine', _slideLabel: 'SINE' })
+                result.push({ ...dir, _slideType: 'cp', _slideLabel: 'Qualificação Profissional' })
+            } else {
+                result.push({ ...dir, _slideType: 'default', _slideLabel: dir.name })
+            }
+        }
+        return result
+    }, [directorates])
+
     const [activeIndex, setActiveIndex] = useState(0)
     const [isPlaying, setIsPlaying] = useState(true)
     const [showFilters, setShowFilters] = useState(false)
@@ -44,12 +62,12 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
     }, [])
 
     const nextSlide = useCallback(() => {
-        setActiveIndex((prev) => (prev + 1) % directorates.length)
-    }, [directorates.length])
+        setActiveIndex((prev) => (prev + 1) % slides.length)
+    }, [slides.length])
 
     const prevSlide = useCallback(() => {
-        setActiveIndex((prev) => (prev - 1 + directorates.length) % directorates.length)
-    }, [directorates.length])
+        setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length)
+    }, [slides.length])
     
     const [isFullscreen, setIsFullscreen] = useState(false)
     
@@ -71,14 +89,14 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
         return () => document.removeEventListener('fullscreenchange', handleFsChange)
     }, [])
 
-    const currentDir = directorates[activeIndex]
+    const currentDir = slides[activeIndex]
     if (!currentDir) return null
 
     const normalizedName = currentDir.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     const id = currentDir.id
     
-    const isSINE = normalizedName.includes('sine') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
-    const isCP = normalizedName.includes('formacao') || normalizedName.includes('profissional') || normalizedName.includes('centro') || id === 'd9f66b00-4782-4fc3-a064-04029529054b'
+    const isSINE = currentDir._slideType === 'sine'
+    const isCP = currentDir._slideType === 'cp'
     const isBeneficios = normalizedName.includes('beneficios') || id === 'efaf606a-53ae-4bbc-996c-79f4354ce0f9'
     const isCRAS = normalizedName.includes('cras')
     const isCREAS = normalizedName.includes('creas')
@@ -99,15 +117,27 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
             currentYear,
             tvMode: true
         }
+        const baseChartProps = {
+            submissions: currentDir.submissions,
+            selectedYear: currentYear,
+            selectedMonth: "all",
+            tvMode: true as const
+        }
 
-        if (isSINE || isCP) return <SineCpPageClient {...props} latestMonthSINE_CP={latestMonth} />
+        if (isSINE) return <SineDashboard {...baseChartProps} directorate={currentDir} />
+        if (isCP) return <CpDashboard {...baseChartProps} />
         if (isBeneficios) return <BeneficiosPageClient {...props} />
         if (isCRAS) return <CrasPageClient {...props} allowedUnits={null} />
         if (isCEAI) return <CeaiPageClient {...props} allowedUnits={null} filteredCEAI={CEAI_UNITS} />
         if (isCREAS) return <CreasPageClient {...props} latestMonth={latestMonth} />
         if (isNAICA) return <NaicaPageClient {...props} filteredNAICA={NAICA_UNITS} />
         if (isPopRua) return <PopRuaPageClient {...props} latestMonth={latestMonth} />
-        if (isCasaDaMulher) return <CasaMulherPageClient {...props} />
+        if (isCasaDaMulher) return (
+            <div className="flex flex-col items-center justify-center h-full">
+                <h1 className="text-4xl font-black text-zinc-300 uppercase tracking-widest">{currentDir.name}</h1>
+                <p className="text-zinc-500 mt-4 font-bold uppercase tracking-widest">Módulo em Desenvolvimento</p>
+            </div>
+        )
 
         return (
             <div className="flex flex-col items-center justify-center h-full">
@@ -145,7 +175,7 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
                                 Dashboard Diretorias
                             </span>
                             <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight leading-tight">
-                                {currentDir.name}
+                                {currentDir._slideLabel || currentDir.name}
                             </h2>
                         </div>
                     </div>
@@ -153,7 +183,7 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
                     <div className="flex items-center gap-2">
                         <div className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 py-1.5 flex items-center gap-4 mr-4">
                             <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">
-                                {activeIndex + 1} / {directorates.length}
+                                {activeIndex + 1} / {slides.length}
                             </span>
                         </div>
 
