@@ -115,7 +115,7 @@ export function CrasDashboard({
     const atual = Number(latestData.atual || 0)
 
     // Calculate cumulative PAIF: start with January's 'atual', then add 'admitidas' from each subsequent month
-    function getCumulativePAIF(upToMonth) {
+    function getCumulativePAIF(upToMonth: number) {
         let total = 0
         for (let m = 1; m <= upToMonth; m++) {
             const mData = unitDataByMonth.get(m)
