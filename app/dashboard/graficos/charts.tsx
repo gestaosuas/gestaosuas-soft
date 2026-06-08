@@ -370,7 +370,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, val
     );
 };
 
-export function GenderPieChart({ data, tvMode = false }: { data: any[], tvMode?: boolean }) {
+export function GenderPieChart({ data, tvMode = false, title = "Gênero" }: { data: any[], tvMode?: boolean, title?: string }) {
     const COLORS = ['#3b82f6', '#f43f5e']; // Blue for Men, Rose for Women
 
     return (
@@ -378,7 +378,7 @@ export function GenderPieChart({ data, tvMode = false }: { data: any[], tvMode?:
             <CardHeader className={cn("p-3", tvMode && "p-2")}>
                 <CardTitle className="text-base text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                    Gênero
+                    {title}
                 </CardTitle>
             </CardHeader>
             <CardContent className={cn("h-[220px] p-2 pt-0", tvMode && "h-[180px] p-2 pt-0")}>

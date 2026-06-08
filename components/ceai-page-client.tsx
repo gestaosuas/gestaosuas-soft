@@ -66,7 +66,7 @@ export function CeaiPageClient({ directorate, submissions, currentYear, allowedU
     return (
         <div className="space-y-6">
             <DirectorateQuickActions 
-                title="CEAI - Centro de Apoio ao Idoso"
+                title="CEAI - Centro Educacional de Assistência Integrada ao Idoso"
                 actions={headerControls}
                 tvMode={tvMode}
             >

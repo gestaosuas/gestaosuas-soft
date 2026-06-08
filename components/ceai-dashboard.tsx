@@ -69,8 +69,49 @@ export function CeaiDashboard({
         return map
     }, [filteredSubmissions, selectedUnit])
 
-    const monthsWithData = useMemo(() => Array.from(unitDataByMonth.keys()).sort((a, b) => b - a), [unitDataByMonth])
+    const monthsWithData = useMemo(() => Array.from(unitDataByMonth.keys()).sort((a, b) => a - b), [unitDataByMonth])
     const selectedMonthNum = selectedMonth === 'all' ? 0 : Number(selectedMonth)
+    const maxMonth = monthsWithData.length > 0 ? Math.max(...monthsWithData) : 0
+
+    // Calculate "Total idosos no ano": FEV's atendidos_anterior + sum(inseridos from FEV to DEZ)
+    const fevAnteriorTotal = (() => {
+        const fev = unitDataByMonth.get(2)
+        if (!fev) return 0
+        return Number(fev.atendidos_anterior_masc || 0) + Number(fev.atendidos_anterior_fem || 0)
+    })()
+
+    const totalInseridosFevToDez = (() => {
+        let sum = 0
+        for (let m = 2; m <= 12; m++) {
+            const md = unitDataByMonth.get(m)
+            if (md) sum += Number(md.inseridos_masc || 0) + Number(md.inseridos_fem || 0)
+        }
+        return sum
+    })()
+
+    // Total per gender for the year (anterior + inseridos)
+    const totalMascYear = (() => {
+        let sum = 0
+        for (let m = 1; m <= maxMonth; m++) {
+            const md = unitDataByMonth.get(m)
+            if (md) sum += Number(md.inseridos_masc || 0)
+        }
+        // Add first available month's anterior
+        const first = unitDataByMonth.get(monthsWithData[0])
+        if (first) sum += Number(first.atendidos_anterior_masc || 0)
+        return sum
+    })()
+
+    const totalFemYear = (() => {
+        let sum = 0
+        for (let m = 1; m <= maxMonth; m++) {
+            const md = unitDataByMonth.get(m)
+            if (md) sum += Number(md.inseridos_fem || 0)
+        }
+        const first = unitDataByMonth.get(monthsWithData[0])
+        if (first) sum += Number(first.atendidos_anterior_fem || 0)
+        return sum
+    })()
 
     const latestData = useMemo(() => {
         let result: any = {}
@@ -82,10 +123,12 @@ export function CeaiDashboard({
                 })
             })
             if (monthsWithData.length > 0) {
-                const lastMonthData = unitDataByMonth.get(monthsWithData[0])
-                result.total_inseridos = Number(lastMonthData?.total_inseridos || 0)
+                const lastMonthData = unitDataByMonth.get(monthsWithData[monthsWithData.length - 1])
                 result.atendidos_anterior_masc = Number(lastMonthData?.atendidos_anterior_masc || 0)
                 result.atendidos_anterior_fem = Number(lastMonthData?.atendidos_anterior_fem || 0)
+                // For "Atendidos no mês" on all: use the last month's anterior + inseridos
+                result.latest_anterior_total = (Number(lastMonthData?.atendidos_anterior_masc || 0) + Number(lastMonthData?.atendidos_anterior_fem || 0))
+                result.latest_inseridos_total = (Number(lastMonthData?.inseridos_masc || 0) + Number(lastMonthData?.inseridos_fem || 0))
             }
         } else {
             result = unitDataByMonth.get(selectedMonthNum) || {}
@@ -99,7 +142,7 @@ export function CeaiDashboard({
     }))
 
     const getTrend = (id: string) => {
-        const currentMonthNum = selectedMonthNum || monthsWithData[0] || 0
+        const currentMonthNum = selectedMonthNum || monthsWithData[monthsWithData.length - 1] || 0
         if (!currentMonthNum || currentMonthNum === 1) return 0
         const currentVal = Number(unitDataByMonth.get(currentMonthNum)?.[id] || 0)
         const prevVal = Number(unitDataByMonth.get(currentMonthNum - 1)?.[id] || 0)
@@ -107,13 +150,18 @@ export function CeaiDashboard({
         return Number(((currentVal - prevVal) / prevVal * 100).toFixed(1))
     }
 
+    // Atendidos no mês: current month's anterior + inseridos
+    const atendidosMes = selectedMonth === 'all'
+        ? latestData.latest_anterior_total + latestData.latest_inseridos_total
+        : Number(unitDataByMonth.get(selectedMonthNum)?.atendidos_anterior_masc || 0) + Number(unitDataByMonth.get(selectedMonthNum)?.atendidos_anterior_fem || 0) + Number(unitDataByMonth.get(selectedMonthNum)?.inseridos_masc || 0) + Number(unitDataByMonth.get(selectedMonthNum)?.inseridos_fem || 0)
+
     const cardsData = [
         { label: "Admitidos Masc.", value: Number(latestData.inseridos_masc || 0), color: "#3b82f6", trend: getTrend('inseridos_masc'), history: getHistory('inseridos_masc') },
         { label: "Admitidos Fem.", value: Number(latestData.inseridos_fem || 0), color: "#f472b6", trend: getTrend('inseridos_fem'), history: getHistory('inseridos_fem') },
-        { label: "Total Idosos", value: Number(latestData.total_inseridos || 0), color: "#8b5cf6" },
+        { label: "Total Idosos", value: fevAnteriorTotal + totalInseridosFevToDez, color: "#8b5cf6" },
         { 
             label: "Atendidos Mês", 
-            value: (Number(latestData.atendidos_anterior_masc || 0) + Number(latestData.atendidos_anterior_fem || 0) + Number(latestData.inseridos_masc || 0) + Number(latestData.inseridos_fem || 0)), 
+            value: atendidosMes,
             color: "#10b981" 
         },
         { label: "Desligados", value: (Number(latestData.desligados_masc || 0) + Number(latestData.desligados_fem || 0)), color: "#ef4444" },
@@ -137,8 +185,8 @@ export function CeaiDashboard({
     }), [unitDataByMonth])
 
     const pieData = [
-        { name: "Feminino", value: Number(latestData.inseridos_fem || 0) },
-        { name: "Masculino", value: Number(latestData.inseridos_masc || 0) }
+        { name: "Feminino", value: totalFemYear },
+        { name: "Masculino", value: totalMascYear }
     ].filter(d => d.value > 0)
 
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[selectedMonthNum - 1]
@@ -166,7 +214,7 @@ export function CeaiDashboard({
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-1">
-                    <GenericPieChart title="Gênero (Admitidos)" data={pieData} colors={['#f472b6', '#3b82f6']} tvMode={tvMode} />
+                    <GenericPieChart title="Total por Gênero (ano)" data={pieData} colors={['#f472b6', '#3b82f6']} tvMode={tvMode} />
                 </div>
                 <div className="md:col-span-2 flex flex-col justify-center bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-zinc-100 dark:border-zinc-800">
                     <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200 mb-2">Resumo Operacional</h3>

@@ -113,16 +113,39 @@ export function CrasDashboard({
 
     const desligadas = Number(latestData.desligadas || 0)
     const atual = Number(latestData.atual || 0)
-    const taxaRetencaoValue = atual > 0 ? (((atual - desligadas) / atual) * 100).toFixed(1) : "0.0"
+
+    // Calculate cumulative PAIF: start with January's 'atual', then add 'admitidas' from each subsequent month
+    function getCumulativePAIF(upToMonth) {
+        let total = 0
+        for (let m = 1; m <= upToMonth; m++) {
+            const mData = unitDataByMonth.get(m)
+            if (!mData) continue
+            if (m === 1) {
+                total = Number(mData.atual || 0)
+            } else {
+                total += Number(mData.admitidas || 0)
+            }
+        }
+        return total
+    }
+
+    const getPAIFHistory = () => monthNames.map((name, i) => ({
+        name,
+        value: getCumulativePAIF(i + 1)
+    }))
+
+    const cumulativePAIF = selectedMonth === 'all'
+        ? getCumulativePAIF(Math.max(...monthsWithData, 0))
+        : getCumulativePAIF(selectedMonthNum)
 
     const cardsData = [
-        { label: "Ativ. PAIF", value: atual, color: "#3b82f6", trend: getTrend('atual'), history: getHistory('atual') },
+        { label: "Ativ. PAIF", value: cumulativePAIF, color: "#3b82f6", trend: getTrend('atual'), history: getPAIFHistory() },
         { label: "Visita Dom.", value: Number(latestData.visita_domiciliar || 0), color: "#60a5fa", trend: getTrend('visita_domiciliar'), history: getHistory('visita_domiciliar') },
         { label: "Cadastros Novos", value: Number(latestData.cadastros_novos || 0), color: "#0ea5e9", trend: getTrend('cadastros_novos'), history: getHistory('cadastros_novos') },
         { label: "Atualização Cad.", value: Number(latestData.recadastros || 0), color: "#f59e0b", trend: getTrend('recadastros'), history: getHistory('recadastros') },
-        { label: "Admitidas", value: Number(latestData.admitidas || 0), color: "#10b981", trend: getTrend('admitidas'), history: getHistory('admitidas') },
-        { label: "Desligadas", value: desligadas, color: "#ef4444", trend: getTrend('desligadas'), history: getHistory('desligadas') },
-        { label: "Taxa Retenção", value: `${taxaRetencaoValue}%`, color: "#8b5cf6" },
+        { label: "Famílias inseridas – PAIF", value: Number(latestData.admitidas || 0), color: "#10b981", trend: getTrend('admitidas'), history: getHistory('admitidas') },
+        { label: "Famílias desligadas – PAIF", value: desligadas, color: "#ef4444", trend: getTrend('desligadas'), history: getHistory('desligadas') },
+        { label: "Cesta básica", value: Number(latestData.cesta_basica || 0), color: "#f59e0b", trend: getTrend('cesta_basica'), history: getHistory('cesta_basica') },
     ]
 
     const selectedMonthName = selectedMonth === 'all' ? "Ano Inteiro" : monthNames[selectedMonthNum - 1]
@@ -133,7 +156,7 @@ export function CrasDashboard({
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-10">
                 <ComparisonLineChart 
-                    title="Cadastros e Recadastros" 
+                    title="Cadastros e Atualização Cadastral" 
                     data={monthNames.map((name, i) => ({ 
                         name, 
                         "Cadastros Novos": Number(unitDataByMonth.get(i + 1)?.cadastros_novos || 0), 
@@ -144,7 +167,7 @@ export function CrasDashboard({
                     tvMode={tvMode}
                 />
                 <ComparisonLineChart 
-                    title="Famílias Admitidas e Desligadas" 
+                    title="Famílias inseridas e desligadas – PAIF" 
                     data={monthNames.map((name, i) => ({ 
                         name, 
                         "Admitidas": Number(unitDataByMonth.get(i + 1)?.admitidas || 0), 

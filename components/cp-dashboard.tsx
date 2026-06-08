@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { MetricsCards, GenericLineChart, ComparisonLineChart, GenderPieChart } from "@/app/dashboard/graficos/charts"
+import { MetricsCards, GenericLineChart, GenderPieChart } from "@/app/dashboard/graficos/charts"
 import { cn } from "@/lib/utils"
 import { CP_FORM_DEFINITION } from "@/app/dashboard/cp-config"
 
@@ -27,7 +27,6 @@ export function CpDashboard({
     const id_homens = "resumo_homens"
     const id_mulheres = "resumo_mulheres"
     const atendimentosFields = cpFields.filter(f => f.id.endsWith('_atendimentos')).map(f => f.id)
-    const procedimentosFields = cpFields.filter(f => f.id.endsWith('_procedimentos')).map(f => f.id)
     
     const sumFields = (data: any, fields: string[]) => fields.reduce((acc, f) => acc + (Number(data[f]) || 0), 0)
 
@@ -37,7 +36,13 @@ export function CpDashboard({
 
     const dataByMonth = useMemo(() => {
         const map = new Map<number, any>()
-        filteredSubmissions.forEach(sub => map.set(sub.month, sub.data))
+        filteredSubmissions.forEach(sub => {
+            // Os dados de qualificação ficam em sub.data.centros (integrado via cached-data)
+            const cpData = sub.data?.centros ?? sub.data ?? {}
+            if (Object.keys(cpData).length > 0) {
+                map.set(sub.month, cpData)
+            }
+        })
         return map
     }, [filteredSubmissions])
 
@@ -93,8 +98,8 @@ export function CpDashboard({
 
     const cardsData = [
         { label: "Concluintes", value: Number(latestData[id_concluintes] || 0), color: "#3b82f6", trend: getTrend(id_concluintes), history: getHistory(id_concluintes) },
-        { label: "Atendimentos", value: sumFields(latestData, atendimentosFields), color: "#60a5fa", trend: getTrend('', true, atendimentosFields), history: getHistory('', true, atendimentosFields) },
-        { label: "Procedimentos", value: sumFields(latestData, procedimentosFields), color: "#0ea5e9", trend: getTrend('', true, procedimentosFields), history: getHistory('', true, procedimentosFields) },
+        { label: "Vagas Oferecidas", value: Number(latestData['resumo_vagas'] || 0), color: "#60a5fa", trend: getTrend('resumo_vagas'), history: getHistory('resumo_vagas') },
+        { label: "Taxa de Ocupação (%)", value: `${Number(latestData['resumo_taxa_ocupacao'] || 0).toFixed(1)}%`, color: "#10b981" },
         { label: "Cursos Total", value: totalCursos, color: "#f59e0b" },
         { label: "Turmas Total", value: totalTurmas, color: "#10b981" },
     ]
@@ -107,8 +112,8 @@ export function CpDashboard({
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mt-10">
                 <GenericLineChart title="Concluintes" data={monthNames.map((name, i) => ({ name, value: Number(dataByMonth.get(i + 1)?.[id_concluintes] || 0) }))} dataKey="value" color="#0ea5e9" tvMode={tvMode} />
-                <ComparisonLineChart title="Atendimentos e Procedimentos" data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, Atendimentos: sumFields(mData, atendimentosFields), Procedimentos: sumFields(mData, procedimentosFields) } })} keys={['Atendimentos', 'Procedimentos']} colors={['#3b82f6', '#10b981']} tvMode={tvMode} />
-                <GenderPieChart data={[{ name: "Homem", value: Number(latestData[id_homens] || 0) }, { name: "Mulher", value: Number(latestData[id_mulheres] || 0) }].filter(d => d.value > 0)} tvMode={tvMode} />
+                <GenericLineChart title="Atendimentos" data={monthNames.map((name, i) => { const mData = dataByMonth.get(i + 1) || {}; return { name, value: sumFields(mData, atendimentosFields) } })} dataKey="value" color="#3b82f6" tvMode={tvMode} />
+                <GenderPieChart data={[{ name: "Homem", value: Number(latestData[id_homens] || 0) }, { name: "Mulher", value: Number(latestData[id_mulheres] || 0) }].filter(d => d.value > 0)} tvMode={tvMode} title="Concluintes por Gênero" />
             </div>
 
             <div className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 text-center pt-8 uppercase tracking-[0.2em]">
