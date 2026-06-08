@@ -18,16 +18,15 @@ import { SineDashboard } from "@/components/sine-dashboard"
 import { CpDashboard } from "@/components/cp-dashboard"
 import { CeaiPageClient } from "@/components/ceai-page-client"
 import { CreasPageClient } from "@/components/creas-page-client"
-import { PopRuaPageClient } from "@/components/pop-rua-page-client"
 import { NaicaPageClient } from "@/components/naica-page-client"
-import { CasaMulherPageClient } from "@/components/casa-mulher-page-client"
 import { CRAS_UNITS } from "@/app/dashboard/cras-config"
 import { CEAI_UNITS } from "@/app/dashboard/ceai-config"
 import { NAICA_UNITS } from "@/app/dashboard/naica-config"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-const SLIDE_DURATION = 30000 // 30 seconds per dashboard
+const FULL_DURATION = 30000   // 30s for real dashboards
+const DEV_DURATION  = 15000   // 15s for "em desenvolvimento" slides
 
 export function TvDashboardClient({ directorates }: { directorates: any[] }) {
     // Build slides: expand SINE/CP into two separate entries
@@ -101,9 +100,8 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
     const isCRAS = normalizedName.includes('cras')
     const isCREAS = normalizedName.includes('creas')
     const isCEAI = normalizedName.includes('ceai')
-    const isPopRua = normalizedName.includes('populacao') && normalizedName.includes('rua')
     const isNAICA = normalizedName.includes('naica')
-    const isCasaDaMulher = normalizedName.includes('casa da mulher')
+    const isDevSlide = !isSINE && !isCP && !isBeneficios && !isCRAS && !isCREAS && !isCEAI && !isNAICA
 
     const currentYear = new Date().getFullYear()
     const getMonthName = (month: number) => new Date(0, month - 1).toLocaleString('pt-BR', { month: 'long' })
@@ -131,13 +129,6 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
         if (isCEAI) return <CeaiPageClient {...props} allowedUnits={null} filteredCEAI={CEAI_UNITS} />
         if (isCREAS) return <CreasPageClient {...props} latestMonth={latestMonth} />
         if (isNAICA) return <NaicaPageClient {...props} filteredNAICA={NAICA_UNITS} />
-        if (isPopRua) return <PopRuaPageClient {...props} latestMonth={latestMonth} />
-        if (isCasaDaMulher) return (
-            <div className="flex flex-col items-center justify-center h-full">
-                <h1 className="text-4xl font-black text-zinc-300 uppercase tracking-widest">{currentDir.name}</h1>
-                <p className="text-zinc-500 mt-4 font-bold uppercase tracking-widest">Módulo em Desenvolvimento</p>
-            </div>
-        )
 
         return (
             <div className="flex flex-col items-center justify-center h-full">
@@ -159,7 +150,7 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
         >
             <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-950">
                 {/* Header / Progress Bar */}
-                <ProgressBar isPlaying={isPlaying} onComplete={nextSlide} activeIndex={activeIndex} />
+                <ProgressBar isPlaying={isPlaying} onComplete={nextSlide} activeIndex={activeIndex} duration={isDevSlide ? DEV_DURATION : FULL_DURATION} />
 
                 {/* Top Toolbar */}
                 <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md">
@@ -282,7 +273,7 @@ export function TvDashboardClient({ directorates }: { directorates: any[] }) {
     )
 }
 
-function ProgressBar({ isPlaying, onComplete, activeIndex }: { isPlaying: boolean, onComplete: () => void, activeIndex: number }) {
+function ProgressBar({ isPlaying, onComplete, activeIndex, duration = FULL_DURATION }: { isPlaying: boolean, onComplete: () => void, activeIndex: number, duration?: number }) {
     const [progress, setProgress] = useState(0)
 
     useEffect(() => {
@@ -292,7 +283,7 @@ function ProgressBar({ isPlaying, onComplete, activeIndex }: { isPlaying: boolea
     useEffect(() => {
         if (!isPlaying) return
 
-        const step = 100 / (30000 / 100) // SLIDE_DURATION is 30000
+        const step = 100 / (duration / 100)
         const interval = setInterval(() => {
             setProgress((prev) => {
                 const next = prev + step
@@ -301,7 +292,7 @@ function ProgressBar({ isPlaying, onComplete, activeIndex }: { isPlaying: boolea
         }, 100)
 
         return () => clearInterval(interval)
-    }, [isPlaying])
+    }, [isPlaying, duration])
 
     useEffect(() => {
         if (progress >= 100) {
