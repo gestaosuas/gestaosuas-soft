@@ -505,7 +505,7 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                                 )}>4. Dados</h2>
 
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-sm">a) Qualitativos (preencher referente ao trimestre)</h3>
+                                    <h3 className="font-bold text-sm">a) Qualitativos (preencher referente ao Bimestre)</h3>
                                     <div className="flex items-baseline gap-2">
                                         <span className="font-bold text-sm shrink-0">Período:</span>
                                         {!isPreview && !isFinalized && (

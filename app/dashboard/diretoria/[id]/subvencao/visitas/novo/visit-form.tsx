@@ -1762,7 +1762,7 @@ export function VisitForm({
                             )}>DADOS PSE (PROTEÇÃO SOCIAL ESPECIAL)</h2>
 
                             <div className="space-y-4">
-                                <h3 className="font-bold text-sm text-zinc-700">Qualitativos (preencher referente ao trimestre)</h3>
+                                 <h3 className="font-bold text-sm text-zinc-700">Qualitativos (preencher referente ao Bimestre)</h3>
                                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                                     <span className="font-bold text-[10px] shrink-0 uppercase tracking-widest text-zinc-400">Período:</span>
                                     <Input
@@ -1846,7 +1846,7 @@ export function VisitForm({
                                 </div>
 
                                 <div className="mt-10 space-y-6">
-                                    <h3 className="font-bold text-sm text-zinc-700">Quantitativos (trimestral)</h3>
+                                     <h3 className="font-bold text-sm text-zinc-700">Quantitativos (Bimestral)</h3>
                                     <div className="overflow-x-auto rounded-2xl border border-zinc-100 shadow-sm">
                                         <Table>
                                             <TableHeader className="bg-zinc-50/80 border-b border-zinc-200">
