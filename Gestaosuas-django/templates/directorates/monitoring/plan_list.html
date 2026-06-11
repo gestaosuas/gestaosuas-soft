@@ -7,7 +7,8 @@
 <div class="app-shell">
     {% include "partials/navbar.html" %}
     <main class="dashboard-main">
-        <div class="plan-page-shell">
+        <div class="plan-page-shell" style="border: 5px solid red !important;">
+            <div style="background: red; color: white; padding: 10px; font-weight: bold; text-align: center;">EDITANDO: GESTAOSUAS-DJANGO</div>
             <header class="plan-page-header">
                 <div class="plan-page-title">
                     <a href="{% url 'directorates:detail' directorate.pk %}" class="plan-back-link">
@@ -256,27 +257,33 @@ document.getElementById("planPreviewModal").addEventListener("click", function(e
     }
 
     .plan-list-card {
-        padding: 18px;
+        padding: 16px;
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
     }
 
     .plan-osc-row {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 16px;
-        padding: 18px 20px;
-        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px 16px;
+        border-radius: 16px;
         border: 1px solid #edf2f7;
         background: #fbfdff;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .plan-osc-row:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+        border-color: #3b82f6;
     }
 
     .plan-osc-main {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        align-items: start;
-        gap: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
         min-width: 0;
     }
 
@@ -284,23 +291,26 @@ document.getElementById("planPreviewModal").addEventListener("click", function(e
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
     }
 
     .plan-osc-copy h2 {
         margin: 0;
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 800;
         color: #0f172a;
-        line-height: 1.2;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .plan-osc-bottom {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 16px;
-        align-items: center;
-        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: auto;
     }
 
     .plan-item-line {

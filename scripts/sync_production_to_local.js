@@ -30,8 +30,10 @@ const tablesToSync = [
     'diversidade_reports',
     'nucleo_diversidade_reports',
     'sine_reports',
-    'qualificacao_reports'
+    'qualificacao_reports',
+    'monitorings_genericmonitoringreport'
 ];
+
 
 async function sync() {
     console.log('🚀 Iniciando sincronismo Produção -> Local...');

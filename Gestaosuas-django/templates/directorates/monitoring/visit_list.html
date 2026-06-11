@@ -66,33 +66,46 @@
     <table class="table-monitoring">
         <thead>
             <tr>
-                <th style="width: 30%;">DATA E OSC</th>
-                <th style="width: 7%;">IDENTIFICADOR</th>
-                <th style="width: 12%;">TÉCNICOS</th>
-                <th style="width: 8%;">STATUS</th>
-                <th style="width: 12%;">REGISTRADO POR</th>
-                <th style="width: 17%; text-align: right;">DOCUMENTOS</th>
-                <th style="width: 14%; text-align: right;">AÇÕES</th>
+                <th style="width: 40%;">DATA E OSC</th>
+                <th class="no-tablet" style="width: 7%;">IDENTIFICADOR</th>
+                <th class="no-tablet" style="width: 12%;">TÉCNICOS</th>
+                <th class="no-tablet" style="width: 8%;">STATUS</th>
+                <th class="no-tablet" style="width: 12%;">REGISTRADO POR</th>
+                <th class="no-tablet" style="width: 17%; text-align: right;">DOCUMENTOS</th>
+                <th style="width: 25%; text-align: right;">AÇÕES</th>
             </tr>
         </thead>
         <tbody>
             {% for visit in visits %}
             <tr>
                 <td>
-                    <div style="display: flex; align-items: flex-start; gap: 8px; overflow:hidden;">
-                        <i data-lucide="building" style="width: 14px; color: #3b82f6; margin-top: 3px; flex-shrink:0;"></i>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; overflow:hidden;">
+                        {% if visit.is_subvencao %}
+                            {% if visit.status != 'completed' and visit.status != 'finalized' %}
+                                <span class="status-dot-tablet dot-draft" title="Instrumental Rascunho"></span>
+                            {% else %}
+                                {% if visit.relatorio_status == 'finalized' %}
+                                    <span class="status-dot-tablet dot-finalized" title="Finalizado"></span>
+                                {% elif visit.relatorio_status == 'draft' %}
+                                    <span class="status-dot-tablet dot-draft" title="Rascunho"></span>
+                                {% else %}
+                                    <span class="status-dot-tablet dot-zerado" title="Zerado"></span>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            <span class="status-dot-tablet {% if visit.status == 'completed' or visit.status == 'finalized' %}dot-finalized{% else %}dot-draft{% endif %}" title="{% if visit.status == 'completed' or visit.status == 'finalized' %}Finalizado{% else %}{{ visit.get_status_display|title }}{% endif %}"></span>
+                        {% endif %}
                         <div style="overflow:hidden;">
                             <span class="osc-name">{{ visit.osc.name }}</span>
-                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
-                                <i data-lucide="calendar" style="width: 10px; color: #94a3b8; flex-shrink:0;"></i>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                <i data-lucide="calendar" style="width: 12px; color: #94a3b8; flex-shrink:0;"></i>
                                 <span class="visit-date-text">{{ visit.visit_date|date:"d/m/Y" }}</span>
-                                <span class="visit-time-text">Salvo as: {{ visit.visit_time|time:"H:i" }}</span>
                             </div>
                         </div>
                     </div>
                 </td>
-                <td style="text-align: center; color: #cbd5e1; font-weight: 900;">—</td>
-                <td>
+                <td class="no-tablet" style="text-align: center; color: #cbd5e1; font-weight: 900;">—</td>
+                <td class="no-tablet">
                     <div class="technician-names">
                         {% if visit.assinaturas.tecnico1_nome %}
                             {{ visit.tecnico1_display }}<br>
@@ -105,13 +118,35 @@
                         {% endif %}
                     </div>
                 </td>
-                <td>
-                    <span class="visit-status-badge {% if visit.status == 'completed' or visit.status == 'finalized' %}status-finalized{% else %}status-draft{% endif %}">
-                        <i data-lucide="check-circle"></i>
-                        {% if visit.status == 'completed' or visit.status == 'finalized' %}Finalizado{% else %}{{ visit.get_status_display|title }}{% endif %}
-                    </span>
+                <td class="no-tablet">
+                    {% if visit.is_subvencao %}
+                        {% if visit.status != 'completed' and visit.status != 'finalized' %}
+                            <span class="visit-status-badge status-draft">
+                                <i data-lucide="file-edit"></i> Instrumental Rascunho
+                            </span>
+                        {% else %}
+                            {% if visit.relatorio_status == 'finalized' %}
+                                <span class="visit-status-badge badge-subvencao-finalizado">
+                                    <i data-lucide="check-circle"></i> Finalizado
+                                </span>
+                            {% elif visit.relatorio_status == 'draft' %}
+                                <span class="visit-status-badge badge-subvencao-rascunho">
+                                    <i data-lucide="file-text"></i> Rascunho
+                                </span>
+                            {% else %}
+                                <span class="visit-status-badge badge-subvencao-zerado">
+                                    <i data-lucide="circle"></i> Zerado
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        <span class="visit-status-badge {% if visit.status == 'completed' or visit.status == 'finalized' %}status-finalized{% else %}status-draft{% endif %}">
+                            <i data-lucide="check-circle"></i>
+                            {% if visit.status == 'completed' or visit.status == 'finalized' %}Finalizado{% else %}{{ visit.get_status_display|title }}{% endif %}
+                        </span>
+                    {% endif %}
                 </td>
-                <td>
+                <td class="no-tablet">
                     <div class="registered-by-pill">
                         <div class="registered-by-avatar">
                             {{ visit.registered_by_name|first|default:"?" }}
@@ -119,31 +154,89 @@
                         <span>{{ visit.registered_by_name|title }}</span>
                     </div>
                 </td>
-                <td class="visit-docs-cell">
+                <td class="no-tablet visit-docs-cell">
                     <div class="visit-doc-actions">
-                        {% if visit.status == 'completed' or visit.status == 'finalized' %}
-                        <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link" title="Relatorio de Visita">
-                            <i data-lucide="file-text"></i> Relatorio
-                        </a>
+                        {% if visit.is_subvencao %}
+                            {% if visit.status != 'completed' and visit.status != 'finalized' %}
+                                <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-text-btn doc-link btn-edit-direct" title="Editar Instrumental">
+                                    <i data-lucide="square-pen"></i> <span>Editar Inst.</span>
+                                </a>
+                            {% else %}
+                                {% if visit.relatorio_status == 'finalized' %}
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-doc-subvencao-finalizado" title="Relatório de Visita Finalizado">
+                                        <i data-lucide="file-text"></i> <span>Relatório</span>
+                                    </a>
+                                {% elif visit.relatorio_status == 'draft' %}
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-doc-subvencao-rascunho" title="Editar Rascunho do Relatório">
+                                        <i data-lucide="file-edit"></i> <span>Rascunho</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-doc-subvencao-zerado" title="Preencher Relatório de Visita">
+                                        <i data-lucide="plus-circle"></i> <span>Preencher</span>
+                                    </a>
+                                {% endif %}
+                            {% endif %}
                         {% else %}
-                        <span class="visit-docs-empty">-</span>
+                            {% if visit.status == 'completed' or visit.status == 'finalized' %}
+                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-report-direct" title="Relatorio de Visita">
+                                    <i data-lucide="file-text"></i> <span>Relatório</span>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-text-btn doc-link btn-edit-direct" title="Editar Instrumental">
+                                    <i data-lucide="square-pen"></i> <span>Editar</span>
+                                </a>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </td>
                 <td class="action-btns-cell">
                     <div class="visit-actions-icons">
-                    {% if visit.status == 'completed' or visit.status == 'finalized' %}
-                        <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-text-btn action-view-btn" title="Visualizar Instrumental">
-                            <i data-lucide="eye"></i> Visualizar
-                        </a>
-                        <form action="{% url 'directorates:visit-revert' visit.pk %}" method="post" style="display:inline;" onsubmit="return confirm('Deseja reverter para rascunho?')">
-                            {% csrf_token %}
-                            <button type="submit" class="action-icon-btn action-icon-revert" title="Reverter para Rascunho"><i data-lucide="undo-2"></i></button>
-                        </form>
+                    {% if visit.is_subvencao %}
+                        {% if visit.status != 'completed' and visit.status != 'finalized' %}
+                            <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-icon-btn action-icon-edit-main" title="Editar Instrumental">
+                                <i data-lucide="square-pen"></i>
+                            </a>
+                        {% else %}
+                            {% if visit.relatorio_status == 'finalized' %}
+                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-subvencao-finalized" title="Visualizar Relatório de Visita">
+                                    <i data-lucide="eye"></i>
+                                </a>
+                            {% elif visit.relatorio_status == 'draft' %}
+                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-subvencao-draft" title="Editar Rascunho do Relatório">
+                                    <i data-lucide="file-edit"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-subvencao-zerado" title="Preencher Relatório de Visita">
+                                    <i data-lucide="file-plus"></i>
+                                </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-icon-btn action-icon-view" title="Visualizar Instrumental">
+                                <i data-lucide="book-open"></i>
+                            </a>
+                            
+                            <form action="{% url 'directorates:visit-revert' visit.pk %}" method="post" style="display:inline;" onsubmit="return confirm('Deseja reverter para rascunho?')">
+                                {% csrf_token %}
+                                <button type="submit" class="action-icon-btn action-icon-revert" title="Reverter para Rascunho"><i data-lucide="undo-2"></i></button>
+                            </form>
+                        {% endif %}
                     {% else %}
-                        <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-text-btn action-view-btn" title="Editar Instrumental">
-                            <i data-lucide="square-pen"></i> Editar
-                        </a>
+                        {% if visit.status == 'completed' or visit.status == 'finalized' %}
+                            <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-report" title="Relatório de Visita">
+                                <i data-lucide="file-text"></i>
+                            </a>
+                            <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-icon-btn action-icon-view" title="Visualizar Instrumental">
+                                <i data-lucide="eye"></i>
+                            </a>
+                            <form action="{% url 'directorates:visit-revert' visit.pk %}" method="post" style="display:inline;" onsubmit="return confirm('Deseja reverter para rascunho?')">
+                                {% csrf_token %}
+                                <button type="submit" class="action-icon-btn action-icon-revert" title="Reverter para Rascunho"><i data-lucide="undo-2"></i></button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-icon-btn action-icon-edit-main" title="Editar Instrumental">
+                                <i data-lucide="square-pen"></i>
+                            </a>
+                        {% endif %}
                     {% endif %}
 
                     <button type="button" class="action-icon-btn action-icon-delegate" onclick="openDelegateModal('{{ visit.pk }}', '{{ visit.osc.name }}')" title="Delegar"><i data-lucide="users-round"></i></button>
@@ -624,33 +717,141 @@
         border-color: #fca5a5;
     }
 
-    @media (max-width: 1200px) {
-        .visit-header-actions {
-            min-width: 0;
-            width: 100%;
-            flex-direction: column;
-            align-items: stretch;
-        }
+    .status-dot-tablet {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-top: 6px;
+        flex-shrink: 0;
+        display: none; /* Hide on desktop by default if needed, or always show */
+    }
+    .dot-finalized { background-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+    .dot-draft { background-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
+    .dot-zerado { background-color: #64748b; box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1); }
 
-        .visit-filter-form-hero {
-            max-width: none;
-        }
+    .action-icon-report { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+    .action-icon-view { color: #64748b; background: #f8fafc; border-color: #e2e8f0; }
+    .action-icon-edit-main { color: #ea580c; background: #fff7ed; border-color: #ffedd5; }
 
-        .visit-filter-form-hero .filter-row-group {
-            justify-content: flex-start;
-        }
+    /* Custom Subvenção Badges & Buttons Styling */
+    .badge-subvencao-rascunho {
+        background: #fff7ed !important;
+        color: #ea580c !important;
+        border: 1px solid #ffedd5 !important;
+    }
+    .badge-subvencao-zerado {
+        background: #f8fafc !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+    .badge-subvencao-finalizado {
+        background: #ecfdf5 !important;
+        color: #10b981 !important;
+        border: 1px solid #d1fae5 !important;
     }
 
-    @media (max-width: 768px) {
-        .monitoring-main-card {
-            padding: 28px 20px 42px;
+    .btn-doc-subvencao-rascunho {
+        background: #fff7ed !important;
+        color: #ea580c !important;
+        border: 1.5px dashed #ea580c !important;
+        transition: all 0.2s;
+    }
+    .btn-doc-subvencao-rascunho:hover {
+        background: #ffedd5 !important;
+        color: #c2410c !important;
+        border-color: #c2410c !important;
+    }
+    .btn-doc-subvencao-zerado {
+        background: #f8fafc !important;
+        color: #64748b !important;
+        border: 1px solid #cbd5e1 !important;
+        transition: all 0.2s;
+    }
+    .btn-doc-subvencao-zerado:hover {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #94a3b8 !important;
+    }
+    .btn-doc-subvencao-finalizado {
+        background: #16a34a !important;
+        color: white !important;
+        border: 1px solid #15803d !important;
+        transition: all 0.2s;
+    }
+    .btn-doc-subvencao-finalizado:hover {
+        background: #15803d !important;
+        color: white !important;
+        border-color: #166534 !important;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+    }
+
+    .action-icon-subvencao-finalized {
+        color: #16a34a !important;
+        background: #ecfdf5 !important;
+        border-color: #bbf7d0 !important;
+    }
+    .action-icon-subvencao-finalized:hover {
+        background: #dcfce7 !important;
+        border-color: #86efac !important;
+    }
+    .action-icon-subvencao-draft {
+        color: #ea580c !important;
+        background: #fff7ed !important;
+        border-color: #ffedd5 !important;
+    }
+    .action-icon-subvencao-draft:hover {
+        background: #ffedd5 !important;
+        border-color: #fed7aa !important;
+    }
+    .action-icon-subvencao-zerado {
+        color: #2563eb !important;
+        background: #eff6ff !important;
+        border-color: #bfdbfe !important;
+    }
+    .action-icon-subvencao-zerado:hover {
+        background: #dbeafe !important;
+        border-color: #93c5fd !important;
+    }
+
+    @media (max-width: 1366px) {
+        .no-tablet { display: none !important; }
+
+        .monitoring-header-container {
+            padding-top: 80px !important;
+            padding-bottom: 40px;
         }
 
-        .visit-filter-form-hero .filter-input,
-        .visit-filter-form-hero .filter-select,
-        .visit-filter-form-hero .filter-date {
-            width: 100%;
-            min-width: 0;
+        .monitoring-header-content {
+            width: 100% !important;
+            padding: 0 16px;
+        }
+
+        .status-dot-tablet { display: block; }
+
+        .table-monitoring th:nth-child(1), .table-monitoring td:nth-child(1) { width: 55% !important; }
+        .table-monitoring th:nth-child(7), .table-monitoring td:nth-child(7) { width: 45% !important; text-align: right; }
+
+        .monitoring-main-card {
+            width: 100% !important;
+            margin: -30px 0 0 0 !important;
+            padding: 16px 8px !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        .visit-actions-icons {
+            background: #f1f5f9;
+            padding: 6px;
+            gap: 10px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .action-icon-btn {
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 12px !important;
         }
     }
 </style>

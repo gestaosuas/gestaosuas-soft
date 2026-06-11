@@ -1,14 +1,38 @@
 # Gestaosuas Django
 
-Base inicial da recriacao do sistema atual em Django, criada dentro da pasta `Gestaosuas` conforme o plano de migracao.
+Recriacao do Sistema de Vigilancia Socioassistencial em Django, conectado ao banco PostgreSQL do Supabase Docker.
 
-## Estrutura inicial
+## Estrutura
 
-- `config/`: configuracao do projeto Django
-- `apps/core/`: layout, dashboard base, mapas, logs e configuracoes
-- `apps/accounts/`: perfis, vinculos de permissoes e login
-- `apps/directorates/`: diretorias, OSCs, visitas, delegacoes e planos de trabalho
-- `apps/monitorings/`: relatorios mensais por diretoria
+| App | Responsabilidade |
+|-----|-----------------|
+| `apps/core/` | Layout, dashboard base, mapas, configuracoes, utilities compartilhadas |
+| `apps/accounts/` | Autenticacao via Supabase Auth, perfis, permissoes |
+| `apps/directorates/` | Diretorias, OSCs, visitas tecnicas, planos de trabalho, delegacoes |
+| `apps/monitoramento/` | Subvencao, Emendas, Fundos e Outros (generico com OSCs/visitas) |
+| `apps/beneficios/` | Beneficios Socioassistenciais |
+| `apps/sinecp/` | Qualificacao Profissional e SINE |
+| `apps/cras/` | CRAS (13 unidades) |
+| `apps/ceai/` | CEAI (Centro de Educacao e Assistencia Infantil) |
+| `apps/naica/` | NAICAs (11 unidades) |
+| `apps/creasidoso/` | CREAS Idoso e Pessoa com Deficiencia |
+| `apps/poprua/` | Populacao de Rua e Migrantes |
+| `apps/protecaoespecial/` | Protecao Especial a Crianca e Adolescente |
+| `apps/casamulher/` | Casa da Mulher / Diversidade |
+
+## Banco de dados
+
+Banco unico: **PostgreSQL do Supabase Docker** (`127.0.0.1:54322`).
+
+Configuracao em `.env`:
+```
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=127.0.0.1
+DB_PORT=54322
+```
 
 ## Como rodar
 
@@ -18,45 +42,12 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Se voce ainda nao tiver usuario admin, ai sim rode:
+## Migracao de dados do Next.js
+
+Os dados do Next.js estao na tabela legada `submissions` (JSONB). Para migrar para as tabelas especializadas:
 
 ```powershell
-python manage.py createsuperuser
+python manage.py migrate_submissions
 ```
 
-## Banco em Docker
-
-O projeto usa dois bancos ao mesmo tempo:
-- `default`: SQLite local do Django para autenticacao, sessao e admin
-- `app_data`: PostgreSQL do Docker para ler e gravar os dados reais das diretorias integradas
-
-Pelo que existe hoje no repositorio:
-- `supabase/config.toml` indica banco local na porta `54322`
-- `.env.local` indica stack local do Supabase/Docker em `127.0.0.1`
-
-Exemplo de configuracao do banco compartilhado:
-
-```powershell
-$env:DB_ENGINE='django.db.backends.postgresql'
-$env:DB_NAME='postgres'
-$env:DB_USER='postgres'
-$env:DB_PASSWORD='postgres'
-$env:DB_HOST='127.0.0.1'
-$env:DB_PORT='54322'
-python manage.py runserver
-```
-
-O arquivo local `.env` ja foi preparado com esse exemplo. Se o seu container estiver com credenciais diferentes, basta ajustar esses valores.
-
-## Situacao atual
-
-- `Beneficios Socioassistenciais` ja esta lendo `directorates`, `beneficios_reports` e `monthly_reports` do PostgreSQL Docker
-- login e sessao continuam locais no Django para nao depender da tabela `auth_user` no banco compartilhado
-- as telas de painel, atualizar dados, ver dados, relatorio mensal e historico de relatorios ja foram conectadas para essa diretoria
-
-## Proximos passos imediatos
-
-1. Refinar a diretoria de Beneficios Socioassistenciais em cima do banco real.
-2. Portar a proxima diretoria seguindo o mesmo padrao de integracao.
-3. Reproduzir formularios, tabelas e dashboards por diretoria.
-4. Evoluir regras de permissao e modulo administrativo.
+Este comando le a tabela `submissions` e copia os dados para as tabelas especializadas de cada diretoria (`cras_reports`, `beneficios_reports`, `creas_idoso_reports`, etc.).

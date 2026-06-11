@@ -7,7 +7,7 @@
     <div class="plan-editor-hero no-print">
         <div class="plan-editor-hero-inner">
             <div class="plan-editor-title">
-                <a href="{% url 'directorates:plan-list' directorate.pk %}" class="plan-editor-back">
+                <a href="{{ return_url }}" class="plan-editor-back">
                     <i data-lucide="arrow-left"></i> Voltar para planos
                 </a>
                 <h1>{% if object %}Editar{% else %}Novo{% endif %} Plano de Trabalho</h1>
@@ -25,6 +25,7 @@
         <aside class="plan-editor-sidebar no-print">
             <form id="planForm" method="post">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ return_url }}">
                 <div class="plan-editor-panel">
                     <div class="plan-editor-panel-header">
                         <span>Configuracao</span>

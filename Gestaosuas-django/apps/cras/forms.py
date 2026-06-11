@@ -4,6 +4,9 @@ from .models import CrasReport
 
 
 class CrasReportForm(StyledMonitoringForm):
+    rma_file = forms.FileField(label="Anexar RMA (PDF)", required=False,
+                               widget=forms.FileInput(attrs={"accept": ".pdf"}))
+
     class Meta:
         model = CrasReport
         exclude = ("id", "directorate", "user_external_id", "rma_url", "anexo_rma", "created_at", "updated_at")
@@ -15,35 +18,17 @@ class CrasReportForm(StyledMonitoringForm):
         (
             "DADOS DO CRAS",
             [
-                "mes_anterior",
-                "admitidas",
-                "desligadas",
-                "atual",
-                "atendimentos",
-                "visita_domiciliar",
-                "atend_particularizado",
+                "mes_anterior", "admitidas", "desligadas", "atual",
+                "atendimentos", "visita_domiciliar", "atend_particularizado",
             ],
         ),
         (
             "SERVICOS E BENEFICIOS",
-            [
-                "pro_pao",
-                "dmae",
-                "auxilio_documento",
-                "cesta_basica",
-                "fralda",
-                "absorvente",
-            ],
+            ["pro_pao", "dmae", "auxilio_documento", "cesta_basica", "fralda", "absorvente"],
         ),
         (
             "ORIENTACOES E CADASTROS",
-            [
-                "bpc",
-                "carteirinha_idoso",
-                "passe_livre_deficiente",
-                "cadastros_novos",
-                "recadastros",
-            ],
+            ["bpc", "carteirinha_idoso", "passe_livre_deficiente", "cadastros_novos", "recadastros"],
         ),
     ]
 
@@ -76,6 +61,9 @@ class CrasReportForm(StyledMonitoringForm):
         super().__init__(*args, **kwargs)
         self.fields["atual"].disabled = True
         self.fields["atual"].widget.attrs["readonly"] = True
+        if "rma_file" in self.fields:
+            self.fields["rma_file"].widget = forms.FileInput(attrs={"accept": ".pdf", "class": "form-input"})
+            self.fields["rma_file"].initial = None
 
     def clean(self):
         cleaned = super().clean()

@@ -1,15 +1,19 @@
 import uuid
 import math
+import unicodedata
 from datetime import date, datetime
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import DetailView, FormView, TemplateView
 
-from apps.directorates.models import Directorate, MonthlyReport, Osc, Visit, WorkPlan
+from apps.accounts.models import Profile, ProfileDirectorate
+from apps.directorates.models import Directorate, FormDelegation, MonthlyReport, Osc, Visit, WorkPlan
+from apps.directorates.forms import OscForm
 from apps.core.utils import (
     MONTH_LABELS, MONTH_OPTIONS, build_sparkline,
     build_period_label, build_year_range_from_years, build_variation
@@ -26,6 +30,26 @@ def current_bimester():
 
 def bimester_months(bimester):
     return (bimester - 1) * 2 + 1, bimester * 2
+
+def get_persistent_bimester(request):
+    bimester = request.GET.get("bimestre")
+    if bimester is not None:
+        request.session["selected_bimester"] = bimester
+    else:
+        bimester = request.session.get("selected_bimester", str(current_bimester()))
+    return bimester
+
+
+
+def strip_accents(text):
+    return "".join(
+        char for char in unicodedata.normalize("NFD", text or "")
+        if unicodedata.category(char) != "Mn"
+    )
+
+
+def title_name(value):
+    return " ".join(part.capitalize() for part in str(value or "").split())
 
 
 class MonitoramentoBaseMixin(LoginRequiredMixin):
@@ -61,7 +85,7 @@ class MonitoramentoHomeView(MonitoramentoBaseMixin, DetailView):
         directorate = self.object
         selected_year = self.get_year()
         selected_month = self.get_month()
-        bimester = self.request.GET.get("bimestre", str(current_bimester()))
+        bimester = get_persistent_bimester(self.request)
         reference = self.get_reference()
 
         context["selected_year"] = int(selected_year)
@@ -71,6 +95,7 @@ class MonitoramentoHomeView(MonitoramentoBaseMixin, DetailView):
         context["years_range"] = build_year_range_from_years([], selected_year)
         context["bimester_options"] = BIMESTER_OPTIONS
         context["bimester_label"] = ""
+        context["dashboard_tab"] = self.request.GET.get("tab", "overview")
 
         # Bimester calculation
         curr_year = int(selected_year)
@@ -87,26 +112,98 @@ class MonitoramentoHomeView(MonitoramentoBaseMixin, DetailView):
         else:
             visits_qs = directorate.visits.filter(visit_date__year=curr_year)
 
-        all_visits = list(visits_qs)
+        stats_visits = list(visits_qs)
+        dashboard_visits_qs = visits_qs.select_related("osc", "directorate").order_by("-visit_date", "-created_at")
+        profile = getattr(self.request.user, "profile", None)
+        if not (self.request.user.is_superuser or (profile and profile.role == "admin")):
+            if profile and profile.role == "diretor":
+                is_primary = str(profile.primary_directorate_id) == str(directorate.pk)
+                is_linked = ProfileDirectorate.objects.filter(profile=profile, directorate=directorate).exists()
+                if not (is_primary or is_linked):
+                    dashboard_visits_qs = dashboard_visits_qs.none()
+            else:
+                delegated_visit_ids = FormDelegation.objects.filter(user_id=self.request.user.id).values_list("visit_id", flat=True)
+                dashboard_visits_qs = dashboard_visits_qs.filter(Q(user_id=self.request.user.id) | Q(id__in=delegated_visit_ids))
+
+        all_visits = list(dashboard_visits_qs)
+        for visit in all_visits:
+            identificacao = visit.identificacao or {}
+            visit.registered_by_name = (
+                identificacao.get("registered_by_name")
+                or identificacao.get("registrado_por")
+                or "Desconhecido"
+            )
+            assinaturas = visit.assinaturas or {}
+            visit.tecnico1_display = title_name(assinaturas.get("tecnico1_nome", ""))
+            visit.tecnico2_display = title_name(assinaturas.get("tecnico2_nome", ""))
 
         subvencao_stats = {
             "totalOSCs": directorate.oscs.count(),
-            "totalVisits": len(all_visits),
-            "finalizedVisits": len([v for v in all_visits if v.status in ["completed", "finalized"]]),
+            "totalVisits": len(stats_visits),
+            "finalizedVisits": len([v for v in stats_visits if v.status in ["completed", "finalized"]]),
         }
 
-        # Detect type
+        # Theme detection
         normalized = directorate.name.lower()
-        is_subvencao = "subvencao" in normalized or "emendas" in normalized or "fundos" in normalized
+        ascii_name = strip_accents(normalized)
+        is_subvencao = "subvencao" in ascii_name or "emendas" in ascii_name or "fundos" in ascii_name
+        is_subvencao_only = is_subvencao
         is_outros = "outros" in normalized
+
+        if "emendas" in ascii_name:
+            theme_class = "theme-amber"
+            header_class = "header-amber"
+            icon_color = "#d97706"
+        elif "fundos" in ascii_name:
+            theme_class = "theme-indigo"
+            header_class = "header-indigo"
+            icon_color = "#4338ca"
+        elif "subvencao" in ascii_name:
+            theme_class = "theme-emerald"
+            header_class = "header-emerald"
+            icon_color = "#059669"
+        elif "outros" in normalized:
+            theme_class = "theme-blue"
+            header_class = ""
+            icon_color = "#3b82f6"
+        else:
+            theme_class = "theme-emerald"
+            header_class = "header-emerald"
+            icon_color = "#059669"
 
         context.update({
             "subvencao_stats": subvencao_stats,
+            "is_subvencao_only": is_subvencao_only,
+            "is_emendas": "emendas" in ascii_name,
+            "is_fundos": "fundos" in ascii_name,
             "is_subvencao_mode": is_subvencao and not is_outros,
             "is_outros_mode": is_outros,
             "recent_visits": all_visits[:5],
             "recent_oscs": directorate.oscs.all()[:5],
+            "theme_class": theme_class,
+            "header_class": header_class,
+            "icon_color": icon_color,
         })
+
+        if is_subvencao_only:
+            oscs = directorate.oscs.all().order_by("name")
+            activity_types = (
+                directorate.oscs.exclude(activity_type="")
+                .values_list("activity_type", flat=True)
+                .distinct()
+                .order_by("activity_type")
+            )
+            context["oscs"] = oscs
+            context["activity_types"] = list(activity_types)
+            context["osc_form"] = OscForm()
+            context["dashboard_visits"] = all_visits
+            context["dashboard_plan_oscs"] = (
+                directorate.oscs.all()
+                .prefetch_related("work_plans")
+                .order_by("name")
+            )
+            context["profiles"] = Profile.objects.all().order_by("full_name")
+            context["all_directorates"] = Directorate.objects.all().order_by("name")
 
         # Also try to get form_definition cards for generic directorates
         form_def_raw = directorate.form_definition or []

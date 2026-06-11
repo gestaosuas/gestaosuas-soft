@@ -10,6 +10,9 @@ LOCAL_DEPS = BASE_DIR / ".deps"
 if LOCAL_DEPS.exists():
     sys.path.insert(0, str(LOCAL_DEPS))
 
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
 
 def main() -> None:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")

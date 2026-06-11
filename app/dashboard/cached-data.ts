@@ -97,7 +97,7 @@ export const getSystemSettings = async () => {
                 const { data, error } = await supabase.from('settings').select('*')
                 if (error) throw error
                 const defaultSettings = {
-                    logo_url: '',
+                    logo_url: 'https://xvyaaavcbxskmunmhwcg.supabase.co/storage/v1/object/public/system-assets/logo-1766148734971.png',
                     system_name: 'Sistema Vigilância Socioassistencial 2026'
                 }
 

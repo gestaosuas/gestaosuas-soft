@@ -13,6 +13,46 @@
         {#  MONITORAMENTO DASHBOARD — Subvenção / Emendas / Outros      #}
         {# ============================================================ #}
         <section class="monitoring-detail-shell">
+            {% if is_subvencao_only %}
+            <div class="subvention-minimal-panel">
+                <nav class="subvention-minimal-menu" aria-label="Ações de Subvenção">
+                    <a href="{% url 'directorates:osc-list' directorate.pk %}" class="subvention-minimal-link">
+                        <i data-lucide="building-2"></i>
+                        <span>Cadastrar OSC</span>
+                    </a>
+                    <a href="{% url 'directorates:visit-list' directorate.pk %}" class="subvention-minimal-link">
+                        <i data-lucide="clipboard-list"></i>
+                        <span>Instrumental de Visita</span>
+                    </a>
+                    <a href="{% url 'directorates:plan-list' directorate.pk %}" class="subvention-minimal-link">
+                        <i data-lucide="folder-open"></i>
+                        <span>Plano de Trabalho</span>
+                    </a>
+                    <a href="{% url 'directorates:report-list' directorate.pk %}" class="subvention-minimal-link">
+                        <i data-lucide="file-input"></i>
+                        <span>Relatórios e Pareceres</span>
+                    </a>
+                </nav>
+
+                <div class="subvention-minimal-stats" aria-label="Resumo de Subvenção">
+                    <article class="subvention-minimal-stat">
+                        <i data-lucide="building-2"></i>
+                        <p>Total de OSCs</p>
+                        <strong>{{ subvencao_stats.totalOSCs }}</strong>
+                    </article>
+                    <article class="subvention-minimal-stat">
+                        <i data-lucide="clipboard-list"></i>
+                        <p>Visitas no Bimestre</p>
+                        <strong>{{ subvencao_stats.totalVisits }}</strong>
+                    </article>
+                    <article class="subvention-minimal-stat">
+                        <i data-lucide="circle-check"></i>
+                        <p>Visitas Finalizadas</p>
+                        <strong>{{ subvencao_stats.finalizedVisits }}</strong>
+                    </article>
+                </div>
+            </div>
+            {% else %}
 
             {# ── Header ── #}
             <header class="monitoring-detail-header">
@@ -225,6 +265,7 @@
             </div>
             {% endif %}
 
+            {% endif %}
         </section>
 
         {% else %}
@@ -250,6 +291,100 @@
 </div>
 
 <style>
+.subvention-minimal-panel {
+    min-height: calc(100vh - 76px);
+    width: 100%;
+    border-radius: 26px;
+    background:
+        linear-gradient(#ffffff, #ffffff) padding-box,
+        linear-gradient(135deg, #047857 0%, #ffffff 18%, #ffffff 82%, #10b981 100%) border-box;
+    border: 1px solid transparent;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+    padding: 30px 30px 42px;
+    color: #08275a;
+}
+
+.subvention-minimal-menu,
+.subvention-minimal-stats {
+    width: 220px;
+}
+
+.subvention-minimal-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.subvention-minimal-link {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    align-items: start;
+    min-height: 48px;
+    text-decoration: none;
+    color: #08275a;
+    font-size: 16px;
+    line-height: 1.18;
+    font-weight: 500;
+}
+
+.subvention-minimal-link i,
+.subvention-minimal-stat i {
+    width: 22px;
+    height: 22px;
+    color: #08275a;
+    stroke-width: 2.1;
+}
+
+.subvention-minimal-link span {
+    grid-column: 1 / -1;
+    padding-top: 4px;
+}
+
+.subvention-minimal-link:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.subvention-minimal-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.subvention-minimal-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.subvention-minimal-stat p {
+    margin: 0;
+    color: #08275a;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+.subvention-minimal-stat strong {
+    color: #063a83;
+    font-size: 17px;
+    line-height: 1;
+    font-weight: 900;
+}
+
+@media (max-width: 768px) {
+    .subvention-minimal-panel {
+        min-height: auto;
+        padding: 24px 22px 34px;
+    }
+
+    .subvention-minimal-menu,
+    .subvention-minimal-stats {
+        width: 100%;
+    }
+}
 /* ─── Shell ────────────────────────────────────────────── */
 .monitoring-detail-shell {
     width: 96%;
@@ -697,5 +832,56 @@
     transform: translateY(-1px);
 }
 .btn-primary-premium i { width: 14px; height: 14px; }
+@media (max-width: 1024px) {
+    .monitoring-detail-shell { width: 100%; padding: 0 16px; }
+    
+    .monitoring-detail-header {
+        padding: 20px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    .monitoring-detail-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        width: 100%;
+    }
+
+    .filter-group-modern {
+        grid-column: span 2;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .btn-primary-premium, 
+    .btn-outline-monitoring-detail {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 10px;
+        font-size: 11px;
+    }
+
+    .mon-action-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .monitoring-detail-actions {
+        grid-template-columns: 1fr;
+    }
+    .filter-group-modern {
+        grid-column: span 1;
+        flex-direction: column;
+    }
+    .pill-select {
+        border-right: none;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 8px 12px;
+    }
+}
 </style>
 {% endblock %}

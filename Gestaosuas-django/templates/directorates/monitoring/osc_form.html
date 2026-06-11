@@ -217,11 +217,23 @@ select.form-control {
 .btn-save:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 12px 28px rgba(59,130,246,0.35); }
 .btn-save i { width: 14px; height: 14px; }
 
+@media (max-width: 1024px) {
+    .osc-form-container {
+        max-width: 90%;
+        margin-top: -20px;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+}
+
 @media (max-width: 640px) {
-    .form-row { flex-direction: column; gap: 16px; }
-    .osc-form-container { padding: 24px 20px; margin: -20px 12px 60px; border-radius: 16px; }
+    .osc-form-container { padding: 24px 20px; margin: -10px 12px 60px; border-radius: 16px; }
     .osc-header { padding: 20px 20px 36px; }
     .osc-header-title h1 { font-size: 22px; }
+    .form-actions { flex-direction: column-reverse; }
+    .btn-cancel, .btn-save { width: 100%; justify-content: center; }
 }
 </style>
 {% endblock %}

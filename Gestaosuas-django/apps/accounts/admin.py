@@ -10,9 +10,9 @@ class ProfileDirectorateInline(admin.TabularInline):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "user", "role", "primary_directorate")
+    list_display = ("full_name", "role", "primary_directorate")
     list_filter = ("role", "primary_directorate")
-    search_fields = ("full_name", "user__username", "user__email")
+    search_fields = ("full_name",)
     inlines = [ProfileDirectorateInline]
 
 

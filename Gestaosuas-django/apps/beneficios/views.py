@@ -4,8 +4,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import DetailView, FormView, TemplateView
+from django.views.generic import DetailView, FormView, TemplateView, View
 
+from django.http import JsonResponse
+from apps.accounts.mixins import RoleRequiredMixin
 from apps.directorates.models import Directorate, MonthlyReport
 from apps.core.utils import (
     MONTH_LABELS, MONTH_OPTIONS, build_sparkline, build_column_points,
@@ -33,12 +35,9 @@ VISITS_BREAKDOWN = [
 
 class BeneficiosBaseMixin(LoginRequiredMixin):
     def get_directorate(self):
-        directorate = Directorate.objects.filter(pk=self.kwargs["pk"]).first()
+        directorate = Directorate.objects.filter(name__icontains="benef").first()
         if not directorate:
-            raise Http404("Diretoria nao encontrada.")
-        normalized = directorate.name.lower()
-        if "benef" not in normalized:
-            raise Http404("A diretoria informada nao corresponde a Beneficios.")
+            raise Http404("A diretoria de Beneficios nao foi encontrada.")
         return directorate
 
     def get_year(self):
@@ -90,7 +89,6 @@ class BeneficiosHomeView(BeneficiosBaseMixin, DetailView):
                 "color": color,
             }
             for field_name, label, color in VISITS_BREAKDOWN
-            if safe_total(latest, field_name) > 0
         ]
         monthly_reports = MonthlyReport.objects.filter(
             directorate=directorate,
@@ -169,7 +167,7 @@ class BeneficiosCreateUpdateView(BeneficiosBaseMixin, FormView):
         report.user_external_id = None
         report.save()
         messages.success(self.request, "Dados de Beneficios salvos com sucesso.")
-        return redirect(reverse("beneficios:home", kwargs={"pk": directorate.pk}))
+        return redirect(reverse("beneficios:home"))
 
 
 class BeneficiosDataView(BeneficiosBaseMixin, TemplateView):
@@ -195,8 +193,17 @@ class BeneficiosDataView(BeneficiosBaseMixin, TemplateView):
                     "rows": [
                         {
                             "field": field_name,
+                            "key": field_name,
                             "label": BeneficiosReportForm.labels.get(field_name, field_name),
-                            "values": [getattr(reports.get(month_num), field_name, "") if reports.get(month_num) else "" for month_num, _label in self.month_labels],
+                            "values": [
+                                {
+                                    "val": getattr(reports.get(month_num), field_name, "") if reports.get(month_num) else "",
+                                    "sub_id": reports.get(month_num).id if reports.get(month_num) else None,
+                                    "month": month_num,
+                                    "year": selected_year,
+                                }
+                                for month_num, _label in self.month_labels
+                            ],
                         }
                         for field_name in fields
                     ],
@@ -232,11 +239,17 @@ class BeneficiosMonthlyNarrativeView(BeneficiosBaseMixin, TemplateView):
             directorate=directorate,
             setor="beneficios",
         ).order_by("-year", "-month", "-created_at")[:8]
+        months_range = [
+            (1, 'Jan'), (2, 'Fev'), (3, 'Mar'), (4, 'Abr'),
+            (5, 'Mai'), (6, 'Jun'), (7, 'Jul'), (8, 'Ago'),
+            (9, 'Set'), (10, 'Out'), (11, 'Nov'), (12, 'Dez')
+        ]
         context.update(
             {
                 "directorate": directorate,
                 "selected_year": selected_year,
                 "selected_month": month,
+                "months_range": months_range,
                 "monthly_report": report,
                 "history": history,
             }
@@ -251,17 +264,59 @@ class BeneficiosNarrativeListView(BeneficiosBaseMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         directorate = self.get_directorate()
         selected_year = self.get_year()
+        selected_month = self.request.GET.get("month", "all")
+        
         reports = MonthlyReport.objects.filter(
             directorate=directorate,
             setor="beneficios",
         ).order_by("-year", "-month", "-created_at")
+        
         if selected_year:
             reports = reports.filter(year=selected_year)
+        if selected_month and selected_month != "all":
+            reports = reports.filter(month=selected_month)
+            
+        # Months range for the filter
+        months_range = [
+            (1, 'Jan'), (2, 'Fev'), (3, 'Mar'), (4, 'Abr'),
+            (5, 'Mai'), (6, 'Jun'), (7, 'Jul'), (8, 'Ago'),
+            (9, 'Set'), (10, 'Out'), (11, 'Nov'), (12, 'Dez')
+        ]
+            
         context.update(
             {
                 "directorate": directorate,
                 "selected_year": selected_year,
+                "selected_month": selected_month,
+                "months_range": months_range,
                 "reports": reports,
             }
         )
         return context
+
+class BeneficiosQuickEditView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = ["admin"]
+
+    def post(self, request):
+        from django.shortcuts import get_object_or_404
+        sub_id = request.POST.get("sub_id")
+        key = request.POST.get("key")
+        value_str = request.POST.get("value")
+        value = int(value_str) if value_str and value_str.isdigit() else 0
+        month = int(request.POST.get("month"))
+        year = int(request.POST.get("year"))
+        
+        directorate = Directorate.objects.filter(name__icontains="Benef").first()
+        
+        if sub_id and sub_id != "None" and sub_id != "":
+            report = get_object_or_404(BeneficiosReport, id=sub_id)
+        else:
+            report, _ = BeneficiosReport.objects.get_or_create(
+                directorate=directorate,
+                month=month,
+                year=year
+            )
+
+        setattr(report, key, value)
+        report.save()
+        return JsonResponse({"status": "success", "value": value, "sub_id": report.id})

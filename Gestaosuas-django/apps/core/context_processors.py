@@ -13,4 +13,5 @@ def system_context(request):
     return {
         "system_name": settings_map.get("system_name", "Plataforma de Vigilancia Socioassistencial"),
         "system_reference_year": settings_map.get("system_reference_year", "2026"),
+        "logo_url": settings_map.get("logo_url", "https://xvyaaavcbxskmunmhwcg.supabase.co/storage/v1/object/public/system-assets/logo-1766148734971.png"),
     }

@@ -24,6 +24,14 @@ class Directorate(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    @property
+    def slug(self):
+        import unicodedata
+        import re
+        value = unicodedata.normalize('NFD', self.name).encode('ascii', 'ignore').decode('ascii')
+        value = re.sub(r'[^\w\s-]', '', value).strip().lower()
+        return re.sub(r'[-\s]+', '-', value)
+
 
 class MonthlySubmission(models.Model):
     id = models.UUIDField(primary_key=True)
@@ -168,15 +176,18 @@ class Visit(TimeStampedUUIDModel):
 
 
 class FormDelegation(models.Model):
-    id = models.UUIDField(primary_key=True)
-    visit = models.ForeignKey(Visit, on_delete=models.CASCADE, related_name="delegations")
-    user_id = models.UUIDField(null=True, blank=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    visit = models.ForeignKey("directorates.Visit", on_delete=models.DO_NOTHING, related_name="delegations", db_column="visit_id")
+    user_id = models.UUIDField()
     delegated_by = models.UUIDField(null=True, blank=True)
-    directorate = models.ForeignKey(Directorate, on_delete=models.CASCADE, null=True, blank=True)
-    created_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    directorate = models.ForeignKey("directorates.Directorate", on_delete=models.DO_NOTHING, related_name="delegations", db_column="directorate_id")
 
     class Meta:
         db_table = "form_delegations"
         managed = False
         verbose_name = "Delegacao de formulario"
-        verbose_name_plural = "Delegacoes de formulario"
+        verbose_name_plural = "Delegacoes de formularios"
+
+    def __str__(self) -> str:
+        return f"Delegacao para {self.user_id} na visita {self.visit_id}"

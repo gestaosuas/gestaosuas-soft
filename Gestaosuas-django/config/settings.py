@@ -10,6 +10,9 @@ LOCAL_ENV_FILE = BASE_DIR / ".env"
 if LOCAL_DEPS.exists():
     sys.path.insert(0, str(LOCAL_DEPS))
 
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
 
 def load_local_env(env_file: Path) -> None:
     if not env_file.exists():
@@ -45,7 +48,12 @@ INSTALLED_APPS = [
     "apps.beneficios",
     "apps.sinecp",
     "apps.naica",
+    "apps.ceai",
     "apps.monitoramento",
+    "apps.creasidoso",
+    "apps.poprua",
+    "apps.protecaoespecial",
+    "apps.casamulher",
 ]
 
 MIDDLEWARE = [
@@ -96,7 +104,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
 ]
 
-AUTHENTICATION_BACKENDS = ["apps.accounts.authentication.SupabaseAuthBackend"]
+AUTH_USER_MODEL = "accounts.User"
+AUTHENTICATION_BACKENDS = [
+    "apps.accounts.authentication.SupabaseAuthBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")

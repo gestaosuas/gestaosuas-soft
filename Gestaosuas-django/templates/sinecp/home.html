@@ -2,94 +2,98 @@
 
 {% block title %}Qualificacao Profissional e SINE | {{ directorate.name }}{% endblock %}
 
+{% block body_class %}theme-indigo{% endblock %}
+
 {% block content %}
 <div class="app-shell">
     {% include "partials/navbar.html" %}
 
-    <main class="dashboard-main beneficios-main">
-        <section class="dashboard-container">
-            <header class="dashboard-header-premium">
-                <div class="header-title-group">
-                    <h1>{{ directorate.name }}</h1>
+    <main class="dashboard-main sinecp-main" style="padding-top: 0;">
+        <div class="monitoring-header-container header-indigo">
+            <div class="monitoring-header-content">
+                <div class="monitoring-title-area">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 10px;">
+                        <div style="width: 50px; height: 50px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #1e1b4b;">
+                            <i data-lucide="briefcase-business" style="width: 32px; height: 32px;"></i>
+                        </div>
+                        <div>
+                            <h1>{{ directorate.name }}</h1>
+                            <p style="margin:0; font-size: 14px; opacity: 0.9;">SINE e Qualificação Profissional</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="header-controls header-controls-rich">
-                    <div class="tab-switcher sinecp-tabs-premium">
-                        <a class="tab-chip {% if active_tab == 'sine' %}active{% endif %}" href="?tab=sine&year={{ selected_year }}&month={{ selected_month }}">
-                            <i data-lucide="briefcase-business"></i>
+                <div class="monitoring-header-actions visit-header-actions" style="flex-direction: row; align-items: center;">
+                    <div class="tab-switcher sinecp-tabs-premium" style="margin-right: 20px; background: rgba(255,255,255,0.1); padding: 4px; border-radius: 12px;">
+                        <a class="tab-chip {% if active_tab == 'sine' %}active{% endif %}" href="?tab=sine&year={{ selected_year }}&month={{ selected_month }}" style="color: white; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-size: 12px; font-weight: 700; {% if active_tab == 'sine' %}background: white; color: #1e1b4b;{% endif %}">
+                            <i data-lucide="briefcase-business" style="width: 16px; height: 16px;"></i>
                             <span>SINE</span>
                         </a>
-                        <a class="tab-chip {% if active_tab == 'cp' %}active{% endif %}" href="?tab=cp&year={{ selected_year }}&month={{ selected_month }}">
-                            <i data-lucide="graduation-cap"></i>
-                            <span>QUALIFICACAO</span>
+                        <a class="tab-chip {% if active_tab == 'cp' %}active{% endif %}" href="?tab=cp&year={{ selected_year }}&month={{ selected_month }}" style="color: white; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-size: 12px; font-weight: 700; {% if active_tab == 'cp' %}background: white; color: #1e1b4b;{% endif %}">
+                            <i data-lucide="graduation-cap" style="width: 16px; height: 16px;"></i>
+                            <span>QUALIFICAÇÃO</span>
                         </a>
                     </div>
 
-                    <form method="get" class="filter-group-modern">
+                    <form method="get" class="visit-filter-form visit-filter-form-hero" style="margin: 0;">
                         <input type="hidden" name="tab" value="{{ active_tab }}">
-                        <label class="pill-select">
-                            <span>Mes</span>
-                            <select name="month">
+                        <div class="filter-row-group">
+                            <select name="month" class="filter-select" onchange="this.form.submit()">
                                 <option value="all" {% if selected_month == 'all' %}selected{% endif %}>Ano Inteiro</option>
                                 {% for m_num, m_name in months_range %}
                                     <option value="{{ m_num }}" {% if selected_month == m_num|stringformat:"s" %}selected{% endif %}>{{ m_name }}</option>
                                 {% endfor %}
                             </select>
-                        </label>
-                        <label class="pill-select">
-                            <span>Ano</span>
-                            <select name="year">
+                            <select name="year" class="filter-select" onchange="this.form.submit()">
                                 {% for y in years_range %}
                                     <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
                                 {% endfor %}
                             </select>
-                        </label>
-                        <button type="submit" class="btn-icon-apply">
-                            <i data-lucide="filter"></i>
-                        </button>
+                            <button type="button" class="btn-primary-premium" id="toggle-sinecp-menu" style="margin-left: 10px;">
+                                <i data-lucide="settings"></i>
+                                <span id="toggle-sinecp-text">Gerenciar Unidade</span>
+                                <i data-lucide="chevron-down" id="toggle-sinecp-icon"></i>
+                            </button>
+                        </div>
                     </form>
-
-                    <button type="button" class="btn-premium-action" id="toggle-sinecp-menu">
-                        <i data-lucide="settings"></i>
-                        <span id="toggle-sinecp-text">Gerenciar Unidade</span>
-                        <i data-lucide="chevron-down" id="toggle-sinecp-icon"></i>
-                    </button>
                 </div>
-            </header>
+            </div>
+        </div>
 
+        <div class="monitoring-main-card">
             <div class="management-overlay management-overlay-rich" id="sinecp-management-menu" style="display: none;">
                 <section class="management-section">
                     <div class="section-head">
                         <div class="section-line"></div>
-                        <h2>Gestao SINE</h2>
+                        <h2>Gestão SINE</h2>
                     </div>
                     <div class="mgmt-grid">
-                        <a href="{% url 'sinecp:sine-form' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:sine-form' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon indigo"><i data-lucide="file-plus"></i></div>
                             <div class="mgmt-info">
                                 <strong>Atualizar Dados SINE</strong>
                                 <span>Inserir indicadores mensais</span>
                             </div>
                         </a>
-                        <a href="{% url 'sinecp:sine-data' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:sine-data' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon emerald"><i data-lucide="database"></i></div>
                             <div class="mgmt-info">
                                 <strong>Ver Dados SINE</strong>
                                 <span>Tabela anual de indicadores</span>
                             </div>
                         </a>
-                        <a href="{% url 'sinecp:sine-monthly-report' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:sine-monthly-report' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon violet"><i data-lucide="file-text"></i></div>
                             <div class="mgmt-info">
-                                <strong>Relatorio Mensal SINE</strong>
-                                <span>Narrativa do mes vigente</span>
+                                <strong>Relatório Mensal SINE</strong>
+                                <span>Narrativa do mês vigente</span>
                             </div>
                         </a>
-                        <a href="{% url 'sinecp:sine-reports' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:sine-reports' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon sky"><i data-lucide="folder-open"></i></div>
                             <div class="mgmt-info">
-                                <strong>Ver Relatorios SINE</strong>
-                                <span>Historico de narrativas</span>
+                                <strong>Ver Relatórios SINE</strong>
+                                <span>Histórico de narrativas</span>
                             </div>
                         </a>
                     </div>
@@ -98,35 +102,35 @@
                 <section class="management-section">
                     <div class="section-head">
                         <div class="section-line"></div>
-                        <h2>Gestao Qualificacao Profissional</h2>
+                        <h2>Gestão Qualificação Profissional</h2>
                     </div>
                     <div class="mgmt-grid">
-                        <a href="{% url 'sinecp:qualificacao-form' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:qualificacao-form' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon indigo"><i data-lucide="file-plus"></i></div>
                             <div class="mgmt-info">
                                 <strong>Atualizar Dados CP</strong>
                                 <span>Inserir indicadores mensais</span>
                             </div>
                         </a>
-                        <a href="{% url 'sinecp:qualificacao-data' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:qualificacao-data' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon emerald"><i data-lucide="database"></i></div>
                             <div class="mgmt-info">
                                 <strong>Ver Dados CP</strong>
                                 <span>Tabela anual de indicadores</span>
                             </div>
                         </a>
-                        <a href="{% url 'sinecp:qualificacao-monthly-report' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:qualificacao-monthly-report' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon violet"><i data-lucide="file-text"></i></div>
                             <div class="mgmt-info">
-                                <strong>Relatorio Mensal CP</strong>
-                                <span>Narrativa do mes vigente</span>
+                                <strong>Relatório Mensal CP</strong>
+                                <span>Narrativa do mês vigente</span>
                             </div>
                         </a>
-                        <a href="{% url 'sinecp:qualificacao-reports' directorate.pk %}?year={{ selected_year }}" class="mgmt-card">
+                        <a href="{% url 'sinecp:qualificacao-reports' %}?year={{ selected_year }}" class="mgmt-card">
                             <div class="mgmt-icon sky"><i data-lucide="folder-open"></i></div>
                             <div class="mgmt-info">
-                                <strong>Ver Relatorios CP</strong>
-                                <span>Historico de narrativas</span>
+                                <strong>Ver Relatórios CP</strong>
+                                <span>Histórico de narrativas</span>
                             </div>
                         </a>
                     </div>
@@ -154,99 +158,78 @@
                     {% endfor %}
                 </aside>
 
-                <div class="charts-stack">
+                    <div class="charts-stack-grid">
                     {% if active_tab == 'sine' %}
-                        <div class="charts-row-inner">
-                            <article class="chart-panel">
-                                <div class="chart-header">
-                                    <div>
-                                        <h2>Servicos Prestados</h2>
-                                        <p class="chart-subtitle">Distribuicao dos atendimentos e operacoes do SINE</p>
-                                    </div>
-                                    <div class="top-badge">
-                                        <i data-lucide="award"></i>
-                                        <span>Destaque: {{ lead_service.label }}</span>
-                                    </div>
+                        <article class="chart-panel">
+                            <div class="chart-header">
+                                <div>
+                                    <h2>Serviços Prestados</h2>
                                 </div>
-                                <div class="monitoring-chart-wrap monitoring-chart-wrap-bar">
-                                    <canvas id="sine-services-chart"></canvas>
-                                </div>
-                            </article>
+                            </div>
+                            <div class="monitoring-chart-wrap">
+                                <canvas id="sine-services-chart"></canvas>
+                            </div>
+                        </article>
 
-                            <article class="chart-panel">
-                                <div class="chart-header">
-                                    <div>
-                                        <h2>Atendimento ao Empregador e Trabalhador</h2>
-                                        <p class="chart-subtitle">Tendencia mensal consolidada por publico</p>
-                                    </div>
-                                    <span class="chart-value">{{ sine_total_attendance }}</span>
+                        <article class="chart-panel">
+                            <div class="chart-header">
+                                <div>
+                                    <h2>Atendimento</h2>
                                 </div>
-                                <div class="monitoring-chart-wrap monitoring-chart-wrap-line">
-                                    <canvas id="sine-attendance-chart"></canvas>
-                                </div>
-                            </article>
-                        </div>
+                                <span class="chart-value">{{ sine_total_attendance }}</span>
+                            </div>
+                            <div class="monitoring-chart-wrap">
+                                <canvas id="sine-attendance-chart"></canvas>
+                            </div>
+                        </article>
                     {% else %}
-                        <div class="charts-row-inner">
-                            <article class="chart-panel">
-                                <div class="chart-header">
-                                    <div>
-                                        <h2>Concluintes</h2>
-                                        <p class="chart-subtitle">Historico mensal de formacao e encerramento de turmas</p>
-                                    </div>
-                                    <span class="chart-value">{{ cp_peak_concluintes }}</span>
+                        <article class="chart-panel">
+                            <div class="chart-header">
+                                <div>
+                                    <h2>Concluintes</h2>
                                 </div>
-                                <div class="monitoring-chart-wrap monitoring-chart-wrap-line">
-                                    <canvas id="cp-concluintes-chart"></canvas>
-                                </div>
-                            </article>
+                                <span class="chart-value">{{ cp_peak_concluintes }}</span>
+                            </div>
+                            <div class="monitoring-chart-wrap">
+                                <canvas id="cp-concluintes-chart"></canvas>
+                            </div>
+                        </article>
 
-                            <article class="chart-panel">
-                                <div class="chart-header">
-                                    <div>
-                                        <h2>Atendimentos e Procedimentos</h2>
-                                        <p class="chart-subtitle">Comparativo acumulado das interacoes do modulo</p>
-                                    </div>
-                                    <span class="chart-value">{{ cp_total_interactions }}</span>
+                        <article class="chart-panel">
+                            <div class="chart-header">
+                                <div>
+                                    <h2>Interações</h2>
                                 </div>
-                                <div class="monitoring-chart-wrap monitoring-chart-wrap-line">
-                                    <canvas id="cp-comparison-chart"></canvas>
-                                </div>
-                            </article>
-                        </div>
+                                <span class="chart-value">{{ cp_total_interactions }}</span>
+                            </div>
+                            <div class="monitoring-chart-wrap">
+                                <canvas id="cp-comparison-chart"></canvas>
+                            </div>
+                        </article>
 
-                        <div class="charts-row-single">
-                            <article class="chart-panel chart-panel-gender">
-                                <div class="chart-header">
-                                    <div>
-                                        <h2>Genero</h2>
-                                        <p class="chart-subtitle">Distribuicao dos concluintes por genero no periodo selecionado</p>
-                                    </div>
-                                    <div class="top-badge">
-                                        <i data-lucide="award"></i>
-                                        <span>Destaque: {{ lead_gender.label }}</span>
-                                    </div>
+                        <article class="chart-panel chart-panel-gender">
+                            <div class="chart-header" style="margin-bottom: 5px;">
+                                <h2>Gênero</h2>
+                            </div>
+                            <div class="sinecp-gender-panel">
+                                <div class="sinecp-gender-canvas-wrap">
+                                    <canvas id="cp-gender-chart"></canvas>
                                 </div>
-                                <div class="sinecp-gender-panel">
-                                    <div class="sinecp-gender-canvas-wrap">
-                                        <canvas id="cp-gender-chart"></canvas>
-                                    </div>
-                                    <ul class="donut-legend">
-                                        {% for item in cp_gender %}
-                                            <li>
-                                                <span class="legend-dot" style="background: {{ item.color }};"></span>
-                                                <span>{{ item.label }}</span>
-                                                <strong>{{ item.value }}</strong>
-                                            </li>
-                                        {% empty %}
-                                            <li>Sem dados de genero no periodo.</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            </article>
-                        </div>
+                                <ul class="donut-legend">
+                                    {% for item in cp_gender %}
+                                        <li>
+                                            <span class="legend-dot" style="background: {{ item.color }};"></span>
+                                            <span>{{ item.label }}</span>
+                                            <strong>{{ item.value }}</strong>
+                                        </li>
+                                    {% empty %}
+                                        <li>Sem dados</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </article>
                     {% endif %}
-                </div>
+                    </div>
             </div>
         </section>
     </main>
@@ -508,16 +491,6 @@
                             pointRadius: 4,
                             pointHoverRadius: 5,
                         },
-                        {
-                            label: "Procedimentos",
-                            data: cpChartPayload.procedimentos_values,
-                            borderColor: "#10b981",
-                            backgroundColor: "#10b981",
-                            tension: 0.35,
-                            borderWidth: 3,
-                            pointRadius: 3,
-                            pointHoverRadius: 4,
-                        },
                     ],
                 },
                 options: {
@@ -526,10 +499,11 @@
                         padding: { top: 22, right: 12, bottom: 8, left: 6 },
                     },
                     plugins: {
-                        ...basePlugins,
+                        legend: { display: false },
+                        tooltip: basePlugins.tooltip,
                         datalabels: {
                             ...basePlugins.datalabels,
-                            color: (ctx) => ctx.dataset.borderColor,
+                            color: "#3b82f6",
                         },
                     },
                     scales: {
@@ -567,17 +541,17 @@
                     }],
                 },
                 options: {
-                    maintainAspectRatio: false,
-                    cutout: "62%",
+                    maintainAspectRatio: true,
+                    cutout: "50%",
                     layout: {
-                        padding: 0,
+                        padding: 5,
                     },
                     plugins: {
                         legend: { display: false },
                         tooltip: basePlugins.tooltip,
                         datalabels: {
                             color: "#ffffff",
-                            font: { size: 12, weight: "800" },
+                            font: { size: 10, weight: "800" },
                             formatter: (value, context) => context.chart.data.labels[context.dataIndex] === "Sem dados" ? "" : value,
                         },
                     },
@@ -586,4 +560,93 @@
         }
     });
 </script>
+
+<style>
+    .dashboard-split-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 20px;
+        margin-top: 12px;
+    }
+
+    .metrics-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .charts-stack-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .chart-panel {
+        display: flex;
+        flex-direction: column;
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 18px rgba(47,104,230,0.06);
+        min-height: 320px;
+    }
+
+    .chart-panel-gender {
+        max-width: 450px;
+        min-height: 220px !important;
+    }
+
+    .monitoring-chart-wrap {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .sinecp-gender-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .sinecp-gender-canvas-wrap {
+        width: 100px;
+        height: 100px;
+        position: relative;
+    }
+
+    .donut-legend {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        justify-content: center;
+    }
+
+    .donut-legend li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #475569;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .donut-legend li strong {
+        margin-left: 5px;
+        color: #1e293b;
+    }
+</style>
 {% endblock %}

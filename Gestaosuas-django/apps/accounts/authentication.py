@@ -48,8 +48,8 @@ class SupabaseAuthBackend(BaseBackend):
             return None
 
         user, created = User.objects.get_or_create(
-            username=email,
-            defaults={"email": email},
+            id=supabase_id,
+            defaults={"username": email, "email": email},
         )
 
         user.set_unusable_password()

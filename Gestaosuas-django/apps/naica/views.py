@@ -2,10 +2,11 @@ import uuid
 from datetime import date
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.views.generic import DetailView, FormView, TemplateView
+from django.views.generic import DetailView, FormView, TemplateView, View
+from django.http import JsonResponse
+from apps.accounts.mixins import RoleRequiredMixin
 
 from apps.directorates.models import Directorate, MonthlyReport
 from apps.core.utils import (
@@ -308,10 +309,16 @@ class NaicaDataView(NaicaBaseMixin, TemplateView):
                     month_values = []
                     for month_num in range(1, 13):
                         report = reports_by_unit_month.get((unit, month_num))
-                        val = getattr(report, field_name, "") if report else ""
-                        month_values.append(val)
+                        month_values.append({
+                            "val": getattr(report, field_name, "") if report else "",
+                            "sub_id": report.id if report else None,
+                            "month": month_num,
+                            "year": selected_year,
+                            "unit": unit
+                        })
                     rows.append({
                         "label": NaicaReportForm.labels.get(field_name, field_name),
+                        "key": field_name,
                         "values": month_values,
                     })
                 groups.append({"title": title, "rows": rows})
@@ -377,3 +384,37 @@ class NaicaNarrativeListView(NaicaBaseMixin, TemplateView):
             "monthly_report_base_url": reverse("naica:monthly-report", kwargs={"pk": directorate.pk}),
         })
         return context
+
+class NaicaQuickEditView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = ["admin"]
+
+    def post(self, request):
+        sub_id = request.POST.get("sub_id")
+        key = request.POST.get("key")
+        value_str = request.POST.get("value")
+        value = int(value_str) if value_str and value_str.isdigit() else 0
+        month = int(request.POST.get("month"))
+        year = int(request.POST.get("year"))
+        unit = request.POST.get("unit")
+        
+        # Tenta encontrar a diretoria pelo nome de forma robusta
+        directorate = Directorate.objects.filter(name__icontains="NAICA").first()
+        if not directorate:
+            directorate = Directorate.objects.filter(name__icontains="Proteção Social Especial").first()
+        
+        if sub_id and sub_id != "None" and sub_id != "":
+            report = get_object_or_404(NaicaReport, id=sub_id)
+        else:
+            report, _ = NaicaReport.objects.get_or_create(
+                directorate=directorate,
+                month=month,
+                year=year,
+                unit_name=unit
+            )
+
+        setattr(report, key, value)
+        if not report.user_id:
+            import uuid
+            report.user_id = uuid.uuid4()
+        report.save()
+        return JsonResponse({"status": "success", "value": value, "sub_id": report.id})

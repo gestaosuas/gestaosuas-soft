@@ -16,6 +16,7 @@ def directorates_processor(request):
             'Proteção Especial à Criança e Adolescente', 
             'Casa da Mulher'
         ]
+
         
         main_directorates = []
         monitoring_directorates = []

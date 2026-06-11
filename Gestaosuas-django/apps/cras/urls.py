@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     CrasHomeView, CrasCreateUpdateView, CrasDataView,
-    CrasMonthlyNarrativeView, CrasNarrativeListView
+    CrasMonthlyNarrativeView, CrasNarrativeListView,
+    CrasQuickEditView
 )
 
 app_name = "cras"
@@ -12,4 +13,5 @@ urlpatterns = [
     path("<uuid:pk>/dados/", CrasDataView.as_view(), name="data"),
     path("<uuid:pk>/relatorio-mensal/", CrasMonthlyNarrativeView.as_view(), name="monthly-report"),
     path("<uuid:pk>/relatorios/", CrasNarrativeListView.as_view(), name="reports"),
+    path("quick-edit/", CrasQuickEditView.as_view(), name="quick-edit"),
 ]
