@@ -30,7 +30,7 @@ export default async function LoginPage({
                     <div className="relative mb-8 group">
                         <div className="relative w-24 h-24 flex items-center justify-center bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/20">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src="https://xvyaaavcbxskmunmhwcg.supabase.co/storage/v1/object/public/system-assets/logo-1766148734971.png" alt="Logo" className="w-auto h-16 object-contain relative z-10" />
+                            <img src="/logo-vigilancia-v2.png" alt="Logo" className="w-auto h-16 object-contain relative z-10" />
                         </div>
                     </div>
                     <div className="space-y-3">
