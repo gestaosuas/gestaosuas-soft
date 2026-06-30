@@ -163,22 +163,22 @@
                                 </a>
                             {% else %}
                                 {% if visit.relatorio_status == 'finalized' %}
-                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-doc-subvencao-finalizado" title="Relatório de Visita Finalizado">
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-text-btn doc-link btn-doc-subvencao-finalizado" title="Relatório de Visita Finalizado">
                                         <i data-lucide="file-text"></i> <span>Relatório</span>
                                     </a>
                                 {% elif visit.relatorio_status == 'draft' %}
-                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-doc-subvencao-rascunho" title="Editar Rascunho do Relatório">
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-text-btn doc-link btn-doc-subvencao-rascunho" title="Editar Rascunho do Relatório">
                                         <i data-lucide="file-edit"></i> <span>Rascunho</span>
                                     </a>
                                 {% else %}
-                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-doc-subvencao-zerado" title="Preencher Relatório de Visita">
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-text-btn doc-link btn-doc-subvencao-zerado" title="Preencher Relatório de Visita">
                                         <i data-lucide="plus-circle"></i> <span>Preencher</span>
                                     </a>
                                 {% endif %}
                             {% endif %}
                         {% else %}
                             {% if visit.status == 'completed' or visit.status == 'finalized' %}
-                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-text-btn doc-link btn-report-direct" title="Relatorio de Visita">
+                                <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-text-btn doc-link btn-report-direct" title="Relatorio de Visita">
                                     <i data-lucide="file-text"></i> <span>Relatório</span>
                                 </a>
                             {% else %}
@@ -198,15 +198,15 @@
                             </a>
                         {% else %}
                             {% if visit.relatorio_status == 'finalized' %}
-                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-subvencao-finalized" title="Visualizar Relatório de Visita">
+                                <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-icon-btn action-icon-subvencao-finalized" title="Visualizar Relatório de Visita">
                                     <i data-lucide="eye"></i>
                                 </a>
                             {% elif visit.relatorio_status == 'draft' %}
-                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-subvencao-draft" title="Editar Rascunho do Relatório">
+                                <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-icon-btn action-icon-subvencao-draft" title="Editar Rascunho do Relatório">
                                     <i data-lucide="file-edit"></i>
                                 </a>
                             {% else %}
-                                <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-subvencao-zerado" title="Preencher Relatório de Visita">
+                                <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-icon-btn action-icon-subvencao-zerado" title="Preencher Relatório de Visita">
                                     <i data-lucide="file-plus"></i>
                                 </a>
                             {% endif %}
@@ -222,7 +222,7 @@
                         {% endif %}
                     {% else %}
                         {% if visit.status == 'completed' or visit.status == 'finalized' %}
-                            <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="action-icon-btn action-icon-report" title="Relatório de Visita">
+                            <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="action-icon-btn action-icon-report" title="Relatório de Visita">
                                 <i data-lucide="file-text"></i>
                             </a>
                             <a href="{% url 'directorates:visit-instrumental' visit.pk %}" class="action-icon-btn action-icon-view" title="Visualizar Instrumental">
@@ -241,10 +241,12 @@
 
                     <button type="button" class="action-icon-btn action-icon-delegate" onclick="openDelegateModal('{{ visit.pk }}', '{{ visit.osc.name }}')" title="Delegar"><i data-lucide="users-round"></i></button>
 
+                    {% if can_delete %}
                     <form action="{% url 'directorates:visit-delete' visit.pk %}" method="post" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta visita?')">
                         {% csrf_token %}
                         <button type="submit" class="action-icon-btn action-icon-delete"><i data-lucide="trash-2"></i></button>
                     </form>
+                    {% endif %}
                     </div>
                 </td>
             </tr>

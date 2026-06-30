@@ -195,6 +195,7 @@
                                     <a href="{% url 'directorates:osc-update' osc.pk %}" title="Editar OSC">
                                         <i data-lucide="pencil"></i>
                                     </a>
+                                    {% if can_delete %}
                                     <form action="{% url 'directorates:osc-delete' osc.pk %}" method="post" onsubmit="return confirm('Excluir OSC {{ osc.name }}?')">
                                         {% csrf_token %}
                                         <input type="hidden" name="next" value="{% url 'monitoramento:home' directorate.pk %}?tab=oscs&bimestre={{ selected_bimester }}&year={{ selected_year }}">
@@ -202,6 +203,7 @@
                                             <i data-lucide="trash-2"></i>
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
@@ -370,7 +372,7 @@
                                 </td>
                                 <td>
                                     {% if visit.status == 'completed' or visit.status == 'finalized' %}
-                                    <a href="{% url 'directorates:visit-report' visit.pk 'relatorio_final' %}" class="inline-doc-btn">
+                                    <a href="{% url 'directorates:visit-report' visit.pk 'parecer_tecnico' %}" class="inline-doc-btn">
                                         <i data-lucide="file-text"></i>
                                         Relatório de Visita
                                     </a>
@@ -396,6 +398,7 @@
                                     </a>
                                     {% endif %}
 
+                                    {% if can_delete %}
                                     <form action="{% url 'directorates:visit-delete' visit.pk %}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir esta visita?')">
                                         {% csrf_token %}
                                         <input type="hidden" name="next" value="{% url 'monitoramento:home' directorate.pk %}?tab=visits&bimestre={{ selected_bimester }}&year={{ selected_year }}">
@@ -403,6 +406,7 @@
                                             <i data-lucide="trash-2"></i>
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
@@ -474,6 +478,7 @@
                                     <a href="{% url 'directorates:plan-update' latest_plan.pk %}?next={% url 'monitoramento:home' directorate.pk %}%3Ftab%3Dplans%26bimestre%3D{{ selected_bimester }}%26year%3D{{ selected_year }}" class="inline-plan-icon-btn" title="Editar plano">
                                         <i data-lucide="pencil"></i>
                                     </a>
+                                    {% if can_delete %}
                                     <form action="{% url 'directorates:plan-delete' latest_plan.pk %}" method="post" onsubmit="return confirm('Excluir plano {{ latest_plan.title }}?')">
                                         {% csrf_token %}
                                         <input type="hidden" name="next" value="{% url 'monitoramento:home' directorate.pk %}?tab=plans&bimestre={{ selected_bimester }}&year={{ selected_year }}">
@@ -481,6 +486,7 @@
                                             <i data-lucide="trash-2"></i>
                                         </button>
                                     </form>
+                                    {% endif %}
                                     {% endif %}
                                 {% endwith %}
                             </div>
@@ -609,59 +615,82 @@
                 </div>
             </section>
             {% else %}
-            <div class="glass-kpi-grid">
-                <!-- KPI 1 -->
-                <article class="glass-kpi-card">
-                    <div class="gkpi-content">
+            <div class="glass-kpi-grid kpi-grid-4">
+                <!-- KPI 1: Total de OSCs -->
+                <article class="glass-kpi-card kpi-card-blue">
+                    <div class="gkpi-top">
                         <div class="gkpi-icon-wrap blue"><i data-lucide="building-2"></i></div>
-                        <div class="gkpi-text">
-                            <p>TOTAL DE OSCS</p>
-                            <strong>{{ subvencao_stats.totalOSCs }}</strong>
-                        </div>
+                        <span class="gkpi-badge badge-blue">Cadastradas</span>
                     </div>
-                    <div class="gkpi-graphic graphic-bars">
-                        <div class="bar" style="height: 30%"></div>
-                        <div class="bar" style="height: 50%"></div>
-                        <div class="bar" style="height: 40%"></div>
-                        <div class="bar" style="height: 70%"></div>
-                        <div class="bar" style="height: 60%"></div>
-                        <div class="bar" style="height: 90%"></div>
-                        <div class="bar" style="height: 75%"></div>
-                        <div class="bar" style="height: 40%"></div>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Total de OSCs</p>
+                        <strong class="gkpi-value">{{ subvencao_stats.totalOSCs }}</strong>
+                    </div>
+                    <div class="gkpi-footer">
+                        <div class="gkpi-progress-track">
+                            <div class="gkpi-progress-fill" style="background: #3b82f6; width: 100%;"></div>
+                        </div>
+                        <span class="gkpi-footer-label">no bimestre</span>
                     </div>
                 </article>
 
-                <!-- KPI 2 -->
-                <article class="glass-kpi-card">
-                    <div class="gkpi-content">
+                <!-- KPI 2: Visitas no Bimestre -->
+                <article class="glass-kpi-card kpi-card-amber">
+                    <div class="gkpi-top">
                         <div class="gkpi-icon-wrap orange"><i data-lucide="clipboard-list"></i></div>
-                        <div class="gkpi-text">
-                            <p>VISITAS NO BIMESTRE</p>
-                            <strong>{{ subvencao_stats.totalVisits }}</strong>
-                        </div>
+                        <span class="gkpi-badge badge-amber">{{ subvencao_stats.draftVisits }} em andamento</span>
                     </div>
-                    <div class="gkpi-graphic graphic-donut">
-                        <svg viewBox="0 0 36 36">
-                            <path class="donut-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="donut-fill orange" stroke-dasharray="80, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <span class="donut-text">{{ subvencao_stats.totalVisits }}</span>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Visitas no Bimestre</p>
+                        <strong class="gkpi-value">{{ subvencao_stats.totalVisits }}</strong>
+                    </div>
+                    <div class="gkpi-footer">
+                        <div class="gkpi-progress-track">
+                            <div class="gkpi-progress-fill" id="kpi-visits-bar" style="background: #f59e0b; width: {{ subvencao_stats.finalizationRate }}%;"></div>
+                        </div>
+                        <span class="gkpi-footer-label">{{ subvencao_stats.finalizationRate }}% concluídas</span>
                     </div>
                 </article>
 
-                <!-- KPI 3 -->
-                <article class="glass-kpi-card">
-                    <div class="gkpi-content">
+                <!-- KPI 3: Visitas Finalizadas -->
+                <article class="glass-kpi-card kpi-card-emerald">
+                    <div class="gkpi-top">
                         <div class="gkpi-icon-wrap green"><i data-lucide="shield-check"></i></div>
-                        <div class="gkpi-text">
-                            <p>VISITAS FINALIZADAS</p>
-                            <strong>{{ subvencao_stats.finalizedVisits }}</strong>
-                        </div>
+                        <span class="gkpi-badge badge-emerald">Concluídas</span>
                     </div>
-                    <div class="gkpi-graphic graphic-sparkline">
-                        <svg viewBox="0 0 100 30" preserveAspectRatio="none">
-                            <path class="spark-line green" d="M0,25 Q10,20 20,25 T40,15 T60,20 T80,5 T100,2" fill="none" />
-                            <path class="spark-fill green" d="M0,25 Q10,20 20,25 T40,15 T60,20 T80,5 T100,2 L100,30 L0,30 Z" />
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Visitas Finalizadas</p>
+                        <strong class="gkpi-value">{{ subvencao_stats.finalizedVisits }}</strong>
+                    </div>
+                    <div class="gkpi-footer">
+                        <div class="gkpi-progress-track">
+                            <div class="gkpi-progress-fill" style="background: #10b981; width: {{ subvencao_stats.finalizationRate }}%;"></div>
+                        </div>
+                        <span class="gkpi-footer-label">de {{ subvencao_stats.totalVisits }} visitas</span>
+                    </div>
+                </article>
+
+                <!-- KPI 4: Taxa de Finalização -->
+                <article class="glass-kpi-card kpi-card-rate">
+                    <div class="gkpi-top">
+                        <div class="gkpi-icon-wrap purple"><i data-lucide="percent"></i></div>
+                        {% if subvencao_stats.finalizationRate == 100 %}
+                            <span class="gkpi-badge badge-success">Meta atingida</span>
+                        {% elif subvencao_stats.finalizationRate >= 70 %}
+                            <span class="gkpi-badge badge-emerald">No caminho certo</span>
+                        {% else %}
+                            <span class="gkpi-badge badge-amber">Em progresso</span>
+                        {% endif %}
+                    </div>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Taxa de Finalização</p>
+                        <strong class="gkpi-value" style="color: {% if subvencao_stats.finalizationRate == 100 %}#059669{% elif subvencao_stats.finalizationRate >= 70 %}#0284c7{% else %}#d97706{% endif %};">{{ subvencao_stats.finalizationRate }}%</strong>
+                    </div>
+                    <div class="gkpi-donut-wrap">
+                        <svg class="gkpi-donut-svg" viewBox="0 0 36 36">
+                            <path class="gkpi-donut-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="gkpi-donut-fill" stroke-dasharray="{{ subvencao_stats.finalizationRate }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                style="stroke: {% if subvencao_stats.finalizationRate == 100 %}#10b981{% elif subvencao_stats.finalizationRate >= 70 %}#3b82f6{% else %}#f59e0b{% endif %};" />
                         </svg>
                     </div>
                 </article>
@@ -669,6 +698,75 @@
             {% endif %}
 
             {% else %}
+            <!-- KPI cards para Emendas, Fundos e Outros -->
+            <div class="glass-kpi-grid kpi-grid-4 {% if is_emendas %}kpi-theme-amber{% elif is_fundos %}kpi-theme-indigo{% else %}kpi-theme-blue{% endif %}">
+                <article class="glass-kpi-card kpi-card-blue">
+                    <div class="gkpi-top">
+                        <div class="gkpi-icon-wrap blue"><i data-lucide="building-2"></i></div>
+                        <span class="gkpi-badge badge-blue">Cadastradas</span>
+                    </div>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Total de OSCs</p>
+                        <strong class="gkpi-value">{{ subvencao_stats.totalOSCs }}</strong>
+                    </div>
+                    <div class="gkpi-footer">
+                        <div class="gkpi-progress-track"><div class="gkpi-progress-fill" style="background: #3b82f6; width: 100%;"></div></div>
+                        <span class="gkpi-footer-label">no bimestre</span>
+                    </div>
+                </article>
+                <article class="glass-kpi-card kpi-card-amber">
+                    <div class="gkpi-top">
+                        <div class="gkpi-icon-wrap orange"><i data-lucide="clipboard-list"></i></div>
+                        <span class="gkpi-badge badge-amber">{{ subvencao_stats.draftVisits }} em andamento</span>
+                    </div>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Visitas no Bimestre</p>
+                        <strong class="gkpi-value">{{ subvencao_stats.totalVisits }}</strong>
+                    </div>
+                    <div class="gkpi-footer">
+                        <div class="gkpi-progress-track"><div class="gkpi-progress-fill" style="background: #f59e0b; width: {{ subvencao_stats.finalizationRate }}%;"></div></div>
+                        <span class="gkpi-footer-label">{{ subvencao_stats.finalizationRate }}% concluídas</span>
+                    </div>
+                </article>
+                <article class="glass-kpi-card kpi-card-emerald">
+                    <div class="gkpi-top">
+                        <div class="gkpi-icon-wrap green"><i data-lucide="shield-check"></i></div>
+                        <span class="gkpi-badge badge-emerald">Concluídas</span>
+                    </div>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Visitas Finalizadas</p>
+                        <strong class="gkpi-value">{{ subvencao_stats.finalizedVisits }}</strong>
+                    </div>
+                    <div class="gkpi-footer">
+                        <div class="gkpi-progress-track"><div class="gkpi-progress-fill" style="background: #10b981; width: {{ subvencao_stats.finalizationRate }}%;"></div></div>
+                        <span class="gkpi-footer-label">de {{ subvencao_stats.totalVisits }} visitas</span>
+                    </div>
+                </article>
+                <article class="glass-kpi-card kpi-card-rate">
+                    <div class="gkpi-top">
+                        <div class="gkpi-icon-wrap purple"><i data-lucide="percent"></i></div>
+                        {% if subvencao_stats.finalizationRate == 100 %}
+                            <span class="gkpi-badge badge-success">Meta atingida</span>
+                        {% elif subvencao_stats.finalizationRate >= 70 %}
+                            <span class="gkpi-badge badge-emerald">No caminho certo</span>
+                        {% else %}
+                            <span class="gkpi-badge badge-amber">Em progresso</span>
+                        {% endif %}
+                    </div>
+                    <div class="gkpi-body">
+                        <p class="gkpi-label">Taxa de Finalização</p>
+                        <strong class="gkpi-value" style="color: {% if subvencao_stats.finalizationRate == 100 %}#059669{% elif subvencao_stats.finalizationRate >= 70 %}#0284c7{% else %}#d97706{% endif %};">{{ subvencao_stats.finalizationRate }}%</strong>
+                    </div>
+                    <div class="gkpi-donut-wrap">
+                        <svg class="gkpi-donut-svg" viewBox="0 0 36 36">
+                            <path class="gkpi-donut-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="gkpi-donut-fill" stroke-dasharray="{{ subvencao_stats.finalizationRate }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                style="stroke: {% if subvencao_stats.finalizationRate == 100 %}#10b981{% elif subvencao_stats.finalizationRate >= 70 %}#3b82f6{% else %}#f59e0b{% endif %};" />
+                        </svg>
+                    </div>
+                </article>
+            </div>
+
             <!-- Original Design para Outros, Fundos e Emendas -->
             <div class="mon-action-cards">
                 <a href="{% url 'directorates:osc-list' directorate.pk %}" class="mon-action-card">
@@ -840,54 +938,84 @@
 .glass-green .glass-icon { color: #047857; filter: drop-shadow(0 8px 12px rgba(5,150,105,0.25)); }
 .glass-green:hover { border-color: rgba(16, 185, 129, 0.6); }
 
-/* GLASS KPI CARDS */
-.glass-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+/* GLASS KPI CARDS — redesign */
+.glass-kpi-grid { display: grid; gap: 18px; }
+.kpi-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
 .glass-kpi-card {
-    background: linear-gradient(145deg, #ffffff, #f8fafc);
-    border-radius: 20px; padding: 24px 28px;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03), inset 0 0 0 1px white;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px 22px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #e8edf5;
     position: relative; overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
 }
-.gkpi-content { display: flex; align-items: center; gap: 20px; z-index: 1; }
+.glass-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.09); }
+
+.gkpi-top { display: flex; align-items: center; justify-content: space-between; }
+
 .gkpi-icon-wrap {
-    width: 60px; height: 60px; border-radius: 16px;
+    width: 46px; height: 46px; border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255,255,255,0.6);
+    flex-shrink: 0;
 }
-.gkpi-icon-wrap i { width: 30px; height: 30px; stroke-width: 2px; }
-.gkpi-icon-wrap.blue { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1e3a8a; }
-.gkpi-icon-wrap.orange { background: linear-gradient(135deg, #fff7ed, #ffedd5); color: #c2410c; }
-.gkpi-icon-wrap.green { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #047857; }
+.gkpi-icon-wrap i { width: 22px; height: 22px; stroke-width: 2px; }
+.gkpi-icon-wrap.blue { background: #eff6ff; color: #2563eb; }
+.gkpi-icon-wrap.orange { background: #fff7ed; color: #c2410c; }
+.gkpi-icon-wrap.green { background: #ecfdf5; color: #059669; }
+.gkpi-icon-wrap.purple { background: #f5f3ff; color: #7c3aed; }
 
-.gkpi-text p { font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px; }
-.gkpi-text strong { font-size: 44px; font-weight: 900; line-height: 1; color: #0f172a; letter-spacing: -0.02em; display: block; }
+.gkpi-badge {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .04em; padding: 3px 9px;
+    border-radius: 20px; white-space: nowrap;
+}
+.badge-blue { background: #eff6ff; color: #1d4ed8; }
+.badge-amber { background: #fffbeb; color: #b45309; }
+.badge-emerald { background: #ecfdf5; color: #065f46; }
+.badge-success { background: #dcfce7; color: #15803d; }
 
-.gkpi-graphic { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); z-index: 0; opacity: 0.8; }
+.gkpi-body { display: flex; flex-direction: column; gap: 2px; }
+.gkpi-label {
+    font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .06em; color: #64748b; margin: 0;
+}
+.gkpi-value {
+    font-size: 42px; font-weight: 900; line-height: 1.1;
+    color: #0f172a; letter-spacing: -0.02em; display: block;
+}
 
-/* Graphic 1: Bars */
-.graphic-bars { display: flex; align-items: flex-end; gap: 6px; height: 44px; }
-.graphic-bars .bar { width: 10px; background: #e2e8f0; border-radius: 3px; }
-.graphic-bars .bar:nth-child(even) { background: #cbd5e1; }
+.gkpi-footer { display: flex; flex-direction: column; gap: 5px; }
+.gkpi-progress-track {
+    height: 5px; background: #f1f5f9;
+    border-radius: 99px; overflow: hidden;
+}
+.gkpi-progress-fill {
+    height: 100%; border-radius: 99px;
+    transition: width .6s ease;
+    min-width: 3px;
+}
+.gkpi-footer-label { font-size: 10px; font-weight: 700; color: #94a3b8; }
 
-/* Graphic 2: Donut */
-.graphic-donut { position: relative; width: 64px; height: 64px; }
-.graphic-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.donut-bg { fill: none; stroke: #ffedd5; stroke-width: 3.5; }
-.donut-fill { fill: none; stroke-width: 3.5; stroke-linecap: round; }
-.donut-fill.orange { stroke: #fb923c; }
-.donut-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #0f172a; }
+/* Donut no 4º card */
+.gkpi-donut-wrap {
+    position: absolute; right: 18px; bottom: 14px;
+    width: 58px; height: 58px; opacity: .9;
+}
+.gkpi-donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.gkpi-donut-bg { fill: none; stroke: #f1f5f9; stroke-width: 4; }
+.gkpi-donut-fill { fill: none; stroke-width: 4; stroke-linecap: round; }
 
-/* Graphic 3: Sparkline */
-.graphic-sparkline { width: 100px; height: 40px; right: 20px; }
-.graphic-sparkline svg { width: 100%; height: 100%; }
-.spark-line.green { stroke: #34d399; stroke-width: 2.5; }
+/* Keep old spark-fill for backward compat */
 .spark-fill.green { fill: url(#spark-gradient); }
 
-@media (max-width: 1100px) {
-    .glass-action-cards { grid-template-columns: repeat(2, 1fr); }
-    .glass-kpi-grid { grid-template-columns: 1fr; }
+@media (max-width: 1200px) {
+    .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .kpi-grid-4 { grid-template-columns: 1fr; }
 }
 
 /* Original Legacy Styles */

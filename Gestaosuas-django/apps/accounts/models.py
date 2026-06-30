@@ -8,12 +8,14 @@ class User(AbstractUser):
 
 class Profile(models.Model):
     ROLE_ADMIN = "admin"
-    ROLE_USER = "user"
     ROLE_DIRECTOR = "diretor"
+    ROLE_AGENTE = "agente"
+    ROLE_USER = "user"
     ROLE_CHOICES = [
         (ROLE_ADMIN, "Administrador"),
-        (ROLE_USER, "Usuario"),
         (ROLE_DIRECTOR, "Diretor"),
+        (ROLE_AGENTE, "Agente"),
+        (ROLE_USER, "Usuario"),
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile", db_column="id", primary_key=True)

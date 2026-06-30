@@ -62,12 +62,14 @@
                             <a href="{% url 'directorates:plan-update' latest_plan.pk %}" class="plan-icon-btn" title="Editar plano">
                                 <i data-lucide="pencil"></i>
                             </a>
+                            {% if can_delete %}
                             <form action="{% url 'directorates:plan-delete' latest_plan.pk %}" method="post" onsubmit="return confirm('Excluir plano {{ latest_plan.title }}?')">
                                 {% csrf_token %}
                                 <button type="submit" class="plan-icon-btn danger" title="Excluir plano">
                                     <i data-lucide="trash-2"></i>
                                 </button>
                             </form>
+                            {% endif %}
                             {% endif %}
                         {% endwith %}
                     </div>

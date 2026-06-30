@@ -14,7 +14,7 @@
             </p>
         </div>
         <div class="monitoring-header-actions" style="display: flex; gap: 10px; align-items: center;">
-            <a href="{% url 'directorates:visit-list' directorate.pk %}" class="btn-premium-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: white; border: 1px solid rgba(255, 255, 255, 0.3); background: transparent; text-decoration: none; transition: all 0.2s;">
+            <a href="{{ return_url }}" class="btn-premium-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: white; border: 1px solid rgba(255, 255, 255, 0.3); background: transparent; text-decoration: none; transition: all 0.2s;">
                 <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Voltar
             </a>
             
@@ -391,49 +391,50 @@
                     <section>
                         <h3 class="section-title" style="font-size: 13px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 12px; letter-spacing: 0.05em;">1. Objeto do Relatório</h3>
                         <p style="font-size: 10px; color: #64748b; font-style: italic; margin-top: -6px; margin-bottom: 10px;">Colocar o mesmo objeto do Plano de Trabalho (Objetivo e especificação do nome do projeto)</p>
-                        <div style="background: #f1f5f9; border-radius: 12px; padding: 16px; border: 1px solid #cbd5e1; font-size: 13px; color: #334155; line-height: 1.6; font-weight: 600; text-align: justify;">
-                            Monitoramento de repasse de recursos para a Organização da Sociedade Civil, SOS Ação Mulher e Família de Uberlândia, oriundos deste Município, nos termos da lei autorizativa própria, para desenvolvimento do Serviço de Proteção Social Especial Para Mulheres Vítimas de Violência.
-                        </div>
+                        {% if report_data.status != 'finalized' %}
+                            <textarea id="pt-objeto-relatorio" style="width: 100%; min-height: 100px; border-radius: 12px; border: 1.5px solid #cbd5e1; padding: 16px; font-size: 13px; line-height: 1.6; font-family: inherit; font-weight: 600; resize: vertical;">{{ report_data.objeto_relatorio }}</textarea>
+                        {% else %}
+                            <div style="min-height: 60px; border-bottom: 1px dashed #94a3b8; font-size: 13px; line-height: 1.6; white-space: pre-wrap; font-weight: 600; color: #334155; text-align: justify; padding-bottom: 12px;">{{ report_data.objeto_relatorio }}</div>
+                        {% endif %}
                     </section>
 
                     <!-- Section 2: Descrição dos objetivos, metas, atividades previstas -->
                     <section>
                         <h3 class="section-title" style="font-size: 13px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 16px; letter-spacing: 0.05em;">2. Descrição dos objetivos, metas, atividades previstas</h3>
-                        
+
                         <div style="display: flex; flex-direction: column; gap: 16px;">
                             <div style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #ffffff;">
                                 <h4 style="font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin: 0 0 8px 0; border-left: 3px solid #1e3a8a; padding-left: 8px;">A) - Dos Objetivos</h4>
-                                <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 500; text-align: justify;">
-                                    <p style="margin: 0 0 8px 0;">- Acolher, apoiar, orientar e encaminhar mulheres que vivenciam ou vivenciaram violência, por meio de atendimentos psicossociais e orientações legais;</p>
-                                    <p style="margin: 0 0 8px 0;">- Fortalecer o protagonismo dos usuários na defesa dos seus direitos de cidadania;</p>
-                                    <p style="margin: 0;">- Criar estratégias para enfrentamento da situação de violência que acontece no âmbito privado da convivência familiar.</p>
-                                </div>
+                                {% if report_data.status != 'finalized' %}
+                                    <textarea id="pt-item2-objetivos" style="width: 100%; min-height: 100px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 12px; font-size: 12.5px; line-height: 1.6; font-family: inherit; font-weight: 600; resize: vertical;">{{ report_data.item2_a_objetivos }}</textarea>
+                                {% else %}
+                                    <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 600; text-align: justify; white-space: pre-wrap;">{{ report_data.item2_a_objetivos }}</div>
+                                {% endif %}
                             </div>
 
                             <div style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #ffffff;">
                                 <h4 style="font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin: 0 0 8px 0; border-left: 3px solid #1e3a8a; padding-left: 8px;">B) - Das Metas Estabelecidas</h4>
-                                <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 500; text-align: justify;">
-                                    <strong style="font-size: 11.5px; color: #475569; text-transform: uppercase; display: block; margin-bottom: 6px;">Qualitativas</strong>
-                                    <p style="margin: 0 0 12px 0;">- Contribuir para romper com os padrões violadores de direitos no interior da família;</p>
-                                    <p style="margin: 0 0 12px 0;">- Prevenir as reincidências da violência contra a mulher.</p>
-                                    
-                                    <div id="quantitativas-meta-container" style="{% if not report_data.item5_enabled %}display: none;{% endif %} margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 12px;">
-                                        <strong style="font-size: 11.5px; color: #475569; text-transform: uppercase; display: block; margin-bottom: 6px;">Quantitativas</strong>
-                                        <p style="margin: 0;">Atender mulheres vítimas de violência intrafamiliar de acordo com a demanda apresentada.</p>
-                                    </div>
-                                </div>
+                                <p style="font-size: 10.5px; font-weight: 800; color: #475569; text-transform: uppercase; margin: 0 0 6px 0;">Qualitativas</p>
+                                {% if report_data.status != 'finalized' %}
+                                    <textarea id="pt-item2-metas-qual" style="width: 100%; min-height: 80px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 12px; font-size: 12.5px; line-height: 1.6; font-family: inherit; font-weight: 600; resize: vertical; margin-bottom: 12px;">{{ report_data.item2_b_metas }}</textarea>
+                                {% else %}
+                                    <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 600; text-align: justify; white-space: pre-wrap; margin-bottom: 12px;">{{ report_data.item2_b_metas }}</div>
+                                {% endif %}
+                                <p style="font-size: 10.5px; font-weight: 800; color: #475569; text-transform: uppercase; margin: 0 0 6px 0; border-top: 1px dashed #cbd5e1; padding-top: 12px;">Quantitativas</p>
+                                {% if report_data.status != 'finalized' %}
+                                    <textarea id="pt-item2-metas-quant" style="width: 100%; min-height: 60px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 12px; font-size: 12.5px; line-height: 1.6; font-family: inherit; font-weight: 600; resize: vertical;">{{ report_data.item2_b_metas_quant }}</textarea>
+                                {% else %}
+                                    <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 600; text-align: justify; white-space: pre-wrap;">{{ report_data.item2_b_metas_quant }}</div>
+                                {% endif %}
                             </div>
 
                             <div style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #ffffff;">
                                 <h4 style="font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin: 0 0 8px 0; border-left: 3px solid #1e3a8a; padding-left: 8px;">C) - Das Atividades</h4>
-                                <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 500; text-align: justify;">
-                                    <p style="margin: 0 0 8px 0;">- Atendimento de vítimas e vitimizadores de violência intrafamiliar decorrentes de demanda espontânea ou encaminhamento;</p>
-                                    <p style="margin: 0 0 8px 0;">- Apoio, orientação e encaminhamento de usuários por meio de atendimentos psicossociais e orientações legais que possibilitem reflexões nas situações de violência;</p>
-                                    <p style="margin: 0 0 8px 0;">- Realização de campanhas e ações educativas/ preventivas visando a tomada de consciência das pessoas sobre essa problemática;</p>
-                                    <p style="margin: 0 0 8px 0;">- Oportunizar programas de capacitação para a equipe;</p>
-                                    <p style="margin: 0 0 8px 0;">- Permitir livre acesso dos técnicos da SMDES responsáveis pelo monitoramento, aos locais de execução do objeto, apresentando aos mesmos, lista de presença dos usuários;</p>
-                                    <p style="margin: 0;">- Em situação de emergência em saúde pública e/ou calamidade pública devidamente declarado pelo Poder Executivo, o monitoramento da parceria poderá ser realizado pessoalmente ou de forma remota, sendo que todas as orientações proferidas pelos órgãos competentes deverão ser fielmente seguidas.</p>
-                                </div>
+                                {% if report_data.status != 'finalized' %}
+                                    <textarea id="pt-item2-atividades" style="width: 100%; min-height: 120px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 12px; font-size: 12.5px; line-height: 1.6; font-family: inherit; font-weight: 600; resize: vertical;">{{ report_data.item2_c_atividades }}</textarea>
+                                {% else %}
+                                    <div style="font-size: 12.5px; color: #334155; line-height: 1.6; font-weight: 600; text-align: justify; white-space: pre-wrap;">{{ report_data.item2_c_atividades }}</div>
+                                {% endif %}
                             </div>
                         </div>
                     </section>
@@ -1417,11 +1418,17 @@
             }
 
         } else {
-            // Legacy parecer_tecnico
-            report.objeto_relatorio = "Monitoramento de repasse de recursos para a Organização da Sociedade Civil, SOS Ação Mulher e Família de Uberlândia, oriundos deste Município, nos termos da lei autorizativa própria, para desenvolvimento do Serviço de Proteção Social Especial Para Mulheres Vítimas de Violência.";
-            report.item2_a_objetivos = "- Acolher, apoiar, orientar e encaminhar mulheres que vivenciam ou vivenciaram violência, por meio de atendimentos psicossociais e orientações legais;\n- Fortalecer o protagonismo dos usuários na defesa dos seus direitos de cidadania;\n- Criar estratégias para enfrentamento da situação de violência que acontece no âmbito privado da convivência familiar.";
-            report.item2_b_metas = "Qualitativas\n- Contribuir para romper com os padrões violadores de direitos no interior da família;\n- Prevenir as reincidências da violência contra a mulher.\n\nQuantitativas\nAtender mulheres vítimas de violência intrafamiliar de acordo com a demanda apresentada.";
-            report.item2_c_atividades = "- Atendimento de vítimas e vitimizadores de violência intrafamiliar decorrentes de demanda espontânea ou encaminhamento;\n- Apoio, orientação e encaminhamento de usuários por meio de atendimentos psicossociais e orientações legais que possibilitem reflexões nas situações de violência;\n- Realização de campanhas e ações educativas/ preventivas visando a tomada de consciência das pessoas sobre essa problemática;\n- Oportunizar programas de capacitação para a equipe;\n- Permitir livre acesso dos técnicos da SMDES responsáveis pelo monitoramento, aos locais de execução do objeto, apresentando aos mesmos, lista de presença dos usuários;\n- Em situação de emergência em saúde pública e/ou calamidade pública devidamente declarado pelo Poder Executivo, o monitoramento da parceria poderá ser realizado pessoalmente ou de forma remota, sendo que todas as orientações proferidas pelos órgãos competentes deverão ser fielmente seguidas.";
+            // parecer_tecnico (Relatório do Monitoramento)
+            var ptObjeto = document.getElementById('pt-objeto-relatorio');
+            if (ptObjeto) report.objeto_relatorio = ptObjeto.value;
+            var ptObjetivos = document.getElementById('pt-item2-objetivos');
+            if (ptObjetivos) report.item2_a_objetivos = ptObjetivos.value;
+            var ptMetasQual = document.getElementById('pt-item2-metas-qual');
+            if (ptMetasQual) report.item2_b_metas = ptMetasQual.value;
+            var ptMetasQuant = document.getElementById('pt-item2-metas-quant');
+            if (ptMetasQuant) report.item2_b_metas_quant = ptMetasQuant.value;
+            var ptAtividades = document.getElementById('pt-item2-atividades');
+            if (ptAtividades) report.item2_c_atividades = ptAtividades.value;
             report.date = "{{ report_data.date|default:'' }}";
             
             var resTxt = document.getElementById('item3-resultados');
@@ -1541,7 +1548,7 @@
                     if (status === 'finalized') {
                         window.location.reload();
                     } else {
-                        window.location.href = "{% url 'directorates:visit-list' directorate.pk %}";
+                        window.location.href = "{{ return_url }}";
                     }
                 }
             } else {

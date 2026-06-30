@@ -2,22 +2,33 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib import messages
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 from apps.directorates.models import Directorate
 from .models import PopRuaReport
 from .forms import PopRuaForm
 import json
 
-class PopRuaDashboardView(LoginRequiredMixin, TemplateView):
+
+class PopRuaBaseMixin(DirectorateAccessMixin):
+    def get_directorate(self):
+        d = Directorate.objects.filter(name__icontains="População de Rua").first()
+        if not d:
+            raise Http404("Diretoria de População de Rua não encontrada.")
+        return d
+
+
+class PopRuaDashboardView(TvTemplateMixin, PopRuaBaseMixin, TemplateView):
     template_name = "poprua/dashboard.html"
+    tv_template_name = "poprua/tv.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        directorate = Directorate.objects.filter(name__icontains="População de Rua").first()
+        directorate = self.get_directorate()
         context["directorate"] = directorate
-        
+
         year = int(self.request.GET.get("year", timezone.now().year))
         month_param = self.request.GET.get("month", "all")
         context["selected_year"] = year
@@ -82,12 +93,12 @@ class PopRuaDashboardView(LoginRequiredMixin, TemplateView):
         ]
         return context
 
-class PopRuaDataListView(LoginRequiredMixin, TemplateView):
+class PopRuaDataListView(PopRuaBaseMixin, TemplateView):
     template_name = "poprua/data_list.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        directorate = Directorate.objects.filter(name__icontains="População de Rua").first()
+        directorate = self.get_directorate()
         year = int(self.request.GET.get("year", timezone.now().year))
         
         reports = PopRuaReport.objects.filter(directorate=directorate, year=year).order_by("month")
@@ -123,11 +134,12 @@ class PopRuaDataListView(LoginRequiredMixin, TemplateView):
         context["month_headers"] = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
         context["years_range"] = range(2023, timezone.now().year + 1)
         context["directorate"] = directorate
+        context["can_delete"] = self.is_admin()
         return context
 
-class PopRuaUpdateView(LoginRequiredMixin, View):
+class PopRuaUpdateView(PopRuaBaseMixin, View):
     def get(self, request, pk=None):
-        directorate = Directorate.objects.filter(name__icontains="População de Rua").first()
+        directorate = self.get_directorate()
         report = None
         if pk:
             report = get_object_or_404(PopRuaReport, pk=pk)
@@ -144,7 +156,7 @@ class PopRuaUpdateView(LoginRequiredMixin, View):
         })
 
     def post(self, request, pk=None):
-        directorate = Directorate.objects.filter(name__icontains="População de Rua").first()
+        directorate = self.get_directorate()
         report = None
         
         # Primary check: ID based

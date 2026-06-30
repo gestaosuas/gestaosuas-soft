@@ -8,7 +8,8 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.http import JsonResponse
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 from django.views.generic import DetailView, FormView, TemplateView, View
 from apps.directorates.models import Directorate, MonthlyReport
 
@@ -83,13 +84,11 @@ def period_label(year, month):
     return f"JAN - DEZ {year}" if month == "all" else f"{month_name(int(month))} {year}"
 
 
-class CreasBaseMixin(LoginRequiredMixin):
+class CreasBaseMixin(DirectorateAccessMixin):
     def get_directorate(self):
         d = Directorate.objects.filter(pk=self.kwargs["pk"]).first()
         if not d:
             raise Http404("Diretoria nao encontrada.")
-        if "creas" not in d.name.lower():
-            raise Http404("Diretoria nao corresponde a CREAS.")
         return d
 
     def get_year(self):
@@ -103,8 +102,9 @@ class CreasBaseMixin(LoginRequiredMixin):
         return int(m) if m and m != "all" else date.today().month
 
 
-class CreasHomeView(CreasBaseMixin, DetailView):
+class CreasHomeView(TvTemplateMixin, CreasBaseMixin, DetailView):
     template_name = "creasidoso/home.html"
+    tv_template_name = "creasidoso/tv.html"
     context_object_name = "directorate"
 
     def get_object(self, queryset=None):
@@ -329,7 +329,8 @@ class CreasIdosoDataView(CreasBaseMixin, TemplateView):
                     for f in fields]
             groups.append({"title": title, "rows": rows})
         ctx.update({"directorate": d, "selected_year": year, "subcategory": "idoso",
-                     "month_labels": [l for _, l in MONTH_LABELS], "table_groups": groups})
+                     "month_labels": [l for _, l in MONTH_LABELS], "table_groups": groups,
+                     "can_delete": self.is_admin()})
         return ctx
 
 
@@ -354,7 +355,8 @@ class CreasPcdDataView(CreasBaseMixin, TemplateView):
                     for f in fields]
             groups.append({"title": title, "rows": rows})
         ctx.update({"directorate": d, "selected_year": year, "subcategory": "pcd",
-                     "month_labels": [l for _, l in MONTH_LABELS], "table_groups": groups})
+                     "month_labels": [l for _, l in MONTH_LABELS], "table_groups": groups,
+                     "can_delete": self.is_admin()})
         return ctx
 
 
@@ -366,8 +368,14 @@ class CreasMonthlyNarrativeView(CreasBaseMixin, TemplateView):
         d = self.get_directorate()
         year = self.get_year()
         m = self.get_month_number()
-        r = MonthlyReport.objects.filter(directorate=d, setor="creas", year=year, month=m).first()
-        history = MonthlyReport.objects.filter(directorate=d, setor="creas").order_by("-year", "-month")[:8]
+        qs = MonthlyReport.objects.filter(directorate=d, setor="creas", year=year, month=m)
+        if self.is_agente():
+            qs = qs.filter(user_external_id=self.request.user.pk)
+        r = qs.first()
+        history_qs = MonthlyReport.objects.filter(directorate=d, setor="creas").order_by("-year", "-month")
+        if self.is_agente():
+            history_qs = history_qs.filter(user_external_id=self.request.user.pk)
+        history = history_qs[:8]
         ctx.update({"directorate": d, "selected_year": year, "selected_month": m, "monthly_report": r, "history": history})
         return ctx
 
@@ -382,7 +390,9 @@ class CreasNarrativeListView(CreasBaseMixin, TemplateView):
         reports = MonthlyReport.objects.filter(directorate=d, setor="creas").order_by("-year", "-month")
         if year:
             reports = reports.filter(year=year)
-        ctx.update({"directorate": d, "selected_year": year, "reports": reports})
+        if self.is_agente():
+            reports = reports.filter(user_external_id=self.request.user.pk)
+        ctx.update({"directorate": d, "selected_year": year, "reports": reports, "can_delete": self.is_admin()})
         return ctx
 
 class CreasSharedQuickEditView(LoginRequiredMixin, RoleRequiredMixin, View):

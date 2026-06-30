@@ -6,7 +6,8 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView, FormView, TemplateView, View
 from django.http import JsonResponse
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 
 from apps.directorates.models import Directorate, MonthlyReport
 from apps.core.utils import (
@@ -31,16 +32,13 @@ NAICA_CARD_FIELDS = [
 NAICA_UNIT_CAPACITY = 120
 
 
-class NaicaBaseMixin(LoginRequiredMixin):
+class NaicaBaseMixin(DirectorateAccessMixin):
     monthly_report_sector = "naica"
 
     def get_directorate(self):
         directorate = Directorate.objects.filter(pk=self.kwargs["pk"]).first()
         if not directorate:
             raise Http404("Diretoria nao encontrada.")
-        normalized = directorate.name.lower()
-        if "naica" not in normalized:
-            raise Http404("A diretoria informada nao corresponde a NAICAs.")
         return directorate
 
     def get_year(self):
@@ -57,8 +55,9 @@ class NaicaBaseMixin(LoginRequiredMixin):
         return self.request.GET.get("unit") or "all"
 
 
-class NaicaHomeView(NaicaBaseMixin, DetailView):
+class NaicaHomeView(TvTemplateMixin, NaicaBaseMixin, DetailView):
     template_name = "naica/home.html"
+    tv_template_name = "naica/tv.html"
     context_object_name = "directorate"
 
     def get_object(self, queryset=None):
@@ -70,6 +69,7 @@ class NaicaHomeView(NaicaBaseMixin, DetailView):
         selected_year = self.get_year()
         selected_month = self.get_month()
         selected_unit = self.get_unit_name()
+        visible_units = self.filter_units(NAICA_UNITS)
 
         reports = NaicaReport.objects.filter(
             directorate=directorate, year=selected_year
@@ -92,7 +92,7 @@ class NaicaHomeView(NaicaBaseMixin, DetailView):
             if selected_unit == "all":
                 for month_num in range(1, 13):
                     total = 0
-                    for unit in NAICA_UNITS:
+                    for unit in visible_units:
                         report = reports_by_month_unit.get((month_num, unit))
                         if report:
                             total += int(getattr(report, field_name, 0) or 0)
@@ -111,7 +111,7 @@ class NaicaHomeView(NaicaBaseMixin, DetailView):
                 return int(getattr(report, field_name, 0) or 0) if report else 0
             else:
                 total = 0
-                for unit in NAICA_UNITS:
+                for unit in visible_units:
                     r = reports_by_month_unit.get((int(selected_month), unit))
                     if r:
                         total += int(getattr(r, field_name, 0) or 0)
@@ -124,7 +124,7 @@ class NaicaHomeView(NaicaBaseMixin, DetailView):
         desligados_fem_hist = get_unit_history("desligados_fem")
 
         total_atendidas_val = get_unit_value("total_atendidas")
-        unit_count = len(NAICA_UNITS) if selected_unit == "all" else 1
+        unit_count = len(visible_units) if selected_unit == "all" else 1
         capacidade_total = NAICA_UNIT_CAPACITY * unit_count
         taxa_ocupacao = round((total_atendidas_val / capacidade_total) * 100, 1) if capacidade_total > 0 else 0
 
@@ -163,7 +163,7 @@ class NaicaHomeView(NaicaBaseMixin, DetailView):
             "selected_unit": selected_unit,
             "months_range": MONTH_OPTIONS,
             "years_range": build_year_range_from_years(available_years, selected_year),
-            "naica_units": NAICA_UNITS,
+            "naica_units": visible_units,
             "cards": cards,
             "reports": all_reports_list,
             "line_chart_total": build_column_points(total_atendidas_hist),
@@ -228,7 +228,7 @@ class NaicaCreateUpdateView(NaicaBaseMixin, FormView):
             "selected_month": self.get_month_number(),
             "section_items": section_items,
             "existing_report": self._get_existing_report(),
-            "naica_units": NAICA_UNITS,
+            "naica_units": self.filter_units(NAICA_UNITS),
             "selected_unit": self.request.GET.get("unit") or "",
         })
         return context
@@ -246,35 +246,17 @@ class NaicaCreateUpdateView(NaicaBaseMixin, FormView):
                 + f"?year={year_val}&month={month_val}"
             )
 
-        try:
-            report = NaicaReport.objects.get(
-                directorate=directorate,
-                month=month_val,
-                year=year_val,
-                unit_name=unit_name,
-            )
-        except NaicaReport.DoesNotExist:
-            from django.db import connections
-            with connections["default"].cursor() as cursor:
-                cursor.execute("SELECT id FROM auth.users LIMIT 1")
-                user_row = cursor.fetchone()
-            fallback_user_id = user_row[0] if user_row else uuid.uuid4()
-            report = NaicaReport(
-                directorate=directorate,
-                month=month_val,
-                year=year_val,
-                unit_name=unit_name,
-                user_id=fallback_user_id,
-            )
+        report, _ = NaicaReport.objects.get_or_create(
+            directorate=directorate,
+            month=month_val,
+            year=year_val,
+            unit_name=unit_name,
+            defaults={"user_id": self.request.user.pk},
+        )
         for field_name, value in form.cleaned_data.items():
             setattr(report, field_name, value)
         report.status = "submitted"
-        if not report.user_id:
-            from django.db import connections
-            with connections["default"].cursor() as cursor:
-                cursor.execute("SELECT id FROM auth.users LIMIT 1")
-                user_row = cursor.fetchone()
-            report.user_id = user_row[0] if user_row else uuid.uuid4()
+        report.user_id = self.request.user.pk
         report.save()
         messages.success(self.request, f"Dados do NAICA {unit_name} salvos com sucesso.")
         return redirect(
@@ -300,8 +282,9 @@ class NaicaDataView(NaicaBaseMixin, TemplateView):
             key = (report.unit_name, report.month)
             reports_by_unit_month[key] = report
 
+        visible_units = self.filter_units(NAICA_UNITS)
         units_tables = []
-        for unit in NAICA_UNITS:
+        for unit in visible_units:
             groups = []
             for title, fields in NaicaReportForm.section_map:
                 rows = []
@@ -328,8 +311,9 @@ class NaicaDataView(NaicaBaseMixin, TemplateView):
             "directorate": directorate,
             "selected_year": selected_year,
             "month_labels": [label for _month, label in MONTH_LABELS],
-            "naica_units": NAICA_UNITS,
+            "naica_units": visible_units,
             "units_tables": units_tables,
+            "can_delete": self.is_admin(),
         })
         return context
 
@@ -342,16 +326,21 @@ class NaicaMonthlyNarrativeView(NaicaBaseMixin, TemplateView):
         directorate = self.get_directorate()
         selected_year = self.get_year()
         month_val = self.get_month_number()
-        report = MonthlyReport.objects.filter(
+        qs = MonthlyReport.objects.filter(
             directorate=directorate,
             setor="naica",
             year=selected_year,
             month=month_val,
-        ).first()
-        history = MonthlyReport.objects.filter(
-            directorate=directorate,
-            setor="naica",
-        ).order_by("-year", "-month", "-created_at")[:8]
+        )
+        if self.is_agente():
+            qs = qs.filter(user_external_id=self.request.user.pk)
+        report = qs.first()
+
+        history_qs = MonthlyReport.objects.filter(directorate=directorate, setor="naica").order_by("-year", "-month", "-created_at")
+        if self.is_agente():
+            history_qs = history_qs.filter(user_external_id=self.request.user.pk)
+        history = history_qs[:8]
+
         context.update({
             "directorate": directorate,
             "selected_year": selected_year,
@@ -376,10 +365,13 @@ class NaicaNarrativeListView(NaicaBaseMixin, TemplateView):
         ).order_by("-year", "-month", "-created_at")
         if selected_year:
             reports = reports.filter(year=selected_year)
+        if self.is_agente():
+            reports = reports.filter(user_external_id=self.request.user.pk)
         context.update({
             "directorate": directorate,
             "selected_year": selected_year,
             "reports": reports,
+            "can_delete": self.is_admin(),
             "back_url": reverse("naica:home", kwargs={"pk": directorate.pk}) + f"?year={selected_year}",
             "monthly_report_base_url": reverse("naica:monthly-report", kwargs={"pk": directorate.pk}),
         })

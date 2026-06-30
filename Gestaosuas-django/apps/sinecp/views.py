@@ -6,7 +6,8 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView, FormView, TemplateView, View
 
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 from apps.directorates.models import Directorate, MonthlyReport
 from apps.core.utils import (
     MONTH_LABELS, MONTH_OPTIONS, build_sparkline, build_column_points,
@@ -37,7 +38,7 @@ CP_ATENDIMENTOS_FIELDS = [
     "cp_planalto_atendimentos", "maravilha_atendimentos", "unitech_atendimentos", "onibus_atendimentos"
 ]
 
-class SineCpBaseMixin(LoginRequiredMixin):
+class SineCpBaseMixin(DirectorateAccessMixin):
     def get_directorate(self):
         directorate = Directorate.objects.filter(name__icontains="sine").first()
         if not directorate:
@@ -53,8 +54,9 @@ class SineCpBaseMixin(LoginRequiredMixin):
         return self.request.GET.get("month") or "all"
 
 
-class SineCpHomeView(SineCpBaseMixin, DetailView):
+class SineCpHomeView(TvTemplateMixin, SineCpBaseMixin, DetailView):
     template_name = "sinecp/home.html"
+    tv_template_name = "sinecp/tv.html"
     context_object_name = "directorate"
 
     def get_object(self, queryset=None):
@@ -259,6 +261,7 @@ class SharedDataView(SineCpBaseMixin, TemplateView):
             "month_labels": [label for _, label in MONTH_LABELS],
             "table_groups": table_groups,
             "module_title": self.module_title,
+            "can_delete": self.is_admin(),
             "back_url": reverse("sinecp:home") + f"?tab={self.back_tab}&year={selected_year}",
             "form_url": reverse(self.form_view_name) + f"?year={selected_year}",
             "monthly_report_url": reverse(self.monthly_report_view_name) + f"?year={selected_year}",
@@ -293,8 +296,14 @@ class SharedMonthlyNarrativeView(SineCpBaseMixin, TemplateView):
         directorate = self.get_directorate()
         selected_year = self.get_year()
         month = int(self.request.GET.get("month") or date.today().month)
-        report = MonthlyReport.objects.filter(directorate=directorate, setor=self.setor, year=selected_year, month=month).first()
-        history = MonthlyReport.objects.filter(directorate=directorate, setor=self.setor).order_by("-year", "-month")[:8]
+        qs = MonthlyReport.objects.filter(directorate=directorate, setor=self.setor, year=selected_year, month=month)
+        if self.is_agente():
+            qs = qs.filter(user_external_id=self.request.user.pk)
+        report = qs.first()
+        history_qs = MonthlyReport.objects.filter(directorate=directorate, setor=self.setor).order_by("-year", "-month")
+        if self.is_agente():
+            history_qs = history_qs.filter(user_external_id=self.request.user.pk)
+        history = history_qs[:8]
         context.update({
             "directorate": directorate,
             "selected_year": selected_year,
@@ -322,11 +331,14 @@ class SharedNarrativeListView(SineCpBaseMixin, TemplateView):
         directorate = self.get_directorate()
         selected_year = self.get_year()
         reports = MonthlyReport.objects.filter(directorate=directorate, setor=self.setor, year=selected_year).order_by("-year", "-month")
+        if self.is_agente():
+            reports = reports.filter(user_external_id=self.request.user.pk)
         context.update({
             "directorate": directorate,
             "selected_year": selected_year,
             "module_title": self.module_title,
             "reports": reports,
+            "can_delete": self.is_admin(),
             "back_url": reverse("sinecp:home") + f"?tab={self.back_tab}&year={selected_year}",
             "monthly_report_base_url": reverse(self.monthly_view_name),
         })

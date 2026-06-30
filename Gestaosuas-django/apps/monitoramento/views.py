@@ -137,10 +137,16 @@ class MonitoramentoHomeView(MonitoramentoBaseMixin, DetailView):
             visit.tecnico1_display = title_name(assinaturas.get("tecnico1_nome", ""))
             visit.tecnico2_display = title_name(assinaturas.get("tecnico2_nome", ""))
 
+        _total_visits = len(stats_visits)
+        _finalized_visits = len([v for v in stats_visits if v.status in ["completed", "finalized"]])
+        _draft_visits = len([v for v in stats_visits if v.status == "draft"])
+        _finalization_rate = int(_finalized_visits / _total_visits * 100) if _total_visits else 0
         subvencao_stats = {
             "totalOSCs": directorate.oscs.count(),
-            "totalVisits": len(stats_visits),
-            "finalizedVisits": len([v for v in stats_visits if v.status in ["completed", "finalized"]]),
+            "totalVisits": _total_visits,
+            "finalizedVisits": _finalized_visits,
+            "draftVisits": _draft_visits,
+            "finalizationRate": _finalization_rate,
         }
 
         # Theme detection
@@ -237,6 +243,7 @@ class MonitoramentoHomeView(MonitoramentoBaseMixin, DetailView):
 
         context["cards"] = cards
         context["period_label"] = build_period_label(selected_year, selected_month)
+        context["can_delete"] = self.request.user.is_superuser or (profile and profile.role == "admin")
         return context
 
 

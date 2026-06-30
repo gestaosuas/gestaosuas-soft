@@ -9,9 +9,11 @@ from apps.directorates.models import Directorate, MonthlyReport
 from apps.ceai.models import CeaiCategory, CeaiOficina, Submission
 from apps.ceai.constants import CEAI_UNITS, CEAI_FORM_DEFINITION, CONDOMINIO_IDOSO_FORM_DEFINITION
 from apps.accounts.mixins import RoleRequiredMixin
+from apps.core.mixins import TvTemplateMixin
 
-class CeaiDashboardView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
+class CeaiDashboardView(TvTemplateMixin, LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     template_name = "ceai/dashboard.html"
+    tv_template_name = "ceai/tv.html"
     allowed_roles = ["admin", "diretor", "agente"]
 
     def get_context_data(self, **kwargs):

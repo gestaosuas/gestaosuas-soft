@@ -8,7 +8,8 @@ from django.urls import reverse
 from django.views.generic import DetailView, FormView, TemplateView, View
 from django.utils import timezone
 
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 from apps.directorates.models import Directorate, MonthlyReport
 from apps.core.utils import (
     MONTH_LABELS, MONTH_OPTIONS, build_sparkline, build_column_points,
@@ -35,7 +36,7 @@ CRAS_CARD_FIELDS = [
     ("Retenção", "__retencao__", "shield-check", "#06b6d4"),
 ]
 
-class CrasBaseMixin(LoginRequiredMixin):
+class CrasBaseMixin(DirectorateAccessMixin):
     monthly_report_sector = "cras"
 
     def get_directorate(self):
@@ -56,12 +57,10 @@ class CrasBaseMixin(LoginRequiredMixin):
         month_value = self.request.GET.get("month")
         return int(month_value) if month_value and month_value != "all" else date.today().month
 
-    def get_allowed_units(self):
-        return None
 
-
-class CrasHomeView(CrasBaseMixin, DetailView):
+class CrasHomeView(TvTemplateMixin, CrasBaseMixin, DetailView):
     template_name = "cras/home.html"
+    tv_template_name = "cras/tv.html"
     context_object_name = "directorate"
 
     def get_object(self, queryset=None):
@@ -73,6 +72,9 @@ class CrasHomeView(CrasBaseMixin, DetailView):
         selected_year = self.get_year()
         selected_month = self.get_month()
         selected_unit = self.request.GET.get("unit") or "all"
+
+        # Filtra unidades pelo que o usuário tem acesso
+        visible_units = self.filter_units(CRAS_UNITS)
 
         reports = CrasReport.objects.filter(directorate=directorate, year=selected_year)
         available_years = sorted(list(set(CrasReport.objects.filter(directorate=directorate).values_list("year", flat=True))), reverse=True)
@@ -94,7 +96,7 @@ class CrasHomeView(CrasBaseMixin, DetailView):
                     history.append(int(getattr(r, field_name, 0) or 0) if r else 0)
                 else:
                     total = 0
-                    for unit in CRAS_UNITS:
+                    for unit in visible_units:
                         unit_key = strip_accents(unit).upper()
                         r = reports_by_month_unit.get((m, unit_key))
                         if r: total += int(getattr(r, field_name, 0) or 0)
@@ -114,7 +116,7 @@ class CrasHomeView(CrasBaseMixin, DetailView):
                 report = reports_by_month_unit.get((month_val, unit_key))
                 return int(getattr(report, field_name, 0) or 0) if report else 0
             total = 0
-            for unit in CRAS_UNITS:
+            for unit in visible_units:
                 unit_key = strip_accents(unit).upper()
                 r = reports_by_month_unit.get((month_val, unit_key))
                 if r: total += int(getattr(r, field_name, 0) or 0)
@@ -152,7 +154,7 @@ class CrasHomeView(CrasBaseMixin, DetailView):
             "selected_unit": selected_unit,
             "months_range": MONTH_OPTIONS,
             "years_range": build_year_range_from_years(available_years, selected_year),
-            "cras_units": CRAS_UNITS,
+            "cras_units": visible_units,
             "cards": cards,
             "reports": list(reports),
             "line_chart_cadastros": build_column_points(get_unit_history("cadastros_novos")),
@@ -203,7 +205,7 @@ class CrasCreateUpdateView(CrasBaseMixin, FormView):
         context.update({
             "directorate": self.get_directorate(), "selected_year": self.get_year(), "selected_month": self.get_month_number(),
             "section_items": section_items, "existing_report": existing,
-            "cras_units": CRAS_UNITS, "selected_unit": self.request.GET.get("unit") or "",
+            "cras_units": self.filter_units(CRAS_UNITS), "selected_unit": self.request.GET.get("unit") or "",
             "existing_rma": existing.rma_url if existing else None,
         })
         return context
@@ -221,6 +223,8 @@ class CrasCreateUpdateView(CrasBaseMixin, FormView):
             if field_name == "rma_file":
                 continue
             setattr(report, field_name, value)
+        # Registra quem salvou
+        report.user_external_id = self.request.user.pk
         # Handle RMA file upload
         rma_file = form.cleaned_data.get("rma_file")
         if rma_file:
@@ -245,6 +249,7 @@ class CrasDataView(CrasBaseMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         directorate = self.get_directorate()
         selected_year = self.get_year()
+        visible_units = self.filter_units(CRAS_UNITS)
         reports = {}
         rma_data = {}
         for r in CrasReport.objects.filter(directorate=directorate, year=selected_year):
@@ -256,7 +261,7 @@ class CrasDataView(CrasBaseMixin, TemplateView):
                 rma_data[unit_upper] = {}
             rma_data[unit_upper][r.month] = {"url": r.rma_url, "name": r.anexo_rma}
         units_tables = []
-        for unit in CRAS_UNITS:
+        for unit in visible_units:
             unit_key = strip_accents(unit).upper()
             groups = []
             for title, fields in CrasReportForm.section_map:
@@ -267,13 +272,18 @@ class CrasDataView(CrasBaseMixin, TemplateView):
                         "values": [{"val": getattr(reports.get((unit_key, m)), f, "") if reports.get((unit_key, m)) else "", "sub_id": reports.get((unit_key, m)).id if reports.get((unit_key, m)) else None, "month": m, "year": selected_year, "unit": unit} for m in range(1, 13)]
                     })
                 groups.append({"title": title, "rows": rows})
-            # RMA row
             rma_row = []
             for m in range(1, 13):
                 rm = rma_data.get(unit_key, {}).get(m, {})
                 rma_row.append(rm)
             units_tables.append({"unit": unit, "groups": groups, "rma": rma_row})
-        context.update({"directorate": directorate, "selected_year": selected_year, "month_labels": [l for _, l in MONTH_LABELS], "units_tables": units_tables})
+        context.update({
+            "directorate": directorate,
+            "selected_year": selected_year,
+            "month_labels": [l for _, l in MONTH_LABELS],
+            "units_tables": units_tables,
+            "can_delete": self.is_admin(),
+        })
         return context
 
 class CrasMonthlyNarrativeView(CrasBaseMixin, TemplateView):
@@ -283,9 +293,25 @@ class CrasMonthlyNarrativeView(CrasBaseMixin, TemplateView):
         directorate = self.get_directorate()
         selected_year = self.get_year()
         month_val = self.get_month_number()
-        report = MonthlyReport.objects.filter(directorate=directorate, setor="cras", year=selected_year, month=month_val).first()
-        history = MonthlyReport.objects.filter(directorate=directorate, setor="cras").order_by("-year", "-month")[:8]
-        context.update({"directorate": directorate, "selected_year": selected_year, "selected_month": month_val, "monthly_report": report, "history": history})
+
+        # Agente vê só o próprio relatório; diretor/admin vêem todos da diretoria
+        qs = MonthlyReport.objects.filter(directorate=directorate, setor="cras", year=selected_year, month=month_val)
+        if self.is_agente():
+            qs = qs.filter(user_external_id=self.request.user.pk)
+        report = qs.first()
+
+        history_qs = MonthlyReport.objects.filter(directorate=directorate, setor="cras").order_by("-year", "-month")
+        if self.is_agente():
+            history_qs = history_qs.filter(user_external_id=self.request.user.pk)
+        history = history_qs[:8]
+
+        context.update({
+            "directorate": directorate,
+            "selected_year": selected_year,
+            "selected_month": month_val,
+            "monthly_report": report,
+            "history": history,
+        })
         return context
 
 class CrasNarrativeListView(CrasBaseMixin, TemplateView):
@@ -295,8 +321,17 @@ class CrasNarrativeListView(CrasBaseMixin, TemplateView):
         directorate = self.get_directorate()
         selected_year = self.get_year()
         reports = MonthlyReport.objects.filter(directorate=directorate, setor="cras").order_by("-year", "-month")
-        if selected_year: reports = reports.filter(year=selected_year)
-        context.update({"directorate": directorate, "selected_year": selected_year, "reports": reports})
+        if selected_year:
+            reports = reports.filter(year=selected_year)
+        # Agente vê só os próprios relatórios
+        if self.is_agente():
+            reports = reports.filter(user_external_id=self.request.user.pk)
+        context.update({
+            "directorate": directorate,
+            "selected_year": selected_year,
+            "reports": reports,
+            "can_delete": self.is_admin(),
+        })
         return context
 
 class CrasQuickEditView(LoginRequiredMixin, RoleRequiredMixin, View):

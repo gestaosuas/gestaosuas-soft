@@ -96,6 +96,7 @@
                                 <a href="{% url 'directorates:osc-update' osc.pk %}" class="action-icon-btn-sm" title="Editar">
                                     <i data-lucide="pencil"></i>
                                 </a>
+                                {% if can_delete %}
                                 <form action="{% url 'directorates:osc-delete' osc.pk %}" method="post" style="display:inline;"
                                       onsubmit="return confirm('Excluir OSC {{ osc.name }}?')">
                                     {% csrf_token %}
@@ -103,6 +104,7 @@
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}

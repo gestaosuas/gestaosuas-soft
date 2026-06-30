@@ -1,16 +1,11 @@
 <nav class="navbar{% if request.GET.tv %} tv-hidden{% endif %}" id="main-navbar">
     {% if request.GET.tv %}{% else %}
-    <a href="{% url 'core:dashboard' %}" class="nav-brand">
+    <a href="{% url 'core:map' %}" class="nav-brand">
         <img src="{{ logo_url }}" alt="Logo" style="height: 48px; width: auto; object-fit: contain;">
         <span class="nav-emphasis">Vigilância Socioassistencial</span>
     </a>
 
     <div class="nav-main">
-        <a href="{% url 'core:dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Painel Geral</span>
-        </a>
-
         <a href="{% url 'core:tv-dashboard' %}" class="nav-link {% if '/tv' in request.path %}active{% endif %}">
             <i data-lucide="monitor-play"></i>
             <span>Dashboard Diretorias</span>

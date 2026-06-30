@@ -7,7 +7,8 @@ from django.urls import reverse
 from django.views.generic import DetailView, FormView, TemplateView, View
 
 from django.http import JsonResponse
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 from apps.directorates.models import Directorate, MonthlyReport
 from apps.core.utils import (
     MONTH_LABELS, MONTH_OPTIONS, build_sparkline, build_column_points,
@@ -33,7 +34,7 @@ VISITS_BREAKDOWN = [
 ]
 
 
-class BeneficiosBaseMixin(LoginRequiredMixin):
+class BeneficiosBaseMixin(DirectorateAccessMixin):
     def get_directorate(self):
         directorate = Directorate.objects.filter(name__icontains="benef").first()
         if not directorate:
@@ -47,8 +48,9 @@ class BeneficiosBaseMixin(LoginRequiredMixin):
         return self.request.GET.get("month") or "all"
 
 
-class BeneficiosHomeView(BeneficiosBaseMixin, DetailView):
+class BeneficiosHomeView(TvTemplateMixin, BeneficiosBaseMixin, DetailView):
     template_name = "beneficios/home.html"
+    tv_template_name = "beneficios/tv.html"
     context_object_name = "directorate"
 
     def get_object(self, queryset=None):
@@ -216,6 +218,7 @@ class BeneficiosDataView(BeneficiosBaseMixin, TemplateView):
                 "selected_year": selected_year,
                 "month_labels": [label for _month, label in self.month_labels],
                 "table_groups": table_groups,
+                "can_delete": self.is_admin(),
             }
         )
         return context
@@ -229,16 +232,22 @@ class BeneficiosMonthlyNarrativeView(BeneficiosBaseMixin, TemplateView):
         directorate = self.get_directorate()
         selected_year = self.get_year()
         month = int(self.request.GET.get("month") or date.today().month)
-        report = MonthlyReport.objects.filter(
+        qs = MonthlyReport.objects.filter(
             directorate=directorate,
             setor="beneficios",
             year=selected_year,
             month=month,
-        ).first()
-        history = MonthlyReport.objects.filter(
+        )
+        if self.is_agente():
+            qs = qs.filter(user_external_id=self.request.user.pk)
+        report = qs.first()
+        history_qs = MonthlyReport.objects.filter(
             directorate=directorate,
             setor="beneficios",
-        ).order_by("-year", "-month", "-created_at")[:8]
+        ).order_by("-year", "-month", "-created_at")
+        if self.is_agente():
+            history_qs = history_qs.filter(user_external_id=self.request.user.pk)
+        history = history_qs[:8]
         months_range = [
             (1, 'Jan'), (2, 'Fev'), (3, 'Mar'), (4, 'Abr'),
             (5, 'Mai'), (6, 'Jun'), (7, 'Jul'), (8, 'Ago'),
@@ -275,14 +284,15 @@ class BeneficiosNarrativeListView(BeneficiosBaseMixin, TemplateView):
             reports = reports.filter(year=selected_year)
         if selected_month and selected_month != "all":
             reports = reports.filter(month=selected_month)
-            
-        # Months range for the filter
+        if self.is_agente():
+            reports = reports.filter(user_external_id=self.request.user.pk)
+
         months_range = [
             (1, 'Jan'), (2, 'Fev'), (3, 'Mar'), (4, 'Abr'),
             (5, 'Mai'), (6, 'Jun'), (7, 'Jul'), (8, 'Ago'),
             (9, 'Set'), (10, 'Out'), (11, 'Nov'), (12, 'Dez')
         ]
-            
+
         context.update(
             {
                 "directorate": directorate,
@@ -290,6 +300,7 @@ class BeneficiosNarrativeListView(BeneficiosBaseMixin, TemplateView):
                 "selected_month": selected_month,
                 "months_range": months_range,
                 "reports": reports,
+                "can_delete": self.is_admin(),
             }
         )
         return context

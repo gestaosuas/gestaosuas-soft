@@ -6,7 +6,8 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView, FormView, TemplateView, View
-from apps.accounts.mixins import RoleRequiredMixin
+from apps.accounts.mixins import RoleRequiredMixin, DirectorateAccessMixin
+from apps.core.mixins import TvTemplateMixin
 from apps.directorates.models import Directorate
 
 from .models import CasaDaMulherReport, DiversidadeReport, NucleoDiversidadeReport
@@ -83,7 +84,7 @@ def period_label(year, month):
     return f"JAN - DEZ {year}" if month == "all" else f"{month_name(int(month))} {year}"
 
 
-class CasaMulherBaseMixin(LoginRequiredMixin):
+class CasaMulherBaseMixin(DirectorateAccessMixin):
     def get_directorate(self):
         d = Directorate.objects.filter(pk=self.kwargs["pk"]).first()
         if not d:
@@ -101,8 +102,9 @@ class CasaMulherBaseMixin(LoginRequiredMixin):
         return int(m) if m and m != "all" else date.today().month
 
 
-class CasaMulherHomeView(CasaMulherBaseMixin, DetailView):
+class CasaMulherHomeView(TvTemplateMixin, CasaMulherBaseMixin, DetailView):
     template_name = "casamulher/home.html"
+    tv_template_name = "casamulher/tv.html"
     context_object_name = "directorate"
 
     def get_object(self, queryset=None):
@@ -352,7 +354,8 @@ class CasaMulherGenericDataView(CasaMulherBaseMixin, TemplateView):
             groups.append({"title": title, "rows": rows})
         ctx.update({
             "directorate": d, "selected_year": year, "subcategory": self.subcategory,
-            "month_labels": [l for _, l in MONTH_LABELS], "table_groups": groups
+            "month_labels": [l for _, l in MONTH_LABELS], "table_groups": groups,
+            "can_delete": self.is_admin(),
         })
         return ctx
 

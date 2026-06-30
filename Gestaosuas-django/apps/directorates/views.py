@@ -376,6 +376,21 @@ def is_subvencao_directorate(directorate):
     return "subvencao" in ascii_name or "emenda" in ascii_name or "fundo" in ascii_name
 
 
+def get_monitoring_back_url(directorate):
+    """Retorna a URL de volta correta: monitoramento:home para directorias de monitoramento,
+    directorates:visit-list para as demais."""
+    ascii_name = strip_accents((getattr(directorate, "name", "") or "").lower())
+    is_monitoring = (
+        "subvencao" in ascii_name
+        or "emenda" in ascii_name
+        or "fundo" in ascii_name
+        or "outros" in ascii_name
+    )
+    if is_monitoring:
+        return reverse("monitoramento:home", kwargs={"pk": directorate.pk})
+    return reverse("directorates:visit-list", kwargs={"pk": directorate.pk})
+
+
 def get_safe_next_url(request):
     next_url = request.POST.get("next") or request.GET.get("next")
     if next_url and next_url.startswith("/"):
@@ -639,6 +654,8 @@ class OscListView(LoginRequiredMixin, ListView):
             .order_by("activity_type")
         )
         context["activity_types"] = list(types)
+        profile = getattr(self.request.user, 'profile', None)
+        context["can_delete"] = self.request.user.is_superuser or (profile and profile.role == 'admin')
         return context
 
 class VisitListView(LoginRequiredMixin, ListView):
@@ -697,7 +714,7 @@ class VisitListView(LoginRequiredMixin, ListView):
             visit.tecnico1_display = title_name(assinaturas.get("tecnico1_nome", ""))
             visit.tecnico2_display = title_name(assinaturas.get("tecnico2_nome", ""))
             visit.is_subvencao = is_subvencao_directorate(visit.directorate)
-            relatorio = visit.relatorio_final or {}
+            relatorio = visit.parecer_tecnico or {}
             visit.relatorio_status = relatorio.get("status") if isinstance(relatorio, dict) else None
         context["profiles"] = Profile.objects.all().order_by("full_name")
         context["all_directorates"] = Directorate.objects.all().order_by("name")
@@ -705,6 +722,8 @@ class VisitListView(LoginRequiredMixin, ListView):
         context["selected_year"] = int(self.request.GET.get("year", datetime.now().year))
         context["selected_bimester"] = get_persistent_bimester(self.request)
         context["bimester_options"] = BIMESTER_OPTIONS
+        profile = getattr(self.request.user, 'profile', None)
+        context["can_delete"] = self.request.user.is_superuser or (profile and profile.role == 'admin')
         return context
 
 class VisitDelegateView(LoginRequiredMixin, View):
@@ -769,6 +788,8 @@ class WorkPlanListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["directorate"] = Directorate.objects.get(pk=self.kwargs["pk"])
         context["selected_osc_id"] = self.request.GET.get("osc", "")
+        profile = getattr(self.request.user, 'profile', None)
+        context["can_delete"] = self.request.user.is_superuser or (profile and profile.role == 'admin')
         return context
 
 class WorkPlanUpdateView(LoginRequiredMixin, UpdateView):
@@ -907,7 +928,7 @@ class VisitReportView(LoginRequiredMixin, DetailView):
     context_object_name = "visit"
 
     REPORT_LABELS = {
-        "parecer_tecnico": "Parecer Técnico",
+        "parecer_tecnico": "Relatório do Monitoramento",
         "parecer_conclusivo": "Parecer Conclusivo",
         "relatorio_final": "Relatório Final",
     }
@@ -989,41 +1010,11 @@ class VisitReportView(LoginRequiredMixin, DetailView):
                     report_data["osc_name"] = self.object.osc.name
                     
         elif report_type == "parecer_tecnico":
-            osc_objeto = (
-                "Monitoramento de repasse de recursos para a Organização da Sociedade Civil, "
-                "SOS Ação Mulher e Família de Uberlândia, oriundos deste Município, nos termos da lei "
-                "autorizativa própria, para desenvolvimento do Serviço de Proteção Social Especial Para "
-                "Mulheres Vítimas de Violência."
-            )
-            osc_objetivos = (
-                "- Acolher, apoiar, orientar e encaminhar mulheres que vivenciam ou vivenciaram violência, "
-                "por meio de atendimentos psicossociais e orientações legais;\n"
-                "- Fortalecer o protagonismo dos usuários na defesa dos seus direitos de cidadania;\n"
-                "- Criar estratégias para enfrentamento da situação de violência que acontece no âmbito "
-                "privado da convivência familiar."
-            )
-            osc_metas = (
-                "Qualitativas\n"
-                "- Contribuir para romper com os padrões violadores de direitos no interior da família;\n"
-                "- Prevenir as reincidências da violência contra a mulher.\n\n"
-                "Quantitativas\n"
-                "Atender mulheres vítimas de violência intrafamiliar de acordo com a demanda apresentada."
-            )
-            osc_atividades = (
-                "- Atendimento de vítimas e vitimizadores de violência intrafamiliar decorrentes de "
-                "demanda espontânea ou encaminhamento;\n"
-                "- Apoio, orientação e encaminhamento de usuários por meio de atendimentos psicossociais "
-                "e orientações legais que possibilitem reflexões nas situações de violência;\n"
-                "- Realização de campanhas e ações educativas/ preventivas visando a tomada de consciência "
-                "das pessoas sobre essa problemática;\n"
-                "- Oportunizar programas de capacitação para a equipe;\n"
-                "- Permitir livre acesso dos técnicos da SMDES responsáveis pelo monitoramento, aos locais "
-                "de execução do objeto, apresentando aos mesmos, lista de presença dos usuários;\n"
-                "- Em situação de emergência em saúde pública e/ou calamidade pública devidamente declarado "
-                "pelo Poder Executivo, o monitoramento da parceria poderá ser realizado pessoalmente ou "
-                "de forma remota, sendo que todas as orientações proferidas pelos órgãos competentes deverão "
-                "ser fielmente seguidas."
-            )
+            osc = self.object.osc
+            osc_objeto = osc.objeto or ""
+            osc_objetivos = osc.objetivos or ""
+            osc_metas = osc.metas or ""
+            osc_atividades = osc.atividades or ""
             
             # Dynamically pull defaults from self.object.atendimento if present
             # Dynamically pull defaults from self.object.atendimento or parecer_tecnico if present
@@ -1154,6 +1145,7 @@ class VisitReportView(LoginRequiredMixin, DetailView):
                 "objeto_relatorio": osc_objeto,
                 "item2_a_objetivos": osc_objetivos,
                 "item2_b_metas": osc_metas,
+                "item2_b_metas_quant": "",
                 "item2_c_atividades": osc_atividades,
                 "item3_resultados": "",
                 "item4_type": "fully",
@@ -1260,6 +1252,7 @@ class VisitReportView(LoginRequiredMixin, DetailView):
         context["is_subvencao"] = is_subvencao
         context["report_data"] = report_data
         context["directorate"] = directorate
+        context["return_url"] = get_safe_next_url(self.request) or get_monitoring_back_url(directorate)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -1449,7 +1442,7 @@ class VisitCreateView(LoginRequiredMixin, TemplateView):
         context["is_new"] = True
         context["object"] = None
         context["is_subvencao_visit"] = is_subvencao_directorate(directorate)
-        context["return_url"] = get_safe_next_url(self.request) or reverse("directorates:visit-list", kwargs={"pk": directorate.pk})
+        context["return_url"] = get_safe_next_url(self.request) or get_monitoring_back_url(directorate)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -1524,14 +1517,13 @@ class VisitCreateView(LoginRequiredMixin, TemplateView):
 
         if visit.status == "completed":
             messages.success(request, "Visita finalizada com sucesso.")
-            if is_subvencao_directorate(directorate):
-                return redirect("directorates:visit-report", pk=visit.pk, report_type="relatorio_final")
+            return redirect("directorates:visit-instrumental", pk=visit.pk)
         else:
             messages.success(request, "Rascunho salvo com sucesso.")
         next_url = get_safe_next_url(request)
         if next_url:
             return redirect(next_url)
-        return redirect("directorates:visit-list", pk=directorate.pk)
+        return redirect(get_monitoring_back_url(directorate))
 
 class VisitInstrumentalView(LoginRequiredMixin, UpdateView):
     model = Visit
@@ -1555,7 +1547,7 @@ class VisitInstrumentalView(LoginRequiredMixin, UpdateView):
         context["oscs"] = Osc.objects.filter(directorate_id=self.object.directorate.pk).order_by("name")
         context["is_new"] = False
         context["is_subvencao_visit"] = is_subvencao_directorate(self.object.directorate)
-        context["return_url"] = get_safe_next_url(self.request) or reverse("directorates:visit-list", kwargs={"pk": self.object.directorate.pk})
+        context["return_url"] = get_safe_next_url(self.request) or get_monitoring_back_url(self.object.directorate)
         return context
 
     def post(self, request, *args, **kwargs):
