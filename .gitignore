@@ -1,12 +1,78 @@
-# Django app — repositório separado, não versionar aqui
-Gestaosuas-django/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# node_modules raiz (pertence ao Gestaosuas-Next/)
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# credentials and secrets
+dashboard-vigilancia-*.json
+credentials.json
+debug_users.ts
+
+# local scripts
+audit-links.js
+audit-oscs.js
+debug-dir-table.js
+debug-oscs-table.js
+detailed-audit-oscs.js
+fix-permissions.js
+test-dir-retrieval.js
+debug-permissions.ts
+check-database.js
+fix-create-directorate.js
+
+# scripts de diagnóstico e temporários
+check-*.js
+debug-*.js
+inspect-*.js
+dump-*.js
+dump-*.json
+search-*.js
+list-*.js
+find-*.js
+global-*.js
+final-*.js
+today.json
+tmp/
+
+# Django app — repositório separado
+Gestaosuas-django/
 
 # Claude memory
 .claude/
-
-# OS
-.DS_Store
-Thumbs.db
