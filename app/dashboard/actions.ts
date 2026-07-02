@@ -2748,7 +2748,61 @@ export async function saveNotificacoes(visitId: string, notifications: { name: s
     return { success: true }
 }
 
+export async function revertReports(visitId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
 
+    const adminSupabase = createAdminClient()
+
+    const { data: visit } = await adminSupabase
+        .from('visits')
+        .select('relatorio_final, parecer_conclusivo, user_id, directorate_id')
+        .eq('id', visitId)
+        .single()
+
+    if (!visit) throw new Error("Visita não encontrada")
+
+    if (!await canAccessVisit(user.id, visitId)) {
+        throw new Error("Sem permissão para reverter estes relatórios.")
+    }
+
+    const updates: any = { updated_at: new Date().toISOString() }
+    if (visit.relatorio_final) {
+        updates.relatorio_final = { ...visit.relatorio_final, status: 'draft' }
+    }
+    if (visit.parecer_conclusivo) {
+        updates.parecer_conclusivo = { ...visit.parecer_conclusivo, status: 'draft' }
+    }
+
+    const { error } = await adminSupabase
+        .from('visits')
+        .update(updates)
+        .eq('id', visitId)
+
+    if (error) throw new Error("Erro ao reverter relatórios: " + error.message)
+
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: dir } = await adminSupabase.from('directorates').select('name').eq('id', visit.directorate_id).single()
+        const { data: visitData } = await adminSupabase.from('visits').select('visit_date').eq('id', visitId).single()
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            directorate_id: visit.directorate_id,
+            directorate_name: dir?.name || 'Diretoria',
+            action_type: 'UPDATE',
+            resource_type: 'REPORT',
+            resource_name: `Reversão para rascunho: Visita ${visitData?.visit_date.split('-').reverse().join('/')}`
+        })
+    } catch (e) {
+        console.error("Log error in revertReports:", e)
+    }
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
 
 export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: string, objetivos: string, metas: string, atividades: string }) {
     const supabase = await createClient()

@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX, ArrowLeft } from "lucide-react"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX, ArrowLeft, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { delegateVisit, saveNotificacoes } from "@/app/dashboard/actions"
+import { delegateVisit, saveNotificacoes, revertReports } from "@/app/dashboard/actions"
 import { cn } from "@/lib/utils"
 import { 
     Select, 
@@ -47,6 +47,7 @@ export function FinalReportList({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const [previewTitle, setPreviewTitle] = useState<string>("")
     const [uploadingVisitId, setUploadingVisitId] = useState<string | null>(null)
+    const [revertingVisitId, setRevertingVisitId] = useState<string | null>(null)
 
     const toggleUser = (userId: string) => {
         setSelectedUserIds(prev => 
@@ -300,13 +301,38 @@ export function FinalReportList({
                                     Parecer Conclusivo
                                 </Button>
 
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => router.push(`/dashboard/diretoria/${directorateId}/subvencao/visitas/${visit.id}/parecer`)}
                                     className="w-full h-11 gap-2 font-bold uppercase text-[10px] rounded-xl border-zinc-200 hover:bg-zinc-100 transition-all text-zinc-500 shadow-sm bg-white"
                                 >
                                     <FileText className="h-4 w-4" />
                                     Instrumental
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    disabled={revertingVisitId === visit.id}
+                                    onClick={async () => {
+                                        if (!confirm("Reverter Relatório Final e Parecer Conclusivo para rascunho? Eles poderão ser editados novamente.")) return
+                                        setRevertingVisitId(visit.id)
+                                        try {
+                                            await revertReports(visit.id)
+                                            router.refresh()
+                                        } catch (e: any) {
+                                            alert(e.message || "Erro ao reverter relatórios")
+                                        } finally {
+                                            setRevertingVisitId(null)
+                                        }
+                                    }}
+                                    className="w-full h-9 gap-2 font-bold uppercase text-[10px] rounded-xl border-amber-200 hover:bg-amber-50 transition-all text-amber-600 shadow-sm bg-white"
+                                >
+                                    {revertingVisitId === visit.id ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                    )}
+                                    Reverter para Rascunho
                                 </Button>
 
                                 <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
