@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX, ArrowLeft, RotateCcw } from "lucide-react"
+import { FileText, CheckCircle2, FileCheck, UserCheck, Loader2, Printer, X, Eye, Paperclip, Trash2, ExternalLink, Calendar, Search, FilterX, ArrowLeft, RotateCcw, ClipboardList } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { delegateVisit, saveNotificacoes, revertReports } from "@/app/dashboard/actions"
@@ -269,6 +269,14 @@ export function FinalReportList({
                             <CardTitle className="text-[13px] font-bold text-blue-900 dark:text-blue-100 transition-colors line-clamp-2 leading-tight" title={visit.oscs?.name}>
                                 {visit.oscs?.name}
                             </CardTitle>
+                            {visit.work_plans?.title && (
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                    <ClipboardList className="h-3 w-3 text-blue-400 shrink-0" />
+                                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold truncate" title={visit.work_plans.title}>
+                                        {visit.work_plans.title}
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex items-center gap-1.5 mt-2">
                                 <Calendar className="h-3 w-3 text-zinc-400" />
                                 <span className="text-[11px] text-zinc-500 font-medium">{new Date(visit.visit_date).toLocaleDateString('pt-BR')}</span>

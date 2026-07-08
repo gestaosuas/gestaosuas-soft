@@ -1791,7 +1791,8 @@ export async function getVisits(directorateId: string) {
         .from('visits')
         .select(`
             *,
-            oscs(name)
+            oscs(name),
+            work_plans(title)
         `)
         .eq('directorate_id', directorateId)
 
@@ -2025,7 +2026,8 @@ export async function getVisitById(id: string) {
         .from('visits')
         .select(`
             *,
-            oscs (*)
+            oscs (*),
+            work_plans (title)
         `)
         .eq('id', id)
         .single()

@@ -340,9 +340,15 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
                 {/* Identification Info - Simplificado conforme solicitação (Restaurando padrão de produção) */}
                 <div className="space-y-4 mb-10 text-[13px] print:text-[11px] no-print:max-w-xl">
                     <div className="flex flex-col md:flex-row md:items-baseline gap-2">
-                        <strong className="uppercase shrink-0 text-blue-900 print:text-black">OSC:</strong> 
+                        <strong className="uppercase shrink-0 text-blue-900 print:text-black">OSC:</strong>
                         <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">{oscName}</span>
                     </div>
+                    {visit.work_plans?.title && (
+                        <div className="flex flex-col md:flex-row md:items-baseline gap-2">
+                            <strong className="uppercase shrink-0 text-blue-900 print:text-black">Plano de Trabalho:</strong>
+                            <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">{visit.work_plans.title}</span>
+                        </div>
+                    )}
                     <div className="flex flex-col md:flex-row md:items-baseline gap-2">
                         <strong className="uppercase shrink-0 text-blue-900 print:text-black">Data de Preenchimento:</strong> 
                         <span className="grow border-b border-dotted border-zinc-300 font-bold text-zinc-800 print:text-black">

@@ -19,6 +19,7 @@ export const visitSchema = z.object({
     osc_id: z.string().uuid(),
     directorate_id: z.string().uuid(),
     visit_date: z.string(),
+    work_plan_id: z.string().uuid().nullable().optional(),
     technician_name1: z.string().optional(),
     technician_name2: z.string().optional(),
     status: z.enum(['draft', 'finalized']).optional(),

@@ -326,6 +326,7 @@ export function VisitList({
                                 {isEmendas && (
                                     <TableHead className="py-4 font-black">Identificador</TableHead>
                                 )}
+                                <TableHead className="py-4 font-black">Plano de Trabalho</TableHead>
                                 <TableHead className="py-4 font-black">Técnicos</TableHead>
                                 <TableHead className="py-4 font-black">Status</TableHead>
                                 <TableHead className="py-4 font-black">Registrado por</TableHead>
@@ -335,7 +336,7 @@ export function VisitList({
                         <TableBody>
                             {filteredVisits.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-32 text-center text-zinc-500 font-medium">
+                                    <TableCell colSpan={7} className="h-32 text-center text-zinc-500 font-medium">
                                         Nenhuma visita encontrada para os filtros aplicados.
                                     </TableCell>
                                 </TableRow>
@@ -365,6 +366,15 @@ export function VisitList({
                                             </div>
                                         </TableCell>
                                     )}
+                                    <TableCell className="py-6">
+                                        {visit.work_plans?.title ? (
+                                            <div className="text-xs font-bold text-blue-900 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded w-fit max-w-[180px] truncate" title={visit.work_plans.title}>
+                                                {visit.work_plans.title}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-zinc-400">—</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="py-6">
                                         <div className="flex flex-col gap-1">
                                             <div className="text-xs font-bold text-zinc-700 dark:text-zinc-300">

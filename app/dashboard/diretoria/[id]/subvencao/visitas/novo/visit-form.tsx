@@ -50,6 +50,7 @@ import {
 import { cn } from "@/lib/utils"
 import { saveVisit, finalizeVisit } from "@/app/dashboard/actions"
 import { WorkPlanSelector } from "./work-plan-selector"
+import { WorkPlanAssign } from "./work-plan-assign"
 import { ReturnLink } from "../../return-link"
 
 export function VisitForm({
@@ -86,6 +87,7 @@ export function VisitForm({
     // Form State
     const [formData, setFormData] = useState({
         osc_id: initialVisit?.osc_id || initialVisit?.identificacao?.osc_id || "",
+        work_plan_id: initialVisit?.work_plan_id || initialVisit?.identificacao?.work_plan_id || "",
         email: initialVisit?.identificacao?.email || "",
         visit_date: initialVisit?.visit_date || initialVisit?.identificacao?.visit_date || new Date().toISOString().split('T')[0],
         visit_date_1: initialVisit?.identificacao?.visit_date_1 || initialVisit?.visit_date || new Date().toISOString().split('T')[0],
@@ -417,6 +419,7 @@ export function VisitForm({
             const payload = {
                 id: currentVisitId,
                 osc_id: formData.osc_id,
+                work_plan_id: formData.work_plan_id || null,
                 directorate_id: directorateId,
                 visit_date: formData.visit_date_1,
                 identificacao: formData,
@@ -464,6 +467,7 @@ export function VisitForm({
             const payload = {
                 id: currentVisitId,
                 osc_id: formData.osc_id,
+                work_plan_id: formData.work_plan_id || null,
                 directorate_id: directorateId,
                 visit_date: formData.visit_date_1,
                 identificacao: formData,
@@ -856,10 +860,16 @@ export function VisitForm({
                             isLocked && "block"
                         )}>
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-1.5 px-2">
-                                <div className="md:col-span-8 flex items-baseline gap-2">
+                                <div className={cn("flex items-baseline gap-2", initialVisit?.work_plans?.title ? "md:col-span-8" : "md:col-span-12")}>
                                     <span className="text-[11px] font-bold uppercase shrink-0">OSC:</span>
                                     <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px">{selectedOSC?.name || "-"}</span>
                                 </div>
+                                {initialVisit?.work_plans?.title && (
+                                    <div className="md:col-span-4 flex items-baseline gap-2">
+                                        <span className="text-[11px] font-bold uppercase shrink-0">Plano:</span>
+                                        <span className="text-[11px] font-bold border-b border-dotted border-zinc-300 grow pb-px truncate" title={initialVisit.work_plans.title}>{initialVisit.work_plans.title}</span>
+                                    </div>
+                                )}
                                 <div className="md:col-span-4 flex flex-col gap-1">
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-[11px] font-bold uppercase shrink-0">1ª Visita:</span>
@@ -946,7 +956,11 @@ export function VisitForm({
                                                                 key={osc.id}
                                                                 type="button"
                                                                 onClick={() => {
-                                                                    setFormData({ ...formData, osc_id: osc.id })
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        osc_id: osc.id,
+                                                                        work_plan_id: osc.id !== formData.osc_id ? "" : formData.work_plan_id
+                                                                    })
                                                                     setIsOscSelectOpen(false)
                                                                     setOscSearch("")
                                                                 }}
@@ -974,6 +988,15 @@ export function VisitForm({
                                             </div>
                                         </DialogContent>
                                     </Dialog>
+
+                                    {formData.osc_id && (
+                                        <WorkPlanAssign
+                                            oscId={formData.osc_id}
+                                            value={formData.work_plan_id}
+                                            onChange={(planId) => setFormData({ ...formData, work_plan_id: planId })}
+                                            disabled={isLocked}
+                                        />
+                                    )}
                                 </div>
 
 
