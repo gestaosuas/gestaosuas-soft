@@ -2027,7 +2027,7 @@ export async function getVisitById(id: string) {
         .select(`
             *,
             oscs (*),
-            work_plans (title)
+            work_plans (title, objeto, objetivos, metas, atividades)
         `)
         .eq('id', id)
         .single()
@@ -2836,6 +2836,42 @@ export async function saveOSCPartnershipDetails(oscId: string, data: { objeto: s
         })
     } catch (e) {
         console.error("Log error in saveOSCPartnershipDetails:", e)
+    }
+
+    revalidatePath('/dashboard', 'page')
+    return { success: true }
+}
+
+export async function saveWorkPlanPartnershipDetails(workPlanId: string, data: { objeto: string, objetivos: string, metas: string, atividades: string }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const isAdmin = await isAdminCheck(user.id)
+    if (!isAdmin) throw new Error("Apenas administradores podem cadastrar descrições do plano de trabalho.")
+
+    const adminSupabase = createAdminClient()
+    const { error } = await adminSupabase
+        .from('work_plans')
+        .update(data)
+        .eq('id', workPlanId)
+
+    if (error) throw new Error("Erro ao salvar descrições: " + error.message)
+
+    // Log Activity
+    try {
+        const { data: profile } = await adminSupabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const { data: plan } = await adminSupabase.from('work_plans').select('title, osc_id, oscs(name)').eq('id', workPlanId).single()
+
+        await logActivity({
+            user_id: user.id,
+            user_name: profile?.full_name || 'Usuário',
+            action_type: 'UPDATE',
+            resource_type: 'WORK_PLAN',
+            resource_name: `Descrição do Plano - ${(plan as any)?.oscs?.name || 'OSC'} (${plan?.title || 'Plano de Trabalho'})`
+        })
+    } catch (e) {
+        console.error("Log error in saveWorkPlanPartnershipDetails:", e)
     }
 
     revalidatePath('/dashboard', 'page')

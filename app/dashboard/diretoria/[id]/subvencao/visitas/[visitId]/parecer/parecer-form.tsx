@@ -75,10 +75,10 @@ export function OpinionReportForm({ visit, directorateId, directorateName = "", 
     })
     const [report, setReport] = useState(() => {
         const defaultReport = {
-            objeto_relatorio: visit.oscs?.objeto || "",
-            item2_a_objetivos: visit.oscs?.objetivos || "",
-            item2_b_metas: visit.oscs?.metas || "",
-            item2_c_atividades: visit.oscs?.atividades || "",
+            objeto_relatorio: visit.work_plans?.objeto || visit.oscs?.objeto || "",
+            item2_a_objetivos: visit.work_plans?.objetivos || visit.oscs?.objetivos || "",
+            item2_b_metas: visit.work_plans?.metas || visit.oscs?.metas || "",
+            item2_c_atividades: visit.work_plans?.atividades || visit.oscs?.atividades || "",
             item3_resultados: "",
             item4_type: "fully",
             item4_custom: "",

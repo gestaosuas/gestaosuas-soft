@@ -21,12 +21,13 @@ interface PlanoTrabalhoClientProps {
     profile: any
     planCounts: Record<string, number>
     logoUrl?: string
+    isEmendas?: boolean
 }
 
 import { WorkPlansManager } from "./work-plans-manager"
 import { AlertCircle, FileCheck } from "lucide-react"
 
-export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, logoUrl }: PlanoTrabalhoClientProps) {
+export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, logoUrl, isEmendas }: PlanoTrabalhoClientProps) {
     const router = useRouter()
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOsc, setSelectedOsc] = useState<OSC | null>(null)
@@ -122,6 +123,7 @@ export function PlanoTrabalhoClient({ directorateId, oscs, profile, planCounts, 
                 isOpen={!!selectedOsc}
                 onOpenChange={(open) => !open && setSelectedOsc(null)}
                 logoUrl={logoUrl}
+                isEmendas={isEmendas}
             />
         </div>
     )

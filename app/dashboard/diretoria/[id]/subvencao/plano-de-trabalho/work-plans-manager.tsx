@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { FileText, Plus, Eye, Trash2, Calendar, FilePenLine, FilePen, AlertCircle, Save, ArrowLeft, Loader2, ClipboardCheck } from "lucide-react"
 import { useState, useEffect } from "react"
 import { WorkPlanEditor, Block } from "./work-plan-editor"
-import { saveWorkPlan, getWorkPlans, deleteWorkPlan, saveOSCPartnershipDetails } from "@/app/dashboard/actions"
+import { saveWorkPlan, getWorkPlans, deleteWorkPlan, saveOSCPartnershipDetails, saveWorkPlanPartnershipDetails } from "@/app/dashboard/actions"
 import { printWorkPlan } from "./print-utils"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,14 +27,16 @@ interface WorkPlansManagerProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
     logoUrl?: string
+    isEmendas?: boolean
 }
 
-export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenChange, logoUrl }: WorkPlansManagerProps) {
+export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenChange, logoUrl, isEmendas }: WorkPlansManagerProps) {
     const [view, setView] = useState<'list' | 'editor' | 'partnership'>('list')
     const [plans, setPlans] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [editingPlan, setEditingPlan] = useState<any>(null)
     const [savingPartnership, setSavingPartnership] = useState(false)
+    const [descriptionTargetPlan, setDescriptionTargetPlan] = useState<any>(null)
 
     // Partnership Details State
     const [partnershipData, setPartnershipData] = useState({
@@ -49,6 +51,7 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
             loadPlans()
             setView('list')
             setEditingPlan(null)
+            setDescriptionTargetPlan(null)
             setPartnershipData({
                 objeto: osc.objeto || "",
                 objetivos: osc.objetivos || "",
@@ -57,6 +60,17 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
             })
         }
     }, [isOpen, osc])
+
+    const handleOpenPlanDescription = (plan: any) => {
+        setDescriptionTargetPlan(plan)
+        setPartnershipData({
+            objeto: plan.objeto || "",
+            objetivos: plan.objetivos || "",
+            metas: plan.metas || "",
+            atividades: plan.atividades || ""
+        })
+        setView('partnership')
+    }
 
     const loadPlans = async () => {
         if (!osc) return
@@ -91,10 +105,15 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
         if (!osc) return
         setSavingPartnership(true)
         try {
-            await saveOSCPartnershipDetails(osc.id, partnershipData)
+            if (descriptionTargetPlan) {
+                await saveWorkPlanPartnershipDetails(descriptionTargetPlan.id, partnershipData)
+                await loadPlans()
+            } else {
+                await saveOSCPartnershipDetails(osc.id, partnershipData)
+            }
             alert("Descrições salvas com sucesso!")
+            setDescriptionTargetPlan(null)
             setView('list')
-            // Update local state if needed, but the page refresh/revalidate handles it
         } catch (error: any) {
             alert(error.message)
         } finally {
@@ -143,7 +162,9 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
                         {view === 'list'
                             ? `Gerencie os planos de trabalho para ${osc?.name}`
                             : view === 'partnership'
-                                ? 'Cadastre e edite as informações principais do Termo de Colaboração.'
+                                ? descriptionTargetPlan
+                                    ? `Cadastre e edite as informações principais do plano "${descriptionTargetPlan.title}".`
+                                    : 'Cadastre e edite as informações principais do Termo de Colaboração.'
                                 : 'Utilize o editor abaixo para criar ou editar o documento.'
                         }
                     </DialogDescription>
@@ -152,7 +173,7 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
                 {view === 'list' ? (
                     <div className="space-y-6">
                         <div className="flex flex-col gap-3">
-                            {isAdmin && (
+                            {isAdmin && !isEmendas && (
                                 <Button
                                     onClick={() => setView('partnership')}
                                     variant="outline"
@@ -160,6 +181,11 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
                                 >
                                     <ClipboardCheck className="h-4 w-4" /> Cadastrar Descrição dos objetivos, metas e atividades previstas
                                 </Button>
+                            )}
+                            {isAdmin && isEmendas && plans.length > 0 && (
+                                <p className="text-[11px] text-zinc-500 leading-snug px-1">
+                                    Cada plano de trabalho tem sua própria descrição de objeto, objetivos, metas e atividades. Use o ícone <ClipboardCheck className="h-3 w-3 inline align-text-bottom" /> em cada plano abaixo para cadastrá-la.
+                                </p>
                             )}
                             <Button onClick={handleCreateNew} className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2 h-12 text-sm font-bold uppercase tracking-wide shadow-md">
                                 <Plus className="h-4 w-4" /> Criar Novo Plano
@@ -190,6 +216,12 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
                                                             Vazio
                                                         </span>
                                                     )}
+                                                    {isEmendas && !plan.objeto && !plan.objetivos && !plan.metas && !plan.atividades && (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-200">
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            Sem descrição
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
                                                     <Calendar className="h-3 w-3" />
@@ -198,6 +230,17 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            {isAdmin && isEmendas && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    onClick={() => handleOpenPlanDescription(plan)}
+                                                    title="Descrição do plano (objeto, objetivos, metas e atividades)"
+                                                    className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+                                                >
+                                                    <ClipboardCheck className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                             <Button
                                                 variant="outline"
                                                 size="icon"
@@ -280,7 +323,7 @@ export function WorkPlansManager({ osc, directorateId, profile, isOpen, onOpenCh
                         </div>
 
                         <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                            <Button variant="ghost" onClick={() => setView('list')} className="gap-2 uppercase text-xs font-bold text-zinc-500">
+                            <Button variant="ghost" onClick={() => { setDescriptionTargetPlan(null); setView('list') }} className="gap-2 uppercase text-xs font-bold text-zinc-500">
                                 <ArrowLeft className="h-4 w-4" /> Cancelar
                             </Button>
                             <Button onClick={handleSavePartnership} disabled={savingPartnership} className="gap-2 bg-blue-900 hover:bg-black text-white px-8 uppercase text-xs font-bold">
