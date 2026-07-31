@@ -297,10 +297,6 @@ export default async function ParecerConclusivoPrintPage({ params }: Props) {
                             <div className="field-value">{v(report.cnpj)}</div>
                         </div>
                         <div className="field-group">
-                            <div className="field-label">Recurso</div>
-                            <div className="field-value">{v(report.emenda)}</div>
-                        </div>
-                        <div className="field-group">
                             <div className="field-label">Nº Termo</div>
                             <div className="field-value">{v(report.termo_fomento)}</div>
                         </div>
@@ -309,7 +305,7 @@ export default async function ParecerConclusivoPrintPage({ params }: Props) {
                             <div className="field-value">{v(report.vigencia)}</div>
                         </div>
                         <div className="field-group col-2">
-                            <div className="field-label">Valor Autorizado por Lei e Repassado</div>
+                            <div className="field-label">Valor Autorizado por Lei para o Exercício de 2026</div>
                             <div className="field-value">{v(report.valor_autorizado)}</div>
                         </div>
                     </div>
@@ -337,13 +333,22 @@ export default async function ParecerConclusivoPrintPage({ params }: Props) {
                     </div>
                 </div>
 
-                {/* 3. CONCLUSÃO */}
+                {/* 3. SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES */}
                 <div className="section">
                     <div className="section-title">
                         <div className="section-bar" />
-                        <h2>3. Conclusão</h2>
+                        <h2>3. Sustentabilidade e Continuidade das Ações que Foram Objeto da Parceria</h2>
                     </div>
                     <div className="text-block">{v(report.conclusao)}</div>
+                </div>
+
+                {/* 4. CONCLUSÃO */}
+                <div className="section">
+                    <div className="section-title">
+                        <div className="section-bar" />
+                        <h2>4. Conclusão</h2>
+                    </div>
+                    <div className="text-block">{v(report.conclusao_final)}</div>
                 </div>
 
                 {/* LOCAL E DATA */}

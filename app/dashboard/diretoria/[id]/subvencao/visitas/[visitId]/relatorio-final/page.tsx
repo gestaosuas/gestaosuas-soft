@@ -18,7 +18,6 @@ import { ReturnLink } from "../../../return-link"
 interface FormData {
     osc_name: string
     cnpj: string
-    emenda: string
     termo_fomento: string
     vigencia: string
     valor_autorizado: string
@@ -32,6 +31,7 @@ interface FormData {
     resultados: string
     execucao_financeira: string
     cumprimento_objeto_final: string
+    conclusao: string
     texto_homologacao: string
     
     local_data: string
@@ -100,7 +100,6 @@ function RelatorioFinalContent() {
     const [formData, setFormData] = useState<FormData>({
         osc_name: '',
         cnpj: '',
-        emenda: '',
         termo_fomento: '',
         vigencia: '',
         valor_autorizado: '',
@@ -113,6 +112,7 @@ function RelatorioFinalContent() {
         resultados: '',
         execucao_financeira: '',
         cumprimento_objeto_final: '',
+        conclusao: '',
         texto_homologacao: '',
         
         local_data: `Uberlândia, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`,
@@ -381,14 +381,6 @@ function RelatorioFinalContent() {
                                     className="print:hidden border-zinc-200 font-bold"
                                 />
                             </PrintField>
-                            <PrintField isPrintView={isPrintView} label="Recurso" value={formData.emenda}>
-                                <Input
-                                    value={formData.emenda}
-                                    onChange={e => setFormData({ ...formData, emenda: e.target.value })}
-                                    readOnly={isFinalized}
-                                    className="print:hidden border-zinc-200 font-bold"
-                                />
-                            </PrintField>
                             <PrintField isPrintView={isPrintView} label="Nº Termo" value={formData.termo_fomento}>
                                 <Input
                                     value={formData.termo_fomento}
@@ -405,7 +397,7 @@ function RelatorioFinalContent() {
                                     className="print:hidden border-zinc-200 font-bold"
                                 />
                             </PrintField>
-                            <PrintField isPrintView={isPrintView} label="Valor autorizado por lei e repassado" value={formData.valor_autorizado} className="md:col-span-2 print:col-span-1">
+                            <PrintField isPrintView={isPrintView} label="Valor autorizado por lei para o exercício de 2026" value={formData.valor_autorizado} className="md:col-span-2 print:col-span-1">
                                 <Input
                                     value={formData.valor_autorizado}
                                     onChange={e => setFormData({ ...formData, valor_autorizado: e.target.value })}
@@ -452,7 +444,7 @@ function RelatorioFinalContent() {
                     <section className="space-y-8 print:space-y-6">
                         <div className="flex items-center gap-3 print:gap-2">
                             <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
-                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">4. DESCRIÇÃO DOS OBJETIVOS, METAS PREVISTAS E EXECUÇÃO FINANCEIRA</h2>
+                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">4. DESCRIÇÃO DOS OBJETIVOS, METAS, ATIVIDADES PREVISTAS E EXECUÇÃO FINANCEIRA</h2>
                         </div>
 
                         <div className="space-y-4 print:space-y-2">
@@ -513,6 +505,22 @@ function RelatorioFinalContent() {
                             <Textarea
                                 value={formData.cumprimento_objeto_final}
                                 onChange={e => setFormData({ ...formData, cumprimento_objeto_final: e.target.value })}
+                                readOnly={isFinalized}
+                                className="print:hidden min-h-[120px] border-zinc-200"
+                            />
+                        </PrintTextArea>
+                    </section>
+
+                    {/* Section 6: CONCLUSÃO */}
+                    <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
+                        <div className="flex items-center gap-3 print:gap-2">
+                            <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
+                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">6. CONCLUSÃO</h2>
+                        </div>
+                        <PrintTextArea isPrintView={isPrintView} label="" value={formData.conclusao}>
+                            <Textarea
+                                value={formData.conclusao}
+                                onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
                                 readOnly={isFinalized}
                                 className="print:hidden min-h-[120px] border-zinc-200"
                             />

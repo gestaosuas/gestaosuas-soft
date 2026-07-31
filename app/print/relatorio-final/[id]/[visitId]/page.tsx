@@ -323,10 +323,6 @@ export default async function RelatorioFinalPrintPage({ params }: Props) {
                             <div className="field-value">{v(report.cnpj)}</div>
                         </div>
                         <div className="field-group">
-                            <div className="field-label">Recurso</div>
-                            <div className="field-value">{v(report.emenda)}</div>
-                        </div>
-                        <div className="field-group">
                             <div className="field-label">Nº Termo</div>
                             <div className="field-value">{v(report.termo_fomento)}</div>
                         </div>
@@ -335,7 +331,7 @@ export default async function RelatorioFinalPrintPage({ params }: Props) {
                             <div className="field-value">{v(report.vigencia)}</div>
                         </div>
                         <div className="field-group col-2">
-                            <div className="field-label">Valor Autorizado por Lei e Repassado</div>
+                            <div className="field-label">Valor Autorizado por Lei para o Exercício de 2026</div>
                             <div className="field-value">{v(report.valor_autorizado)}</div>
                         </div>
                     </div>
@@ -363,7 +359,7 @@ export default async function RelatorioFinalPrintPage({ params }: Props) {
                 <div className="section">
                     <div className="section-title">
                         <div className="section-bar" />
-                        <h2>4. Descrição dos Objetivos, Metas Previstas e Execução Financeira</h2>
+                        <h2>4. Descrição dos Objetivos, Metas, Atividades Previstas e Execução Financeira</h2>
                     </div>
 
                     <div className="text-item">
@@ -401,6 +397,15 @@ export default async function RelatorioFinalPrintPage({ params }: Props) {
                         <h2>5. Cumprimento do Objeto</h2>
                     </div>
                     <div className="text-block">{v(report.cumprimento_objeto_final)}</div>
+                </div>
+
+                {/* 6. CONCLUSÃO */}
+                <div className="section">
+                    <div className="section-title">
+                        <div className="section-bar" />
+                        <h2>6. Conclusão</h2>
+                    </div>
+                    <div className="text-block">{v(report.conclusao)}</div>
                 </div>
 
                 {/* LOCAL E DATA */}

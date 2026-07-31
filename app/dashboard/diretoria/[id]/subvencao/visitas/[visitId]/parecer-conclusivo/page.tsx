@@ -18,7 +18,6 @@ import { ReturnLink } from "../../../return-link"
 interface FormData {
     osc_name: string
     cnpj: string
-    emenda: string
     termo_fomento: string
     vigencia: string
     valor_autorizado: string
@@ -26,6 +25,7 @@ interface FormData {
     cumprimento_objeto: string
     beneficios_impactos: string
     conclusao: string
+    conclusao_final: string
     local_data: string
     signature_tecnico: string | null
     tecnico_nome: string
@@ -80,7 +80,6 @@ function ParecerConclusivoContent() {
     const [formData, setFormData] = useState<FormData>({
         osc_name: '',
         cnpj: '',
-        emenda: '',
         termo_fomento: '',
         vigencia: '',
         valor_autorizado: '',
@@ -88,6 +87,7 @@ function ParecerConclusivoContent() {
         cumprimento_objeto: '',
         beneficios_impactos: '',
         conclusao: '',
+        conclusao_final: '',
         local_data: `Uberlândia, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`,
         signature_tecnico: null,
         tecnico_nome: '',
@@ -124,7 +124,6 @@ function ParecerConclusivoContent() {
                         ...prev,
                         osc_name: relatorioFinal.osc_name || oscNameFallback || '',
                         cnpj: relatorioFinal.cnpj || '',
-                        emenda: relatorioFinal.emenda || '',
                         termo_fomento: relatorioFinal.termo_fomento || '',
                         vigencia: relatorioFinal.vigencia || '',
                         valor_autorizado: relatorioFinal.valor_autorizado || '',
@@ -342,15 +341,6 @@ function ParecerConclusivoContent() {
                                     className="print:hidden border-zinc-200 placeholder:text-zinc-300 placeholder:font-normal font-bold"
                                 />
                             </PrintField>
-                            <PrintField isPrintView={isPrintView} label="Recurso" value={formData.emenda}>
-                                <Input
-                                    value={formData.emenda}
-                                    onChange={e => setFormData({ ...formData, emenda: e.target.value })}
-                                    readOnly={isFinalized}
-                                    placeholder="Ex: 1430/2023"
-                                    className="print:hidden border-zinc-200 placeholder:text-zinc-300 placeholder:font-normal font-bold"
-                                />
-                            </PrintField>
                             <PrintField isPrintView={isPrintView} label="Nº Termo" value={formData.termo_fomento}>
                                 <Input
                                     value={formData.termo_fomento}
@@ -369,7 +359,7 @@ function ParecerConclusivoContent() {
                                     className="print:hidden border-zinc-200 placeholder:text-zinc-300 placeholder:font-normal font-bold"
                                 />
                             </PrintField>
-                            <PrintField isPrintView={isPrintView} label="Valor autorizado por lei e repassado" value={formData.valor_autorizado} className="md:col-span-2 print:col-span-1">
+                            <PrintField isPrintView={isPrintView} label="Valor autorizado por lei para o exercício de 2026" value={formData.valor_autorizado} className="md:col-span-2 print:col-span-1">
                                 <Input
                                     value={formData.valor_autorizado}
                                     onChange={e => setFormData({ ...formData, valor_autorizado: e.target.value })}
@@ -420,16 +410,33 @@ function ParecerConclusivoContent() {
                         </div>
                     </section>
 
-                    {/* Section 3: CONCLUSÃO */}
+                    {/* Section 3: SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES */}
                     <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
                         <div className="flex items-center gap-3 print:gap-2">
                             <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
-                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">3. CONCLUSÃO</h2>
+                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">3. SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES QUE FORAM OBJETO DA PARCERIA</h2>
                         </div>
                         <PrintTextArea isPrintView={isPrintView} label="" value={formData.conclusao}>
                             <Textarea
                                 value={formData.conclusao}
                                 onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
+                                readOnly={isFinalized}
+                                placeholder="Digite a sustentabilidade e continuidade das ações..."
+                                className="print:hidden min-h-[150px] border-zinc-200"
+                            />
+                        </PrintTextArea>
+                    </section>
+
+                    {/* Section 4: CONCLUSÃO */}
+                    <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
+                        <div className="flex items-center gap-3 print:gap-2">
+                            <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
+                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">4. CONCLUSÃO</h2>
+                        </div>
+                        <PrintTextArea isPrintView={isPrintView} label="" value={formData.conclusao_final}>
+                            <Textarea
+                                value={formData.conclusao_final}
+                                onChange={e => setFormData({ ...formData, conclusao_final: e.target.value })}
                                 readOnly={isFinalized}
                                 placeholder="Digite a conclusão final..."
                                 className="print:hidden min-h-[150px] border-zinc-200"
