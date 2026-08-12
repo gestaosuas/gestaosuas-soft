@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { getVisitById } from '@/app/dashboard/actions'
+import { getDirectorateSimple } from '@/app/dashboard/actions-narrative'
 import { redirect } from 'next/navigation'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function RelatorioFinalPrintPage({ params }: Props) {
-    const { visitId } = await params
+    const { id, visitId } = await params
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -35,6 +36,11 @@ export default async function RelatorioFinalPrintPage({ params }: Props) {
 
     const report = visit.relatorio_final || {}
     const osc_name = report.osc_name || (Array.isArray(visit.oscs) ? visit.oscs[0]?.name : visit.oscs?.name) || '---'
+
+    const directorate = await getDirectorateSimple(id)
+    const normalizedDirName = (directorate?.name || '').toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    const isEmendas = normalizedDirName.includes('emenda') || normalizedDirName.includes('fundo')
+        || id === '63553b96-3771-4842-9f45-630c7558adac' || id === '12b2a325-113f-4bc5-a74a-4f58a569be24'
 
     const { data: settings } = await supabase
         .from('system_settings')
@@ -399,14 +405,16 @@ export default async function RelatorioFinalPrintPage({ params }: Props) {
                     <div className="text-block">{v(report.cumprimento_objeto_final)}</div>
                 </div>
 
-                {/* 6. CONCLUSÃO */}
-                <div className="section">
-                    <div className="section-title">
-                        <div className="section-bar" />
-                        <h2>6. Conclusão</h2>
+                {/* 6. CONCLUSÃO (não exibida em Emendas e Fundos) */}
+                {!isEmendas && (
+                    <div className="section">
+                        <div className="section-title">
+                            <div className="section-bar" />
+                            <h2>6. Conclusão</h2>
+                        </div>
+                        <div className="text-block">{v(report.conclusao)}</div>
                     </div>
-                    <div className="text-block">{v(report.conclusao)}</div>
-                </div>
+                )}
 
                 {/* LOCAL E DATA */}
                 <div className="local-data">{v(report.local_data)}</div>
