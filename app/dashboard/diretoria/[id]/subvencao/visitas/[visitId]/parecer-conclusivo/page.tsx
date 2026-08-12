@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { SignaturePad } from "@/components/signature-pad"
 import { saveParecerConclusivo, getVisitById } from "@/app/dashboard/actions"
+import { getDirectorateSimple } from "@/app/dashboard/actions-narrative"
 import { createClient } from "@/utils/supabase/client"
 import { cn } from "@/lib/utils"
 import { ReturnLink } from "../../../return-link"
@@ -77,6 +78,7 @@ function ParecerConclusivoContent() {
     const [finalizing, setFinalizing] = useState(false)
     const [savingSignature, setSavingSignature] = useState<string | null>(null)
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
+    const [directorateName, setDirectorateName] = useState('')
     const [formData, setFormData] = useState<FormData>({
         osc_name: '',
         cnpj: '',
@@ -98,6 +100,10 @@ function ParecerConclusivoContent() {
 
     const isFinalized = formData.status === 'finalized'
 
+    const normalizedDirName = directorateName.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    const isEmendas = normalizedDirName.includes('emenda') || normalizedDirName.includes('fundo')
+        || id === '63553b96-3771-4842-9f45-630c7558adac' || id === '12b2a325-113f-4bc5-a74a-4f58a569be24'
+
     useEffect(() => {
         async function fetchData() {
             try {
@@ -105,6 +111,9 @@ function ParecerConclusivoContent() {
 
                 // Fetch visit using server action for robustness
                 const visit = await getVisitById(visitId)
+
+                const directorate = await getDirectorateSimple(id)
+                if (directorate?.name) setDirectorateName(directorate.name)
 
                 if (!visit) {
                     throw new Error("Visita não encontrada ou sem permissão.")
@@ -410,28 +419,30 @@ function ParecerConclusivoContent() {
                         </div>
                     </section>
 
-                    {/* Section 3: SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES */}
-                    <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
-                        <div className="flex items-center gap-3 print:gap-2">
-                            <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
-                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">3. SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES QUE FORAM OBJETO DA PARCERIA</h2>
-                        </div>
-                        <PrintTextArea isPrintView={isPrintView} label="" value={formData.conclusao}>
-                            <Textarea
-                                value={formData.conclusao}
-                                onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
-                                readOnly={isFinalized}
-                                placeholder="Digite a sustentabilidade e continuidade das ações..."
-                                className="print:hidden min-h-[150px] border-zinc-200"
-                            />
-                        </PrintTextArea>
-                    </section>
+                    {/* Section 3: SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES (não exibida em Emendas e Fundos) */}
+                    {!isEmendas && (
+                        <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
+                            <div className="flex items-center gap-3 print:gap-2">
+                                <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
+                                <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">3. SUSTENTABILIDADE E CONTINUIDADE DAS AÇÕES QUE FORAM OBJETO DA PARCERIA</h2>
+                            </div>
+                            <PrintTextArea isPrintView={isPrintView} label="" value={formData.conclusao}>
+                                <Textarea
+                                    value={formData.conclusao}
+                                    onChange={e => setFormData({ ...formData, conclusao: e.target.value })}
+                                    readOnly={isFinalized}
+                                    placeholder="Digite a sustentabilidade e continuidade das ações..."
+                                    className="print:hidden min-h-[150px] border-zinc-200"
+                                />
+                            </PrintTextArea>
+                        </section>
+                    )}
 
-                    {/* Section 4: CONCLUSÃO */}
+                    {/* Section 4/3: CONCLUSÃO — numeração se ajusta quando a seção anterior está oculta (Emendas e Fundos) */}
                     <section className="space-y-6 print:space-y-4 print:break-inside-avoid">
                         <div className="flex items-center gap-3 print:gap-2">
                             <div className="h-6 w-1 bg-blue-600 rounded-full print:bg-black" />
-                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">4. CONCLUSÃO</h2>
+                            <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-tight print:text-sm">{isEmendas ? '3' : '4'}. CONCLUSÃO</h2>
                         </div>
                         <PrintTextArea isPrintView={isPrintView} label="" value={formData.conclusao_final}>
                             <Textarea
