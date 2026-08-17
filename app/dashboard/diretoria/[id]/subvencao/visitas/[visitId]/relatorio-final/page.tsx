@@ -406,7 +406,7 @@ function RelatorioFinalContent() {
                                     className="print:hidden border-zinc-200 font-bold"
                                 />
                             </PrintField>
-                            <PrintField isPrintView={isPrintView} label="Valor autorizado por lei para o exercício de 2026" value={formData.valor_autorizado} className="md:col-span-2 print:col-span-1">
+                            <PrintField isPrintView={isPrintView} label={isEmendas ? "Valor autorizado por lei" : "Valor autorizado por lei para o exercício de 2026"} value={formData.valor_autorizado} className="md:col-span-2 print:col-span-1">
                                 <Input
                                     value={formData.valor_autorizado}
                                     onChange={e => setFormData({ ...formData, valor_autorizado: e.target.value })}
